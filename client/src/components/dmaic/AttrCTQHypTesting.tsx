@@ -159,7 +159,7 @@ export function AttrCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
       [ctqId]: {
         ctq: ctqName,
         testType: "Attribute Hyp-Test",
-        enableTwoProportionTest: true,
+        enableTwoProportionTest: false,
         enableChiSquareTest: false,
       }
     }));
@@ -179,9 +179,9 @@ export function AttrCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
           Validate or invalidate assumptions and determine if differences are statistically significant or insignificant.
         </p>
         <div>
-          <Label htmlFor="Sample-Number">Select Number of Samples in Hypothesis Test</Label>
+          <Label htmlFor="Sample-Number">Select Hypothesis Tests (select multiple)</Label>
           <div className="max-w-4xl">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id={`${ctqId}-OneSampleTest`}
@@ -189,7 +189,7 @@ export function AttrCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
                   onCheckedChange={(checked) => updateAttrCTQHypTestDataField(ctqId, "enableTwoProportionTest", checked)}
                 />
                 <Label htmlFor={`${ctqId}-TwoProportionTest`} className="text-sm font-medium text-gray-700">
-                  Two-Proportion Hypothesis Test
+                  Two-Proportion Test
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
@@ -199,7 +199,7 @@ export function AttrCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
                   onCheckedChange={(checked) => updateAttrCTQHypTestDataField(ctqId, "enableChiSquareTest", checked)}
                 />
                 <Label htmlFor={`${ctqId}-ChiSquareTest`} className="text-sm font-medium text-gray-700">
-                  Chi Square Hypothesis Test
+                  Chi Square Test (n-Sample Test of Independence)
                 </Label>
               </div>
             </div>
@@ -214,10 +214,10 @@ export function AttrCTQHypTesting({ projectId, ctqId, ctqName, activeTab, onSave
             <h4 className="text-sm font-medium mb-2">Selected Hypotesis Tests:</h4>
             <ul className="text-sm text-gray-600 space-y-1">
               {AttrCTQHypTestData[ctqId]?.enableTwoProportionTest && (
-                <li>• Two-Proportion Hypothesis Test</li>
+                <li>• Two-Proportion Test</li>
               )}
               {AttrCTQHypTestData[ctqId]?.enableChiSquareTest && (
-                <li>• Chi Square Hypothesis Test</li>
+                <li>• Chi Square Test (n-Sample Test of Independence)</li>
               )}
             </ul>
           </div>

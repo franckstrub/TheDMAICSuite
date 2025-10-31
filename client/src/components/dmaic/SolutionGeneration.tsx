@@ -160,7 +160,7 @@ export default function SolutionGeneration({ projectId, projectType }: SolutionG
     if (!benefit || !effort) return { x: 50, y: 50 };
     
     const effortMap = { Low: 83.33, Medium: 50, High: 16.67 }; // Inverted for X axis
-    const benefitMap = { Low: 16.67, Medium: 50, High: 83.33 }; // Y axis (Low at bottom, High at top)
+    const benefitMap = { Low: 83.33, Medium: 50, High: 16.67 }; // Y axis (Low at bottom, High at top)
     
     const baseX = effortMap[effort as keyof typeof effortMap] || 50;
     const baseY = benefitMap[benefit as keyof typeof benefitMap] || 50;

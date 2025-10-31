@@ -74,6 +74,9 @@ interface ContCTQTwoSampleHypTestingProps {
   ctqName: string;
   activeTab?: string;
   onSave?: (data: string) => void;
+  apiEndpoint?: string;
+  defaultDataset1Description?: string;
+  defaultDataset2Description?: string;
 }
 
 interface PowerSampleSizeResults {
@@ -183,9 +186,21 @@ interface MedianTestResults {
   median2CI: { lower: number, upper: number };
 }
 
-export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTab, onSave }: ContCTQTwoSampleHypTestingProps) {
+export function ContCTQTwoSampleHypTesting({ 
+  projectId, 
+  ctqId, 
+  ctqName, 
+  activeTab, 
+  onSave, 
+  apiEndpoint,
+  defaultDataset1Description = "",
+  defaultDataset2Description = ""
+}: ContCTQTwoSampleHypTestingProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Use provided apiEndpoint or default to the Analyze phase endpoint
+  const effectiveApiEndpoint = apiEndpoint || `/api/projects/${projectId}/ctq/${ctqId}/two-sample-hypothesis-config`;
   const [significanceLevel, setSignificanceLevel] = useState("0.05");
   const [alternativemean, setAlternativemean] = useState("Less than");
   const [alternativevariance, setAlternativevariance] = useState("Less than");
@@ -285,8 +300,8 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
       enableMedianTest: false,
       deltaMean0: 0,
       ratioVariance0: 1,
-      dataset1description: "",
-      dataset2description: "",
+      dataset1description: defaultDataset1Description,
+      dataset2description: defaultDataset2Description,
       enableMean2SPower: false,
       power2SMeanMean1: 0,
       power2SMeanMean2: 0,
@@ -299,7 +314,7 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
 
   // TanStack Query for loading data from database
   const { data: configData, isLoading, error } = useQuery({
-    queryKey: [`/api/projects/${projectId}/ctq/${ctqId}/two-sample-hypothesis-config`],
+    queryKey: [effectiveApiEndpoint],
     enabled: !!projectId && !!ctqId,
     retry: false,
   });
@@ -307,7 +322,7 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
   // Mutation for saving data to database
   const saveConfigMutation = useMutation({
     mutationFn: async (configData: any) => {
-      const response = await fetch(`/api/projects/${projectId}/ctq/${ctqId}/two-sample-hypothesis-config`, {
+      const response = await fetch(effectiveApiEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -329,7 +344,7 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
         description: "Two-sample hypothesis testing configuration has been saved successfully.",
       });
       // Invalidate the query to refresh data
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/ctq/${ctqId}/two-sample-hypothesis-config`] });
+      queryClient.invalidateQueries({ queryKey: [effectiveApiEndpoint] });
     },
     onError: (error: any) => {
       toast({
@@ -342,9 +357,10 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
 
   // Load configuration data from database when available
   useEffect(() => {
-    if (configData && (configData as any).config && !isLoading) {
+    if (configData && !isLoading) {
       setTimeout(() => {
-        const config = (configData as any).config;
+        // Handle both formats: { config: {...} } and direct {...}
+        const config = (configData as any).config || configData;
         
         // Update significanceLevel and alternative options from database
         if (config.significanceLevel) {
@@ -457,6 +473,7 @@ export function ContCTQTwoSampleHypTesting({ projectId, ctqId, ctqName, activeTa
     if (!currentConfig) return;
     
     const configToSave = {
+      ctq: ctqName,
       testType: currentConfig.testType,
       enableMeanTest: currentConfig.enableMeanTest,
       enableVarianceTest: currentConfig.enableVarianceTest,
@@ -1714,7 +1731,7 @@ useEffect(() => {
   useEffect(() => {
     const handleKeyboardShortcut = (event: KeyboardEvent) => {
       // Handle Ctrl+V/Cmd+V for paste - only when this specific component has focus
-      if ((event.ctrlKey || event.metaKey) && event.key === 'v' && (activeTab === ctqName)) {
+      if ((event.ctrlKey || event.metaKey) && event.key === 'v' && (!activeTab || activeTab === ctqName)) {
         
         // Check if this Two Sample component should handle the paste based on global context
         const focusedComponent = (window as any).focusedComponent;
@@ -1763,7 +1780,7 @@ useEffect(() => {
       }
 
       // Handle Ctrl+Z/Cmd+Z for undo - works both in and outside input fields and this CTQ is active
-      if ((event.ctrlKey || event.metaKey) && event.key === 'z' && (undoState1 || undoState2) && (activeTab === ctqName)) {
+      if ((event.ctrlKey || event.metaKey) && event.key === 'z' && (undoState1 || undoState2) && (!activeTab || activeTab === ctqName)) {
         event.preventDefault();
         
         // Determine which dataset to undo based on which input field is focused

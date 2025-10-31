@@ -631,6 +631,28 @@ export const insertRaciSchema = createInsertSchema(projectRaciMatrix).pick({
   raciData: true,
 });
 
+// Process RACI Matrix for Improve Phase (TO BE Process) - Solution-Specific
+export const processRaciMatrix = pgTable("process_raci_matrix", {
+  id: serial("id").primaryKey(),
+  organizationId: integer("organization_id")
+    .references(() => organizations.id)
+    .notNull(),
+  projectId: integer("project_id").notNull(),
+  solutionId: text("solution_id").notNull(),
+  // Store the matrix as structured JSON with role assignments for TO BE process
+  // Each row represents a team member/stakeholder
+  // Columns represent activities or process steps in the TO BE process
+  raciData: jsonb("raci_data").notNull(),
+  lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+});
+
+export const insertProcessRaciSchema = createInsertSchema(processRaciMatrix).pick({
+  organizationId: true,
+  projectId: true,
+  solutionId: true,
+  raciData: true,
+});
+
 // Activity Log
 export const activityLogs = pgTable("activity_logs", {
   id: serial("id").primaryKey(),
@@ -833,6 +855,9 @@ export type InsertRisk = z.infer<typeof insertRiskSchema>;
 export type ProjectRaciMatrix = typeof projectRaciMatrix.$inferSelect;
 export type InsertRaciMatrix = z.infer<typeof insertRaciSchema>;
 
+export type ProcessRaciMatrix = typeof processRaciMatrix.$inferSelect;
+export type InsertProcessRaciMatrix = z.infer<typeof insertProcessRaciSchema>;
+
 // RACI matrix data structure
 export type RaciMatrixData = {
   roles: {
@@ -844,6 +869,18 @@ export type RaciMatrixData = {
       analyze: RaciRole | null;
       improve: RaciRole | null;
       control: RaciRole | null;
+    };
+  }[];
+};
+
+// Process RACI matrix data structure for TO BE Process
+export type ProcessRaciMatrixData = {
+  activities: string[]; // Array of activity/step names in the TO BE process
+  roles: {
+    name: string;
+    role: string;
+    responsibilities: {
+      [activityIndex: number]: RaciRole | null; // Key is activity index, value is RACI role
     };
   }[];
 };
@@ -1016,7 +1053,19 @@ export const processMaps = pgTable("process_maps", {
     .references(() => organizations.id)
     .notNull(),
   projectId: integer("project_id").notNull(),
-  diagramData: text("diagram_data"), // Store draw.io XML data
+  asIsDiagramData: text("as_is_diagram_data"), // Store draw.io XML data for AS-IS process
+  lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+});
+
+// Solution Process Maps for DMAIC Improve Phase - TO BE Process Maps per Solution
+export const solutionProcessMaps = pgTable("solution_process_maps", {
+  id: serial("id").primaryKey(),
+  organizationId: integer("organization_id")
+    .references(() => organizations.id)
+    .notNull(),
+  projectId: integer("project_id").notNull(),
+  solutionId: text("solution_id").notNull(),
+  diagramData: text("diagram_data"), // Store draw.io XML data for TO-BE process
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });
 
@@ -1051,6 +1100,14 @@ export const insertProcessMapSchema = createInsertSchema(processMaps).omit({
 
 export type InsertProcessMap = z.infer<typeof insertProcessMapSchema>;
 export type ProcessMap = typeof processMaps.$inferSelect;
+
+export const insertSolutionProcessMapSchema = createInsertSchema(solutionProcessMaps).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type InsertSolutionProcessMap = z.infer<typeof insertSolutionProcessMapSchema>;
+export type SolutionProcessMap = typeof solutionProcessMaps.$inferSelect;
 
 // CTQ Type for CTS Characteristics
 export const ctqTypes = ["Attribute", "Continuous"] as const;
@@ -2144,6 +2201,320 @@ export const insertImplementationPlanTaskSchema = createInsertSchema(implementat
 
 export type InsertImplementationPlanTask = z.infer<typeof insertImplementationPlanTaskSchema>;
 export type ImplementationPlanTask = typeof implementationPlanTasks.$inferSelect;
+
+// Solution Design Tracking - tracks implementation aspects for each solution
+export const solutionDesignTracking = pgTable(
+  "solution_design_tracking",
+  {
+    id: serial("id").primaryKey(),
+    organizationId: integer("organization_id")
+      .references(() => organizations.id)
+      .notNull(),
+    projectId: integer("project_id").notNull(),
+    solutionId: text("solution_id").notNull(), // e.g., S1, S2, S3
+    
+    // Design and implementation tracking checkboxes
+    toBeProcessMap: boolean("to_be_process_map").default(false),
+    toBeProcessRaci: boolean("to_be_process_raci").default(false),
+    transferFunction: boolean("transfer_function").default(false),
+    otherDesign: boolean("other_design").default(false),
+    otherDesignExplanation: text("other_design_explanation"),
+    otherDesignFile: text("other_design_file"),
+    solutionNotPursued: boolean("solution_not_pursued").default(false),
+    
+    // Transfer Function Configuration
+    tfSimpleRegression: boolean("tf_simple_regression").default(false),
+    tfAnovaTwoWay: boolean("tf_anova_two_way").default(false),
+    tfMultipleRegression: boolean("tf_multiple_regression").default(false),
+    tfDoe: boolean("tf_doe").default(false),
+    tfLogisticRegression: boolean("tf_logistic_regression").default(false),
+    
+    lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+  },
+  (table) => ({
+    uniqueSolutionDesign: unique().on(table.projectId, table.solutionId),
+  }),
+);
+
+export const insertSolutionDesignTrackingSchema = createInsertSchema(solutionDesignTracking).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type InsertSolutionDesignTracking = z.infer<typeof insertSolutionDesignTrackingSchema>;
+export type SolutionDesignTracking = typeof solutionDesignTracking.$inferSelect;
+
+// Proof of Improvement - Before/After Continuous CTQ Two-Sample Test
+export const beforeAfterContCTQTwoSampleTest = pgTable(
+  "before_after_cont_ctq_two_sample_test",
+  {
+    id: serial("id").primaryKey(),
+    organizationId: integer("organization_id")
+      .references(() => organizations.id)
+      .notNull(),
+    projectId: integer("project_id").notNull(),
+    ctqId: integer("ctq_id")
+      .references(() => ctsCharacteristics.id, { onDelete: "cascade" })
+      .notNull(),
+    ctq: text("ctq").notNull(),
+
+    // Test configuration
+    testType: text("test_type").default("Before-After Two Sample Test"),
+
+    // Statistical parameter enablers
+    enableMeanTest: boolean("enable_mean_test").default(true),
+    enableVarianceTest: boolean("enable_variance_test").default(false),
+    enableMedianTest: boolean("enable_median_test").default(false),
+
+    // Target values for hypothesis tests
+    deltaMean0: real("delta_mean_0").default(0),
+    ratioVariance0: real("ratio_variance_0").default(1),
+
+    // Test parameters
+    significanceLevel: text("significance_level").default("0.05"),
+    alternativemean: text("alternativemean").default("Less than"),
+    alternativevariance: text("alternativevariance").default("Less than"),
+    alternativemedian: text("alternativemedian").default("Less than"),
+
+    // Data points - Before (dataSet1) and After (dataSet2)
+    dataSet1: jsonb("data_set_1")
+      .$type<Array<{ indexNumber: number; dataValue: number }>>()
+      .default([]),
+    dataSet2: jsonb("data_set_2")
+      .$type<Array<{ indexNumber: number; dataValue: number }>>()
+      .default([]),
+
+    // Dataset descriptions
+    dataset1Description: text("dataset_1_description").default("Before"),
+    dataset2Description: text("dataset_2_description").default("After"),
+
+    // Power analysis fields for Mean Test
+    enableMean2SPower: boolean("enable_mean_2s_power").default(false),
+    power2SMeanPower: text("power_2s_mean_power"),
+    power2SMeanHa: text("power_2s_mean_ha"),
+    power2SMeanMean1: real("power_2s_mean_mean_1"),
+    power2SMeanMean2: real("power_2s_mean_mean_2"),
+    power2SMeanStdev: real("power_2s_mean_stdev"),
+    power2SMeanAlpha: text("power_2s_mean_alpha"),
+
+    // Power analysis fields for Variance Test
+    enableVariance2SPower: boolean("enable_variance_2s_power").default(false),
+    power2SVariancePower: text("power_2s_variance_power"),
+    power2SVarianceHa: text("power_2s_variance_ha"),
+    power2SVarianceStdev1: real("power_2s_variance_stdev_1"),
+    power2SVarianceStdev2: real("power_2s_variance_stdev_2"),
+    power2SVarianceAlpha: text("power_2s_variance_alpha"),
+
+    lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+  },
+  (table) => ({
+    uniqueCtqConfig: unique().on(table.projectId, table.ctqId),
+  }),
+);
+
+export const insertBeforeAfterContCTQTwoSampleTestSchema = createInsertSchema(
+  beforeAfterContCTQTwoSampleTest,
+).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type InsertBeforeAfterContCTQTwoSampleTest = z.infer<
+  typeof insertBeforeAfterContCTQTwoSampleTestSchema
+>;
+export type BeforeAfterContCTQTwoSampleTest =
+  typeof beforeAfterContCTQTwoSampleTest.$inferSelect;
+
+// Proof of Improvement - Before/After Two Proportion Test
+export const beforeAfterTwoProportionTest = pgTable(
+  "before_after_two_proportion_test",
+  {
+    id: serial("id").primaryKey(),
+    organizationId: integer("organization_id")
+      .references(() => organizations.id)
+      .notNull(),
+    projectId: integer("project_id").notNull(),
+    ctqId: integer("ctq_id")
+      .references(() => ctsCharacteristics.id, { onDelete: "cascade" })
+      .notNull(),
+    ctq: text("ctq").notNull(),
+
+    // Test configuration
+    testType: text("test_type").default("Before-After Two Proportion Test"),
+    hypothesizedDifference: real("hypothesized_difference").default(0),
+
+    // Sample data - Before (sample1) and After (sample2)
+    sample1Size: integer("sample1_size"),
+    sample1Events: integer("sample1_events"),
+    sample2Size: integer("sample2_size"),
+    sample2Events: integer("sample2_events"),
+
+    // Sample descriptions
+    sample1Description: text("sample1_description").default("Before"),
+    sample2Description: text("sample2_description").default("After"),
+
+    // Test parameters
+    significanceLevel: text("significance_level").default("0.05"),
+    alternative: text("alternative").default("Different"),
+
+    // Power analysis fields
+    enablePowerAnalysis: boolean("enable_power_analysis").default(false),
+    powerTargetPower: real("power_target_power"),
+    powerAlpha: real("power_alpha"),
+    powerHa: text("power_ha"),
+    powerP1: real("power_p1"),
+    powerP2: real("power_p2"),
+
+    lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+  },
+  (table) => ({
+    uniqueCtqConfig: unique().on(table.projectId, table.ctqId),
+  }),
+);
+
+export const insertBeforeAfterTwoProportionTestSchema = createInsertSchema(
+  beforeAfterTwoProportionTest,
+).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type InsertBeforeAfterTwoProportionTest = z.infer<
+  typeof insertBeforeAfterTwoProportionTestSchema
+>;
+export type BeforeAfterTwoProportionTest =
+  typeof beforeAfterTwoProportionTest.$inferSelect;
+
+// Proof of Improvement - Before/After Chi-Square Test
+export const beforeAfterChiSquareTest = pgTable(
+  "before_after_chi_square_test",
+  {
+    id: serial("id").primaryKey(),
+    organizationId: integer("organization_id")
+      .references(() => organizations.id)
+      .notNull(),
+    projectId: integer("project_id").notNull(),
+    ctqId: integer("ctq_id")
+      .references(() => ctsCharacteristics.id, { onDelete: "cascade" })
+      .notNull(),
+    ctq: text("ctq").notNull(),
+
+    // Test configuration
+    significanceLevel: text("significance_level").default("0.05"),
+    
+    // Variable names
+    variable1Name: text("variable1_name").default("Time Period"),
+    variable2Name: text("variable2_name").default("Outcome"),
+    
+    // Categories
+    variable1Categories: jsonb("variable1_categories")
+      .$type<string[]>()
+      .default(["Before", "After"]),
+    variable2Categories: jsonb("variable2_categories")
+      .$type<string[]>()
+      .default(["Category 1", "Category 2"]),
+    
+    // Observed frequencies as string (for compatibility with existing component)
+    observedFrequencies: text("observed_frequencies").default(""),
+
+    lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+  },
+  (table) => ({
+    uniqueCtqConfig: unique().on(table.projectId, table.ctqId),
+  }),
+);
+
+export const insertBeforeAfterChiSquareTestSchema = createInsertSchema(
+  beforeAfterChiSquareTest,
+).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type InsertBeforeAfterChiSquareTest = z.infer<
+  typeof insertBeforeAfterChiSquareTestSchema
+>;
+export type BeforeAfterChiSquareTest =
+  typeof beforeAfterChiSquareTest.$inferSelect;
+
+// Proof of Improvement - Test Preferences (which tests to display)
+export const proofOfImprovementPreferences = pgTable(
+  "proof_of_improvement_preferences",
+  {
+    id: serial("id").primaryKey(),
+    organizationId: integer("organization_id")
+      .references(() => organizations.id)
+      .notNull(),
+    projectId: integer("project_id").notNull(),
+    ctqId: integer("ctq_id")
+      .references(() => ctsCharacteristics.id, { onDelete: "cascade" })
+      .notNull(),
+    
+    // Test preferences for Attribute CTQs
+    enableTwoProportionTest: boolean("enable_two_proportion_test").default(true),
+    enableChiSquareTest: boolean("enable_chi_square_test").default(true),
+    
+    lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+  },
+  (table) => ({
+    uniqueCtqPreferences: unique().on(table.projectId, table.ctqId),
+  }),
+);
+
+export const insertProofOfImprovementPreferencesSchema = createInsertSchema(
+  proofOfImprovementPreferences,
+).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type InsertProofOfImprovementPreferences = z.infer<
+  typeof insertProofOfImprovementPreferencesSchema
+>;
+export type ProofOfImprovementPreferences =
+  typeof proofOfImprovementPreferences.$inferSelect;
+
+// Simple Regression Configuration for Transfer Function Analysis
+export const simpleRegressionConfig = pgTable(
+  "simple_regression_config",
+  {
+    id: serial("id").primaryKey(),
+    organizationId: integer("organization_id")
+      .references(() => organizations.id)
+      .notNull(),
+    projectId: integer("project_id").notNull(),
+    solutionId: text("solution_id").notNull(),
+    
+    // Regression type selection
+    enableLinear: boolean("enable_linear").default(false),
+    enableQuadratic: boolean("enable_quadratic").default(false),
+    enableCubic: boolean("enable_cubic").default(false),
+    
+    // Dataset descriptions
+    datasetYDescription: text("dataset_y_description").default("Y Variable"),
+    datasetXDescription: text("dataset_x_description").default("X Variable"),
+    
+    // Data arrays (stored as jsonb arrays of numbers)
+    dataY: jsonb("data_y").$type<number[]>().default([]),
+    dataX: jsonb("data_x").$type<number[]>().default([]),
+    
+    // Target Y value for solving equations (coefficients and solutions calculated on render)
+    targetY: real("target_y"),
+    
+    lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+  },
+  (table) => ({
+    uniqueSolutionRegression: unique().on(table.projectId, table.solutionId),
+  }),
+);
+
+export const insertSimpleRegressionConfigSchema = createInsertSchema(simpleRegressionConfig).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type InsertSimpleRegressionConfig = z.infer<typeof insertSimpleRegressionConfigSchema>;
+export type SimpleRegressionConfig = typeof simpleRegressionConfig.$inferSelect;
 
 // User Settings Table
 export const userSettings = pgTable(

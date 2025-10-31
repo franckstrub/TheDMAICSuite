@@ -18,6 +18,10 @@ interface AttrCTQChiSquareHypTestingProps {
   ctqName: string;
   activeTab?: string;
   onSave?: (data: string) => void;
+  apiEndpoint?: string;
+  defaultVariable1Name?: string;
+  defaultVariable1Categories?: string[];
+  defaultVariable2Name?: string;
 }
 
 interface ChiSquareConfig {
@@ -29,14 +33,27 @@ interface ChiSquareConfig {
   observedFrequencies: string;
 }
 
-export function AttrCTQChiSquareHypTesting({ projectId, ctqId, ctqName, activeTab, onSave }: AttrCTQChiSquareHypTestingProps) {
+export function AttrCTQChiSquareHypTesting({ 
+  projectId, 
+  ctqId, 
+  ctqName, 
+  activeTab, 
+  onSave, 
+  apiEndpoint,
+  defaultVariable1Name = "Variable 1",
+  defaultVariable1Categories = ["Category 1", "Category 2"],
+  defaultVariable2Name = "Variable 2"
+}: AttrCTQChiSquareHypTestingProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
+  // Use provided apiEndpoint or default to the Analyze phase endpoint
+  const effectiveApiEndpoint = apiEndpoint || `/api/projects/${projectId}/ctq/${ctqId}/chi-square-independence-config`;
+  
   const [significanceLevel, setSignificanceLevel] = useState("0.05");
-  const [variable1Name, setVariable1Name] = useState("Variable 1");
-  const [variable1Categories, setVariable1Categories] = useState<string[]>(["Category 1", "Category 2"]);
-  const [variable2Name, setVariable2Name] = useState("Variable 2");
+  const [variable1Name, setVariable1Name] = useState(defaultVariable1Name);
+  const [variable1Categories, setVariable1Categories] = useState<string[]>(defaultVariable1Categories);
+  const [variable2Name, setVariable2Name] = useState(defaultVariable2Name);
   const [variable2Categories, setVariable2Categories] = useState<string[]>(["Category 1", "Category 2"]);
   const [observedFrequencies, setObservedFrequencies] = useState<{ [key: string]: number }>({});
   const [testResults, setTestResults] = useState<any>(null);
@@ -44,7 +61,7 @@ export function AttrCTQChiSquareHypTesting({ projectId, ctqId, ctqName, activeTa
 
   // TanStack Query for loading data from database
   const { data: configData, isLoading } = useQuery({
-    queryKey: [`/api/projects/${projectId}/ctq/${ctqId}/chi-square-independence-config`],
+    queryKey: [effectiveApiEndpoint],
     enabled: !!projectId && !!ctqId,
     retry: false,
   });
@@ -52,7 +69,7 @@ export function AttrCTQChiSquareHypTesting({ projectId, ctqId, ctqName, activeTa
   // Mutation for saving data to database
   const saveConfigMutation = useMutation({
     mutationFn: async (configData: any) => {
-      const response = await fetch(`/api/projects/${projectId}/ctq/${ctqId}/chi-square-independence-config`, {
+      const response = await fetch(effectiveApiEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -73,7 +90,7 @@ export function AttrCTQChiSquareHypTesting({ projectId, ctqId, ctqName, activeTa
         title: "Configuration Saved",
         description: "Chi-square test configuration has been saved successfully.",
       });
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/ctq/${ctqId}/chi-square-independence-config`] });
+      queryClient.invalidateQueries({ queryKey: [effectiveApiEndpoint] });
     },
     onError: (error: any) => {
       toast({
@@ -86,8 +103,9 @@ export function AttrCTQChiSquareHypTesting({ projectId, ctqId, ctqName, activeTa
 
   // Load configuration data from database when available
   useEffect(() => {
-    if (configData && (configData as any).config && !isLoading) {
-      const config = (configData as any).config;
+    if (configData && !isLoading) {
+      // Handle both formats: { config: {...} } and direct {...}
+      const config = (configData as any).config || configData;
       
       if (config.significanceLevel) setSignificanceLevel(config.significanceLevel);
       if (config.variable1Name) setVariable1Name(config.variable1Name);
@@ -227,6 +245,7 @@ export function AttrCTQChiSquareHypTesting({ projectId, ctqId, ctqName, activeTa
 
   const saveConfiguration = () => {
     const configToSave = {
+      ctq: ctqName,
       testType: "Chi-Square Independence Test",
       significanceLevel,
       variable1Name,
@@ -241,6 +260,7 @@ export function AttrCTQChiSquareHypTesting({ projectId, ctqId, ctqName, activeTa
 
   const saveData = () => {
     const configToSave = {
+      ctq: ctqName,
       testType: "Chi-Square Independence Test",
       significanceLevel,
       variable1Name,
@@ -415,7 +435,7 @@ export function AttrCTQChiSquareHypTesting({ projectId, ctqId, ctqName, activeTa
           <thead>
             <tr>
               <th className="border border-gray-300 bg-gray-100 p-2 text-sm font-semibold">
-                {variable1Name} / {variable2Name}
+                {variable1Name} ↓ / {variable2Name} →
               </th>
               {variable2Categories.map((cat, index) => (
                 <th key={index} className="border border-gray-300 bg-gray-100 p-2 text-sm font-semibold">
@@ -662,7 +682,7 @@ export function AttrCTQChiSquareHypTesting({ projectId, ctqId, ctqName, activeTa
                   <thead>
                     <tr>
                       <th className="border border-gray-300 bg-gray-100 p-2 text-sm font-semibold">
-                        {variable1Name} / {variable2Name}
+                        {variable1Name} ↓ / {variable2Name} →
                       </th>
                       {variable2Categories.map((cat, index) => (
                         <th key={index} className="border border-gray-300 bg-gray-100 p-2 text-sm font-semibold">

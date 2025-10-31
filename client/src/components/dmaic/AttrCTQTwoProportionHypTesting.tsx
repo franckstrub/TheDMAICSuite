@@ -38,6 +38,9 @@ interface AttrCTQTwoProportionHypTestingProps {
   ctqName: string;
   activeTab?: string;
   onSave?: (data: string) => void;
+  apiEndpoint?: string;
+  defaultSample1Description?: string;
+  defaultSample2Description?: string;
 }
 
 interface PowerSampleSizeResults {
@@ -58,9 +61,21 @@ interface TestResults {
   ciUpper: number;
 }
 
-export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, activeTab, onSave }: AttrCTQTwoProportionHypTestingProps) {
+export function AttrCTQTwoProportionHypTesting({ 
+  projectId, 
+  ctqId, 
+  ctqName, 
+  activeTab, 
+  onSave, 
+  apiEndpoint,
+  defaultSample1Description = "",
+  defaultSample2Description = ""
+}: AttrCTQTwoProportionHypTestingProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Use provided apiEndpoint or default to the Analyze phase endpoint
+  const effectiveApiEndpoint = apiEndpoint || `/api/projects/${projectId}/ctq/${ctqId}/two-proportion-hypothesis-config`;
   
   const [significanceLevel, setSignificanceLevel] = useState("0.05");
   const [alternative, setAlternative] = useState("Different");
@@ -84,8 +99,8 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
     sample1Events: 0,
     sample2Size: 0,
     sample2Events: 0,
-    sample1Description: "",
-    sample2Description: "",
+    sample1Description: defaultSample1Description,
+    sample2Description: defaultSample2Description,
     enablePowerAnalysis: false,
     powerTargetPower: 0.90,
     powerAlpha: 0.05,
@@ -96,7 +111,7 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
 
   // TanStack Query for loading data from database
   const { data: configData, isLoading } = useQuery({
-    queryKey: [`/api/projects/${projectId}/ctq/${ctqId}/two-proportion-hypothesis-config`],
+    queryKey: [effectiveApiEndpoint],
     enabled: !!projectId && !!ctqId,
     retry: false,
   });
@@ -104,7 +119,7 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
   // Mutation for saving data to database
   const saveConfigMutation = useMutation({
     mutationFn: async (configData: any) => {
-      const response = await fetch(`/api/projects/${projectId}/ctq/${ctqId}/two-proportion-hypothesis-config`, {
+      const response = await fetch(effectiveApiEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -125,7 +140,7 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
         title: "Configuration Saved",
         description: "Two-proportion hypothesis testing configuration has been saved successfully.",
       });
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/ctq/${ctqId}/two-proportion-hypothesis-config`] });
+      queryClient.invalidateQueries({ queryKey: [effectiveApiEndpoint] });
     },
     onError: (error: any) => {
       toast({
@@ -138,8 +153,9 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
 
   // Load configuration data from database when available
   useEffect(() => {
-    if (configData && (configData as any).config && !isLoading) {
-      const config = (configData as any).config;
+    if (configData && !isLoading) {
+      // Handle both formats: { config: {...} } and direct {...}
+      const config = (configData as any).config || configData;
       
       if (config.significanceLevel) setSignificanceLevel(config.significanceLevel);
       if (config.alternative) setAlternative(config.alternative);
@@ -320,6 +336,7 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
   // Save configuration
   const saveConfiguration = () => {
     const configToSave = {
+      ctq: ctqName,
       testType: twoProportionData.testType,
       hypothesizedDifference: twoProportionData.hypothesizedDifference,
       significanceLevel,
@@ -647,9 +664,13 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
             </div>
           </div>
 
-          {twoProportionData.sample1Size && twoProportionData.sample1Size > 0 && (
+          {twoProportionData.sample1Size && twoProportionData.sample1Size > 0 ? (
             <div className="text-sm text-gray-600">
               <strong>Sample 1 Proportion (p1):</strong> {(twoProportionData.sample1Events! / twoProportionData.sample1Size).toFixed(4)}
+            </div>
+          ) : (
+            <div className="text-sm text-gray-600">
+              <strong>Sample 1 Proportion (p1):</strong> N/A
             </div>
           )}
         </CardContent>
@@ -710,9 +731,13 @@ export function AttrCTQTwoProportionHypTesting({ projectId, ctqId, ctqName, acti
             </div>
           </div>
 
-          {twoProportionData.sample2Size && twoProportionData.sample2Size > 0 && (
+          {twoProportionData.sample2Size && twoProportionData.sample2Size > 0 ? (
             <div className="text-sm text-gray-600">
               <strong>Sample 2 Proportion (p2):</strong> {(twoProportionData.sample2Events! / twoProportionData.sample2Size).toFixed(4)}
+            </div>
+          )  : (
+            <div className="text-sm text-gray-600">
+              <strong>Sample 2 Proportion (p1):</strong> N/A
             </div>
           )}
         </CardContent>

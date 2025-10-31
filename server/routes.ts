@@ -18,6 +18,7 @@ import {
   insertProcessDataSchema,
   insertRiskSchema,
   insertRaciSchema,
+  insertProcessRaciSchema,
   insertGanttTaskSchema,
   insertStakeholderAnalysisItemSchema,
   insertMsaAnalysisSchema,
@@ -40,6 +41,13 @@ import {
   insertFmeaAnalysisSchema,
   insertSolutionSchema,
   insertImplementationPlanTaskSchema,
+  insertBeforeAfterContCTQTwoSampleTestSchema,
+  insertBeforeAfterTwoProportionTestSchema,
+  insertBeforeAfterChiSquareTestSchema,
+  insertProofOfImprovementPreferencesSchema,
+  insertSolutionDesignTrackingSchema,
+  insertSolutionProcessMapSchema,
+  insertSimpleRegressionConfigSchema,
 } from "@shared/schema";
 import {
   CustomerRequirement,
@@ -57,6 +65,7 @@ import {
   InsertSipoc,
   InsertRisk,
   InsertRaciMatrix,
+  InsertProcessRaciMatrix,
   Project,
   ProjectBenefits,
   ProjectCosts,
@@ -70,6 +79,7 @@ import {
   GanttTask,
   stakeholderAnalysisItems,
   processMaps,
+  solutionProcessMaps,
   ctsCharacteristics,
   insertCtsCharacteristicsSchema,
   customerRequirements,
@@ -96,7 +106,14 @@ import {
   valueTimeAnalysis,
   fmeaAnalysis,
   solutions,
+  solutionDesignTracking,
   implementationPlanTasks,
+  beforeAfterContCTQTwoSampleTest,
+  beforeAfterTwoProportionTest,
+  beforeAfterChiSquareTest,
+  proofOfImprovementPreferences,
+  processRaciMatrix,
+  simpleRegressionConfig,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, asc, desc, ne, and, or, ilike, sql, inArray } from "drizzle-orm";
@@ -186,6 +203,29 @@ const upload = multer({
     } else {
       cb(new Error("Only image files are allowed!"));
     }
+  },
+});
+
+// Configure multer for solution design files
+const solutionDesignUpload = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => {
+      const uploadDir = "uploads/solution-design";
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+      cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+      const projectId = (req as any).params.projectId;
+      const solutionId = (req as any).body.solutionId || "unknown";
+      const ext = path.extname(file.originalname);
+      const baseName = path.basename(file.originalname, ext);
+      cb(null, `project${projectId}-${solutionId}-${baseName}-${Date.now()}${ext}`);
+    },
+  }),
+  limits: {
+    fileSize: 100 * 1024 * 1024, // 100MB limit
   },
 });
 
@@ -2580,6 +2620,127 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Process RACI Matrix routes (for Improve Phase TO BE Process) - Solution-Specific
+  app.get(
+    "/api/projects/:projectId/solutions/:solutionId/process-raci-matrix",
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        const solutionId = req.params.solutionId;
+
+        const [raciMatrixResult] = await db
+          .select()
+          .from(processRaciMatrix)
+          .where(
+            and(
+              eq(processRaciMatrix.projectId, projectId),
+              eq(processRaciMatrix.solutionId, solutionId)
+            )
+          );
+
+        if (!raciMatrixResult) {
+          return res.status(404).json({ message: "Process RACI matrix not found" });
+        }
+
+        return res.status(200).json({ processRaciMatrix: raciMatrixResult });
+      } catch (err) {
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  app.post(
+    "/api/projects/:projectId/solutions/:solutionId/process-raci-matrix",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        const solutionId = req.params.solutionId;
+
+        // Get user's organization ID
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(400).json({ message: "User not authenticated" });
+        }
+
+        const userRecord = await storage.getUser(parseInt(userId));
+        if (!userRecord || !userRecord.organizationId) {
+          return res
+            .status(400)
+            .json({ message: "User organization not found" });
+        }
+
+        const processRaciMatrixInput: InsertProcessRaciMatrix = {
+          ...req.body,
+          projectId,
+          solutionId,
+          organizationId: userRecord.organizationId,
+        };
+
+        const validatedData = insertProcessRaciSchema.parse(processRaciMatrixInput);
+
+        // Check if a process RACI matrix already exists for this solution
+        const [existingMatrix] = await db
+          .select()
+          .from(processRaciMatrix)
+          .where(
+            and(
+              eq(processRaciMatrix.projectId, projectId),
+              eq(processRaciMatrix.solutionId, solutionId),
+              eq(processRaciMatrix.organizationId, userRecord.organizationId)
+            )
+          );
+
+        let savedMatrix;
+        let isUpdate = false;
+
+        if (existingMatrix) {
+          // Update existing matrix
+          isUpdate = true;
+          const [updatedMatrix] = await db
+            .update(processRaciMatrix)
+            .set({ raciData: validatedData.raciData, lastUpdated: new Date() })
+            .where(eq(processRaciMatrix.id, existingMatrix.id))
+            .returning();
+
+          savedMatrix = updatedMatrix;
+
+          // Log activity
+          await storage.createActivityLog({
+            organizationId: userRecord.organizationId,
+            userId: parseInt(userId),
+            projectId,
+            action: "update_process_raci_matrix",
+            details: `Updated process RACI matrix for solution ${solutionId}`,
+          });
+        } else {
+          // Create new matrix
+          const [newMatrix] = await db
+            .insert(processRaciMatrix)
+            .values(validatedData)
+            .returning();
+
+          savedMatrix = newMatrix;
+
+          // Log activity
+          await storage.createActivityLog({
+            organizationId: userRecord.organizationId,
+            userId: parseInt(userId),
+            projectId,
+            action: "create_process_raci_matrix",
+            details: `Created process RACI matrix for solution ${solutionId}`,
+          });
+        }
+
+        return res.status(201).json({ processRaciMatrix: savedMatrix, isUpdate });
+      } catch (err) {
+        return handleErrors(err, res);
+      }
+    },
+  );
+
   // Debug route for project data
   app.get("/api/debug/project/:id", async (req: Request, res: Response) => {
     try {
@@ -3414,7 +3575,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     },
   );
 
-  // Process Map routes for DMAIC Measure Phase
+  // Process Map routes for DMAIC Measure Phase (AS_IS maps only)
+  // GET: Fetch AS_IS process map
   app.get(
     "/api/projects/:projectId/process-map",
     async (req: Request, res: Response) => {
@@ -3430,13 +3592,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(404).json({ message: "Process map not found" });
         }
 
-        return res.status(200).json(processMap);
+        return res.status(200).json({ ...processMap, diagramData: processMap.asIsDiagramData });
       } catch (err) {
         return handleErrors(err, res);
       }
     },
   );
 
+  // POST: Save AS_IS process map
   app.post(
     "/api/projects/:projectId/process-map",
     isAuthenticated,
@@ -3470,10 +3633,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Update existing process map
           const [updatedMap] = await db
             .update(processMaps)
-            .set({
-              diagramData,
-              lastUpdated: new Date(),
-            })
+            .set({ asIsDiagramData: diagramData, lastUpdated: new Date() })
             .where(eq(processMaps.projectId, projectId))
             .returning();
 
@@ -3482,8 +3642,100 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Create new process map
           const [newMap] = await db
             .insert(processMaps)
+            .values({ 
+              projectId, 
+              organizationId: userRecord.organizationId, 
+              asIsDiagramData: diagramData 
+            })
+            .returning();
+
+          return res.status(201).json(newMap);
+        }
+      } catch (err) {
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // Solution-specific TO BE Process Map routes for DMAIC Improve Phase
+  // GET: Fetch TO BE process map for a specific solution
+  app.get(
+    "/api/projects/:projectId/solutions/:solutionId/to-be-process-map",
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        const solutionId = req.params.solutionId;
+
+        const [processMap] = await db
+          .select()
+          .from(solutionProcessMaps)
+          .where(
+            and(
+              eq(solutionProcessMaps.projectId, projectId),
+              eq(solutionProcessMaps.solutionId, solutionId)
+            )
+          );
+
+        return res.status(200).json({ diagramData: processMap?.diagramData || '' });
+      } catch (err) {
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // POST: Save TO BE process map for a specific solution
+  app.post(
+    "/api/projects/:projectId/solutions/:solutionId/to-be-process-map",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        const solutionId = req.params.solutionId;
+        const { diagramData } = req.body;
+
+        // Get user's organization ID
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(400).json({ message: "User not authenticated" });
+        }
+
+        const userRecord = await storage.getUser(parseInt(userId));
+        if (!userRecord || !userRecord.organizationId) {
+          return res
+            .status(400)
+            .json({ message: "User organization not found" });
+        }
+
+        // Check if process map already exists for this solution
+        const [existingMap] = await db
+          .select()
+          .from(solutionProcessMaps)
+          .where(
+            and(
+              eq(solutionProcessMaps.projectId, projectId),
+              eq(solutionProcessMaps.solutionId, solutionId),
+              eq(solutionProcessMaps.organizationId, userRecord.organizationId)
+            )
+          );
+
+        if (existingMap) {
+          // Update existing process map
+          const [updatedMap] = await db
+            .update(solutionProcessMaps)
+            .set({ diagramData })
+            .where(eq(solutionProcessMaps.id, existingMap.id))
+            .returning();
+
+          return res.status(200).json(updatedMap);
+        } else {
+          // Create new process map
+          const [newMap] = await db
+            .insert(solutionProcessMaps)
             .values({
               projectId,
+              solutionId,
               organizationId: userRecord.organizationId,
               diagramData,
             })
@@ -6970,6 +7222,259 @@ export async function registerRoutes(app: Express): Promise<Server> {
     },
   );
 
+  // Solution Design Tracking Routes (DMAIC Improve Phase)
+  app.get(
+    "/api/projects/:projectId/solution-design-tracking",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res
+            .status(400)
+            .json({ message: "User organization not found" });
+        }
+
+        const trackingList = await db
+          .select()
+          .from(solutionDesignTracking)
+          .where(
+            and(
+              eq(solutionDesignTracking.projectId, projectId),
+              eq(solutionDesignTracking.organizationId, userRecord.organizationId),
+            ),
+          )
+          .orderBy(asc(solutionDesignTracking.solutionId));
+
+        return res.json({ tracking: trackingList });
+      } catch (err) {
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  app.post(
+    "/api/projects/:projectId/solution-design-tracking",
+    isAuthenticated,
+    solutionDesignUpload.single("otherDesignFile"),
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res
+            .status(400)
+            .json({ message: "User organization not found" });
+        }
+
+        // Check if tracking already exists for this solution
+        const [existingRecord] = await db
+          .select()
+          .from(solutionDesignTracking)
+          .where(
+            and(
+              eq(solutionDesignTracking.projectId, projectId),
+              eq(solutionDesignTracking.solutionId, req.body.solutionId),
+              eq(solutionDesignTracking.organizationId, userRecord.organizationId),
+            ),
+          )
+          .limit(1);
+
+        // Convert string boolean values from FormData to actual booleans
+        const trackingData = {
+          projectId,
+          organizationId: userRecord.organizationId,
+          solutionId: req.body.solutionId,
+          toBeProcessMap: req.body.toBeProcessMap === "true",
+          toBeProcessRaci: req.body.toBeProcessRaci === "true",
+          transferFunction: req.body.transferFunction === "true",
+          otherDesign: req.body.otherDesign === "true",
+          solutionNotPursued: req.body.solutionNotPursued === "true",
+          otherDesignExplanation: req.body.otherDesignExplanation || null,
+          // Handle file: new upload, remove file, or preserve existing
+          otherDesignFile: req.body.removeFile === "true"
+            ? null
+            : (req as any).file 
+              ? `/${(req as any).file.path}` 
+              : (existingRecord?.otherDesignFile || null),
+          // Transfer Function Configuration
+          tfSimpleRegression: req.body.tfSimpleRegression === "true",
+          tfAnovaTwoWay: req.body.tfAnovaTwoWay === "true",
+          tfMultipleRegression: req.body.tfMultipleRegression === "true",
+          tfDoe: req.body.tfDoe === "true",
+          tfLogisticRegression: req.body.tfLogisticRegression === "true",
+        };
+
+        const validatedData = insertSolutionDesignTrackingSchema.parse(trackingData);
+
+        if (existingRecord) {
+          // Update existing tracking
+          const [updated] = await db
+            .update(solutionDesignTracking)
+            .set({
+              ...validatedData,
+              lastUpdated: new Date(),
+            })
+            .where(
+              and(
+                eq(solutionDesignTracking.projectId, projectId),
+                eq(solutionDesignTracking.solutionId, validatedData.solutionId),
+                eq(solutionDesignTracking.organizationId, userRecord.organizationId),
+              ),
+            )
+            .returning();
+          return res.json(updated);
+        } else {
+          // Insert new tracking
+          const [saved] = await db
+            .insert(solutionDesignTracking)
+            .values(validatedData)
+            .returning();
+          return res.status(201).json(saved);
+        }
+      } catch (err) {
+        console.error("Solution design tracking error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // Simple Regression Routes (DMAIC Improve Phase - Transfer Function)
+  app.get(
+    "/api/projects/:projectId/solutions/:solutionId/simple-regression",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        const solutionId = req.params.solutionId;
+
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res
+            .status(400)
+            .json({ message: "User organization not found" });
+        }
+
+        const [config] = await db
+          .select()
+          .from(simpleRegressionConfig)
+          .where(
+            and(
+              eq(simpleRegressionConfig.projectId, projectId),
+              eq(simpleRegressionConfig.solutionId, solutionId),
+              eq(simpleRegressionConfig.organizationId, userRecord.organizationId),
+            ),
+          )
+          .limit(1);
+
+        if (!config) {
+          return res.status(404).json({ message: "Configuration not found" });
+        }
+
+        return res.json(config);
+      } catch (err) {
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  app.post(
+    "/api/projects/:projectId/solutions/:solutionId/simple-regression",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        const solutionId = req.params.solutionId;
+
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res
+            .status(400)
+            .json({ message: "User organization not found" });
+        }
+
+        const configData = {
+          projectId,
+          solutionId,
+          organizationId: userRecord.organizationId,
+          ...req.body,
+        };
+
+        const validatedData = insertSimpleRegressionConfigSchema.parse(configData);
+
+        const [existing] = await db
+          .select()
+          .from(simpleRegressionConfig)
+          .where(
+            and(
+              eq(simpleRegressionConfig.projectId, projectId),
+              eq(simpleRegressionConfig.solutionId, solutionId),
+              eq(simpleRegressionConfig.organizationId, userRecord.organizationId),
+            ),
+          )
+          .limit(1);
+
+        if (existing) {
+          const [updated] = await db
+            .update(simpleRegressionConfig)
+            .set({
+              ...validatedData,
+              lastUpdated: new Date(),
+            })
+            .where(
+              and(
+                eq(simpleRegressionConfig.projectId, projectId),
+                eq(simpleRegressionConfig.solutionId, solutionId),
+                eq(simpleRegressionConfig.organizationId, userRecord.organizationId),
+              ),
+            )
+            .returning();
+          return res.json(updated);
+        } else {
+          const [saved] = await db
+            .insert(simpleRegressionConfig)
+            .values(validatedData)
+            .returning();
+          return res.status(201).json(saved);
+        }
+      } catch (err) {
+        console.error("Simple regression config error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
   // Implementation Plan Tasks Routes (DMAIC Improve Phase)
   app.get(
     "/api/projects/:projectId/implementation-plan-tasks",
@@ -7134,6 +7639,430 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json({ message: "Task deleted successfully" });
       } catch (err) {
         console.error("Implementation plan task deletion error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // Proof of Improvement - Before/After Continuous CTQ Two-Sample Test Routes
+  app.get(
+    "/api/projects/:projectId/ctq/:ctqId/before-after-cont-two-sample",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        const ctqId = parseInt(req.params.ctqId);
+
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res.status(400).json({ message: "User organization not found" });
+        }
+
+        const [config] = await db
+          .select()
+          .from(beforeAfterContCTQTwoSampleTest)
+          .where(
+            and(
+              eq(beforeAfterContCTQTwoSampleTest.projectId, projectId),
+              eq(beforeAfterContCTQTwoSampleTest.ctqId, ctqId),
+              eq(beforeAfterContCTQTwoSampleTest.organizationId, userRecord.organizationId),
+            ),
+          );
+
+        if (!config) {
+          return res.status(404).json({ message: "Configuration not found" });
+        }
+
+        return res.json({ config });
+      } catch (err) {
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  app.post(
+    "/api/projects/:projectId/ctq/:ctqId/before-after-cont-two-sample",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        const ctqId = parseInt(req.params.ctqId);
+
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res.status(400).json({ message: "User organization not found" });
+        }
+
+        const configData = {
+          projectId,
+          ctqId,
+          organizationId: userRecord.organizationId,
+          ...req.body,
+        };
+
+        const validatedData = insertBeforeAfterContCTQTwoSampleTestSchema.parse(configData);
+
+        const [existingConfig] = await db
+          .select()
+          .from(beforeAfterContCTQTwoSampleTest)
+          .where(
+            and(
+              eq(beforeAfterContCTQTwoSampleTest.projectId, projectId),
+              eq(beforeAfterContCTQTwoSampleTest.ctqId, ctqId),
+              eq(beforeAfterContCTQTwoSampleTest.organizationId, userRecord.organizationId),
+            ),
+          );
+
+        let savedConfig;
+        if (existingConfig) {
+          [savedConfig] = await db
+            .update(beforeAfterContCTQTwoSampleTest)
+            .set({ ...validatedData, lastUpdated: new Date() })
+            .where(eq(beforeAfterContCTQTwoSampleTest.id, existingConfig.id))
+            .returning();
+        } else {
+          [savedConfig] = await db
+            .insert(beforeAfterContCTQTwoSampleTest)
+            .values(validatedData)
+            .returning();
+        }
+
+        return res.status(201).json(savedConfig);
+      } catch (err) {
+        console.error("Before/After continuous test save error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // Proof of Improvement - Before/After Two Proportion Test Routes
+  app.get(
+    "/api/projects/:projectId/ctq/:ctqId/before-after-two-proportion",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        const ctqId = parseInt(req.params.ctqId);
+
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res.status(400).json({ message: "User organization not found" });
+        }
+
+        const [config] = await db
+          .select()
+          .from(beforeAfterTwoProportionTest)
+          .where(
+            and(
+              eq(beforeAfterTwoProportionTest.projectId, projectId),
+              eq(beforeAfterTwoProportionTest.ctqId, ctqId),
+              eq(beforeAfterTwoProportionTest.organizationId, userRecord.organizationId),
+            ),
+          );
+
+        if (!config) {
+          return res.status(404).json({ message: "Configuration not found" });
+        }
+
+        return res.json({ config });
+      } catch (err) {
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  app.post(
+    "/api/projects/:projectId/ctq/:ctqId/before-after-two-proportion",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        const ctqId = parseInt(req.params.ctqId);
+
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res.status(400).json({ message: "User organization not found" });
+        }
+
+        const configData = {
+          projectId,
+          ctqId,
+          organizationId: userRecord.organizationId,
+          ...req.body,
+        };
+
+        const validatedData = insertBeforeAfterTwoProportionTestSchema.parse(configData);
+
+        const [existingConfig] = await db
+          .select()
+          .from(beforeAfterTwoProportionTest)
+          .where(
+            and(
+              eq(beforeAfterTwoProportionTest.projectId, projectId),
+              eq(beforeAfterTwoProportionTest.ctqId, ctqId),
+              eq(beforeAfterTwoProportionTest.organizationId, userRecord.organizationId),
+            ),
+          );
+
+        let savedConfig;
+        if (existingConfig) {
+          [savedConfig] = await db
+            .update(beforeAfterTwoProportionTest)
+            .set({ ...validatedData, lastUpdated: new Date() })
+            .where(eq(beforeAfterTwoProportionTest.id, existingConfig.id))
+            .returning();
+        } else {
+          [savedConfig] = await db
+            .insert(beforeAfterTwoProportionTest)
+            .values(validatedData)
+            .returning();
+        }
+
+        return res.status(201).json(savedConfig);
+      } catch (err) {
+        console.error("Before/After two proportion test save error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // Proof of Improvement - Before/After Chi-Square Test Routes
+  app.get(
+    "/api/projects/:projectId/ctq/:ctqId/before-after-chi-square",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        const ctqId = parseInt(req.params.ctqId);
+
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res.status(400).json({ message: "User organization not found" });
+        }
+
+        const [config] = await db
+          .select()
+          .from(beforeAfterChiSquareTest)
+          .where(
+            and(
+              eq(beforeAfterChiSquareTest.projectId, projectId),
+              eq(beforeAfterChiSquareTest.ctqId, ctqId),
+              eq(beforeAfterChiSquareTest.organizationId, userRecord.organizationId),
+            ),
+          );
+
+        if (!config) {
+          return res.status(404).json({ message: "Configuration not found" });
+        }
+
+        return res.json({ config });
+      } catch (err) {
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  app.post(
+    "/api/projects/:projectId/ctq/:ctqId/before-after-chi-square",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        const ctqId = parseInt(req.params.ctqId);
+
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res.status(400).json({ message: "User organization not found" });
+        }
+
+        const configData = {
+          projectId,
+          ctqId,
+          organizationId: userRecord.organizationId,
+          ...req.body,
+        };
+
+        const validatedData = insertBeforeAfterChiSquareTestSchema.parse(configData);
+
+        const [existingConfig] = await db
+          .select()
+          .from(beforeAfterChiSquareTest)
+          .where(
+            and(
+              eq(beforeAfterChiSquareTest.projectId, projectId),
+              eq(beforeAfterChiSquareTest.ctqId, ctqId),
+              eq(beforeAfterChiSquareTest.organizationId, userRecord.organizationId),
+            ),
+          );
+
+        let savedConfig;
+        if (existingConfig) {
+          [savedConfig] = await db
+            .update(beforeAfterChiSquareTest)
+            .set({ ...validatedData, lastUpdated: new Date() })
+            .where(eq(beforeAfterChiSquareTest.id, existingConfig.id))
+            .returning();
+        } else {
+          [savedConfig] = await db
+            .insert(beforeAfterChiSquareTest)
+            .values(validatedData)
+            .returning();
+        }
+
+        return res.status(201).json(savedConfig);
+      } catch (err) {
+        console.error("Before/After chi-square test save error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // Proof of Improvement - Test Preferences Routes
+  app.get(
+    "/api/projects/:projectId/ctq/:ctqId/proof-improvement-preferences",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        const ctqId = parseInt(req.params.ctqId);
+
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res.status(400).json({ message: "User organization not found" });
+        }
+
+        const [preferences] = await db
+          .select()
+          .from(proofOfImprovementPreferences)
+          .where(
+            and(
+              eq(proofOfImprovementPreferences.projectId, projectId),
+              eq(proofOfImprovementPreferences.ctqId, ctqId),
+              eq(proofOfImprovementPreferences.organizationId, userRecord.organizationId),
+            ),
+          );
+
+        if (!preferences) {
+          // Return default preferences if none exist
+          return res.json({
+            enableTwoProportionTest: true,
+            enableChiSquareTest: true,
+          });
+        }
+
+        return res.json(preferences);
+      } catch (err) {
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  app.post(
+    "/api/projects/:projectId/ctq/:ctqId/proof-improvement-preferences",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        const ctqId = parseInt(req.params.ctqId);
+
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res.status(400).json({ message: "User organization not found" });
+        }
+
+        const preferencesData = {
+          projectId,
+          ctqId,
+          organizationId: userRecord.organizationId,
+          ...req.body,
+        };
+
+        const validatedData = insertProofOfImprovementPreferencesSchema.parse(preferencesData);
+
+        const [existingPreferences] = await db
+          .select()
+          .from(proofOfImprovementPreferences)
+          .where(
+            and(
+              eq(proofOfImprovementPreferences.projectId, projectId),
+              eq(proofOfImprovementPreferences.ctqId, ctqId),
+              eq(proofOfImprovementPreferences.organizationId, userRecord.organizationId),
+            ),
+          );
+
+        let savedPreferences;
+        if (existingPreferences) {
+          [savedPreferences] = await db
+            .update(proofOfImprovementPreferences)
+            .set({ ...validatedData, lastUpdated: new Date() })
+            .where(eq(proofOfImprovementPreferences.id, existingPreferences.id))
+            .returning();
+        } else {
+          [savedPreferences] = await db
+            .insert(proofOfImprovementPreferences)
+            .values(validatedData)
+            .returning();
+        }
+
+        return res.status(201).json(savedPreferences);
+      } catch (err) {
+        console.error("Proof of improvement preferences save error:", err);
         return handleErrors(err, res);
       }
     },

@@ -5,10 +5,12 @@ import { PlusCircle } from "lucide-react";
 
 interface DrawIoProcessMapProps {
   projectId: number;
+  type?: 'AS_IS' | 'TO_BE'; // Type of process map (default: AS_IS)
+  solutionId?: string; // Solution ID for solution-specific TO BE maps
   onSave?: (data: string) => void;
 }
 
-export default function DrawIoProcessMap({ projectId, onSave }: DrawIoProcessMapProps) {
+export default function DrawIoProcessMap({ projectId, type = 'AS_IS', solutionId, onSave }: DrawIoProcessMapProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [diagramData, setDiagramData] = useState<string>('');
@@ -17,25 +19,36 @@ export default function DrawIoProcessMap({ projectId, onSave }: DrawIoProcessMap
   useEffect(() => {
     // Load any existing diagram data for this project
     loadDiagramData();
-  }, [projectId]);
+  }, [projectId, type, solutionId]);
 
   const loadDiagramData = async () => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/process-map`);
+      // Use solution-specific endpoint if solutionId is provided and type is TO_BE
+      const endpoint = (type === 'TO_BE' && solutionId)
+        ? `/api/projects/${projectId}/solutions/${solutionId}/to-be-process-map`
+        : `/api/projects/${projectId}/process-map?type=${type}`;
+      
+      const response = await fetch(endpoint);
       if (response.ok) {
         const data = await response.json();
         setDiagramData(data.diagramData || '');
-        console.log('Loaded existing diagram data');
+        console.log(`Loaded existing ${type} diagram data${solutionId ? ` for solution ${solutionId}` : ''}`);
       }
     } catch (error) {
-      console.log('No existing diagram data found, starting with empty diagram');
+      console.log(`No existing ${type} diagram data found, starting with empty diagram`);
     }
   };
 
   const saveDiagramData = async (data: string) => {
     try {
-      console.log('Saving diagram data to server:', data.substring(0, 100) + '...');
-      const response = await fetch(`/api/projects/${projectId}/process-map`, {
+      console.log(`Saving ${type} diagram data to server${solutionId ? ` for solution ${solutionId}` : ''}:`, data.substring(0, 100) + '...');
+      
+      // Use solution-specific endpoint if solutionId is provided and type is TO_BE
+      const endpoint = (type === 'TO_BE' && solutionId)
+        ? `/api/projects/${projectId}/solutions/${solutionId}/to-be-process-map`
+        : `/api/projects/${projectId}/process-map?type=${type}`;
+      
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
