@@ -85,7 +85,13 @@ export function linearRegression(x: number[], y: number[]): LinearRegressionResu
   const xMean = sumX / n;
   const numerator = sumXY - n * xMean * yMean;
   const denominator = Math.sqrt((sumX2 - n * xMean * xMean) * (sumY2 - n * yMean * yMean));
-  const pearsonR = denominator !== 0 ? numerator / denominator : 0;
+  let pearsonR = denominator !== 0 ? numerator / denominator : 0;
+  
+  // Clamp Pearson r to [-1, 1] interval and handle non-finite values
+  if (!isFinite(pearsonR)) {
+    pearsonR = 0;
+  }
+  pearsonR = Math.max(-1, Math.min(1, pearsonR));
 
   const equation = `Y = ${a.toFixed(4)} + ${b.toFixed(4)}X`;
 
