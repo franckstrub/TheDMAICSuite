@@ -1124,7 +1124,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
               <p className="font-medium">Equation:</p>
               <p className="text-lg">{linearResult.equation}</p>
               <p className="text-lg text-blue-600 dark:text-blue-400 mt-1">
-                {datasetYDescription} = {linearResult.a.toFixed(4)} + {linearResult.b.toFixed(4)}({datasetXDescription})
+                {datasetYDescription} = {linearResult.a.toFixed(4)} + {linearResult.b.toFixed(4)}*{datasetXDescription}
               </p>
             </div>
             
