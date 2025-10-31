@@ -73,7 +73,13 @@ export function linearRegression(x: number[], y: number[]): LinearRegressionResu
   const yMean = sumY / n;
   const sst = y.reduce((sum, yi) => sum + Math.pow(yi - yMean, 2), 0);
   const sse = residuals.reduce((sum, r) => sum + r * r, 0);
-  const r2 = 1 - (sse / sst);
+  let r2 = sst !== 0 ? 1 - (sse / sst) : (sse === 0 ? 1 : 0);
+  
+  // Clamp R² to [0, 1] interval and handle non-finite values
+  if (!isFinite(r2)) {
+    r2 = 0;
+  }
+  r2 = Math.max(0, Math.min(1, r2));
 
   // Calculate Pearson correlation coefficient
   const xMean = sumX / n;
@@ -137,7 +143,13 @@ export function quadraticRegression(x: number[], y: number[]): QuadraticRegressi
   const yMean = sumY / n;
   const sst = y.reduce((sum, yi) => sum + Math.pow(yi - yMean, 2), 0);
   const sse = residuals.reduce((sum, r) => sum + r * r, 0);
-  const r2 = 1 - (sse / sst);
+  let r2 = sst !== 0 ? 1 - (sse / sst) : (sse === 0 ? 1 : 0);
+  
+  // Clamp R² to [0, 1] interval and handle non-finite values
+  if (!isFinite(r2)) {
+    r2 = 0;
+  }
+  r2 = Math.max(0, Math.min(1, r2));
 
   const equation = `Y = ${a.toFixed(4)} + ${b.toFixed(4)}X + ${c.toFixed(4)}X²`;
 
@@ -199,7 +211,13 @@ export function cubicRegression(x: number[], y: number[]): CubicRegressionResult
   const yMean = sumY / n;
   const sst = y.reduce((sum, yi) => sum + Math.pow(yi - yMean, 2), 0);
   const sse = residuals.reduce((sum, r) => sum + r * r, 0);
-  const r2 = 1 - (sse / sst);
+  let r2 = sst !== 0 ? 1 - (sse / sst) : (sse === 0 ? 1 : 0);
+  
+  // Clamp R² to [0, 1] interval and handle non-finite values
+  if (!isFinite(r2)) {
+    r2 = 0;
+  }
+  r2 = Math.max(0, Math.min(1, r2));
 
   const equation = `Y = ${a.toFixed(4)} + ${b.toFixed(4)}X + ${c.toFixed(4)}X² + ${d.toFixed(4)}X³`;
 
@@ -513,17 +531,42 @@ function calculateRegressionStatistics(
 ): RegressionStatistics {
   const n = x.length;
   const df = n - numParams;
-  const mse = sse / df;
   
-  // R² Adjusted
-  const r2Adjusted = df !== 0 ? 1 - ((1 - r2) * (n - 1)) / df : r2;
+  // R² Adjusted - handle edge cases
+  let r2Adjusted: number;
+  if (df <= 0) {
+    r2Adjusted = r2;
+  } else {
+    r2Adjusted = 1 - ((1 - r2) * (n - 1)) / df;
+  }
   
-  // F-statistic and p-value for overall regression
-  const ssr = sst - sse;
-  const dfRegression = numParams - 1;
-  const msr = ssr / dfRegression;
-  const fStatistic = msr / mse;
-  const regressionPValue = 1 - fDistributionCDF(fStatistic, dfRegression, df);
+  // Clamp R² Adjusted to [0, 1] interval and handle non-finite values
+  if (!isFinite(r2Adjusted)) {
+    r2Adjusted = 0;
+  }
+  r2Adjusted = Math.max(0, Math.min(1, r2Adjusted));
+  
+  // F-statistic and p-value for overall regression - handle edge cases
+  let fStatistic: number;
+  let regressionPValue: number;
+  
+  if (df <= 0 || sse === 0) {
+    fStatistic = 0;
+    regressionPValue = 1;
+  } else {
+    const mse = sse / df;
+    const ssr = sst - sse;
+    const dfRegression = numParams - 1;
+    const msr = dfRegression > 0 ? ssr / dfRegression : 0;
+    fStatistic = mse !== 0 ? msr / mse : 0;
+    regressionPValue = 1 - fDistributionCDF(fStatistic, dfRegression, df);
+  }
+  
+  // Clamp regression p-value to [0, 1] interval and handle non-finite values
+  if (!isFinite(regressionPValue)) {
+    regressionPValue = 1;
+  }
+  regressionPValue = Math.max(0, Math.min(1, regressionPValue));
   
   // Calculate coefficient p-values (this is a simplified approach)
   // For accurate p-values, we'd need the variance-covariance matrix
