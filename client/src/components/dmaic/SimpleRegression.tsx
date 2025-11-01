@@ -777,7 +777,17 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
           const yMargin = yRange * 0.1;
           const yAxisMin = minY - yMargin;
           const yAxisMax = maxY + yMargin;
-          
+          const modelEquation = `
+                ${enableLinear && linearResult ? `<br><span style="color:red; font-size:14px;">Linear model: ${linearResult.equation}</span>` : ''}
+                ${enableQuadratic && quadraticResult ? `<br><span style="color:green; font-size:14px;">Quadratic model: ${quadraticResult.equation}</span>` : ''}
+                ${enableCubic && cubicResult ? `<br><span style="color:purple; font-size:14px;">Cubic model: ${cubicResult.equation}</span>` : ''}
+              `;
+
+          const chartTitle = `
+            <b style="font-size:18px;">Simple Regression of ${datasetYDescription} vs ${datasetXDescription}</b>
+            ${modelEquation}
+          `;
+
           return (
           <div className="space-y-4">
             {/* Warning messages for insufficient data */}
@@ -915,7 +925,8 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
               ]}
               layout={{
                 autosize: true,
-                title: { text: '<b>Simple Regression Analysis</b>' },
+                margin: { t: 160 },
+                title: { text: chartTitle, font: { size: 16 } },
                 xaxis: { title: { text: '<b>' + datasetXDescription + '</b>'} },
                 yaxis: { 
                   title: { text: '<b>' + datasetYDescription + '</b>'},
@@ -1042,31 +1053,6 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                 }
               }}
             />
-            
-            {/* Regression equations Card below the chart */}
-            {(linearResult || quadraticResult || cubicResult) && (
-              <Card className="mt-4">
-                <CardContent className="pt-6">
-                  <div className="space-y-2">
-                    {linearResult && enableLinear && (
-                      <p className="font-mono text-sm text-red-600 dark:text-red-400">
-                        Linear model: {linearResult.equation} (R²={(linearResult.r2*100).toFixed(2)}%) (R²-Adj={(linearResult.statistics.r2Adjusted*100).toFixed(2)}%) (Pearson correlation coefficient r={linearResult.pearsonR.toFixed(4)})
-                      </p>
-                    )}
-                    {quadraticResult && enableQuadratic && (
-                      <p className="font-mono text-sm text-green-600 dark:text-green-400">
-                        Quadratic model: {quadraticResult.equation} (R²={(quadraticResult.r2*100).toFixed(2)}%) (R²-Adj={(quadraticResult.statistics.r2Adjusted*100).toFixed(2)}%)
-                      </p>
-                    )}
-                    {cubicResult && enableCubic && (
-                      <p className="font-mono text-sm text-purple-600 dark:text-purple-400">
-                        Cubic model: {cubicResult.equation} (R²={(cubicResult.r2*100).toFixed(2)}%) (R²-Adj={(cubicResult.statistics.r2Adjusted*100).toFixed(2)}%)
-                      </p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
           </div>
           );
         })()}
