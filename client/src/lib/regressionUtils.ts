@@ -1,10 +1,13 @@
 // Regression utilities for polynomial regression analysis
 
+import { mean} from "jstat";
+import jStat from "jstat";
+import {performNormalityTest} from "./statisticsUtils";
+
 export interface RegressionStatistics {
   r2Adjusted: number;
   regressionPValue: number;
   fStatistic: number;
-  coefficientPValues: number[];
   residualMean: number;
   residualStd: number;
   andersonDarlingStatistic: number;
@@ -354,175 +357,6 @@ export function solveCubicForX(a: number, b: number, c: number, d: number, targe
 }
 
 // Statistical helper functions
-
-/**
- * Calculate t-distribution CDF (cumulative distribution function)
- * Using approximation for p-value calculation
- */
-function tDistributionCDF(t: number, df: number): number {
-  const x = df / (df + t * t);
-  return 1 - 0.5 * incompleteBeta(df / 2, 0.5, x);
-}
-
-/**
- * Incomplete beta function approximation
- */
-function incompleteBeta(a: number, b: number, x: number): number {
-  if (x <= 0) return 0;
-  if (x >= 1) return 1;
-  
-  // Using continued fraction approximation
-  const lbeta = logGamma(a + b) - logGamma(a) - logGamma(b);
-  const front = Math.exp(Math.log(x) * a + Math.log(1 - x) * b - lbeta) / a;
-  
-  const f = continuedFraction(a, b, x);
-  return front * f;
-}
-
-function continuedFraction(a: number, b: number, x: number): number {
-  const maxIterations = 200;
-  const epsilon = 3e-7;
-  
-  const qab = a + b;
-  const qap = a + 1;
-  const qam = a - 1;
-  let c = 1;
-  let d = 1 - qab * x / qap;
-  
-  if (Math.abs(d) < 1e-30) d = 1e-30;
-  d = 1 / d;
-  let h = d;
-  
-  for (let m = 1; m <= maxIterations; m++) {
-    const m2 = 2 * m;
-    let aa = m * (b - m) * x / ((qam + m2) * (a + m2));
-    d = 1 + aa * d;
-    if (Math.abs(d) < 1e-30) d = 1e-30;
-    c = 1 + aa / c;
-    if (Math.abs(c) < 1e-30) c = 1e-30;
-    d = 1 / d;
-    h *= d * c;
-    
-    aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2));
-    d = 1 + aa * d;
-    if (Math.abs(d) < 1e-30) d = 1e-30;
-    c = 1 + aa / c;
-    if (Math.abs(c) < 1e-30) c = 1e-30;
-    d = 1 / d;
-    const del = d * c;
-    h *= del;
-    
-    if (Math.abs(del - 1) < epsilon) break;
-  }
-  
-  return h;
-}
-
-function logGamma(x: number): number {
-  const coefficients = [
-    76.18009172947146, -86.50532032941677,
-    24.01409824083091, -1.231739572450155,
-    0.1208650973866179e-2, -0.5395239384953e-5
-  ];
-  
-  let y = x;
-  let tmp = x + 5.5;
-  tmp -= (x + 0.5) * Math.log(tmp);
-  let ser = 1.000000000190015;
-  
-  for (let j = 0; j < 6; j++) {
-    ser += coefficients[j] / ++y;
-  }
-  
-  return -tmp + Math.log(2.5066282746310005 * ser / x);
-}
-
-/**
- * F-distribution CDF for p-value calculation
- */
-function fDistributionCDF(f: number, df1: number, df2: number): number {
-  const x = df2 / (df2 + df1 * f);
-  return 1 - incompleteBeta(df2 / 2, df1 / 2, x);
-}
-
-/**
- * Anderson-Darling test for normality
- */
-function andersonDarlingTest(data: number[]): {
-  statistic: number;
-  pValue: number;
-  conclusion: 'Normal' | 'Not Normal' | 'Inconclusive';
-} {
-  const n = data.length;
-  if (n < 3) {
-    return { statistic: 0, pValue: 1, conclusion: 'Inconclusive' };
-  }
-  
-  // Standardize data
-  const mean = data.reduce((sum, x) => sum + x, 0) / n;
-  const variance = data.reduce((sum, x) => sum + Math.pow(x - mean, 2), 0) / n;
-  const std = Math.sqrt(variance);
-  
-  if (std === 0) {
-    return { statistic: 0, pValue: 1, conclusion: 'Inconclusive' };
-  }
-  
-  const standardized = data.map(x => (x - mean) / std).sort((a, b) => a - b);
-  
-  // Calculate Anderson-Darling statistic
-  let sum = 0;
-  for (let i = 0; i < n; i++) {
-    const z = standardized[i];
-    const phi = normalCDF(z);
-    
-    if (phi <= 0 || phi >= 1) continue;
-    
-    sum += (2 * (i + 1) - 1) * (Math.log(phi) + Math.log(1 - standardized[n - 1 - i] >= 0 ? normalCDF(standardized[n - 1 - i]) : 0));
-  }
-  
-  let A2 = -n - sum / n;
-  
-  // Adjust for sample size
-  A2 = A2 * (1 + 0.75 / n + 2.25 / (n * n));
-  
-  // Approximate p-value using critical values
-  let pValue = 0.5;
-  let conclusion: 'Normal' | 'Not Normal' | 'Inconclusive' = 'Inconclusive';
-  
-  if (A2 < 0.201) {
-    pValue = 0.25;
-    conclusion = 'Normal';
-  } else if (A2 < 0.240) {
-    pValue = 0.15;
-    conclusion = 'Normal';
-  } else if (A2 < 0.283) {
-    pValue = 0.10;
-    conclusion = 'Normal';
-  } else if (A2 < 0.346) {
-    pValue = 0.05;
-    conclusion = 'Inconclusive';
-  } else if (A2 < 0.399) {
-    pValue = 0.025;
-    conclusion = 'Not Normal';
-  } else {
-    pValue = 0.01;
-    conclusion = 'Not Normal';
-  }
-  
-  return { statistic: A2, pValue, conclusion };
-}
-
-/**
- * Normal CDF (cumulative distribution function)
- */
-function normalCDF(x: number): number {
-  const t = 1 / (1 + 0.2316419 * Math.abs(x));
-  const d = 0.3989423 * Math.exp(-x * x / 2);
-  const p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
-  
-  return x > 0 ? 1 - p : p;
-}
-
 /**
  * Calculate regression statistics
  */
@@ -556,45 +390,43 @@ function calculateRegressionStatistics(
   let fStatistic: number;
   let regressionPValue: number;
   
-  if (df <= 0 || sse === 0) {
+  if (df < 0) {
     fStatistic = 0;
     regressionPValue = 1;
+  } else if (sse === 0 || df === 0) {
+    fStatistic = Infinity;
+    regressionPValue = 0.0;
   } else {
     const mse = sse / df;
     const ssr = sst - sse;
     const dfRegression = numParams - 1;
     const msr = dfRegression > 0 ? ssr / dfRegression : 0;
     fStatistic = mse !== 0 ? msr / mse : 0;
-    regressionPValue = 1 - fDistributionCDF(fStatistic, dfRegression, df);
+    regressionPValue = 1 - jStat.centralF.cdf(fStatistic, dfRegression, df);
   }
-  
+
   // Clamp regression p-value to [0, 1] interval and handle non-finite values
   if (!isFinite(regressionPValue)) {
     regressionPValue = 1;
   }
   regressionPValue = Math.max(0, Math.min(1, regressionPValue));
   
-  // Calculate coefficient p-values (this is a simplified approach)
-  // For accurate p-values, we'd need the variance-covariance matrix
-  const coefficientPValues = new Array(numParams).fill(0.05);
-  
-  // Residual statistics
+  // Residual statistics - assume sample and not population of residuals
   const residualMean = residuals.reduce((sum, r) => sum + r, 0) / n;
-  const residualVariance = residuals.reduce((sum, r) => sum + Math.pow(r - residualMean, 2), 0) / n;
+  const residualVariance = residuals.reduce((sum, r) => sum + Math.pow(r - residualMean, 2), 0) / (n-1);
   const residualStd = Math.sqrt(residualVariance);
   
-  // Anderson-Darling test for normality
-  const adTest = andersonDarlingTest(residuals);
+  // Anderson-Darling test for normality test of residuals
+  const normalADTest = performNormalityTest(residuals,residualMean,residualStd);
   
   return {
     r2Adjusted,
     regressionPValue,
     fStatistic,
-    coefficientPValues,
     residualMean,
     residualStd,
-    andersonDarlingStatistic: adTest.statistic,
-    andersonDarlingPValue: adTest.pValue,
-    andersonDarlingNormality: adTest.conclusion,
+    andersonDarlingStatistic: normalADTest.adStatistic,
+    andersonDarlingPValue: normalADTest.pValue,
+    andersonDarlingNormality: normalADTest.isNormal ? 'Normal' : (normalADTest.isNormal === false ? 'Not Normal' : 'Inconclusive'),
   };
 }
