@@ -746,27 +746,8 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
     <Card>
       <CardHeader>
         <CardTitle>Regression Graph</CardTitle>
-        {(linearResult || quadraticResult || cubicResult) && (
-          <div className="mt-3 space-y-2 text-sm">
-            {linearResult && enableLinear && (
-              <div className="font-mono text-red-600 dark:text-red-400">
-                Linear model: {linearResult.equation} (R²={(linearResult.r2*100).toFixed(2)}%) (R²-Adj={(linearResult.statistics.r2Adjusted*100).toFixed(2)}%) (Pearson correlation coefficient r={linearResult.pearsonR.toFixed(4)})
-              </div>
-            )}
-            {quadraticResult && enableQuadratic && (
-              <div className="font-mono text-green-600 dark:text-green-400">
-                Quadratic model: {quadraticResult.equation} (R²={(quadraticResult.r2*100).toFixed(2)}%) (R²-Adj={(quadraticResult.statistics.r2Adjusted*100).toFixed(2)}%)
-              </div>
-            )}
-            {cubicResult && enableCubic && (
-              <div className="font-mono text-purple-600 dark:text-purple-400">
-                Cubic model: {cubicResult.equation}  (R²={(cubicResult.r2*100).toFixed(2)}%) (R²-Adj={(cubicResult.statistics.r2Adjusted*100).toFixed(2)}%)
-              </div>
-            )}
-          </div>
-        )}
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
         {dataPoints.filter(p => p.x !== 0 || p.y !== 0).length < 2 ? (
           <div className="py-8 text-center">
             <p className="text-sm text-muted-foreground">
@@ -1061,6 +1042,31 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                 }
               }}
             />
+            
+            {/* Regression equations Card below the chart */}
+            {(linearResult || quadraticResult || cubicResult) && (
+              <Card className="mt-4">
+                <CardContent className="pt-6">
+                  <div className="space-y-2">
+                    {linearResult && enableLinear && (
+                      <p className="font-mono text-sm text-red-600 dark:text-red-400">
+                        Linear model: {linearResult.equation} (R²={(linearResult.r2*100).toFixed(2)}%) (R²-Adj={(linearResult.statistics.r2Adjusted*100).toFixed(2)}%) (Pearson correlation coefficient r={linearResult.pearsonR.toFixed(4)})
+                      </p>
+                    )}
+                    {quadraticResult && enableQuadratic && (
+                      <p className="font-mono text-sm text-green-600 dark:text-green-400">
+                        Quadratic model: {quadraticResult.equation} (R²={(quadraticResult.r2*100).toFixed(2)}%) (R²-Adj={(quadraticResult.statistics.r2Adjusted*100).toFixed(2)}%)
+                      </p>
+                    )}
+                    {cubicResult && enableCubic && (
+                      <p className="font-mono text-sm text-purple-600 dark:text-purple-400">
+                        Cubic model: {cubicResult.equation} (R²={(cubicResult.r2*100).toFixed(2)}%) (R²-Adj={(cubicResult.statistics.r2Adjusted*100).toFixed(2)}%)
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
           );
         })()}
