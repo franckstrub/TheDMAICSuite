@@ -778,11 +778,10 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
           const yAxisMin = minY - yMargin;
           const yAxisMax = maxY + yMargin;
           const modelEquation = `
-                ${enableLinear && linearResult ? `<br><span style="color:red; font-size:14px;">Linear model: ${linearResult.equation}</span>` : ''}
-                ${enableQuadratic && quadraticResult ? `<br><span style="color:green; font-size:14px;">Quadratic model: ${quadraticResult.equation}</span>` : ''}
-                ${enableCubic && cubicResult ? `<br><span style="color:purple; font-size:14px;">Cubic model: ${cubicResult.equation}</span>` : ''}
+                ${enableLinear && linearResult ? `<br><span style="color:red; font-size:14px;">Linear model: ${linearResult.equation} (R²=${(linearResult.r2*100).toFixed(2)}%) (R²-Adj=${(linearResult.statistics.r2Adjusted*100).toFixed(2)}%) (Pearson correlation coeff r=${linearResult.pearsonR.toFixed(4)})</span>` : ''}
+                ${enableQuadratic && quadraticResult ? `<br><span style="color:green; font-size:14px;">Quadratic model: ${quadraticResult.equation} (R²=${(quadraticResult.r2*100).toFixed(2)}%) (R²-Adj=${(quadraticResult.statistics.r2Adjusted*100).toFixed(2)}%)</span>` : ''}
+                ${enableCubic && cubicResult ? `<br><span style="color:purple; font-size:14px;">Cubic model: ${cubicResult.equation} (R²=${(cubicResult.r2*100).toFixed(2)}%) (R²-Adj=${(cubicResult.statistics.r2Adjusted*100).toFixed(2)}%)</span>` : ''}
               `;
-
           const chartTitle = `
             <b style="font-size:18px;">Simple Regression of ${datasetYDescription} vs ${datasetXDescription}</b>
             ${modelEquation}
@@ -927,7 +926,10 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                 autosize: true,
                 margin: { t: 160 },
                 title: { text: chartTitle, font: { size: 16 } },
-                xaxis: { title: { text: '<b>' + datasetXDescription + '</b>'} },
+                xaxis: { title: {
+                                  text: `<b>${datasetXDescription}</b>`,
+                                  standoff: 35 // ← increase to move it farther from the axis, decrease for closer
+                                }, },
                 yaxis: { 
                   title: { text: '<b>' + datasetYDescription + '</b>'},
                   range: [yAxisMin, yAxisMax]
@@ -1121,38 +1123,48 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
             </div>
             
             <div>
-              <p className="font-semibold mb-2">Model Coefficients:</p>
+              <p className="font-semibold mb-2">Model Coefficients: Y = a + bX</p>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">Intercept (a):</p>
+                  <p className="text-sm text-muted-foreground">Intercept or Constant (a):</p>
                   <p className="font-medium">{linearResult.a.toFixed(6)}</p>
-                  <p className="text-xs text-muted-foreground">p-value: {linearResult.statistics.coefficientPValues[0].toFixed(4)}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Slope (b):</p>
+                  <p className="text-sm text-muted-foreground">Linear coefficient (Slope) (b):</p>
                   <p className="font-medium">{linearResult.b.toFixed(6)}</p>
-                  <p className="text-xs text-muted-foreground">p-value: {linearResult.statistics.coefficientPValues[1].toFixed(4)}</p>
                 </div>
               </div>
             </div>
 
             <div>
               <p className="font-semibold mb-2">Goodness of Fit:</p>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-4 gap-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">R²:</p>
+                  <p className="text-sm text-muted-foreground"
+                    title="R² Coefficient of Determination. This is the proportion of the variation in the dependent variable Y that is predictable from the independent variable X."
+                  >
+                    R²:
+                  </p>
                   <p className="font-medium">{(linearResult.r2*100).toFixed(2)}%</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">R² Adjusted:</p>
+                  <p className="text-sm text-muted-foreground"  title="R² Adjusted - Adjusted Coefficient of Determination. Adjust R² to number of terms in model">R² Adjusted:</p>
                   <p className="font-medium">{(linearResult.statistics.r2Adjusted*100).toFixed(2)}%</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Pearson Correlation coeff. r:</p>
+                  <p className="text-sm text-muted-foreground"
+                  title="Pearson Correlation coefficient (r): Measures the linear correlation (association strengt) between X and Y variables. r varies between [-1, 1]. An r of 1 indicates a perfect positive linear relationship, -1 indicates a perfect negative linear relationship, and 0 indicates no linear relationship."
+                  >
+                    Pearson Correlation coeff. (r):
+                  </p>
                   <p className="font-medium">{linearResult.pearsonR.toFixed(6)}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">SSE:</p>
+                  <p className="text-sm text-muted-foreground"
+                  title="Sum of Squared Errors (SSE): The sum of the squared differences between the observed values and the values predicted by the model. A lower SSE indicates a better fit."
+                  >
+                    SSE:
+                  </p>
                   <p className="font-medium">{linearResult.sse.toFixed(6)}</p>
                 </div>
               </div>
@@ -1160,7 +1172,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
 
             <div>
               <p className="font-semibold mb-2">Overall Regression Test:</p>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground">F-statistic:</p>
                   <p className="font-medium">{linearResult.statistics.fStatistic.toFixed(4)}</p>
@@ -1168,6 +1180,22 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                 <div>
                   <p className="text-sm text-muted-foreground">p-value:</p>
                   <p className="font-medium">{linearResult.statistics.regressionPValue.toFixed(4)}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    Conclusion (5% significance (α)):
+                  </p>
+                  <p
+                    className={`font-medium ${
+                      linearResult.statistics.regressionPValue < 0.05
+                        ? 'text-green-600 dark:text-green-400'
+                        : 'text-red-600 dark:text-red-400'
+                    }`}
+                  >
+                    {linearResult.statistics.regressionPValue < 0.05
+                      ? 'Significant Regression'
+                      : 'Non-significant Regression'}
+                  </p>
                 </div>
               </div>
             </div>
@@ -1178,34 +1206,33 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                 {/*<div>
                   <p className="text-sm text-muted-foreground">Mean:</p>
                   <p className="font-medium">{linearResult.statistics.residualMean.toFixed(6)}</p>
-                </div> */}
+                </div>*/}
                 <div>
                   <p className="text-sm text-muted-foreground">Std Deviation:</p>
                   <p className="font-medium">{linearResult.statistics.residualStd.toFixed(6)}</p>
                 </div>
-              </div>
-            </div>
-
-            <div>
-              <p className="font-semibold mb-2">Normality Test (Anderson-Darling):</p>
-              <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">Statistic:</p>
-                  <p className="font-medium">{linearResult.statistics.andersonDarlingStatistic.toFixed(4)}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">p-value:</p>
-                  <p className="font-medium">{linearResult.statistics.andersonDarlingPValue.toFixed(4)}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Conclusion:</p>
-                  <p className={`font-medium ${
-                    linearResult.statistics.andersonDarlingNormality === 'Normal' ? 'text-green-600 dark:text-green-400' :
-                    linearResult.statistics.andersonDarlingNormality === 'Not Normal' ? 'text-red-600 dark:text-red-400' :
-                    'text-yellow-600 dark:text-yellow-400'
-                  }`}>
-                    {linearResult.statistics.andersonDarlingNormality}
-                  </p>
+                  <p className="font-medium mb-2">Normality Test (Anderson-Darling):</p>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Statistic:</p>
+                      <p className="font-medium">{linearResult.statistics.andersonDarlingStatistic.toFixed(4)}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">p-value:</p>
+                      <p className="font-medium">{linearResult.statistics.andersonDarlingPValue.toFixed(4)}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Conclusion (5% significance (α)):</p>
+                      <p className={`font-medium ${
+                        linearResult.statistics.andersonDarlingNormality === 'Normal' ? 'text-green-600 dark:text-green-400' :
+                        linearResult.statistics.andersonDarlingNormality === 'Not Normal' ? 'text-red-600 dark:text-red-400' :
+                        'text-yellow-600 dark:text-yellow-400'
+                      }`}>
+                        {linearResult.statistics.andersonDarlingNormality}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1228,39 +1255,44 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
             </div>
             
             <div>
-              <p className="font-semibold mb-2">Model Coefficients:</p>
+              <p className="font-semibold mb-2">Model Coefficients: Y = a + bX + cX²</p>
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">Intercept (a):</p>
+                  <p className="text-sm text-muted-foreground">Intercept or Constant (a):</p>
                   <p className="font-medium">{quadraticResult.a.toFixed(6)}</p>
-                  <p className="text-xs text-muted-foreground">p-value: {quadraticResult.statistics.coefficientPValues[0].toFixed(4)}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Linear (b):</p>
+                  <p className="text-sm text-muted-foreground">Linear coefficient (b):</p>
                   <p className="font-medium">{quadraticResult.b.toFixed(6)}</p>
-                  <p className="text-xs text-muted-foreground">p-value: {quadraticResult.statistics.coefficientPValues[1].toFixed(4)}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Quadratic (c):</p>
+                  <p className="text-sm text-muted-foreground">Quadratic coefficient (c):</p>
                   <p className="font-medium">{quadraticResult.c.toFixed(6)}</p>
-                  <p className="text-xs text-muted-foreground">p-value: {quadraticResult.statistics.coefficientPValues[2].toFixed(4)}</p>
                 </div>
               </div>
             </div>
 
             <div>
               <p className="font-semibold mb-2">Goodness of Fit:</p>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">R²:</p>
+                  <p className="text-sm text-muted-foreground"
+                    title="R² Coefficient of Determination. This is the proportion of the variation in the dependent variable Y that is predictable from the independent variable X."
+                  >
+                    R²:
+                  </p>
                   <p className="font-medium">{(quadraticResult.r2*100).toFixed(2)}%</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">R² Adjusted:</p>
+                  <p className="text-sm text-muted-foreground"  title="R² Adjusted - Adjusted Coefficient of Determination. Adjust R² to number of terms in model">R² Adjusted:</p>
                   <p className="font-medium">{(quadraticResult.statistics.r2Adjusted*100).toFixed(2)}%</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">SSE:</p>
+                  <p className="text-sm text-muted-foreground"
+                  title="Sum of Squared Errors (SSE): The sum of the squared differences between the observed values and the values predicted by the model. A lower SSE indicates a better fit."
+                  >
+                    SSE:
+                  </p>
                   <p className="font-medium">{quadraticResult.sse.toFixed(6)}</p>
                 </div>
               </div>
@@ -1268,7 +1300,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
 
             <div>
               <p className="font-semibold mb-2">Overall Regression Test:</p>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground">F-statistic:</p>
                   <p className="font-medium">{quadraticResult.statistics.fStatistic.toFixed(4)}</p>
@@ -1276,6 +1308,22 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                 <div>
                   <p className="text-sm text-muted-foreground">p-value:</p>
                   <p className="font-medium">{quadraticResult.statistics.regressionPValue.toFixed(4)}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    Conclusion (5% significance (α)):
+                  </p>
+                  <p
+                    className={`font-medium ${
+                      quadraticResult.statistics.regressionPValue < 0.05
+                        ? 'text-green-600 dark:text-green-400'
+                        : 'text-red-600 dark:text-red-400'
+                    }`}
+                  >
+                    {quadraticResult.statistics.regressionPValue < 0.05
+                      ? 'Significant Regression'
+                      : 'Non-significant Regression'}
+                  </p>
                 </div>
               </div>
             </div>
@@ -1291,29 +1339,28 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                   <p className="text-sm text-muted-foreground">Std Deviation:</p>
                   <p className="font-medium">{quadraticResult.statistics.residualStd.toFixed(6)}</p>
                 </div>
-              </div>
-            </div>
-
-            <div>
-              <p className="font-semibold mb-2">Normality Test (Anderson-Darling):</p>
-              <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">Statistic:</p>
-                  <p className="font-medium">{quadraticResult.statistics.andersonDarlingStatistic.toFixed(4)}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">p-value:</p>
-                  <p className="font-medium">{quadraticResult.statistics.andersonDarlingPValue.toFixed(4)}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Conclusion:</p>
-                  <p className={`font-medium ${
-                    quadraticResult.statistics.andersonDarlingNormality === 'Normal' ? 'text-green-600 dark:text-green-400' :
-                    quadraticResult.statistics.andersonDarlingNormality === 'Not Normal' ? 'text-red-600 dark:text-red-400' :
-                    'text-yellow-600 dark:text-yellow-400'
-                  }`}>
-                    {quadraticResult.statistics.andersonDarlingNormality}
-                  </p>
+                  <p className="font-medium mb-2">Normality Test (Anderson-Darling):</p>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Statistic:</p>
+                      <p className="font-medium">{quadraticResult.statistics.andersonDarlingStatistic.toFixed(4)}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">p-value:</p>
+                      <p className="font-medium">{quadraticResult.statistics.andersonDarlingPValue.toFixed(4)}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Conclusion (5% significance (α)):</p>
+                      <p className={`font-medium ${
+                        quadraticResult.statistics.andersonDarlingNormality === 'Normal' ? 'text-green-600 dark:text-green-400' :
+                        quadraticResult.statistics.andersonDarlingNormality === 'Not Normal' ? 'text-red-600 dark:text-red-400' :
+                        'text-yellow-600 dark:text-yellow-400'
+                      }`}>
+                        {quadraticResult.statistics.andersonDarlingNormality}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1336,44 +1383,49 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
             </div>
             
             <div>
-              <p className="font-semibold mb-2">Model Coefficients:</p>
-              <div className="grid grid-cols-2 gap-4">
+              <p className="font-semibold mb-2">Model Coefficients: Y = a + bX + cX² + dX³</p>
+              <div className="grid grid-cols-4 gap-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">Intercept (a):</p>
+                  <p className="text-sm text-muted-foreground">Intercept or Constant (a):</p>
                   <p className="font-medium">{cubicResult.a.toFixed(6)}</p>
-                  <p className="text-xs text-muted-foreground">p-value: {cubicResult.statistics.coefficientPValues[0].toFixed(4)}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Linear (b):</p>
+                  <p className="text-sm text-muted-foreground">Linear coefficient (b):</p>
                   <p className="font-medium">{cubicResult.b.toFixed(6)}</p>
-                  <p className="text-xs text-muted-foreground">p-value: {cubicResult.statistics.coefficientPValues[1].toFixed(4)}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Quadratic (c):</p>
+                  <p className="text-sm text-muted-foreground">Quadratic coefficient (c):</p>
                   <p className="font-medium">{cubicResult.c.toFixed(6)}</p>
-                  <p className="text-xs text-muted-foreground">p-value: {cubicResult.statistics.coefficientPValues[2].toFixed(4)}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Cubic (d):</p>
+                  <p className="text-sm text-muted-foreground">Cubic coefficient (d):</p>
                   <p className="font-medium">{cubicResult.d.toFixed(6)}</p>
-                  <p className="text-xs text-muted-foreground">p-value: {cubicResult.statistics.coefficientPValues[3].toFixed(4)}</p>
                 </div>
               </div>
             </div>
 
             <div>
               <p className="font-semibold mb-2">Goodness of Fit:</p>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">R²:</p>
+                  <p className="text-sm text-muted-foreground"
+                    title="R² Coefficient of Determination. This is the proportion of the variation in the dependent variable Y that is predictable from the independent variable X."
+                  >
+                    R²:
+                  </p>
+
                   <p className="font-medium">{(cubicResult.r2*100).toFixed(2)}%</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">R² Adjusted:</p>
+                  <p className="text-sm text-muted-foreground"  title="R² Adjusted - Adjusted Coefficient of Determination. Adjust R² to number of terms in model">R² Adjusted:</p>
                   <p className="font-medium">{(cubicResult.statistics.r2Adjusted*100).toFixed(2)}%</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">SSE:</p>
+                  <p className="text-sm text-muted-foreground"
+                  title="Sum of Squared Errors (SSE): The sum of the squared differences between the observed values and the values predicted by the model. A lower SSE indicates a better fit."
+                  >
+                    SSE:
+                  </p>
                   <p className="font-medium">{cubicResult.sse.toFixed(6)}</p>
                 </div>
               </div>
@@ -1381,7 +1433,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
 
             <div>
               <p className="font-semibold mb-2">Overall Regression Test:</p>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground">F-statistic:</p>
                   <p className="font-medium">{cubicResult.statistics.fStatistic.toFixed(4)}</p>
@@ -1389,6 +1441,22 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                 <div>
                   <p className="text-sm text-muted-foreground">p-value:</p>
                   <p className="font-medium">{cubicResult.statistics.regressionPValue.toFixed(4)}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    Conclusion (5% significance (α)):
+                  </p>
+                  <p
+                    className={`font-medium ${
+                      cubicResult.statistics.regressionPValue < 0.05
+                        ? 'text-green-600 dark:text-green-400'
+                        : 'text-red-600 dark:text-red-400'
+                    }`}
+                  >
+                    {cubicResult.statistics.regressionPValue < 0.05
+                      ? 'Significant Regression'
+                      : 'Non-significant Regression'}
+                  </p>
                 </div>
               </div>
             </div>
@@ -1404,29 +1472,28 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                   <p className="text-sm text-muted-foreground">Std Deviation:</p>
                   <p className="font-medium">{cubicResult.statistics.residualStd.toFixed(6)}</p>
                 </div>
-              </div>
-            </div>
-
-            <div>
-              <p className="font-semibold mb-2">Normality Test (Anderson-Darling):</p>
-              <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">Statistic:</p>
-                  <p className="font-medium">{cubicResult.statistics.andersonDarlingStatistic.toFixed(4)}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">p-value:</p>
-                  <p className="font-medium">{cubicResult.statistics.andersonDarlingPValue.toFixed(4)}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Conclusion:</p>
-                  <p className={`font-medium ${
-                    cubicResult.statistics.andersonDarlingNormality === 'Normal' ? 'text-green-600 dark:text-green-400' :
-                    cubicResult.statistics.andersonDarlingNormality === 'Not Normal' ? 'text-red-600 dark:text-red-400' :
-                    'text-yellow-600 dark:text-yellow-400'
-                  }`}>
-                    {cubicResult.statistics.andersonDarlingNormality}
-                  </p>
+                  <p className="font-medium mb-2">Normality Test (Anderson-Darling):</p>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Statistic:</p>
+                      <p className="font-medium">{cubicResult.statistics.andersonDarlingStatistic.toFixed(4)}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">p-value:</p>
+                      <p className="font-medium">{cubicResult.statistics.andersonDarlingPValue.toFixed(4)}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Conclusion (5% significance (α)):</p>
+                      <p className={`font-medium ${
+                        cubicResult.statistics.andersonDarlingNormality === 'Normal' ? 'text-green-600 dark:text-green-400' :
+                        cubicResult.statistics.andersonDarlingNormality === 'Not Normal' ? 'text-red-600 dark:text-red-400' :
+                        'text-yellow-600 dark:text-yellow-400'
+                      }`}>
+                        {cubicResult.statistics.andersonDarlingNormality}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
