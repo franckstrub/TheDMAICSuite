@@ -72,6 +72,13 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
   const [solvedXLinear, setSolvedXLinear] = useState<number | null>(null);
   const [solvedXQuadratic, setSolvedXQuadratic] = useState<number[]>([]);
   const [solvedXCubic, setSolvedXCubic] = useState<number[]>([]);
+  
+  const [showLinearResidualsVsFits, setShowLinearResidualsVsFits] = useState(false);
+  const [showLinearResidualsVsOrder, setShowLinearResidualsVsOrder] = useState(false);
+  const [showQuadraticResidualsVsFits, setShowQuadraticResidualsVsFits] = useState(false);
+  const [showQuadraticResidualsVsOrder, setShowQuadraticResidualsVsOrder] = useState(false);
+  const [showCubicResidualsVsFits, setShowCubicResidualsVsFits] = useState(false);
+  const [showCubicResidualsVsOrder, setShowCubicResidualsVsOrder] = useState(false);
 
   const configQuery = useQuery({
     queryKey: [`/api/projects/${projectId}/solutions/${solutionId}/simple-regression`],
@@ -1274,6 +1281,97 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                   </tr>
                 </tbody>
               </table>
+              
+              <div className="mt-4 space-y-2">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="linear-residuals-vs-fits"
+                    checked={showLinearResidualsVsFits}
+                    onCheckedChange={(checked) => setShowLinearResidualsVsFits(checked as boolean)}
+                    data-testid="checkbox-linear-residuals-vs-fits"
+                  />
+                  <Label htmlFor="linear-residuals-vs-fits" className="cursor-pointer">
+                    Graph residuals versus fits
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="linear-residuals-vs-order"
+                    checked={showLinearResidualsVsOrder}
+                    onCheckedChange={(checked) => setShowLinearResidualsVsOrder(checked as boolean)}
+                    data-testid="checkbox-linear-residuals-vs-order"
+                  />
+                  <Label htmlFor="linear-residuals-vs-order" className="cursor-pointer">
+                    Graph residuals versus order of data
+                  </Label>
+                </div>
+              </div>
+              
+              {showLinearResidualsVsFits && linearResult.statistics.residuals && (
+                <div className="mt-4">
+                  <Plot
+                    data={[{
+                      x: linearResult.statistics.fittedValues,
+                      y: linearResult.statistics.residuals,
+                      mode: 'markers',
+                      type: 'scatter',
+                      name: 'Residuals',
+                      marker: { color: 'red', size: 8 },
+                    },
+                    {
+                      x: linearResult.statistics.fittedValues,
+                      y: Array(linearResult.statistics.fittedValues.length).fill(0),
+                      mode: 'lines',
+                      type: 'scatter',
+                      name: 'Zero Line',
+                      line: { color: 'black', width: 1, dash: 'dash' },
+                    }]}
+                    layout={{
+                      title: { text: '<b>Residuals vs Fitted Values (Linear)</b>' },
+                      xaxis: { title: { text: '<b>Fitted Values</b>' } },
+                      yaxis: { title: { text: '<b>Residuals</b>' } },
+                      showlegend: false,
+                      hovermode: 'closest',
+                    }}
+                    useResizeHandler
+                    style={{ width: '100%', height: '400px' }}
+                    config={{ responsive: true, displayModeBar: true, displaylogo: false }}
+                  />
+                </div>
+              )}
+              
+              {showLinearResidualsVsOrder && linearResult.statistics.residuals && (
+                <div className="mt-4">
+                  <Plot
+                    data={[{
+                      x: linearResult.statistics.residuals.map((_, i) => i + 1),
+                      y: linearResult.statistics.residuals,
+                      mode: 'markers',
+                      type: 'scatter',
+                      name: 'Residuals',
+                      marker: { color: 'red', size: 8 },
+                    },
+                    {
+                      x: [1, linearResult.statistics.residuals.length],
+                      y: [0, 0],
+                      mode: 'lines',
+                      type: 'scatter',
+                      name: 'Zero Line',
+                      line: { color: 'black', width: 1, dash: 'dash' },
+                    }]}
+                    layout={{
+                      title: { text: '<b>Residuals vs Order of Data (Linear)</b>' },
+                      xaxis: { title: { text: '<b>Observation Order</b>' } },
+                      yaxis: { title: { text: '<b>Residuals</b>' } },
+                      showlegend: false,
+                      hovermode: 'closest',
+                    }}
+                    useResizeHandler
+                    style={{ width: '100%', height: '400px' }}
+                    config={{ responsive: true, displayModeBar: true, displaylogo: false }}
+                  />
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -1440,6 +1538,97 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                   </tr>
                 </tbody>
               </table>
+              
+              <div className="mt-4 space-y-2">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="quadratic-residuals-vs-fits"
+                    checked={showQuadraticResidualsVsFits}
+                    onCheckedChange={(checked) => setShowQuadraticResidualsVsFits(checked as boolean)}
+                    data-testid="checkbox-quadratic-residuals-vs-fits"
+                  />
+                  <Label htmlFor="quadratic-residuals-vs-fits" className="cursor-pointer">
+                    Graph residuals versus fits
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="quadratic-residuals-vs-order"
+                    checked={showQuadraticResidualsVsOrder}
+                    onCheckedChange={(checked) => setShowQuadraticResidualsVsOrder(checked as boolean)}
+                    data-testid="checkbox-quadratic-residuals-vs-order"
+                  />
+                  <Label htmlFor="quadratic-residuals-vs-order" className="cursor-pointer">
+                    Graph residuals versus order of data
+                  </Label>
+                </div>
+              </div>
+              
+              {showQuadraticResidualsVsFits && quadraticResult.statistics.residuals && (
+                <div className="mt-4">
+                  <Plot
+                    data={[{
+                      x: quadraticResult.statistics.fittedValues,
+                      y: quadraticResult.statistics.residuals,
+                      mode: 'markers',
+                      type: 'scatter',
+                      name: 'Residuals',
+                      marker: { color: 'green', size: 8 },
+                    },
+                    {
+                      x: quadraticResult.statistics.fittedValues,
+                      y: Array(quadraticResult.statistics.fittedValues.length).fill(0),
+                      mode: 'lines',
+                      type: 'scatter',
+                      name: 'Zero Line',
+                      line: { color: 'black', width: 1, dash: 'dash' },
+                    }]}
+                    layout={{
+                      title: { text: '<b>Residuals vs Fitted Values (Quadratic)</b>' },
+                      xaxis: { title: { text: '<b>Fitted Values</b>' } },
+                      yaxis: { title: { text: '<b>Residuals</b>' } },
+                      showlegend: false,
+                      hovermode: 'closest',
+                    }}
+                    useResizeHandler
+                    style={{ width: '100%', height: '400px' }}
+                    config={{ responsive: true, displayModeBar: true, displaylogo: false }}
+                  />
+                </div>
+              )}
+              
+              {showQuadraticResidualsVsOrder && quadraticResult.statistics.residuals && (
+                <div className="mt-4">
+                  <Plot
+                    data={[{
+                      x: quadraticResult.statistics.residuals.map((_, i) => i + 1),
+                      y: quadraticResult.statistics.residuals,
+                      mode: 'markers',
+                      type: 'scatter',
+                      name: 'Residuals',
+                      marker: { color: 'green', size: 8 },
+                    },
+                    {
+                      x: [1, quadraticResult.statistics.residuals.length],
+                      y: [0, 0],
+                      mode: 'lines',
+                      type: 'scatter',
+                      name: 'Zero Line',
+                      line: { color: 'black', width: 1, dash: 'dash' },
+                    }]}
+                    layout={{
+                      title: { text: '<b>Residuals vs Order of Data (Quadratic)</b>' },
+                      xaxis: { title: { text: '<b>Observation Order</b>' } },
+                      yaxis: { title: { text: '<b>Residuals</b>' } },
+                      showlegend: false,
+                      hovermode: 'closest',
+                    }}
+                    useResizeHandler
+                    style={{ width: '100%', height: '400px' }}
+                    config={{ responsive: true, displayModeBar: true, displaylogo: false }}
+                  />
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -1611,6 +1800,97 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                   </tr>
                 </tbody>
               </table>
+              
+              <div className="mt-4 space-y-2">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="cubic-residuals-vs-fits"
+                    checked={showCubicResidualsVsFits}
+                    onCheckedChange={(checked) => setShowCubicResidualsVsFits(checked as boolean)}
+                    data-testid="checkbox-cubic-residuals-vs-fits"
+                  />
+                  <Label htmlFor="cubic-residuals-vs-fits" className="cursor-pointer">
+                    Graph residuals versus fits
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="cubic-residuals-vs-order"
+                    checked={showCubicResidualsVsOrder}
+                    onCheckedChange={(checked) => setShowCubicResidualsVsOrder(checked as boolean)}
+                    data-testid="checkbox-cubic-residuals-vs-order"
+                  />
+                  <Label htmlFor="cubic-residuals-vs-order" className="cursor-pointer">
+                    Graph residuals versus order of data
+                  </Label>
+                </div>
+              </div>
+              
+              {showCubicResidualsVsFits && cubicResult.statistics.residuals && (
+                <div className="mt-4">
+                  <Plot
+                    data={[{
+                      x: cubicResult.statistics.fittedValues,
+                      y: cubicResult.statistics.residuals,
+                      mode: 'markers',
+                      type: 'scatter',
+                      name: 'Residuals',
+                      marker: { color: 'purple', size: 8 },
+                    },
+                    {
+                      x: cubicResult.statistics.fittedValues,
+                      y: Array(cubicResult.statistics.fittedValues.length).fill(0),
+                      mode: 'lines',
+                      type: 'scatter',
+                      name: 'Zero Line',
+                      line: { color: 'black', width: 1, dash: 'dash' },
+                    }]}
+                    layout={{
+                      title: { text: '<b>Residuals vs Fitted Values (Cubic)</b>' },
+                      xaxis: { title: { text: '<b>Fitted Values</b>' } },
+                      yaxis: { title: { text: '<b>Residuals</b>' } },
+                      showlegend: false,
+                      hovermode: 'closest',
+                    }}
+                    useResizeHandler
+                    style={{ width: '100%', height: '400px' }}
+                    config={{ responsive: true, displayModeBar: true, displaylogo: false }}
+                  />
+                </div>
+              )}
+              
+              {showCubicResidualsVsOrder && cubicResult.statistics.residuals && (
+                <div className="mt-4">
+                  <Plot
+                    data={[{
+                      x: cubicResult.statistics.residuals.map((_, i) => i + 1),
+                      y: cubicResult.statistics.residuals,
+                      mode: 'markers',
+                      type: 'scatter',
+                      name: 'Residuals',
+                      marker: { color: 'purple', size: 8 },
+                    },
+                    {
+                      x: [1, cubicResult.statistics.residuals.length],
+                      y: [0, 0],
+                      mode: 'lines',
+                      type: 'scatter',
+                      name: 'Zero Line',
+                      line: { color: 'black', width: 1, dash: 'dash' },
+                    }]}
+                    layout={{
+                      title: { text: '<b>Residuals vs Order of Data (Cubic)</b>' },
+                      xaxis: { title: { text: '<b>Observation Order</b>' } },
+                      yaxis: { title: { text: '<b>Residuals</b>' } },
+                      showlegend: false,
+                      hovermode: 'closest',
+                    }}
+                    useResizeHandler
+                    style={{ width: '100%', height: '400px' }}
+                    config={{ responsive: true, displayModeBar: true, displaylogo: false }}
+                  />
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
