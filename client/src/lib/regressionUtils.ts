@@ -6,6 +6,10 @@ import {performNormalityTest} from "./statisticsUtils";
 
 export interface RegressionStatistics {
   r2Adjusted: number;
+  dfRegression: number;
+  dfError: number;
+  msr: number;
+  mse: number;
   regressionPValue: number;
   fStatistic: number;
   residualMean: number;
@@ -96,7 +100,7 @@ export function linearRegression(x: number[], y: number[]): LinearRegressionResu
   }
   pearsonR = Math.max(-1, Math.min(1, pearsonR));
 
-  const equation = `Y = ${a.toFixed(4)} + ${b.toFixed(4)}X`;
+  const equation = `Y = ${a.toFixed(4)} ${b >= 0 ? '+' : ''} ${b.toFixed(4)}X`;
 
   const statistics = calculateRegressionStatistics(x, y, residuals, sse, sst, r2, 2);
 
@@ -160,7 +164,7 @@ export function quadraticRegression(x: number[], y: number[]): QuadraticRegressi
   }
   r2 = Math.max(0, Math.min(1, r2));
 
-  const equation = `Y = ${a.toFixed(4)} + ${b.toFixed(4)}X + ${c.toFixed(4)}X²`;
+  const equation = `Y = ${a.toFixed(4)} ${b >= 0 ? '+' : ''} ${b.toFixed(4)}X ${c >= 0 ? '+' : ''} ${c.toFixed(4)}X²`;
 
   const statistics = calculateRegressionStatistics(x, y, residuals, sse, sst, r2, 3);
 
@@ -228,7 +232,7 @@ export function cubicRegression(x: number[], y: number[]): CubicRegressionResult
   }
   r2 = Math.max(0, Math.min(1, r2));
 
-  const equation = `Y = ${a.toFixed(4)} + ${b.toFixed(4)}X + ${c.toFixed(4)}X² + ${d.toFixed(4)}X³`;
+  const equation = `Y = ${a.toFixed(4)} ${b >= 0 ? '+' : ''} ${b.toFixed(4)}X ${c >= 0 ? '+' : ''} ${c.toFixed(4)}X² ${d >= 0 ? '+' : ''} ${d.toFixed(4)}X³`;
 
   const statistics = calculateRegressionStatistics(x, y, residuals, sse, sst, r2, 4);
 
@@ -370,14 +374,14 @@ function calculateRegressionStatistics(
   numParams: number
 ): RegressionStatistics {
   const n = x.length;
-  const df = n - numParams;
+  const dfError = n - numParams;
   
   // R² Adjusted - handle edge cases
   let r2Adjusted: number;
-  if (df <= 0) {
+  if (dfError <= 0) {
     r2Adjusted = r2;
   } else {
-    r2Adjusted = 1 - ((1 - r2) * (n - 1)) / df;
+    r2Adjusted = 1 - ((1 - r2) * (n - 1)) / dfError;
   }
   
   // Clamp R² Adjusted to [0, 1] interval and handle non-finite values
@@ -389,20 +393,24 @@ function calculateRegressionStatistics(
   // F-statistic and p-value for overall regression - handle edge cases
   let fStatistic: number;
   let regressionPValue: number;
+  const dfRegression = numParams - 1;
+  const ssr = sst - sse;
+  let mse: number=0;
+  let msr: number=0;
   
-  if (df < 0) {
+  if (dfError < 0) {
     fStatistic = 0;
     regressionPValue = 1;
-  } else if (sse === 0 || df === 0) {
+    msr = dfRegression > 0 ? ssr / dfRegression : 0;
+  } else if (sse === 0 || dfError === 0) {
     fStatistic = Infinity;
     regressionPValue = 0.0;
+    msr = dfRegression > 0 ? ssr / dfRegression : 0;
   } else {
-    const mse = sse / df;
-    const ssr = sst - sse;
-    const dfRegression = numParams - 1;
-    const msr = dfRegression > 0 ? ssr / dfRegression : 0;
+    mse = sse / dfError;
+    msr = dfRegression > 0 ? ssr / dfRegression : 0;
     fStatistic = mse !== 0 ? msr / mse : 0;
-    regressionPValue = 1 - jStat.centralF.cdf(fStatistic, dfRegression, df);
+    regressionPValue = 1 - jStat.centralF.cdf(fStatistic, dfRegression, dfError);
   }
 
   // Clamp regression p-value to [0, 1] interval and handle non-finite values
@@ -413,7 +421,7 @@ function calculateRegressionStatistics(
   
   // Residual statistics - assume sample and not population of residuals
   const residualMean = residuals.reduce((sum, r) => sum + r, 0) / n;
-  const residualVariance = residuals.reduce((sum, r) => sum + Math.pow(r - residualMean, 2), 0) / (n-1);
+  const residualVariance = residuals.reduce((sum, r) => sum + Math.pow(r - residualMean, 2), 0) / n;
   const residualStd = Math.sqrt(residualVariance);
   
   // Anderson-Darling test for normality test of residuals
@@ -421,6 +429,10 @@ function calculateRegressionStatistics(
   
   return {
     r2Adjusted,
+    dfRegression,
+    dfError,
+    msr,
+    mse,
     regressionPValue,
     fStatistic,
     residualMean,
