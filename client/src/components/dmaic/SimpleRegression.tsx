@@ -1291,7 +1291,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                     data-testid="checkbox-linear-residuals-vs-fits"
                   />
                   <Label htmlFor="linear-residuals-vs-fits" className="cursor-pointer">
-                    Graph residuals versus fits
+                    Graph of residuals versus fits (check the homogeneity of the variance of the residuals and their random distribution)
                   </Label>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -1302,7 +1302,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                     data-testid="checkbox-linear-residuals-vs-order"
                   />
                   <Label htmlFor="linear-residuals-vs-order" className="cursor-pointer">
-                    Graph residuals versus order of data
+                    Graph of residuals versus order of data (verify the independence of the residuals)
                   </Label>
                 </div>
               </div>
@@ -1337,7 +1337,15 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                         }}
                         useResizeHandler
                         style={{ width: '100%', height: '400px' }}
-                        config={{ responsive: true, displayModeBar: true, displaylogo: false }}
+                        config={{ responsive: true, displayModeBar: true, displaylogo: false,
+                        toImageButtonOptions: {
+                          format: 'png',
+                          filename: `Residuals vs Fits_${datasetYDescription} vs ${datasetXDescription}_Linear Regression`,
+                          height: 500,
+                          width: 600,
+                          scale: 1
+                        }
+ }}
                       />
                     </div>
                   )}
@@ -1370,7 +1378,15 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                         }}
                         useResizeHandler
                         style={{ width: '100%', height: '400px' }}
-                        config={{ responsive: true, displayModeBar: true, displaylogo: false }}
+                        config={{ responsive: true, displayModeBar: true, displaylogo: false,
+                        toImageButtonOptions: {
+                          format: 'png',
+                          filename: `Residuals vs Order of Data_${datasetYDescription} vs ${datasetXDescription}_Linear Regression`,
+                          height: 500,
+                          width: 600,
+                          scale: 1
+                        }
+ }}
                       />
                     </div>
                   )}
@@ -1552,7 +1568,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                     data-testid="checkbox-quadratic-residuals-vs-fits"
                   />
                   <Label htmlFor="quadratic-residuals-vs-fits" className="cursor-pointer">
-                    Graph residuals versus fits
+                    Graph of residuals versus fits (check the homogeneity of the variance of the residuals and their random distribution)
                   </Label>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -1563,7 +1579,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                     data-testid="checkbox-quadratic-residuals-vs-order"
                   />
                   <Label htmlFor="quadratic-residuals-vs-order" className="cursor-pointer">
-                    Graph residuals versus order of data
+                    Graph of residuals versus order of data (verify the independence of the residuals)
                   </Label>
                 </div>
               </div>
@@ -1598,7 +1614,15 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                         }}
                         useResizeHandler
                         style={{ width: '100%', height: '400px' }}
-                        config={{ responsive: true, displayModeBar: true, displaylogo: false }}
+                        config={{ responsive: true, displayModeBar: true, displaylogo: false,
+                        toImageButtonOptions: {
+                          format: 'png',
+                          filename: `Residuals vs Fits_${datasetYDescription} vs ${datasetXDescription}_Quadraticic Regression`,
+                          height: 500,
+                          width: 600,
+                          scale: 1
+                        }
+ }}
                       />
                     </div>
                   )}
@@ -1631,7 +1655,15 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                         }}
                         useResizeHandler
                         style={{ width: '100%', height: '400px' }}
-                        config={{ responsive: true, displayModeBar: true, displaylogo: false }}
+                        config={{ responsive: true, displayModeBar: true, displaylogo: false,
+                        toImageButtonOptions: {
+                          format: 'png',
+                          filename: `Residuals vs Order of Data_${datasetYDescription} vs ${datasetXDescription}_Quadratic Regression`,
+                          height: 500,
+                          width: 600,
+                          scale: 1
+                        }
+ }}
                       />
                     </div>
                   )}
@@ -1818,7 +1850,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                     data-testid="checkbox-cubic-residuals-vs-fits"
                   />
                   <Label htmlFor="cubic-residuals-vs-fits" className="cursor-pointer">
-                    Graph residuals versus fits
+                    Graph of residuals versus fits (check the homogeneity of the variance of the residuals and their random distribution)
                   </Label>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -1829,7 +1861,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                     data-testid="checkbox-cubic-residuals-vs-order"
                   />
                   <Label htmlFor="cubic-residuals-vs-order" className="cursor-pointer">
-                    Graph residuals versus order of data
+                    Graph of residuals versus order of data (verify the independence of the residuals)
                   </Label>
                 </div>
               </div>
@@ -1864,7 +1896,15 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                         }}
                         useResizeHandler
                         style={{ width: '100%', height: '400px' }}
-                        config={{ responsive: true, displayModeBar: true, displaylogo: false }}
+                        config={{ responsive: true, displayModeBar: true, displaylogo: false,
+                        toImageButtonOptions: {
+                          format: 'png',
+                          filename: `Residuals vs Fits_${datasetYDescription} vs ${datasetXDescription}_Cubic Regression`,
+                          height: 500,
+                          width: 600,
+                          scale: 1
+                        }
+ }}
                       />
                     </div>
                   )}
@@ -1897,7 +1937,15 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                         }}
                         useResizeHandler
                         style={{ width: '100%', height: '400px' }}
-                        config={{ responsive: true, displayModeBar: true, displaylogo: false }}
+                        config={{ responsive: true, displayModeBar: true, displaylogo: false,
+                        toImageButtonOptions: {
+                          format: 'png',
+                          filename: `Residuals vs Order of Data_${datasetYDescription} vs ${datasetXDescription}_Cubic Regression`,
+                          height: 500,
+                          width: 600,
+                          scale: 1
+                        }
+                         }}
                       />
                     </div>
                   )}
