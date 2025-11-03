@@ -1307,69 +1307,73 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                 </div>
               </div>
               
-              {showLinearResidualsVsFits && linearResult.statistics.residuals && (
-                <div className="mt-4">
-                  <Plot
-                    data={[{
-                      x: linearResult.statistics.fittedValues,
-                      y: linearResult.statistics.residuals,
-                      mode: 'markers',
-                      type: 'scatter',
-                      name: 'Residuals',
-                      marker: { color: 'red', size: 8 },
-                    },
-                    {
-                      x: linearResult.statistics.fittedValues,
-                      y: Array(linearResult.statistics.fittedValues.length).fill(0),
-                      mode: 'lines',
-                      type: 'scatter',
-                      name: 'Zero Line',
-                      line: { color: 'black', width: 1, dash: 'dash' },
-                    }]}
-                    layout={{
-                      title: { text: '<b>Residuals vs Fitted Values (Linear)</b>' },
-                      xaxis: { title: { text: '<b>Fitted Values</b>' } },
-                      yaxis: { title: { text: '<b>Residuals</b>' } },
-                      showlegend: false,
-                      hovermode: 'closest',
-                    }}
-                    useResizeHandler
-                    style={{ width: '100%', height: '400px' }}
-                    config={{ responsive: true, displayModeBar: true, displaylogo: false }}
-                  />
-                </div>
-              )}
-              
-              {showLinearResidualsVsOrder && linearResult.statistics.residuals && (
-                <div className="mt-4">
-                  <Plot
-                    data={[{
-                      x: linearResult.statistics.residuals.map((_, i) => i + 1),
-                      y: linearResult.statistics.residuals,
-                      mode: 'markers',
-                      type: 'scatter',
-                      name: 'Residuals',
-                      marker: { color: 'red', size: 8 },
-                    },
-                    {
-                      x: [1, linearResult.statistics.residuals.length],
-                      y: [0, 0],
-                      mode: 'lines',
-                      type: 'scatter',
-                      name: 'Zero Line',
-                      line: { color: 'black', width: 1, dash: 'dash' },
-                    }]}
-                    layout={{
-                      title: { text: '<b>Residuals vs Order of Data (Linear)</b>' },
-                      xaxis: { title: { text: '<b>Observation Order</b>' } },
-                      yaxis: { title: { text: '<b>Residuals</b>' } },
-                      showlegend: false,
-                      hovermode: 'closest',
-                    }}
-                    useResizeHandler
-                    style={{ width: '100%', height: '400px' }}
-                    config={{ responsive: true, displayModeBar: true, displaylogo: false }}
-                  />
+              {(showLinearResidualsVsFits || showLinearResidualsVsOrder) && linearResult.statistics.residuals && (
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {showLinearResidualsVsFits && (
+                    <div>
+                      <Plot
+                        data={[{
+                          x: linearResult.statistics.fittedValues,
+                          y: linearResult.statistics.residuals,
+                          mode: 'markers',
+                          type: 'scatter',
+                          name: 'Residuals',
+                          marker: { color: 'red', size: 8 },
+                        },
+                        {
+                          x: linearResult.statistics.fittedValues,
+                          y: Array(linearResult.statistics.fittedValues.length).fill(0),
+                          mode: 'lines',
+                          type: 'scatter',
+                          name: 'Zero Line',
+                          line: { color: 'black', width: 1, dash: 'dash' },
+                        }]}
+                        layout={{
+                          title: { text: '<b>Residuals vs Fitted Values (Linear)</b>' },
+                          xaxis: { title: { text: '<b>Fitted Values</b>' } },
+                          yaxis: { title: { text: '<b>Residuals</b>' } },
+                          showlegend: false,
+                          hovermode: 'closest',
+                        }}
+                        useResizeHandler
+                        style={{ width: '100%', height: '400px' }}
+                        config={{ responsive: true, displayModeBar: true, displaylogo: false }}
+                      />
+                    </div>
+                  )}
+                  
+                  {showLinearResidualsVsOrder && (
+                    <div>
+                      <Plot
+                        data={[{
+                          x: linearResult.statistics.residuals.map((_, i) => i + 1),
+                          y: linearResult.statistics.residuals,
+                          mode: 'markers',
+                          type: 'scatter',
+                          name: 'Residuals',
+                          marker: { color: 'red', size: 8 },
+                        },
+                        {
+                          x: [1, linearResult.statistics.residuals.length],
+                          y: [0, 0],
+                          mode: 'lines',
+                          type: 'scatter',
+                          name: 'Zero Line',
+                          line: { color: 'black', width: 1, dash: 'dash' },
+                        }]}
+                        layout={{
+                          title: { text: '<b>Residuals vs Order of Data (Linear)</b>' },
+                          xaxis: { title: { text: '<b>Observation Order</b>' } },
+                          yaxis: { title: { text: '<b>Residuals</b>' } },
+                          showlegend: false,
+                          hovermode: 'closest',
+                        }}
+                        useResizeHandler
+                        style={{ width: '100%', height: '400px' }}
+                        config={{ responsive: true, displayModeBar: true, displaylogo: false }}
+                      />
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -1564,69 +1568,73 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                 </div>
               </div>
               
-              {showQuadraticResidualsVsFits && quadraticResult.statistics.residuals && (
-                <div className="mt-4">
-                  <Plot
-                    data={[{
-                      x: quadraticResult.statistics.fittedValues,
-                      y: quadraticResult.statistics.residuals,
-                      mode: 'markers',
-                      type: 'scatter',
-                      name: 'Residuals',
-                      marker: { color: 'green', size: 8 },
-                    },
-                    {
-                      x: quadraticResult.statistics.fittedValues,
-                      y: Array(quadraticResult.statistics.fittedValues.length).fill(0),
-                      mode: 'lines',
-                      type: 'scatter',
-                      name: 'Zero Line',
-                      line: { color: 'black', width: 1, dash: 'dash' },
-                    }]}
-                    layout={{
-                      title: { text: '<b>Residuals vs Fitted Values (Quadratic)</b>' },
-                      xaxis: { title: { text: '<b>Fitted Values</b>' } },
-                      yaxis: { title: { text: '<b>Residuals</b>' } },
-                      showlegend: false,
-                      hovermode: 'closest',
-                    }}
-                    useResizeHandler
-                    style={{ width: '100%', height: '400px' }}
-                    config={{ responsive: true, displayModeBar: true, displaylogo: false }}
-                  />
-                </div>
-              )}
-              
-              {showQuadraticResidualsVsOrder && quadraticResult.statistics.residuals && (
-                <div className="mt-4">
-                  <Plot
-                    data={[{
-                      x: quadraticResult.statistics.residuals.map((_, i) => i + 1),
-                      y: quadraticResult.statistics.residuals,
-                      mode: 'markers',
-                      type: 'scatter',
-                      name: 'Residuals',
-                      marker: { color: 'green', size: 8 },
-                    },
-                    {
-                      x: [1, quadraticResult.statistics.residuals.length],
-                      y: [0, 0],
-                      mode: 'lines',
-                      type: 'scatter',
-                      name: 'Zero Line',
-                      line: { color: 'black', width: 1, dash: 'dash' },
-                    }]}
-                    layout={{
-                      title: { text: '<b>Residuals vs Order of Data (Quadratic)</b>' },
-                      xaxis: { title: { text: '<b>Observation Order</b>' } },
-                      yaxis: { title: { text: '<b>Residuals</b>' } },
-                      showlegend: false,
-                      hovermode: 'closest',
-                    }}
-                    useResizeHandler
-                    style={{ width: '100%', height: '400px' }}
-                    config={{ responsive: true, displayModeBar: true, displaylogo: false }}
-                  />
+              {(showQuadraticResidualsVsFits || showQuadraticResidualsVsOrder) && quadraticResult.statistics.residuals && (
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {showQuadraticResidualsVsFits && (
+                    <div>
+                      <Plot
+                        data={[{
+                          x: quadraticResult.statistics.fittedValues,
+                          y: quadraticResult.statistics.residuals,
+                          mode: 'markers',
+                          type: 'scatter',
+                          name: 'Residuals',
+                          marker: { color: 'green', size: 8 },
+                        },
+                        {
+                          x: quadraticResult.statistics.fittedValues,
+                          y: Array(quadraticResult.statistics.fittedValues.length).fill(0),
+                          mode: 'lines',
+                          type: 'scatter',
+                          name: 'Zero Line',
+                          line: { color: 'black', width: 1, dash: 'dash' },
+                        }]}
+                        layout={{
+                          title: { text: '<b>Residuals vs Fitted Values (Quadratic)</b>' },
+                          xaxis: { title: { text: '<b>Fitted Values</b>' } },
+                          yaxis: { title: { text: '<b>Residuals</b>' } },
+                          showlegend: false,
+                          hovermode: 'closest',
+                        }}
+                        useResizeHandler
+                        style={{ width: '100%', height: '400px' }}
+                        config={{ responsive: true, displayModeBar: true, displaylogo: false }}
+                      />
+                    </div>
+                  )}
+                  
+                  {showQuadraticResidualsVsOrder && (
+                    <div>
+                      <Plot
+                        data={[{
+                          x: quadraticResult.statistics.residuals.map((_, i) => i + 1),
+                          y: quadraticResult.statistics.residuals,
+                          mode: 'markers',
+                          type: 'scatter',
+                          name: 'Residuals',
+                          marker: { color: 'green', size: 8 },
+                        },
+                        {
+                          x: [1, quadraticResult.statistics.residuals.length],
+                          y: [0, 0],
+                          mode: 'lines',
+                          type: 'scatter',
+                          name: 'Zero Line',
+                          line: { color: 'black', width: 1, dash: 'dash' },
+                        }]}
+                        layout={{
+                          title: { text: '<b>Residuals vs Order of Data (Quadratic)</b>' },
+                          xaxis: { title: { text: '<b>Observation Order</b>' } },
+                          yaxis: { title: { text: '<b>Residuals</b>' } },
+                          showlegend: false,
+                          hovermode: 'closest',
+                        }}
+                        useResizeHandler
+                        style={{ width: '100%', height: '400px' }}
+                        config={{ responsive: true, displayModeBar: true, displaylogo: false }}
+                      />
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -1826,69 +1834,73 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                 </div>
               </div>
               
-              {showCubicResidualsVsFits && cubicResult.statistics.residuals && (
-                <div className="mt-4">
-                  <Plot
-                    data={[{
-                      x: cubicResult.statistics.fittedValues,
-                      y: cubicResult.statistics.residuals,
-                      mode: 'markers',
-                      type: 'scatter',
-                      name: 'Residuals',
-                      marker: { color: 'purple', size: 8 },
-                    },
-                    {
-                      x: cubicResult.statistics.fittedValues,
-                      y: Array(cubicResult.statistics.fittedValues.length).fill(0),
-                      mode: 'lines',
-                      type: 'scatter',
-                      name: 'Zero Line',
-                      line: { color: 'black', width: 1, dash: 'dash' },
-                    }]}
-                    layout={{
-                      title: { text: '<b>Residuals vs Fitted Values (Cubic)</b>' },
-                      xaxis: { title: { text: '<b>Fitted Values</b>' } },
-                      yaxis: { title: { text: '<b>Residuals</b>' } },
-                      showlegend: false,
-                      hovermode: 'closest',
-                    }}
-                    useResizeHandler
-                    style={{ width: '100%', height: '400px' }}
-                    config={{ responsive: true, displayModeBar: true, displaylogo: false }}
-                  />
-                </div>
-              )}
-              
-              {showCubicResidualsVsOrder && cubicResult.statistics.residuals && (
-                <div className="mt-4">
-                  <Plot
-                    data={[{
-                      x: cubicResult.statistics.residuals.map((_, i) => i + 1),
-                      y: cubicResult.statistics.residuals,
-                      mode: 'markers',
-                      type: 'scatter',
-                      name: 'Residuals',
-                      marker: { color: 'purple', size: 8 },
-                    },
-                    {
-                      x: [1, cubicResult.statistics.residuals.length],
-                      y: [0, 0],
-                      mode: 'lines',
-                      type: 'scatter',
-                      name: 'Zero Line',
-                      line: { color: 'black', width: 1, dash: 'dash' },
-                    }]}
-                    layout={{
-                      title: { text: '<b>Residuals vs Order of Data (Cubic)</b>' },
-                      xaxis: { title: { text: '<b>Observation Order</b>' } },
-                      yaxis: { title: { text: '<b>Residuals</b>' } },
-                      showlegend: false,
-                      hovermode: 'closest',
-                    }}
-                    useResizeHandler
-                    style={{ width: '100%', height: '400px' }}
-                    config={{ responsive: true, displayModeBar: true, displaylogo: false }}
-                  />
+              {(showCubicResidualsVsFits || showCubicResidualsVsOrder) && cubicResult.statistics.residuals && (
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {showCubicResidualsVsFits && (
+                    <div>
+                      <Plot
+                        data={[{
+                          x: cubicResult.statistics.fittedValues,
+                          y: cubicResult.statistics.residuals,
+                          mode: 'markers',
+                          type: 'scatter',
+                          name: 'Residuals',
+                          marker: { color: 'purple', size: 8 },
+                        },
+                        {
+                          x: cubicResult.statistics.fittedValues,
+                          y: Array(cubicResult.statistics.fittedValues.length).fill(0),
+                          mode: 'lines',
+                          type: 'scatter',
+                          name: 'Zero Line',
+                          line: { color: 'black', width: 1, dash: 'dash' },
+                        }]}
+                        layout={{
+                          title: { text: '<b>Residuals vs Fitted Values (Cubic)</b>' },
+                          xaxis: { title: { text: '<b>Fitted Values</b>' } },
+                          yaxis: { title: { text: '<b>Residuals</b>' } },
+                          showlegend: false,
+                          hovermode: 'closest',
+                        }}
+                        useResizeHandler
+                        style={{ width: '100%', height: '400px' }}
+                        config={{ responsive: true, displayModeBar: true, displaylogo: false }}
+                      />
+                    </div>
+                  )}
+                  
+                  {showCubicResidualsVsOrder && (
+                    <div>
+                      <Plot
+                        data={[{
+                          x: cubicResult.statistics.residuals.map((_, i) => i + 1),
+                          y: cubicResult.statistics.residuals,
+                          mode: 'markers',
+                          type: 'scatter',
+                          name: 'Residuals',
+                          marker: { color: 'purple', size: 8 },
+                        },
+                        {
+                          x: [1, cubicResult.statistics.residuals.length],
+                          y: [0, 0],
+                          mode: 'lines',
+                          type: 'scatter',
+                          name: 'Zero Line',
+                          line: { color: 'black', width: 1, dash: 'dash' },
+                        }]}
+                        layout={{
+                          title: { text: '<b>Residuals vs Order of Data (Cubic)</b>' },
+                          xaxis: { title: { text: '<b>Observation Order</b>' } },
+                          yaxis: { title: { text: '<b>Residuals</b>' } },
+                          showlegend: false,
+                          hovermode: 'closest',
+                        }}
+                        useResizeHandler
+                        style={{ width: '100%', height: '400px' }}
+                        config={{ responsive: true, displayModeBar: true, displaylogo: false }}
+                      />
+                    </div>
+                  )}
                 </div>
               )}
             </div>
