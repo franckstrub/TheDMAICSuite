@@ -17,6 +17,8 @@ export interface RegressionStatistics {
   andersonDarlingStatistic: number;
   andersonDarlingPValue: number;
   andersonDarlingNormality: 'Normal' | 'Not Normal' | 'Inconclusive';
+  fittedValues: number[];
+  residuals: number[];
 }
 
 export interface RegressionResult {
@@ -102,7 +104,7 @@ export function linearRegression(x: number[], y: number[]): LinearRegressionResu
 
   const equation = `Y = ${a.toFixed(4)} ${b >= 0 ? '+' : ''} ${b.toFixed(4)}X`;
 
-  const statistics = calculateRegressionStatistics(x, y, residuals, sse, sst, r2, 2);
+  const statistics = calculateRegressionStatistics(x, y, residuals, sse, sst, r2, 2, yPred);
 
   return {
     a,
@@ -166,7 +168,7 @@ export function quadraticRegression(x: number[], y: number[]): QuadraticRegressi
 
   const equation = `Y = ${a.toFixed(4)} ${b >= 0 ? '+' : ''} ${b.toFixed(4)}X ${c >= 0 ? '+' : ''} ${c.toFixed(4)}X²`;
 
-  const statistics = calculateRegressionStatistics(x, y, residuals, sse, sst, r2, 3);
+  const statistics = calculateRegressionStatistics(x, y, residuals, sse, sst, r2, 3, yPred);
 
   return {
     a,
@@ -234,7 +236,7 @@ export function cubicRegression(x: number[], y: number[]): CubicRegressionResult
 
   const equation = `Y = ${a.toFixed(4)} ${b >= 0 ? '+' : ''} ${b.toFixed(4)}X ${c >= 0 ? '+' : ''} ${c.toFixed(4)}X² ${d >= 0 ? '+' : ''} ${d.toFixed(4)}X³`;
 
-  const statistics = calculateRegressionStatistics(x, y, residuals, sse, sst, r2, 4);
+  const statistics = calculateRegressionStatistics(x, y, residuals, sse, sst, r2, 4, yPred);
 
   return {
     a,
@@ -371,7 +373,8 @@ function calculateRegressionStatistics(
   sse: number,
   sst: number,
   r2: number,
-  numParams: number
+  numParams: number,
+  fittedValues: number[]
 ): RegressionStatistics {
   const n = x.length;
   const dfError = n - numParams;
@@ -440,5 +443,7 @@ function calculateRegressionStatistics(
     andersonDarlingStatistic: normalADTest.adStatistic,
     andersonDarlingPValue: normalADTest.pValue,
     andersonDarlingNormality: normalADTest.isNormal ? 'Normal' : (normalADTest.isNormal === false ? 'Not Normal' : 'Inconclusive'),
+    fittedValues,
+    residuals,
   };
 }
