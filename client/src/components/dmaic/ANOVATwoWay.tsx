@@ -531,6 +531,57 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
     </div>
   );
 
+  // Calculate Y-axis range for consistent scaling across plots
+  const getYAxisRange = () => {
+    if (!anovaResult) return undefined;
+    
+    const allMeans: number[] = [];
+    
+    // Main effect means for Factor A
+    factorALevels.forEach((levelA) => {
+      const values: number[] = [];
+      factorBLevels.forEach((levelB) => {
+        const key = `${levelA}-${levelB}`;
+        const cellValues = cellData[key] || [];
+        values.push(...cellValues);
+      });
+      if (values.length > 0) {
+        allMeans.push(values.reduce((a, b) => a + b, 0) / values.length);
+      }
+    });
+    
+    // Main effect means for Factor B
+    factorBLevels.forEach((levelB) => {
+      const values: number[] = [];
+      factorALevels.forEach((levelA) => {
+        const key = `${levelA}-${levelB}`;
+        const cellValues = cellData[key] || [];
+        values.push(...cellValues);
+      });
+      if (values.length > 0) {
+        allMeans.push(values.reduce((a, b) => a + b, 0) / values.length);
+      }
+    });
+    
+    // If interaction is included, add cell means
+    if (includeInteraction) {
+      Object.values(anovaResult.cellMeans).forEach((mean) => {
+        allMeans.push(mean);
+      });
+    }
+    
+    if (allMeans.length === 0) return undefined;
+    
+    const minMean = Math.min(...allMeans);
+    const maxMean = Math.max(...allMeans);
+    const range = maxMean - minMean;
+    const padding = range * 0.1;
+    
+    return [minMean - padding, maxMean + padding];
+  };
+
+  const yAxisRange = getYAxisRange();
+
   // Graph Tab Content
   const graphContent = (
     <div className="space-y-6">
@@ -538,7 +589,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
         <Card>
           <CardContent className="p-8 text-center text-muted-foreground">
             <Info className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>Enter data to view main effect plots, interaction plot, and residual plots</p>
+            <p>Enter data to view main effect plots{includeInteraction ? ', interaction plot,' : ''} and residual plots</p>
           </CardContent>
         </Card>
       ) : (
@@ -571,7 +622,10 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                   ]}
                   layout={{
                     xaxis: { title: factorAName },
-                    yaxis: { title: `Mean ${responseVariableName}` },
+                    yaxis: { 
+                      title: responseVariableName,
+                      range: yAxisRange,
+                    },
                     showlegend: false,
                     hovermode: 'closest',
                   }}
@@ -607,7 +661,10 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                   ]}
                   layout={{
                     xaxis: { title: factorBName },
-                    yaxis: { title: `Mean ${responseVariableName}` },
+                    yaxis: { 
+                      title: responseVariableName,
+                      range: yAxisRange,
+                    },
                     showlegend: false,
                     hovermode: 'closest',
                   }}
@@ -618,38 +675,43 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
             </Card>
           </div>
 
-          {/* Interaction Plot */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Interaction Plot</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Plot
-                data={factorALevels.map((levelA) => ({
-                  x: factorBLevels,
-                  y: factorBLevels.map((levelB) => {
-                    const key = `${levelA}-${levelB}`;
-                    return anovaResult.cellMeans[key] || 0;
-                  }),
-                  type: 'scatter',
-                  mode: 'lines+markers',
-                  name: levelA,
-                  line: { width: 2 },
-                  marker: { size: 8 },
-                }))}
-                layout={{
-                  title: `${factorAName} × ${factorBName} Interaction`,
-                  xaxis: { title: factorBName },
-                  yaxis: { title: `Mean ${responseVariableName}` },
-                  showlegend: true,
-                  legend: { title: { text: factorAName } },
-                  hovermode: 'closest',
-                }}
-                config={{ displayModeBar: true, responsive: true }}
-                className="w-full"
-              />
-            </CardContent>
-          </Card>
+          {/* Interaction Plot - Only show when interaction is included */}
+          {includeInteraction && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Interaction Plot</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Plot
+                  data={factorALevels.map((levelA) => ({
+                    x: factorBLevels,
+                    y: factorBLevels.map((levelB) => {
+                      const key = `${levelA}-${levelB}`;
+                      return anovaResult.cellMeans[key] || 0;
+                    }),
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: levelA,
+                    line: { width: 2 },
+                    marker: { size: 8 },
+                  }))}
+                  layout={{
+                    title: `${factorAName} × ${factorBName} Interaction`,
+                    xaxis: { title: factorBName },
+                    yaxis: { 
+                      title: responseVariableName,
+                      range: yAxisRange,
+                    },
+                    showlegend: true,
+                    legend: { title: { text: factorAName } },
+                    hovermode: 'closest',
+                  }}
+                  config={{ displayModeBar: true, responsive: true }}
+                  className="w-full"
+                />
+              </CardContent>
+            </Card>
+          )}
 
           {/* Residual Plots */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
