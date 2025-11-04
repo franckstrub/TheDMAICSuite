@@ -621,13 +621,16 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                     },
                   ]}
                   layout={{
-                    xaxis: { title: factorAName },
+                    xaxis: { 
+                      title: { text: factorAName },
+                    },
                     yaxis: { 
-                      title: responseVariableName,
+                      title: { text: responseVariableName },
                       range: yAxisRange,
                     },
                     showlegend: false,
                     hovermode: 'closest',
+                    margin: { l: 60, r: 40, t: 40, b: 60 },
                   }}
                   config={{ displayModeBar: false, responsive: true }}
                   className="w-full"
@@ -660,13 +663,16 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                     },
                   ]}
                   layout={{
-                    xaxis: { title: factorBName },
+                    xaxis: { 
+                      title: { text: factorBName },
+                    },
                     yaxis: { 
-                      title: responseVariableName,
+                      title: { text: responseVariableName },
                       range: yAxisRange,
                     },
                     showlegend: false,
                     hovermode: 'closest',
+                    margin: { l: 60, r: 40, t: 40, b: 60 },
                   }}
                   config={{ displayModeBar: false, responsive: true }}
                   className="w-full"
@@ -697,14 +703,17 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                   }))}
                   layout={{
                     title: `${factorAName} × ${factorBName} Interaction`,
-                    xaxis: { title: factorBName },
+                    xaxis: { 
+                      title: { text: factorBName },
+                    },
                     yaxis: { 
-                      title: responseVariableName,
+                      title: { text: responseVariableName },
                       range: yAxisRange,
                     },
                     showlegend: true,
                     legend: { title: { text: factorAName } },
                     hovermode: 'closest',
+                    margin: { l: 60, r: 40, t: 60, b: 60 },
                   }}
                   config={{ displayModeBar: true, responsive: true }}
                   className="w-full"
