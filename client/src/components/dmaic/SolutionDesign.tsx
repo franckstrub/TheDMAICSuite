@@ -14,6 +14,7 @@ import { Loader2, FileText, Download, Trash2, Paperclip, X } from "lucide-react"
 import DrawIoProcessMap from "@/components/dmaic/DrawIoProcessMap";
 import ProcessRaciMatrix from "@/components/dmaic/ProcessRaciMatrix";
 import { SimpleRegression } from "@/components/dmaic/SimpleRegression";
+import { ANOVATwoWay } from "@/components/dmaic/ANOVATwoWay";
 
 interface SolutionDesignProps {
   projectId: number;
@@ -683,6 +684,20 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
                         </CardHeader>
                         <CardContent>
                           <SimpleRegression projectId={projectId} solutionId={solution.solutionId} />
+                        </CardContent>
+                      </Card>
+                    </div>
+                  )}
+
+                  {/* ANOVA Two-Way - Show when tfAnovaTwoWay is checked */}
+                  {currentState.transferFunction && transferFunctionConfigs[solution.solutionId]?.tfAnovaTwoWay && (
+                    <div className="mt-6">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>ANOVA Two-Way Analysis - {solution.solutionId}</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <ANOVATwoWay projectId={projectId} solutionId={solution.solutionId} />
                         </CardContent>
                       </Card>
                     </div>
