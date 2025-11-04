@@ -724,79 +724,6 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
               </CardContent>
             </Card>
           )}
-
-          {/* Residual Plots */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Residuals vs Fitted Values</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Plot
-                  data={[
-                    {
-                      x: anovaResult.fittedValues,
-                      y: anovaResult.residuals,
-                      type: 'scatter',
-                      mode: 'markers',
-                      marker: { color: 'blue', size: 6 },
-                    },
-                    {
-                      x: anovaResult.fittedValues,
-                      y: new Array(anovaResult.fittedValues.length).fill(0),
-                      type: 'scatter',
-                      mode: 'lines',
-                      line: { color: 'red', dash: 'dash' },
-                      showlegend: false,
-                    },
-                  ]}
-                  layout={{
-                    xaxis: { title: 'Fitted Values' },
-                    yaxis: { title: 'Residuals' },
-                    showlegend: false,
-                    hovermode: 'closest',
-                  }}
-                  config={{ displayModeBar: false, responsive: true }}
-                  className="w-full"
-                />
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Residuals vs Order</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Plot
-                  data={[
-                    {
-                      x: anovaResult.residuals.map((_, i) => i + 1),
-                      y: anovaResult.residuals,
-                      type: 'scatter',
-                      mode: 'markers',
-                      marker: { color: 'blue', size: 6 },
-                    },
-                    {
-                      x: anovaResult.residuals.map((_, i) => i + 1),
-                      y: new Array(anovaResult.residuals.length).fill(0),
-                      type: 'scatter',
-                      mode: 'lines',
-                      line: { color: 'red', dash: 'dash' },
-                      showlegend: false,
-                    },
-                  ]}
-                  layout={{
-                    xaxis: { title: 'Observation Order' },
-                    yaxis: { title: 'Residuals' },
-                    showlegend: false,
-                    hovermode: 'closest',
-                  }}
-                  config={{ displayModeBar: false, responsive: true }}
-                  className="w-full"
-                />
-              </CardContent>
-            </Card>
-          </div>
         </>
       )}
     </div>
@@ -1003,28 +930,61 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
               <CardTitle>Analysis of Residuals</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="residuals-vs-fits"
-                  checked={showResidualsVsFits}
-                  onCheckedChange={(checked) => setShowResidualsVsFits(checked as boolean)}
-                  data-testid="checkbox-residuals-vs-fits"
-                />
-                <Label htmlFor="residuals-vs-fits" className="cursor-pointer">
-                  Graph of residuals versus fitted values (check the homogeneity of the variance of the residuals and their random distribution)
-                </Label>
+              <div>
+                <p className="font-semibold mb-2">Residuals Analysis:</p>
+                <table className="w-full border-collapse">
+                  <tbody>
+                    <th className="text-sm text-muted-foreground py-2 pr-4 w-1/4">Standard Deviation:</th>
+                    <th className="text-sm text-muted-foreground py-2 pr-4 align-top w-3/4">Normality Test (Anderson-Darling):</th>
+                    <tr>
+                      <td className="font-medium py-2">{anovaResult.residualStd.toFixed(6)}</td>
+                      <table className="w-full">
+                        <tbody>                         
+                          <th className="text-sm text-muted-foreground pb-1 w-1/5">AD Statistic:</th>
+                          <th className="text-sm text-muted-foreground pb-1 w 1/5">p-value:</th>
+                          <th className="text-sm text-muted-foreground pb-1 w-3/5">Conclusion (5% significance (α)):</th>
+                          <tr>
+                            <td className="font-medium pb-1 text-center">{anovaResult.andersonDarlingStatistic.toFixed(4)}</td>
+                            <td className="font-medium pb-1 text-center">{anovaResult.andersonDarlingPValue.toFixed(4)}</td>
+                            <td className={`font-medium pb-1  text-center ${
+                              anovaResult.andersonDarlingNormality === 'Normal' ? 'text-green-600 dark:text-green-400' :
+                              anovaResult.andersonDarlingNormality === 'Not Normal' ? 'text-red-600 dark:text-red-400' :
+                              'text-yellow-600 dark:text-yellow-400'
+                              }`}>
+                              {anovaResult.andersonDarlingNormality}
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
+              
+              <div className="mt-4 space-y-2">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="residuals-vs-fits"
+                    checked={showResidualsVsFits}
+                    onCheckedChange={(checked) => setShowResidualsVsFits(checked as boolean)}
+                    data-testid="checkbox-residuals-vs-fits"
+                  />
+                  <Label htmlFor="residuals-vs-fits" className="cursor-pointer">
+                    Graph of residuals versus fitted values (check the homogeneity of the variance of the residuals and their random distribution)
+                  </Label>
+                </div>
 
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="residuals-vs-order"
-                  checked={showResidualsVsOrder}
-                  onCheckedChange={(checked) => setShowResidualsVsOrder(checked as boolean)}
-                  data-testid="checkbox-residuals-vs-order"
-                />
-                <Label htmlFor="residuals-vs-order" className="cursor-pointer">
-                  Graph of residuals versus order of data (verify the independence of the residuals)
-                </Label>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="residuals-vs-order"
+                    checked={showResidualsVsOrder}
+                    onCheckedChange={(checked) => setShowResidualsVsOrder(checked as boolean)}
+                    data-testid="checkbox-residuals-vs-order"
+                  />
+                  <Label htmlFor="residuals-vs-order" className="cursor-pointer">
+                    Graph of residuals versus order of data (verify the independence of the residuals)
+                  </Label>
+                </div>
               </div>
 
               {(showResidualsVsFits || showResidualsVsOrder) && anovaResult.residuals && (
