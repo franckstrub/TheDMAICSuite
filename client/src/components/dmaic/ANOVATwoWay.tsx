@@ -538,12 +538,87 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
         <Card>
           <CardContent className="p-8 text-center text-muted-foreground">
             <Info className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>Enter data to view interaction plot and residual plots</p>
+            <p>Enter data to view main effect plots, interaction plot, and residual plots</p>
           </CardContent>
         </Card>
       ) : (
         <>
-          {/* Main Effects and Interaction Plot */}
+          {/* Main Effect Plots */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Main Effect Plot - {factorAName}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Plot
+                  data={[
+                    {
+                      x: factorALevels,
+                      y: factorALevels.map((levelA) => {
+                        const values: number[] = [];
+                        factorBLevels.forEach((levelB) => {
+                          const key = `${levelA}-${levelB}`;
+                          const cellValues = cellData[key] || [];
+                          values.push(...cellValues);
+                        });
+                        return values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0;
+                      }),
+                      type: 'scatter',
+                      mode: 'lines+markers',
+                      line: { width: 3, color: '#2563eb' },
+                      marker: { size: 10, color: '#2563eb' },
+                    },
+                  ]}
+                  layout={{
+                    xaxis: { title: factorAName },
+                    yaxis: { title: `Mean ${responseVariableName}` },
+                    showlegend: false,
+                    hovermode: 'closest',
+                  }}
+                  config={{ displayModeBar: false, responsive: true }}
+                  className="w-full"
+                />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Main Effect Plot - {factorBName}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Plot
+                  data={[
+                    {
+                      x: factorBLevels,
+                      y: factorBLevels.map((levelB) => {
+                        const values: number[] = [];
+                        factorALevels.forEach((levelA) => {
+                          const key = `${levelA}-${levelB}`;
+                          const cellValues = cellData[key] || [];
+                          values.push(...cellValues);
+                        });
+                        return values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0;
+                      }),
+                      type: 'scatter',
+                      mode: 'lines+markers',
+                      line: { width: 3, color: '#16a34a' },
+                      marker: { size: 10, color: '#16a34a' },
+                    },
+                  ]}
+                  layout={{
+                    xaxis: { title: factorBName },
+                    yaxis: { title: `Mean ${responseVariableName}` },
+                    showlegend: false,
+                    hovermode: 'closest',
+                  }}
+                  config={{ displayModeBar: false, responsive: true }}
+                  className="w-full"
+                />
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Interaction Plot */}
           <Card>
             <CardHeader>
               <CardTitle>Interaction Plot</CardTitle>
