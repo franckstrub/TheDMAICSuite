@@ -338,6 +338,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
         </CardContent>
       </Card>
 
+<Card className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4 bg-muted">
       <Card>
         <CardHeader>
           <CardTitle>{factorAName} Levels</CardTitle>
@@ -399,6 +400,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
           </Button>
         </CardContent>
       </Card>
+</Card>
 
       <Card>
         <CardHeader>
