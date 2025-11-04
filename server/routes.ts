@@ -48,6 +48,7 @@ import {
   insertSolutionDesignTrackingSchema,
   insertSolutionProcessMapSchema,
   insertSimpleRegressionConfigSchema,
+  insertAnovaTwoWayConfigSchema,
 } from "@shared/schema";
 import {
   CustomerRequirement,
@@ -114,6 +115,7 @@ import {
   proofOfImprovementPreferences,
   processRaciMatrix,
   simpleRegressionConfig,
+  anovaTwoWayConfig,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, asc, desc, ne, and, or, ilike, sql, inArray } from "drizzle-orm";
@@ -7470,6 +7472,125 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       } catch (err) {
         console.error("Simple regression config error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // ANOVA Two-Way Routes (DMAIC Improve Phase - Transfer Function)
+  app.get(
+    "/api/projects/:projectId/solutions/:solutionId/anova-two-way",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        const solutionId = req.params.solutionId;
+
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res
+            .status(400)
+            .json({ message: "User organization not found" });
+        }
+
+        const [config] = await db
+          .select()
+          .from(anovaTwoWayConfig)
+          .where(
+            and(
+              eq(anovaTwoWayConfig.projectId, projectId),
+              eq(anovaTwoWayConfig.solutionId, solutionId),
+              eq(anovaTwoWayConfig.organizationId, userRecord.organizationId),
+            ),
+          )
+          .limit(1);
+
+        if (!config) {
+          return res.status(404).json({ message: "Configuration not found" });
+        }
+
+        return res.json(config);
+      } catch (err) {
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  app.post(
+    "/api/projects/:projectId/solutions/:solutionId/anova-two-way",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        const solutionId = req.params.solutionId;
+
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res
+            .status(400)
+            .json({ message: "User organization not found" });
+        }
+
+        const configData = {
+          projectId,
+          solutionId,
+          organizationId: userRecord.organizationId,
+          ...req.body,
+        };
+
+        const validatedData = insertAnovaTwoWayConfigSchema.parse(configData);
+
+        const [existing] = await db
+          .select()
+          .from(anovaTwoWayConfig)
+          .where(
+            and(
+              eq(anovaTwoWayConfig.projectId, projectId),
+              eq(anovaTwoWayConfig.solutionId, solutionId),
+              eq(anovaTwoWayConfig.organizationId, userRecord.organizationId),
+            ),
+          )
+          .limit(1);
+
+        if (existing) {
+          const [updated] = await db
+            .update(anovaTwoWayConfig)
+            .set({
+              ...validatedData,
+              lastUpdated: new Date(),
+            })
+            .where(
+              and(
+                eq(anovaTwoWayConfig.projectId, projectId),
+                eq(anovaTwoWayConfig.solutionId, solutionId),
+                eq(anovaTwoWayConfig.organizationId, userRecord.organizationId),
+              ),
+            )
+            .returning();
+          return res.json(updated);
+        } else {
+          const [saved] = await db
+            .insert(anovaTwoWayConfig)
+            .values(validatedData)
+            .returning();
+          return res.status(201).json(saved);
+        }
+      } catch (err) {
+        console.error("ANOVA Two-Way config error:", err);
         return handleErrors(err, res);
       }
     },

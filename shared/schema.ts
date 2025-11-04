@@ -2516,6 +2516,49 @@ export const insertSimpleRegressionConfigSchema = createInsertSchema(simpleRegre
 export type InsertSimpleRegressionConfig = z.infer<typeof insertSimpleRegressionConfigSchema>;
 export type SimpleRegressionConfig = typeof simpleRegressionConfig.$inferSelect;
 
+// ANOVA Two-Way Configuration for Transfer Function Analysis
+export const anovaTwoWayConfig = pgTable(
+  "anova_two_way_config",
+  {
+    id: serial("id").primaryKey(),
+    organizationId: integer("organization_id")
+      .references(() => organizations.id)
+      .notNull(),
+    projectId: integer("project_id").notNull(),
+    solutionId: text("solution_id").notNull(),
+    
+    // Factor and response variable names
+    factorAName: text("factor_a_name").default("Factor A"),
+    factorBName: text("factor_b_name").default("Factor B"),
+    responseVariableName: text("response_variable_name").default("Response"),
+    
+    // Factor levels (stored as arrays of strings)
+    factorALevels: jsonb("factor_a_levels").$type<string[]>().default([]),
+    factorBLevels: jsonb("factor_b_levels").$type<string[]>().default([]),
+    
+    // Data organized by cell (Factor A level, Factor B level, replications)
+    // Structure: { "A1-B1": [val1, val2, ...], "A1-B2": [...], ... }
+    cellData: jsonb("cell_data").$type<Record<string, number[]>>().default({}),
+    
+    // Analysis options
+    includeInteraction: boolean("include_interaction").default(true),
+    significanceLevel: real("significance_level").default(0.05),
+    
+    lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+  },
+  (table) => ({
+    uniqueSolutionAnovaTwoWay: unique().on(table.projectId, table.solutionId),
+  }),
+);
+
+export const insertAnovaTwoWayConfigSchema = createInsertSchema(anovaTwoWayConfig).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type InsertAnovaTwoWayConfig = z.infer<typeof insertAnovaTwoWayConfigSchema>;
+export type AnovaTwoWayConfig = typeof anovaTwoWayConfig.$inferSelect;
+
 // User Settings Table
 export const userSettings = pgTable(
   "user_settings",
