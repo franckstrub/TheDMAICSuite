@@ -473,6 +473,15 @@ export function calculateLinearXIntervals(
   
   // Solved X value
   const solvedX = (targetY - a) / b;
+  if (dfError ===0) {
+    return {
+      xValue: solvedX,
+      confidenceIntervalLower: solvedX,
+      confidenceIntervalUpper: solvedX,
+      predictionIntervalLower: solvedX,
+      predictionIntervalUpper: solvedX,
+    }
+  }
   
   // Calculate necessary statistics
   const meanX = x.reduce((sum, xi) => sum + xi, 0) / n;
@@ -529,6 +538,16 @@ export function calculateQuadraticXIntervals(
   const n = x.length;
   const { a, b, c, statistics } = result;
   const { mse, dfError } = statistics;
+
+  if (dfError ===0) {
+    return {
+      xValue: solvedX,
+      confidenceIntervalLower: solvedX,
+      confidenceIntervalUpper: solvedX,
+      predictionIntervalLower: solvedX,
+      predictionIntervalUpper: solvedX,
+    }
+  }
   
   // Standard error of the regression
   const s = Math.sqrt(mse);
@@ -566,6 +585,7 @@ export function calculateQuadraticXIntervals(
       predictionIntervalLower: NaN,
       predictionIntervalUpper: NaN,
     };
+    
   }
   
   const XtXinv: number[][] = [
@@ -657,6 +677,16 @@ export function calculateCubicXIntervals(
   const n = x.length;
   const { a, b, c, d, statistics } = result;
   const { mse, dfError } = statistics;
+
+  if (dfError ===0) {
+    return {
+      xValue: solvedX,
+      confidenceIntervalLower: solvedX,
+      confidenceIntervalUpper: solvedX,
+      predictionIntervalLower: solvedX,
+      predictionIntervalUpper: solvedX,
+    }
+  }
   
   // Standard error of the regression
   const s = Math.sqrt(mse);

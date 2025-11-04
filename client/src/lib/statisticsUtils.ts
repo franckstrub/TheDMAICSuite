@@ -616,7 +616,10 @@ export function performNormalityTest(values: number[], meanval: number, stdeviat
 
   const Threshold = 0.05;
   let isNormal = true;
-  if (p_value < Threshold) {
+  if (isNaN(p_value)) {
+    isNormal=false
+  }
+  else if (p_value < Threshold) {
     isNormal= false;
   }
   return { isNormal, adStatistic: AD_value, pValue: p_value };
