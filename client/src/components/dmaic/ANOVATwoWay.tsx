@@ -1,0 +1,866 @@
+import { useState, useEffect, useRef } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2, Trash2, Info, Plus } from "lucide-react";
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { apiRequest, queryClient } from '@/lib/queryClient';
+import { HypothesisTestingTabs } from './common/HypothesisTestingTabs';
+import { anovaTwoWay, type AnovaTwoWayResult } from '@/lib/anovaUtils';
+import Plot from 'react-plotly.js';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+
+interface ANOVATwoWayProps {
+  projectId: number;
+  solutionId: string;
+}
+
+export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
+  const { toast } = useToast();
+  const loadedRef = useRef(false);
+  
+  const [factorAName, setFactorAName] = useState("Factor A");
+  const [factorBName, setFactorBName] = useState("Factor B");
+  const [responseVariableName, setResponseVariableName] = useState("Response");
+  
+  const [factorALevels, setFactorALevels] = useState<string[]>(["A1", "A2"]);
+  const [factorBLevels, setFactorBLevels] = useState<string[]>(["B1", "B2"]);
+  
+  const [cellData, setCellData] = useState<Record<string, number[]>>({});
+  const [includeInteraction, setIncludeInteraction] = useState(true);
+  const [significanceLevel, setSignificanceLevel] = useState(0.05);
+  
+  const [anovaResult, setAnovaResult] = useState<AnovaTwoWayResult | null>(null);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
+
+  const configQuery = useQuery({
+    queryKey: [`/api/projects/${projectId}/solutions/${solutionId}/anova-two-way`],
+    retry: false,
+  });
+
+  useEffect(() => {
+    if (configQuery.data && !loadedRef.current) {
+      loadedRef.current = true;
+      
+      const config = configQuery.data as any;
+      setFactorAName(config.factorAName || "Factor A");
+      setFactorBName(config.factorBName || "Factor B");
+      setResponseVariableName(config.responseVariableName || "Response");
+      
+      if (config.factorALevels && config.factorALevels.length > 0) {
+        setFactorALevels(config.factorALevels);
+      }
+      if (config.factorBLevels && config.factorBLevels.length > 0) {
+        setFactorBLevels(config.factorBLevels);
+      }
+      if (config.cellData) {
+        setCellData(config.cellData);
+      }
+      setIncludeInteraction(config.includeInteraction ?? true);
+      setSignificanceLevel(config.significanceLevel ?? 0.05);
+    }
+  }, [configQuery.data]);
+
+  const saveConfigMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return apiRequest(
+        'POST',
+        `/api/projects/${projectId}/solutions/${solutionId}/anova-two-way`,
+        data
+      );
+    },
+    onSuccess: () => {
+      toast({
+        title: "Configuration saved",
+        description: "Your ANOVA configuration has been saved successfully.",
+      });
+      queryClient.invalidateQueries({
+        queryKey: [`/api/projects/${projectId}/solutions/${solutionId}/anova-two-way`]
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save configuration",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const saveDataMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return apiRequest(
+        'POST',
+        `/api/projects/${projectId}/solutions/${solutionId}/anova-two-way`,
+        data
+      );
+    },
+    onSuccess: () => {
+      toast({
+        title: "Data saved",
+        description: "Your data has been saved successfully.",
+      });
+      queryClient.invalidateQueries({
+        queryKey: [`/api/projects/${projectId}/solutions/${solutionId}/anova-two-way`]
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save data",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSaveSetup = () => {
+    saveConfigMutation.mutate({
+      factorAName,
+      factorBName,
+      responseVariableName,
+      factorALevels,
+      factorBLevels,
+      includeInteraction,
+      significanceLevel,
+    });
+  };
+
+  const handleSaveData = () => {
+    calculateANOVA();
+    saveDataMutation.mutate({
+      factorAName,
+      factorBName,
+      responseVariableName,
+      factorALevels,
+      factorBLevels,
+      cellData,
+      includeInteraction,
+      significanceLevel,
+    });
+  };
+
+  const addFactorALevel = () => {
+    const newLevel = `A${factorALevels.length + 1}`;
+    setFactorALevels([...factorALevels, newLevel]);
+  };
+
+  const addFactorBLevel = () => {
+    const newLevel = `B${factorBLevels.length + 1}`;
+    setFactorBLevels([...factorBLevels, newLevel]);
+  };
+
+  const removeFactorALevel = (index: number) => {
+    if (factorALevels.length <= 2) {
+      toast({
+        title: "Cannot remove",
+        description: "Must have at least 2 levels for Factor A",
+        variant: "destructive",
+      });
+      return;
+    }
+    const newLevels = factorALevels.filter((_, i) => i !== index);
+    setFactorALevels(newLevels);
+    
+    // Clean up cell data
+    const newCellData = { ...cellData };
+    const levelToRemove = factorALevels[index];
+    for (const levelB of factorBLevels) {
+      delete newCellData[`${levelToRemove}-${levelB}`];
+    }
+    setCellData(newCellData);
+  };
+
+  const removeFactorBLevel = (index: number) => {
+    if (factorBLevels.length <= 2) {
+      toast({
+        title: "Cannot remove",
+        description: "Must have at least 2 levels for Factor B",
+        variant: "destructive",
+      });
+      return;
+    }
+    const newLevels = factorBLevels.filter((_, i) => i !== index);
+    setFactorBLevels(newLevels);
+    
+    // Clean up cell data
+    const newCellData = { ...cellData };
+    const levelToRemove = factorBLevels[index];
+    for (const levelA of factorALevels) {
+      delete newCellData[`${levelA}-${levelToRemove}`];
+    }
+    setCellData(newCellData);
+  };
+
+  const updateFactorALevel = (index: number, value: string) => {
+    const oldLevel = factorALevels[index];
+    const newLevels = [...factorALevels];
+    newLevels[index] = value;
+    setFactorALevels(newLevels);
+    
+    // Update cell data keys
+    const newCellData = { ...cellData };
+    for (const levelB of factorBLevels) {
+      const oldKey = `${oldLevel}-${levelB}`;
+      const newKey = `${value}-${levelB}`;
+      if (oldKey in newCellData) {
+        newCellData[newKey] = newCellData[oldKey];
+        delete newCellData[oldKey];
+      }
+    }
+    setCellData(newCellData);
+  };
+
+  const updateFactorBLevel = (index: number, value: string) => {
+    const oldLevel = factorBLevels[index];
+    const newLevels = [...factorBLevels];
+    newLevels[index] = value;
+    setFactorBLevels(newLevels);
+    
+    // Update cell data keys
+    const newCellData = { ...cellData };
+    for (const levelA of factorALevels) {
+      const oldKey = `${levelA}-${oldLevel}`;
+      const newKey = `${levelA}-${value}`;
+      if (oldKey in newCellData) {
+        newCellData[newKey] = newCellData[oldKey];
+        delete newCellData[oldKey];
+      }
+    }
+    setCellData(newCellData);
+  };
+
+  const updateCellValue = (levelA: string, levelB: string, index: number, value: string) => {
+    const key = `${levelA}-${levelB}`;
+    const currentData = cellData[key] || [];
+    const newData = [...currentData];
+    newData[index] = parseFloat(value) || 0;
+    
+    setCellData({
+      ...cellData,
+      [key]: newData,
+    });
+  };
+
+  const addReplication = (levelA: string, levelB: string) => {
+    const key = `${levelA}-${levelB}`;
+    const currentData = cellData[key] || [];
+    
+    setCellData({
+      ...cellData,
+      [key]: [...currentData, 0],
+    });
+  };
+
+  const removeReplication = (levelA: string, levelB: string, index: number) => {
+    const key = `${levelA}-${levelB}`;
+    const currentData = cellData[key] || [];
+    if (currentData.length <= 1 && includeInteraction) {
+      toast({
+        title: "Cannot remove",
+        description: "Each cell must have at least 1 observation (2 if interaction is included)",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const newData = currentData.filter((_, i) => i !== index);
+    setCellData({
+      ...cellData,
+      [key]: newData,
+    });
+  };
+
+  const calculateANOVA = () => {
+    setAnalysisError(null);
+    try {
+      const result = anovaTwoWay(factorALevels, factorBLevels, cellData, includeInteraction);
+      setAnovaResult(result);
+    } catch (error: any) {
+      setAnalysisError(error.message);
+      setAnovaResult(null);
+      toast({
+        title: "Analysis Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (Object.keys(cellData).length > 0) {
+      calculateANOVA();
+    }
+  }, [cellData, factorALevels, factorBLevels, includeInteraction]);
+
+  // Setup Tab Content
+  const setupContent = (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Variable Names</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="factorAName" data-testid="label-factor-a-name">Factor A Name</Label>
+              <Input
+                id="factorAName"
+                data-testid="input-factor-a-name"
+                value={factorAName}
+                onChange={(e) => setFactorAName(e.target.value)}
+                placeholder="e.g., Temperature"
+              />
+            </div>
+            <div>
+              <Label htmlFor="factorBName" data-testid="label-factor-b-name">Factor B Name</Label>
+              <Input
+                id="factorBName"
+                data-testid="input-factor-b-name"
+                value={factorBName}
+                onChange={(e) => setFactorBName(e.target.value)}
+                placeholder="e.g., Pressure"
+              />
+            </div>
+            <div>
+              <Label htmlFor="responseVariable" data-testid="label-response-variable">Response Variable</Label>
+              <Input
+                id="responseVariable"
+                data-testid="input-response-variable"
+                value={responseVariableName}
+                onChange={(e) => setResponseVariableName(e.target.value)}
+                placeholder="e.g., Yield"
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{factorAName} Levels</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {factorALevels.map((level, index) => (
+            <div key={index} className="flex gap-2 items-center">
+              <Input
+                value={level}
+                data-testid={`input-factor-a-level-${index}`}
+                onChange={(e) => updateFactorALevel(index, e.target.value)}
+                placeholder={`Level ${index + 1}`}
+              />
+              <Button
+                variant="outline"
+                size="icon"
+                data-testid={`button-remove-factor-a-level-${index}`}
+                onClick={() => removeFactorALevel(index)}
+                disabled={factorALevels.length <= 2}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
+          <Button onClick={addFactorALevel} data-testid="button-add-factor-a-level" className="w-full">
+            <Plus className="h-4 w-4 mr-2" />
+            Add {factorAName} Level
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{factorBName} Levels</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {factorBLevels.map((level, index) => (
+            <div key={index} className="flex gap-2 items-center">
+              <Input
+                value={level}
+                data-testid={`input-factor-b-level-${index}`}
+                onChange={(e) => updateFactorBLevel(index, e.target.value)}
+                placeholder={`Level ${index + 1}`}
+              />
+              <Button
+                variant="outline"
+                size="icon"
+                data-testid={`button-remove-factor-b-level-${index}`}
+                onClick={() => removeFactorBLevel(index)}
+                disabled={factorBLevels.length <= 2}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
+          <Button onClick={addFactorBLevel} data-testid="button-add-factor-b-level" className="w-full">
+            <Plus className="h-4 w-4 mr-2" />
+            Add {factorBName} Level
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Analysis Options</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="includeInteraction"
+              data-testid="checkbox-include-interaction"
+              checked={includeInteraction}
+              onCheckedChange={(checked) => setIncludeInteraction(checked as boolean)}
+            />
+            <Label htmlFor="includeInteraction" className="cursor-pointer">
+              Include Interaction Effect ({factorAName} × {factorBName})
+            </Label>
+          </div>
+          <div>
+            <Label htmlFor="significanceLevel" data-testid="label-significance-level">Significance Level (α)</Label>
+            <Input
+              id="significanceLevel"
+              data-testid="input-significance-level"
+              type="number"
+              min="0.001"
+              max="0.5"
+              step="0.001"
+              value={significanceLevel}
+              onChange={(e) => setSignificanceLevel(parseFloat(e.target.value) || 0.05)}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Button
+        onClick={handleSaveSetup}
+        data-testid="button-save-setup"
+        disabled={saveConfigMutation.isPending}
+        className="w-full"
+      >
+        {saveConfigMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        Save Configuration
+      </Button>
+    </div>
+  );
+
+  // Data Tab Content
+  const dataContent = (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>Data Entry</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-center">{factorAName} \ {factorBName}</TableHead>
+                  {factorBLevels.map((levelB, idx) => (
+                    <TableHead key={idx} className="text-center" data-testid={`header-factor-b-${idx}`}>
+                      {levelB}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {factorALevels.map((levelA, idxA) => (
+                  <TableRow key={idxA}>
+                    <TableCell className="font-medium" data-testid={`cell-factor-a-${idxA}`}>{levelA}</TableCell>
+                    {factorBLevels.map((levelB, idxB) => {
+                      const key = `${levelA}-${levelB}`;
+                      const data = cellData[key] || [];
+                      return (
+                        <TableCell key={idxB} className="p-2">
+                          <div className="space-y-2">
+                            {data.map((value, repIdx) => (
+                              <div key={repIdx} className="flex gap-1">
+                                <Input
+                                  type="number"
+                                  data-testid={`input-cell-${idxA}-${idxB}-${repIdx}`}
+                                  value={value}
+                                  onChange={(e) => updateCellValue(levelA, levelB, repIdx, e.target.value)}
+                                  className="w-20 text-sm"
+                                  placeholder="0"
+                                />
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  data-testid={`button-remove-rep-${idxA}-${idxB}-${repIdx}`}
+                                  onClick={() => removeReplication(levelA, levelB, repIdx)}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            ))}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              data-testid={`button-add-rep-${idxA}-${idxB}`}
+                              onClick={() => addReplication(levelA, levelB)}
+                              className="w-full text-xs"
+                            >
+                              <Plus className="h-3 w-3 mr-1" />
+                              Add
+                            </Button>
+                          </div>
+                        </TableCell>
+                      );
+                    })}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Button
+        onClick={handleSaveData}
+        data-testid="button-save-data"
+        disabled={saveDataMutation.isPending}
+        className="w-full"
+      >
+        {saveDataMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        Save Data
+      </Button>
+    </div>
+  );
+
+  // Graph Tab Content
+  const graphContent = (
+    <div className="space-y-6">
+      {!anovaResult ? (
+        <Card>
+          <CardContent className="p-8 text-center text-muted-foreground">
+            <Info className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p>Enter data to view interaction plot and residual plots</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          {/* Main Effects and Interaction Plot */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Interaction Plot</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Plot
+                data={factorALevels.map((levelA) => ({
+                  x: factorBLevels,
+                  y: factorBLevels.map((levelB) => {
+                    const key = `${levelA}-${levelB}`;
+                    return anovaResult.cellMeans[key] || 0;
+                  }),
+                  type: 'scatter',
+                  mode: 'lines+markers',
+                  name: levelA,
+                  line: { width: 2 },
+                  marker: { size: 8 },
+                }))}
+                layout={{
+                  title: `${factorAName} × ${factorBName} Interaction`,
+                  xaxis: { title: factorBName },
+                  yaxis: { title: `Mean ${responseVariableName}` },
+                  showlegend: true,
+                  legend: { title: { text: factorAName } },
+                  hovermode: 'closest',
+                }}
+                config={{ displayModeBar: true, responsive: true }}
+                className="w-full"
+              />
+            </CardContent>
+          </Card>
+
+          {/* Residual Plots */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Residuals vs Fitted Values</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Plot
+                  data={[
+                    {
+                      x: anovaResult.fittedValues,
+                      y: anovaResult.residuals,
+                      type: 'scatter',
+                      mode: 'markers',
+                      marker: { color: 'blue', size: 6 },
+                    },
+                    {
+                      x: anovaResult.fittedValues,
+                      y: new Array(anovaResult.fittedValues.length).fill(0),
+                      type: 'scatter',
+                      mode: 'lines',
+                      line: { color: 'red', dash: 'dash' },
+                      showlegend: false,
+                    },
+                  ]}
+                  layout={{
+                    xaxis: { title: 'Fitted Values' },
+                    yaxis: { title: 'Residuals' },
+                    showlegend: false,
+                    hovermode: 'closest',
+                  }}
+                  config={{ displayModeBar: false, responsive: true }}
+                  className="w-full"
+                />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Residuals vs Order</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Plot
+                  data={[
+                    {
+                      x: anovaResult.residuals.map((_, i) => i + 1),
+                      y: anovaResult.residuals,
+                      type: 'scatter',
+                      mode: 'markers',
+                      marker: { color: 'blue', size: 6 },
+                    },
+                    {
+                      x: anovaResult.residuals.map((_, i) => i + 1),
+                      y: new Array(anovaResult.residuals.length).fill(0),
+                      type: 'scatter',
+                      mode: 'lines',
+                      line: { color: 'red', dash: 'dash' },
+                      showlegend: false,
+                    },
+                  ]}
+                  layout={{
+                    xaxis: { title: 'Observation Order' },
+                    yaxis: { title: 'Residuals' },
+                    showlegend: false,
+                    hovermode: 'closest',
+                  }}
+                  config={{ displayModeBar: false, responsive: true }}
+                  className="w-full"
+                />
+              </CardContent>
+            </Card>
+          </div>
+        </>
+      )}
+    </div>
+  );
+
+  // Analysis Tab Content
+  const analysisContent = (
+    <div className="space-y-6">
+      {analysisError ? (
+        <Card>
+          <CardContent className="p-8 text-center text-destructive">
+            <Info className="h-12 w-12 mx-auto mb-4" />
+            <p className="font-semibold">Analysis Error</p>
+            <p className="text-sm mt-2">{analysisError}</p>
+          </CardContent>
+        </Card>
+      ) : !anovaResult ? (
+        <Card>
+          <CardContent className="p-8 text-center text-muted-foreground">
+            <Info className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p>Enter data and save to view ANOVA results</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          {/* ANOVA Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle>ANOVA Table</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Source</TableHead>
+                      <TableHead className="text-right">DF</TableHead>
+                      <TableHead className="text-right">SS</TableHead>
+                      <TableHead className="text-right">MS</TableHead>
+                      <TableHead className="text-right">F</TableHead>
+                      <TableHead className="text-right">P-Value</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell className="font-medium">{factorAName}</TableCell>
+                      <TableCell className="text-right">{anovaResult.factorADF}</TableCell>
+                      <TableCell className="text-right">{anovaResult.factorASS.toFixed(4)}</TableCell>
+                      <TableCell className="text-right">{anovaResult.factorAMS.toFixed(4)}</TableCell>
+                      <TableCell className="text-right">{anovaResult.factorAF.toFixed(4)}</TableCell>
+                      <TableCell className="text-right">
+                        <span className={anovaResult.factorAPValue < significanceLevel ? "text-green-600 font-semibold" : ""}>
+                          {anovaResult.factorAPValue.toFixed(4)}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell className="font-medium">{factorBName}</TableCell>
+                      <TableCell className="text-right">{anovaResult.factorBDF}</TableCell>
+                      <TableCell className="text-right">{anovaResult.factorBSS.toFixed(4)}</TableCell>
+                      <TableCell className="text-right">{anovaResult.factorBMS.toFixed(4)}</TableCell>
+                      <TableCell className="text-right">{anovaResult.factorBF.toFixed(4)}</TableCell>
+                      <TableCell className="text-right">
+                        <span className={anovaResult.factorBPValue < significanceLevel ? "text-green-600 font-semibold" : ""}>
+                          {anovaResult.factorBPValue.toFixed(4)}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                    {includeInteraction && (
+                      <TableRow>
+                        <TableCell className="font-medium">{factorAName} × {factorBName}</TableCell>
+                        <TableCell className="text-right">{anovaResult.interactionDF}</TableCell>
+                        <TableCell className="text-right">{anovaResult.interactionSS.toFixed(4)}</TableCell>
+                        <TableCell className="text-right">{anovaResult.interactionMS.toFixed(4)}</TableCell>
+                        <TableCell className="text-right">{anovaResult.interactionF.toFixed(4)}</TableCell>
+                        <TableCell className="text-right">
+                          <span className={anovaResult.interactionPValue < significanceLevel ? "text-green-600 font-semibold" : ""}>
+                            {anovaResult.interactionPValue.toFixed(4)}
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                    <TableRow>
+                      <TableCell className="font-medium">Error</TableCell>
+                      <TableCell className="text-right">{anovaResult.errorDF}</TableCell>
+                      <TableCell className="text-right">{anovaResult.errorSS.toFixed(4)}</TableCell>
+                      <TableCell className="text-right">{anovaResult.errorMS.toFixed(4)}</TableCell>
+                      <TableCell className="text-right">-</TableCell>
+                      <TableCell className="text-right">-</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell className="font-medium">Total</TableCell>
+                      <TableCell className="text-right">{anovaResult.totalDF}</TableCell>
+                      <TableCell className="text-right">{anovaResult.totalSS.toFixed(4)}</TableCell>
+                      <TableCell className="text-right">-</TableCell>
+                      <TableCell className="text-right">-</TableCell>
+                      <TableCell className="text-right">-</TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Model Summary */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Model Summary</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">R-Squared</p>
+                  <p className="text-2xl font-bold">{(anovaResult.rSquared * 100).toFixed(2)}%</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Root MSE</p>
+                  <p className="text-2xl font-bold">{Math.sqrt(anovaResult.errorMS).toFixed(4)}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Cell Means */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Cell Means</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{factorAName} \ {factorBName}</TableHead>
+                      {factorBLevels.map((levelB, idx) => (
+                        <TableHead key={idx} className="text-right">{levelB}</TableHead>
+                      ))}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {factorALevels.map((levelA, idx) => (
+                      <TableRow key={idx}>
+                        <TableCell className="font-medium">{levelA}</TableCell>
+                        {factorBLevels.map((levelB, idxB) => {
+                          const key = `${levelA}-${levelB}`;
+                          return (
+                            <TableCell key={idxB} className="text-right">
+                              {anovaResult.cellMeans[key]?.toFixed(4) || '-'}
+                              <span className="text-xs text-muted-foreground ml-1">
+                                (n={anovaResult.cellNs[key] || 0})
+                              </span>
+                            </TableCell>
+                          );
+                        })}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Interpretation */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Interpretation (α = {significanceLevel})</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div>
+                <p className="font-semibold">{factorAName} Effect:</p>
+                <p className={anovaResult.factorAPValue < significanceLevel ? "text-green-600" : "text-muted-foreground"}>
+                  {anovaResult.factorAPValue < significanceLevel
+                    ? `✓ Significant (p = ${anovaResult.factorAPValue.toFixed(4)}). ${factorAName} has a significant effect on ${responseVariableName}.`
+                    : `✗ Not significant (p = ${anovaResult.factorAPValue.toFixed(4)}). ${factorAName} does not have a significant effect on ${responseVariableName}.`
+                  }
+                </p>
+              </div>
+              <div>
+                <p className="font-semibold">{factorBName} Effect:</p>
+                <p className={anovaResult.factorBPValue < significanceLevel ? "text-green-600" : "text-muted-foreground"}>
+                  {anovaResult.factorBPValue < significanceLevel
+                    ? `✓ Significant (p = ${anovaResult.factorBPValue.toFixed(4)}). ${factorBName} has a significant effect on ${responseVariableName}.`
+                    : `✗ Not significant (p = ${anovaResult.factorBPValue.toFixed(4)}). ${factorBName} does not have a significant effect on ${responseVariableName}.`
+                  }
+                </p>
+              </div>
+              {includeInteraction && (
+                <div>
+                  <p className="font-semibold">Interaction Effect:</p>
+                  <p className={anovaResult.interactionPValue < significanceLevel ? "text-green-600" : "text-muted-foreground"}>
+                    {anovaResult.interactionPValue < significanceLevel
+                      ? `✓ Significant (p = ${anovaResult.interactionPValue.toFixed(4)}). There is a significant interaction between ${factorAName} and ${factorBName}.`
+                      : `✗ Not significant (p = ${anovaResult.interactionPValue.toFixed(4)}). There is no significant interaction between ${factorAName} and ${factorBName}.`
+                    }
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="p-6">
+      <HypothesisTestingTabs
+        projectId={projectId}
+        ctqId={0}
+        testType={`anova-two-way-${solutionId}`}
+        setupContent={setupContent}
+        dataContent={dataContent}
+        chartContent={graphContent}
+        analysisContent={analysisContent}
+      />
+    </div>
+  );
+}
