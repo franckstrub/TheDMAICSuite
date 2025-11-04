@@ -1342,14 +1342,14 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                         useResizeHandler
                         style={{ width: '100%', height: '400px' }}
                         config={{ responsive: true, displayModeBar: true, displaylogo: false,
-                        toImageButtonOptions: {
-                          format: 'png',
-                          filename: `Residuals vs Fits_${datasetYDescription} vs ${datasetXDescription}_Linear Regression`,
-                          height: 500,
-                          width: 600,
-                          scale: 1
-                        }
- }}
+                          toImageButtonOptions: {
+                            format: 'png',
+                            filename: `Residuals vs Fits_${datasetYDescription} vs ${datasetXDescription}_Linear Regression`,
+                            height: 500,
+                            width: 600,
+                            scale: 1
+                          }
+                        }}
                       />
                     </div>
                   )}
@@ -1383,14 +1383,14 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                         useResizeHandler
                         style={{ width: '100%', height: '400px' }}
                         config={{ responsive: true, displayModeBar: true, displaylogo: false,
-                        toImageButtonOptions: {
-                          format: 'png',
-                          filename: `Residuals vs Order of Data_${datasetYDescription} vs ${datasetXDescription}_Linear Regression`,
-                          height: 500,
-                          width: 600,
-                          scale: 1
-                        }
- }}
+                          toImageButtonOptions: {
+                            format: 'png',
+                            filename: `Residuals vs Order of Data_${datasetYDescription} vs ${datasetXDescription}_Linear Regression`,
+                            height: 500,
+                            width: 600,
+                            scale: 1
+                          }
+                        }}
                       />
                     </div>
                   )}
@@ -1619,14 +1619,14 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                         useResizeHandler
                         style={{ width: '100%', height: '400px' }}
                         config={{ responsive: true, displayModeBar: true, displaylogo: false,
-                        toImageButtonOptions: {
-                          format: 'png',
-                          filename: `Residuals vs Fits_${datasetYDescription} vs ${datasetXDescription}_Quadraticic Regression`,
-                          height: 500,
-                          width: 600,
-                          scale: 1
-                        }
- }}
+                          toImageButtonOptions: {
+                            format: 'png',
+                            filename: `Residuals vs Fits_${datasetYDescription} vs ${datasetXDescription}_Quadraticic Regression`,
+                            height: 500,
+                            width: 600,
+                            scale: 1
+                          }
+                        }}
                       />
                     </div>
                   )}
@@ -1908,7 +1908,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                           width: 600,
                           scale: 1
                         }
- }}
+                        }}
                       />
                     </div>
                   )}
@@ -2020,31 +2020,34 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
             
             return (
               <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg space-y-2">
-                <p className="font-medium mb-2">Linear Solution:</p>
-                <p>
-                  X = {isInInferenceSpace ? <strong>{solvedXLinear.toFixed(6)}</strong> : solvedXLinear.toFixed(6)}
-                {!isInInferenceSpace && (
-                  <span className="text-sm text-orange-600 dark:text-orange-400 mt-2">
-                    &nbsp;(⚠️ Outside the inference space. Solution not shown on the graph!)
-                  </span>
-                )}
-                </p>
-                <div className="mt-2 text-sm space-y-1">
-                  <p className="font-medium">95% Confidence Interval:</p>
-                  <p className="ml-4">
-                    {isNaN(intervals.confidenceIntervalLower) ? 
-                      <span className="text-orange-600 dark:text-orange-400">Cannot compute (numerical issue)</span> :
-                      `[${intervals.confidenceIntervalLower.toFixed(6)}, ${intervals.confidenceIntervalUpper.toFixed(6)}]`
-                    }
-                  </p>
-                  <p className="font-medium mt-2">95% Prediction Interval:</p>
-                  <p className="ml-4">
-                    {isNaN(intervals.predictionIntervalLower) ? 
-                      <span className="text-orange-600 dark:text-orange-400">Cannot compute (numerical issue)</span> :
-                      `[${intervals.predictionIntervalLower.toFixed(6)}, ${intervals.predictionIntervalUpper.toFixed(6)}]`
-                    }
-                  </p>
-                </div>
+                <p className="font-medium mb-2"><b>Linear Solution:</b></p>  
+                <table className="w-full border-collapse">
+                  <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0">
+                    <tr>
+                      <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">Solution:</th>
+                      <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">95% Confidence Interval:</th>
+                      <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">95% Prediction Interval:</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td className="font-medium pb-1 align-text-top">X = {isInInferenceSpace ? <strong>{solvedXLinear.toFixed(4)}</strong> : solvedXLinear.toFixed(4)}
+                      {!isInInferenceSpace && (
+                        <span className="text-sm text-orange-600 dark:text-orange-400 mt-2">
+                          &nbsp;(⚠️ Outside the inference space. Solution not shown on the graph!)
+                        </span>
+                      )}</td>
+                      <td className="font-medium pb-1 align-text-top">{isNaN(intervals.confidenceIntervalLower) ? 
+                            <span className="text-orange-600 dark:text-orange-400">Cannot compute (numerical issue)</span> :
+                            `[${intervals.confidenceIntervalLower.toFixed(4)}, ${intervals.confidenceIntervalUpper.toFixed(4)}]`
+                          }</td>
+                      <td className="font-medium pb-1 align-text-top">{isNaN(intervals.predictionIntervalLower) ? 
+                            <span className="text-orange-600 dark:text-orange-400">Cannot compute (numerical issue)</span> :
+                            `[${intervals.predictionIntervalLower.toFixed(4)}, ${intervals.predictionIntervalUpper.toFixed(4)}]`
+                          }</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             );
           })()}
@@ -2065,30 +2068,33 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                   
                   return (
                     <div key={i} className="mb-4 last:mb-0 pb-3 border-b last:border-b-0 border-green-200 dark:border-green-800">
-                      <p className="mb-2">
-                        X{i + 1} = {isInInferenceSpace ? <strong>{x.toFixed(6)}</strong> : x.toFixed(6)}
-                      {!isInInferenceSpace && (
-                        <span className="text-sm text-orange-600 dark:text-orange-400 mt-1">
-                          &nbsp;(⚠️ Outside the inference space. Solution not shown on the graph!)
-                        </span>
-                      )}
-                      </p>
-                      <div className="mt-2 text-sm space-y-1">
-                        <p className="font-medium">95% Confidence Interval:</p>
-                        <p className="ml-4">
-                          {isNaN(intervals.confidenceIntervalLower) ? 
-                            <span className="text-orange-600 dark:text-orange-400">Cannot compute (numerical issue)</span> :
-                            `[${intervals.confidenceIntervalLower.toFixed(6)}, ${intervals.confidenceIntervalUpper.toFixed(6)}]`
-                          }
-                        </p>
-                        <p className="font-medium mt-2">95% Prediction Interval:</p>
-                        <p className="ml-4">
-                          {isNaN(intervals.predictionIntervalLower) ? 
-                            <span className="text-orange-600 dark:text-orange-400">Cannot compute (numerical issue)</span> :
-                            `[${intervals.predictionIntervalLower.toFixed(6)}, ${intervals.predictionIntervalUpper.toFixed(6)}]`
-                          }
-                        </p>
-                      </div>
+                      <table className="w-full border-collapse">
+                        <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0">
+                          <tr>
+                            <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">Solutions:</th>
+                            <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">95% Confidence Interval:</th>
+                            <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">95% Prediction Interval:</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td className="font-medium align-text-top">X{i + 1} = {isInInferenceSpace ? <strong>{x.toFixed(4)}</strong> : x.toFixed(4)}
+                            {!isInInferenceSpace && (
+                              <span className="text-sm text-orange-600 dark:text-orange-400 mt-1">
+                                &nbsp;(⚠️ Outside the inference space. Solution not shown on the graph!)
+                              </span>
+                            )}</td>
+                            <td className="font-medium align-text-top">{isNaN(intervals.confidenceIntervalLower) ? 
+                                  <span className="text-orange-600 dark:text-orange-400">Cannot compute (numerical issue)</span> :
+                                  `[${intervals.confidenceIntervalLower.toFixed(4)}, ${intervals.confidenceIntervalUpper.toFixed(4)}]`
+                                }</td>
+                            <td className="font-medium align-text-top">{isNaN(intervals.predictionIntervalLower) ? 
+                                  <span className="text-orange-600 dark:text-orange-400">Cannot compute (numerical issue)</span> :
+                                  `[${intervals.predictionIntervalLower.toFixed(4)}, ${intervals.predictionIntervalUpper.toFixed(4)}]`
+                                }</td>
+                          </tr>
+                        </tbody>
+                      </table>
                     </div>
                   );
                 })}
@@ -2112,30 +2118,33 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                   
                   return (
                     <div key={i} className="mb-4 last:mb-0 pb-3 border-b last:border-b-0 border-purple-200 dark:border-purple-800">
-                      <p className="mb-2">
-                        X{i + 1} = {isInInferenceSpace ? <strong>{x.toFixed(6)}</strong> : x.toFixed(6)}
-                      {!isInInferenceSpace && (
-                        <span className="text-sm text-orange-600 dark:text-orange-400 mt-1">
-                          &nbsp;(⚠️ Outside the inference space. Solution not shown on the graph!)
-                        </span>
-                      )}
-                      </p>
-                      <div className="mt-2 text-sm space-y-1">
-                        <p className="font-medium">95% Confidence Interval:</p>
-                        <p className="ml-4">
-                          {isNaN(intervals.confidenceIntervalLower) ? 
-                            <span className="text-orange-600 dark:text-orange-400">Cannot compute (numerical issue)</span> :
-                            `[${intervals.confidenceIntervalLower.toFixed(6)}, ${intervals.confidenceIntervalUpper.toFixed(6)}]`
-                          }
-                        </p>
-                        <p className="font-medium mt-2">95% Prediction Interval:</p>
-                        <p className="ml-4">
-                          {isNaN(intervals.predictionIntervalLower) ? 
-                            <span className="text-orange-600 dark:text-orange-400">Cannot compute (numerical issue)</span> :
-                            `[${intervals.predictionIntervalLower.toFixed(6)}, ${intervals.predictionIntervalUpper.toFixed(6)}]`
-                          }
-                        </p>
-                      </div>
+                      <table className="w-full border-collapse">
+                        <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0">
+                          <tr>
+                            <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">Solutions:</th>
+                            <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">95% Confidence Interval:</th>
+                            <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">95% Prediction Interval:</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td className="font-medium pb-1 align-text-top">X{i + 1} = {isInInferenceSpace ? <strong>{x.toFixed(4)}</strong> : x.toFixed(4)}
+                            {!isInInferenceSpace && (
+                              <span className="text-sm text-orange-600 dark:text-orange-400 mt-1">
+                                &nbsp;(⚠️ Outside the inference space. Solution not shown on the graph!)
+                              </span>
+                            )}</td>
+                            <td className="font-medium pb-1 align-text-top">{isNaN(intervals.confidenceIntervalLower) ? 
+                                  <span className="text-orange-600 dark:text-orange-400">Cannot compute (numerical issue)</span> :
+                                  `[${intervals.confidenceIntervalLower.toFixed(4)}, ${intervals.confidenceIntervalUpper.toFixed(4)}]`
+                                }</td>
+                            <td className="font-medium pb-1 align-text-top">{isNaN(intervals.predictionIntervalLower) ? 
+                                  <span className="text-orange-600 dark:text-orange-400">Cannot compute (numerical issue)</span> :
+                                  `[${intervals.predictionIntervalLower.toFixed(4)}, ${intervals.predictionIntervalUpper.toFixed(4)}]`
+                                }</td>
+                          </tr>
+                        </tbody>
+                      </table>
                     </div>
                   );
                 })}
