@@ -1,4 +1,5 @@
 import jStat from 'jstat';
+import { performNormalityTest } from './statisticsUtils';
 
 export interface AnovaTwoWayResult {
   // Overall statistics
@@ -51,6 +52,12 @@ export interface AnovaTwoWayResult {
   
   // R-squared
   rSquared: number;
+  
+  // Residual statistics
+  residualStd: number;
+  andersonDarlingStatistic: number;
+  andersonDarlingPValue: number;
+  andersonDarlingNormality: 'Normal' | 'Not Normal' | 'Inconclusive';
 }
 
 /**
@@ -266,6 +273,14 @@ export function anovaTwoWay(
   // R-squared
   const rSquared = totalSS > 0 ? 1 - (errorSS / totalSS) : 0;
   
+  // Residual statistics
+  const residualMean = residuals.reduce((sum, r) => sum + r, 0) / residuals.length;
+  const residualVariance = residuals.reduce((sum, r) => sum + Math.pow(r - residualMean, 2), 0) / residuals.length;
+  const residualStd = Math.sqrt(residualVariance);
+  
+  // Anderson-Darling test for normality of residuals
+  const normalADTest = performNormalityTest(residuals, residualMean, residualStd);
+  
   return {
     grandMean,
     totalN,
@@ -300,5 +315,9 @@ export function anovaTwoWay(
     residuals,
     fittedValues,
     rSquared,
+    residualStd,
+    andersonDarlingStatistic: normalADTest.adStatistic,
+    andersonDarlingPValue: normalADTest.pValue,
+    andersonDarlingNormality: normalADTest.isNormal ? 'Normal' : (normalADTest.isNormal === false ? 'Not Normal' : 'Inconclusive'),
   };
 }
