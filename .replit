@@ -30,12 +30,12 @@ localPort = 36017
 localPort = 37311
 
 [[ports]]
-localPort = 38809
-externalPort = 3001
+localPort = 37731
+externalPort = 8080
 
 [[ports]]
-localPort = 39239
-externalPort = 8080
+localPort = 38809
+externalPort = 3001
 
 [[ports]]
 localPort = 40175

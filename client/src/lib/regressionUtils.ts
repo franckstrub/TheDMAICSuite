@@ -447,3 +447,351 @@ function calculateRegressionStatistics(
     residuals,
   };
 }
+
+/**
+ * Calculate confidence and prediction intervals for a solved X value (inverse regression)
+ * For linear regression: Y = a + bX, solve for X = (Y - a) / b
+ */
+export interface XInterval {
+  xValue: number;
+  confidenceIntervalLower: number;
+  confidenceIntervalUpper: number;
+  predictionIntervalLower: number;
+  predictionIntervalUpper: number;
+}
+
+export function calculateLinearXIntervals(
+  targetY: number,
+  x: number[],
+  y: number[],
+  result: LinearRegressionResult,
+  confidenceLevel: number = 0.95
+): XInterval {
+  const n = x.length;
+  const { a, b, statistics } = result;
+  const { mse, dfError } = statistics;
+  
+  // Solved X value
+  const solvedX = (targetY - a) / b;
+  
+  // Calculate necessary statistics
+  const meanX = x.reduce((sum, xi) => sum + xi, 0) / n;
+  const meanY = y.reduce((sum, yi) => sum + yi, 0) / n;
+  const ssX = x.reduce((sum, xi) => sum + Math.pow(xi - meanX, 2), 0);
+  
+  // Standard error of the regression
+  const s = Math.sqrt(mse);
+  
+  // For inverse regression, calculate standard error of predicted X
+  // Using delta method: SE(X̂) ≈ (1/b) * SE(Ŷ) where Ŷ = targetY
+  // SE(Ŷ) for a new prediction at X̂
+  const seYatX = s * Math.sqrt(1/n + Math.pow(solvedX - meanX, 2) / ssX);
+  
+  // Standard error for confidence interval of mean X
+  const seXConfidence = seYatX / Math.abs(b);
+  
+  // Standard error for prediction interval (includes individual variation)
+  const seYpred = s * Math.sqrt(1 + 1/n + Math.pow(solvedX - meanX, 2) / ssX);
+  const seXPrediction = seYpred / Math.abs(b);
+  
+  // t-value for confidence level
+  const alpha = 1 - confidenceLevel;
+  const tValue = jStat.studentt.inv(1 - alpha/2, dfError);
+  
+  // Calculate intervals
+  const confidenceIntervalLower = solvedX - tValue * seXConfidence;
+  const confidenceIntervalUpper = solvedX + tValue * seXConfidence;
+  const predictionIntervalLower = solvedX - tValue * seXPrediction;
+  const predictionIntervalUpper = solvedX + tValue * seXPrediction;
+  
+  return {
+    xValue: solvedX,
+    confidenceIntervalLower,
+    confidenceIntervalUpper,
+    predictionIntervalLower,
+    predictionIntervalUpper,
+  };
+}
+
+/**
+ * Calculate confidence and prediction intervals for quadratic regression X solutions
+ * For quadratic: Y = a + bX + cX², solving gives two X values
+ * Uses proper covariance matrix approach for inverse regression
+ */
+export function calculateQuadraticXIntervals(
+  targetY: number,
+  x: number[],
+  y: number[],
+  result: QuadraticRegressionResult,
+  solvedX: number,
+  confidenceLevel: number = 0.95
+): XInterval {
+  const n = x.length;
+  const { a, b, c, statistics } = result;
+  const { mse, dfError } = statistics;
+  
+  // Standard error of the regression
+  const s = Math.sqrt(mse);
+  
+  // Build design matrix X for quadratic model
+  // Each row: [1, xi, xi²]
+  const X: number[][] = x.map(xi => [1, xi, xi * xi]);
+  
+  // Calculate X'X (transpose times X)
+  const XtX: number[][] = [
+    [0, 0, 0],
+    [0, 0, 0],
+    [0, 0, 0]
+  ];
+  
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < 3; j++) {
+      for (let k = 0; k < 3; k++) {
+        XtX[j][k] += X[i][j] * X[i][k];
+      }
+    }
+  }
+  
+  // Invert X'X using 3x3 matrix inversion
+  const det = XtX[0][0] * (XtX[1][1] * XtX[2][2] - XtX[1][2] * XtX[2][1])
+            - XtX[0][1] * (XtX[1][0] * XtX[2][2] - XtX[1][2] * XtX[2][0])
+            + XtX[0][2] * (XtX[1][0] * XtX[2][1] - XtX[1][1] * XtX[2][0]);
+  
+  if (Math.abs(det) < 1e-10) {
+    // Singular matrix, return NaN intervals
+    return {
+      xValue: solvedX,
+      confidenceIntervalLower: NaN,
+      confidenceIntervalUpper: NaN,
+      predictionIntervalLower: NaN,
+      predictionIntervalUpper: NaN,
+    };
+  }
+  
+  const XtXinv: number[][] = [
+    [
+      (XtX[1][1] * XtX[2][2] - XtX[1][2] * XtX[2][1]) / det,
+      (XtX[0][2] * XtX[2][1] - XtX[0][1] * XtX[2][2]) / det,
+      (XtX[0][1] * XtX[1][2] - XtX[0][2] * XtX[1][1]) / det
+    ],
+    [
+      (XtX[1][2] * XtX[2][0] - XtX[1][0] * XtX[2][2]) / det,
+      (XtX[0][0] * XtX[2][2] - XtX[0][2] * XtX[2][0]) / det,
+      (XtX[0][2] * XtX[1][0] - XtX[0][0] * XtX[1][2]) / det
+    ],
+    [
+      (XtX[1][0] * XtX[2][1] - XtX[1][1] * XtX[2][0]) / det,
+      (XtX[0][1] * XtX[2][0] - XtX[0][0] * XtX[2][1]) / det,
+      (XtX[0][0] * XtX[1][1] - XtX[0][1] * XtX[1][0]) / det
+    ]
+  ];
+  
+  // Derivative dY/dX = b + 2*c*X
+  const dYdX = b + 2 * c * solvedX;
+  
+  if (Math.abs(dYdX) < 1e-6) {
+    // Derivative is near zero, intervals cannot be computed
+    return {
+      xValue: solvedX,
+      confidenceIntervalLower: NaN,
+      confidenceIntervalUpper: NaN,
+      predictionIntervalLower: NaN,
+      predictionIntervalUpper: NaN,
+    };
+  }
+  
+  // Gradient vector for delta method using implicit function theorem
+  // For Y = a + bX + cX², solving for X implicitly defines X(a,b,c)
+  // ∂X/∂β_i = -(∂Y/∂β_i) / (∂Y/∂X)
+  // ∂Y/∂a = 1, ∂Y/∂b = X, ∂Y/∂c = X², ∂Y/∂X = b + 2cX
+  const gradient = [
+    -1 / dYdX,
+    -solvedX / dYdX,
+    -(solvedX * solvedX) / dYdX
+  ];
+  
+  // Variance of X: gradient' * (s² * (X'X)⁻¹) * gradient
+  let varX = 0;
+  for (let i = 0; i < 3; i++) {
+    for (let j = 0; j < 3; j++) {
+      varX += gradient[i] * XtXinv[i][j] * gradient[j];
+    }
+  }
+  varX *= (s * s);
+  
+  // Standard error for confidence interval
+  const seXConfidence = Math.sqrt(Math.max(0, varX));
+  
+  // For prediction interval, add variance of new observation only
+  // varX already includes parameter uncertainty via delta method
+  // Only need to add s² (new observation variance) transformed to X-space
+  const varNewObs = (s * s) / (dYdX * dYdX);
+  const seXPrediction = Math.sqrt(Math.max(0, varX + varNewObs));
+  
+  // t-value for confidence level
+  const alpha = 1 - confidenceLevel;
+  const tValue = jStat.studentt.inv(1 - alpha/2, dfError);
+  
+  return {
+    xValue: solvedX,
+    confidenceIntervalLower: solvedX - tValue * seXConfidence,
+    confidenceIntervalUpper: solvedX + tValue * seXConfidence,
+    predictionIntervalLower: solvedX - tValue * seXPrediction,
+    predictionIntervalUpper: solvedX + tValue * seXPrediction,
+  };
+}
+
+/**
+ * Calculate confidence and prediction intervals for cubic regression X solutions
+ * For cubic: Y = a + bX + cX² + dX³
+ * Uses proper covariance matrix approach for inverse regression
+ */
+export function calculateCubicXIntervals(
+  targetY: number,
+  x: number[],
+  y: number[],
+  result: CubicRegressionResult,
+  solvedX: number,
+  confidenceLevel: number = 0.95
+): XInterval {
+  const n = x.length;
+  const { a, b, c, d, statistics } = result;
+  const { mse, dfError } = statistics;
+  
+  // Standard error of the regression
+  const s = Math.sqrt(mse);
+  
+  // Build design matrix X for cubic model
+  // Each row: [1, xi, xi², xi³]
+  const X: number[][] = x.map(xi => [1, xi, xi * xi, xi * xi * xi]);
+  
+  // Calculate X'X (transpose times X)
+  const XtX: number[][] = Array(4).fill(0).map(() => Array(4).fill(0));
+  
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < 4; j++) {
+      for (let k = 0; k < 4; k++) {
+        XtX[j][k] += X[i][j] * X[i][k];
+      }
+    }
+  }
+  
+  // Invert 4x4 matrix using Gauss-Jordan elimination
+  const XtXinv = invert4x4Matrix(XtX);
+  
+  if (!XtXinv) {
+    // Singular matrix, return NaN intervals
+    return {
+      xValue: solvedX,
+      confidenceIntervalLower: NaN,
+      confidenceIntervalUpper: NaN,
+      predictionIntervalLower: NaN,
+      predictionIntervalUpper: NaN,
+    };
+  }
+  
+  // Derivative dY/dX = b + 2*c*X + 3*d*X²
+  const dYdX = b + 2 * c * solvedX + 3 * d * solvedX * solvedX;
+  
+  if (Math.abs(dYdX) < 1e-6) {
+    // Derivative is near zero, intervals cannot be computed
+    return {
+      xValue: solvedX,
+      confidenceIntervalLower: NaN,
+      confidenceIntervalUpper: NaN,
+      predictionIntervalLower: NaN,
+      predictionIntervalUpper: NaN,
+    };
+  }
+  
+  // Gradient vector for delta method using implicit function theorem
+  // For Y = a + bX + cX² + dX³, solving for X implicitly defines X(a,b,c,d)
+  // ∂X/∂β_i = -(∂Y/∂β_i) / (∂Y/∂X)
+  // ∂Y/∂a = 1, ∂Y/∂b = X, ∂Y/∂c = X², ∂Y/∂d = X³, ∂Y/∂X = b + 2cX + 3dX²
+  const gradient = [
+    -1 / dYdX,
+    -solvedX / dYdX,
+    -(solvedX * solvedX) / dYdX,
+    -(solvedX * solvedX * solvedX) / dYdX
+  ];
+  
+  // Variance of X: gradient' * (s² * (X'X)⁻¹) * gradient
+  let varX = 0;
+  for (let i = 0; i < 4; i++) {
+    for (let j = 0; j < 4; j++) {
+      varX += gradient[i] * XtXinv[i][j] * gradient[j];
+    }
+  }
+  varX *= (s * s);
+  
+  // Standard error for confidence interval
+  const seXConfidence = Math.sqrt(Math.max(0, varX));
+  
+  // For prediction interval, add variance of new observation only
+  // varX already includes parameter uncertainty via delta method
+  // Only need to add s² (new observation variance) transformed to X-space
+  const varNewObs = (s * s) / (dYdX * dYdX);
+  const seXPrediction = Math.sqrt(Math.max(0, varX + varNewObs));
+  
+  // t-value for confidence level
+  const alpha = 1 - confidenceLevel;
+  const tValue = jStat.studentt.inv(1 - alpha/2, dfError);
+  
+  return {
+    xValue: solvedX,
+    confidenceIntervalLower: solvedX - tValue * seXConfidence,
+    confidenceIntervalUpper: solvedX + tValue * seXConfidence,
+    predictionIntervalLower: solvedX - tValue * seXPrediction,
+    predictionIntervalUpper: solvedX + tValue * seXPrediction,
+  };
+}
+
+/**
+ * Helper function to invert a 4x4 matrix using Gauss-Jordan elimination
+ */
+function invert4x4Matrix(matrix: number[][]): number[][] | null {
+  const n = 4;
+  // Create augmented matrix [A | I]
+  const augmented: number[][] = matrix.map((row, i) => [
+    ...row,
+    ...Array(n).fill(0).map((_, j) => (i === j ? 1 : 0))
+  ]);
+  
+  // Forward elimination
+  for (let i = 0; i < n; i++) {
+    // Find pivot
+    let maxRow = i;
+    for (let k = i + 1; k < n; k++) {
+      if (Math.abs(augmented[k][i]) > Math.abs(augmented[maxRow][i])) {
+        maxRow = k;
+      }
+    }
+    
+    // Swap rows
+    [augmented[i], augmented[maxRow]] = [augmented[maxRow], augmented[i]];
+    
+    // Check for singular matrix
+    if (Math.abs(augmented[i][i]) < 1e-10) {
+      return null;
+    }
+    
+    // Scale pivot row
+    const pivot = augmented[i][i];
+    for (let j = 0; j < 2 * n; j++) {
+      augmented[i][j] /= pivot;
+    }
+    
+    // Eliminate column
+    for (let k = 0; k < n; k++) {
+      if (k !== i) {
+        const factor = augmented[k][i];
+        for (let j = 0; j < 2 * n; j++) {
+          augmented[k][j] -= factor * augmented[i][j];
+        }
+      }
+    }
+  }
+  
+  // Extract inverse from augmented matrix
+  return augmented.map(row => row.slice(n));
+}

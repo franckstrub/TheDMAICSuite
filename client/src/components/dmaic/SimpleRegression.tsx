@@ -16,9 +16,13 @@ import {
   solveLinearForX,
   solveQuadraticForX,
   solveCubicForX,
+  calculateLinearXIntervals,
+  calculateQuadraticXIntervals,
+  calculateCubicXIntervals,
   type LinearRegressionResult,
   type QuadraticRegressionResult,
-  type CubicRegressionResult
+  type CubicRegressionResult,
+  type XInterval
 } from '@/lib/regressionUtils';
 import { parseTwoColumnPaste } from '@/lib/excelPasteUtils';
 import {
@@ -1291,7 +1295,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                     data-testid="checkbox-linear-residuals-vs-fits"
                   />
                   <Label htmlFor="linear-residuals-vs-fits" className="cursor-pointer">
-                    Graph residuals versus fits
+                    Graph of residuals versus fits (check the homogeneity of the variance of the residuals and their random distribution)
                   </Label>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -1302,7 +1306,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                     data-testid="checkbox-linear-residuals-vs-order"
                   />
                   <Label htmlFor="linear-residuals-vs-order" className="cursor-pointer">
-                    Graph residuals versus order of data
+                    Graph of residuals versus order of data (verify the independence of the residuals)
                   </Label>
                 </div>
               </div>
@@ -1337,7 +1341,15 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                         }}
                         useResizeHandler
                         style={{ width: '100%', height: '400px' }}
-                        config={{ responsive: true, displayModeBar: true, displaylogo: false }}
+                        config={{ responsive: true, displayModeBar: true, displaylogo: false,
+                        toImageButtonOptions: {
+                          format: 'png',
+                          filename: `Residuals vs Fits_${datasetYDescription} vs ${datasetXDescription}_Linear Regression`,
+                          height: 500,
+                          width: 600,
+                          scale: 1
+                        }
+ }}
                       />
                     </div>
                   )}
@@ -1370,7 +1382,15 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                         }}
                         useResizeHandler
                         style={{ width: '100%', height: '400px' }}
-                        config={{ responsive: true, displayModeBar: true, displaylogo: false }}
+                        config={{ responsive: true, displayModeBar: true, displaylogo: false,
+                        toImageButtonOptions: {
+                          format: 'png',
+                          filename: `Residuals vs Order of Data_${datasetYDescription} vs ${datasetXDescription}_Linear Regression`,
+                          height: 500,
+                          width: 600,
+                          scale: 1
+                        }
+ }}
                       />
                     </div>
                   )}
@@ -1552,7 +1572,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                     data-testid="checkbox-quadratic-residuals-vs-fits"
                   />
                   <Label htmlFor="quadratic-residuals-vs-fits" className="cursor-pointer">
-                    Graph residuals versus fits
+                    Graph of residuals versus fits (check the homogeneity of the variance of the residuals and their random distribution)
                   </Label>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -1563,7 +1583,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                     data-testid="checkbox-quadratic-residuals-vs-order"
                   />
                   <Label htmlFor="quadratic-residuals-vs-order" className="cursor-pointer">
-                    Graph residuals versus order of data
+                    Graph of residuals versus order of data (verify the independence of the residuals)
                   </Label>
                 </div>
               </div>
@@ -1598,7 +1618,15 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                         }}
                         useResizeHandler
                         style={{ width: '100%', height: '400px' }}
-                        config={{ responsive: true, displayModeBar: true, displaylogo: false }}
+                        config={{ responsive: true, displayModeBar: true, displaylogo: false,
+                        toImageButtonOptions: {
+                          format: 'png',
+                          filename: `Residuals vs Fits_${datasetYDescription} vs ${datasetXDescription}_Quadraticic Regression`,
+                          height: 500,
+                          width: 600,
+                          scale: 1
+                        }
+ }}
                       />
                     </div>
                   )}
@@ -1631,7 +1659,15 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                         }}
                         useResizeHandler
                         style={{ width: '100%', height: '400px' }}
-                        config={{ responsive: true, displayModeBar: true, displaylogo: false }}
+                        config={{ responsive: true, displayModeBar: true, displaylogo: false,
+                        toImageButtonOptions: {
+                          format: 'png',
+                          filename: `Residuals vs Order of Data_${datasetYDescription} vs ${datasetXDescription}_Quadratic Regression`,
+                          height: 500,
+                          width: 600,
+                          scale: 1
+                        }
+ }}
                       />
                     </div>
                   )}
@@ -1818,7 +1854,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                     data-testid="checkbox-cubic-residuals-vs-fits"
                   />
                   <Label htmlFor="cubic-residuals-vs-fits" className="cursor-pointer">
-                    Graph residuals versus fits
+                    Graph of residuals versus fits (check the homogeneity of the variance of the residuals and their random distribution)
                   </Label>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -1829,7 +1865,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                     data-testid="checkbox-cubic-residuals-vs-order"
                   />
                   <Label htmlFor="cubic-residuals-vs-order" className="cursor-pointer">
-                    Graph residuals versus order of data
+                    Graph of residuals versus order of data (verify the independence of the residuals)
                   </Label>
                 </div>
               </div>
@@ -1864,7 +1900,15 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                         }}
                         useResizeHandler
                         style={{ width: '100%', height: '400px' }}
-                        config={{ responsive: true, displayModeBar: true, displaylogo: false }}
+                        config={{ responsive: true, displayModeBar: true, displaylogo: false,
+                        toImageButtonOptions: {
+                          format: 'png',
+                          filename: `Residuals vs Fits_${datasetYDescription} vs ${datasetXDescription}_Cubic Regression`,
+                          height: 500,
+                          width: 600,
+                          scale: 1
+                        }
+ }}
                       />
                     </div>
                   )}
@@ -1897,7 +1941,15 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                         }}
                         useResizeHandler
                         style={{ width: '100%', height: '400px' }}
-                        config={{ responsive: true, displayModeBar: true, displaylogo: false }}
+                        config={{ responsive: true, displayModeBar: true, displaylogo: false,
+                        toImageButtonOptions: {
+                          format: 'png',
+                          filename: `Residuals vs Order of Data_${datasetYDescription} vs ${datasetXDescription}_Cubic Regression`,
+                          height: 500,
+                          width: 600,
+                          scale: 1
+                        }
+                         }}
                       />
                     </div>
                   )}
@@ -1955,15 +2007,19 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
             </div>
           )}
 
-          {solvedXLinear !== null && enableLinear && (() => {
+          {solvedXLinear !== null && enableLinear && targetY !== null && linearResult && (() => {
             const validPoints = dataPoints.filter(p => p.x !== 0 || p.y !== 0);
             const xValues = validPoints.map(p => p.x);
+            const yValues = validPoints.map(p => p.y);
             const minX = Math.min(...xValues);
             const maxX = Math.max(...xValues);
             const isInInferenceSpace = solvedXLinear >= minX && solvedXLinear <= maxX;
             
+            // Calculate confidence and prediction intervals
+            const intervals = calculateLinearXIntervals(targetY, xValues, yValues, linearResult);
+            
             return (
-              <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
+              <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg space-y-2">
                 <p className="font-medium mb-2">Linear Solution:</p>
                 <p>
                   X = {isInInferenceSpace ? <strong>{solvedXLinear.toFixed(6)}</strong> : solvedXLinear.toFixed(6)}
@@ -1973,24 +2029,43 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                   </span>
                 )}
                 </p>
+                <div className="mt-2 text-sm space-y-1">
+                  <p className="font-medium">95% Confidence Interval:</p>
+                  <p className="ml-4">
+                    {isNaN(intervals.confidenceIntervalLower) ? 
+                      <span className="text-orange-600 dark:text-orange-400">Cannot compute (numerical issue)</span> :
+                      `[${intervals.confidenceIntervalLower.toFixed(6)}, ${intervals.confidenceIntervalUpper.toFixed(6)}]`
+                    }
+                  </p>
+                  <p className="font-medium mt-2">95% Prediction Interval:</p>
+                  <p className="ml-4">
+                    {isNaN(intervals.predictionIntervalLower) ? 
+                      <span className="text-orange-600 dark:text-orange-400">Cannot compute (numerical issue)</span> :
+                      `[${intervals.predictionIntervalLower.toFixed(6)}, ${intervals.predictionIntervalUpper.toFixed(6)}]`
+                    }
+                  </p>
+                </div>
               </div>
             );
           })()}
 
-          {solvedXQuadratic.length > 0 && enableQuadratic && (() => {
+          {solvedXQuadratic.length > 0 && enableQuadratic && targetY !== null && quadraticResult && (() => {
             const validPoints = dataPoints.filter(p => p.x !== 0 || p.y !== 0);
             const xValues = validPoints.map(p => p.x);
+            const yValues = validPoints.map(p => p.y);
             const minX = Math.min(...xValues);
             const maxX = Math.max(...xValues);
             
             return (
-              <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg">
+              <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg space-y-4">
                 <p className="font-medium mb-2">Quadratic Solutions:</p>
                 {solvedXQuadratic.map((x, i) => {
                   const isInInferenceSpace = x >= minX && x <= maxX;
+                  const intervals = calculateQuadraticXIntervals(targetY, xValues, yValues, quadraticResult, x);
+                  
                   return (
-                    <div key={i} className="mb-2 last:mb-0">
-                      <p>
+                    <div key={i} className="mb-4 last:mb-0 pb-3 border-b last:border-b-0 border-green-200 dark:border-green-800">
+                      <p className="mb-2">
                         X{i + 1} = {isInInferenceSpace ? <strong>{x.toFixed(6)}</strong> : x.toFixed(6)}
                       {!isInInferenceSpace && (
                         <span className="text-sm text-orange-600 dark:text-orange-400 mt-1">
@@ -1998,6 +2073,22 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                         </span>
                       )}
                       </p>
+                      <div className="mt-2 text-sm space-y-1">
+                        <p className="font-medium">95% Confidence Interval:</p>
+                        <p className="ml-4">
+                          {isNaN(intervals.confidenceIntervalLower) ? 
+                            <span className="text-orange-600 dark:text-orange-400">Cannot compute (numerical issue)</span> :
+                            `[${intervals.confidenceIntervalLower.toFixed(6)}, ${intervals.confidenceIntervalUpper.toFixed(6)}]`
+                          }
+                        </p>
+                        <p className="font-medium mt-2">95% Prediction Interval:</p>
+                        <p className="ml-4">
+                          {isNaN(intervals.predictionIntervalLower) ? 
+                            <span className="text-orange-600 dark:text-orange-400">Cannot compute (numerical issue)</span> :
+                            `[${intervals.predictionIntervalLower.toFixed(6)}, ${intervals.predictionIntervalUpper.toFixed(6)}]`
+                          }
+                        </p>
+                      </div>
                     </div>
                   );
                 })}
@@ -2005,20 +2096,23 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
             );
           })()}
 
-          {solvedXCubic.length > 0 && enableCubic && (() => {
+          {solvedXCubic.length > 0 && enableCubic && targetY !== null && cubicResult && (() => {
             const validPoints = dataPoints.filter(p => p.x !== 0 || p.y !== 0);
             const xValues = validPoints.map(p => p.x);
+            const yValues = validPoints.map(p => p.y);
             const minX = Math.min(...xValues);
             const maxX = Math.max(...xValues);
             
             return (
-              <div className="p-4 bg-purple-50 dark:bg-purple-950 rounded-lg">
+              <div className="p-4 bg-purple-50 dark:bg-purple-950 rounded-lg space-y-4">
                 <p className="font-medium mb-2">Cubic Solutions:</p>
                 {solvedXCubic.map((x, i) => {
                   const isInInferenceSpace = x >= minX && x <= maxX;
+                  const intervals = calculateCubicXIntervals(targetY, xValues, yValues, cubicResult, x);
+                  
                   return (
-                    <div key={i} className="mb-2 last:mb-0">
-                      <p>
+                    <div key={i} className="mb-4 last:mb-0 pb-3 border-b last:border-b-0 border-purple-200 dark:border-purple-800">
+                      <p className="mb-2">
                         X{i + 1} = {isInInferenceSpace ? <strong>{x.toFixed(6)}</strong> : x.toFixed(6)}
                       {!isInInferenceSpace && (
                         <span className="text-sm text-orange-600 dark:text-orange-400 mt-1">
@@ -2026,6 +2120,22 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                         </span>
                       )}
                       </p>
+                      <div className="mt-2 text-sm space-y-1">
+                        <p className="font-medium">95% Confidence Interval:</p>
+                        <p className="ml-4">
+                          {isNaN(intervals.confidenceIntervalLower) ? 
+                            <span className="text-orange-600 dark:text-orange-400">Cannot compute (numerical issue)</span> :
+                            `[${intervals.confidenceIntervalLower.toFixed(6)}, ${intervals.confidenceIntervalUpper.toFixed(6)}]`
+                          }
+                        </p>
+                        <p className="font-medium mt-2">95% Prediction Interval:</p>
+                        <p className="ml-4">
+                          {isNaN(intervals.predictionIntervalLower) ? 
+                            <span className="text-orange-600 dark:text-orange-400">Cannot compute (numerical issue)</span> :
+                            `[${intervals.predictionIntervalLower.toFixed(6)}, ${intervals.predictionIntervalUpper.toFixed(6)}]`
+                          }
+                        </p>
+                      </div>
                     </div>
                   );
                 })}
