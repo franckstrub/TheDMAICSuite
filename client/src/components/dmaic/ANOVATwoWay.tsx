@@ -35,6 +35,9 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
   
   const [anovaResult, setAnovaResult] = useState<AnovaTwoWayResult | null>(null);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
+  
+  const [showResidualsVsFits, setShowResidualsVsFits] = useState(false);
+  const [showResidualsVsOrder, setShowResidualsVsOrder] = useState(false);
 
   const configQuery = useQuery({
     queryKey: [`/api/projects/${projectId}/solutions/${solutionId}/anova-two-way`],
@@ -989,6 +992,126 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                       : `✗ Not significant (p = ${anovaResult.interactionPValue.toFixed(4)}). There is no significant interaction between ${factorAName} and ${factorBName}.`
                     }
                   </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Analysis of Residuals */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Analysis of Residuals</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="residuals-vs-fits"
+                  checked={showResidualsVsFits}
+                  onCheckedChange={(checked) => setShowResidualsVsFits(checked as boolean)}
+                  data-testid="checkbox-residuals-vs-fits"
+                />
+                <Label htmlFor="residuals-vs-fits" className="cursor-pointer">
+                  Graph of residuals versus fitted values (check the homogeneity of the variance of the residuals and their random distribution)
+                </Label>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="residuals-vs-order"
+                  checked={showResidualsVsOrder}
+                  onCheckedChange={(checked) => setShowResidualsVsOrder(checked as boolean)}
+                  data-testid="checkbox-residuals-vs-order"
+                />
+                <Label htmlFor="residuals-vs-order" className="cursor-pointer">
+                  Graph of residuals versus order of data (verify the independence of the residuals)
+                </Label>
+              </div>
+
+              {(showResidualsVsFits || showResidualsVsOrder) && anovaResult.residuals && (
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {showResidualsVsFits && (
+                    <div>
+                      <Plot
+                        data={[{
+                          x: anovaResult.fittedValues,
+                          y: anovaResult.residuals,
+                          mode: 'markers',
+                          type: 'scatter',
+                          name: 'Residuals',
+                          marker: { color: '#2563eb', size: 8 },
+                        },
+                        {
+                          x: anovaResult.fittedValues,
+                          y: Array(anovaResult.fittedValues.length).fill(0),
+                          mode: 'lines',
+                          type: 'scatter',
+                          name: 'Zero Line',
+                          line: { color: 'black', width: 1, dash: 'dash' },
+                        }]}
+                        layout={{
+                          title: { text: '<b>Residuals vs Fitted Values</b>' },
+                          xaxis: { title: { text: '<b>Fitted Values</b>' } },
+                          yaxis: { title: { text: '<b>Residuals</b>' } },
+                          showlegend: false,
+                          hovermode: 'closest',
+                          margin: { l: 60, r: 40, t: 60, b: 60 },
+                        }}
+                        useResizeHandler
+                        style={{ width: '100%', height: '400px' }}
+                        config={{ 
+                          displayModeBar: true,
+                          toImageButtonOptions: {
+                            filename: `Residuals vs Fitted Values_${responseVariableName}_ANOVA Two-Way`,
+                            height: 500,
+                            width: 600,
+                            scale: 1
+                          }
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  {showResidualsVsOrder && (
+                    <div>
+                      <Plot
+                        data={[{
+                          x: anovaResult.residuals.map((_, i) => i + 1),
+                          y: anovaResult.residuals,
+                          mode: 'markers',
+                          type: 'scatter',
+                          name: 'Residuals',
+                          marker: { color: '#2563eb', size: 8 },
+                        },
+                        {
+                          x: [1, anovaResult.residuals.length],
+                          y: [0, 0],
+                          mode: 'lines',
+                          type: 'scatter',
+                          name: 'Zero Line',
+                          line: { color: 'black', width: 1, dash: 'dash' },
+                        }]}
+                        layout={{
+                          title: { text: '<b>Residuals vs Observation Order</b>' },
+                          xaxis: { title: { text: '<b>Observation Order</b>' } },
+                          yaxis: { title: { text: '<b>Residuals</b>' } },
+                          showlegend: false,
+                          hovermode: 'closest',
+                          margin: { l: 60, r: 40, t: 60, b: 60 },
+                        }}
+                        useResizeHandler
+                        style={{ width: '100%', height: '400px' }}
+                        config={{ 
+                          displayModeBar: true,
+                          toImageButtonOptions: {
+                            filename: `Residuals vs Observation Order_${responseVariableName}_ANOVA Two-Way`,
+                            height: 500,
+                            width: 600,
+                            scale: 1
+                          }
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>
