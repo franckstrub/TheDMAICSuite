@@ -597,8 +597,8 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
         </Card>
       ) : (
         <>
-          {/* Main Effect Plots */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Main Effect Plots and Interaction Plot */}
+          <div className={`grid grid-cols-1 ${includeInteraction ? 'lg:grid-cols-3' : 'md:grid-cols-2'} gap-4`}>
             <Card>
               <CardHeader>
                 <CardTitle>Main Effect Plot - {factorAName}</CardTitle>
@@ -682,48 +682,48 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                 />
               </CardContent>
             </Card>
-          </div>
 
-          {/* Interaction Plot - Only show when interaction is included */}
-          {includeInteraction && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Interaction Plot</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Plot
-                  data={factorALevels.map((levelA) => ({
-                    x: factorBLevels,
-                    y: factorBLevels.map((levelB) => {
-                      const key = `${levelA}-${levelB}`;
-                      return anovaResult.cellMeans[key] || 0;
-                    }),
-                    type: 'scatter',
-                    mode: 'lines+markers',
-                    name: levelA,
-                    line: { width: 2 },
-                    marker: { size: 8 },
-                  }))}
-                  layout={{
-                    title: `${factorAName} × ${factorBName} Interaction`,
-                    xaxis: { 
-                      title: { text: factorBName },
-                    },
-                    yaxis: { 
-                      title: { text: responseVariableName },
-                      range: yAxisRange,
-                    },
-                    showlegend: true,
-                    legend: { title: { text: factorAName } },
-                    hovermode: 'closest',
-                    margin: { l: 60, r: 40, t: 60, b: 60 },
-                  }}
-                  config={{ displayModeBar: true, responsive: true }}
-                  className="w-full"
-                />
-              </CardContent>
-            </Card>
-          )}
+            {/* Interaction Plot - Only show when interaction is included */}
+            {includeInteraction && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Interaction Plot</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Plot
+                    data={factorALevels.map((levelA) => ({
+                      x: factorBLevels,
+                      y: factorBLevels.map((levelB) => {
+                        const key = `${levelA}-${levelB}`;
+                        return anovaResult.cellMeans[key] || 0;
+                      }),
+                      type: 'scatter',
+                      mode: 'lines+markers',
+                      name: levelA,
+                      line: { width: 2 },
+                      marker: { size: 8 },
+                    }))}
+                    layout={{
+                      title: { text: `${factorAName} × ${factorBName} Interaction` },
+                      xaxis: { 
+                        title: { text: factorBName },
+                      },
+                      yaxis: { 
+                        title: { text: responseVariableName },
+                        range: yAxisRange,
+                      },
+                      showlegend: true,
+                      legend: { title: { text: factorAName } },
+                      hovermode: 'closest',
+                      margin: { l: 60, r: 40, t: 60, b: 60 },
+                    }}
+                    config={{ displayModeBar: true, responsive: true }}
+                    className="w-full"
+                  />
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </>
       )}
     </div>
