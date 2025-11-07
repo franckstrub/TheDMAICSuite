@@ -903,7 +903,11 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
             <CardHeader>
               <CardTitle>Cell Means</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Grand Mean</p>
+                <p className="text-xl font-bold" data-testid="text-grand-mean">{anovaResult.grandMean.toFixed(4)}</p>
+              </div>
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
