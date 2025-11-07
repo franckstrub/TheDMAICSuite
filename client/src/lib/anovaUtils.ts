@@ -1,6 +1,14 @@
 import jStat from 'jstat';
 import { performNormalityTest } from './statisticsUtils';
 
+export interface CoefficientRow {
+  term: string;
+  estimate: number;
+  stdError: number;
+  tValue: number;
+  pValue: number;
+}
+
 export interface AnovaTwoWayResult {
   // Overall statistics
   grandMean: number;
@@ -58,6 +66,247 @@ export interface AnovaTwoWayResult {
   andersonDarlingStatistic: number;
   andersonDarlingPValue: number;
   andersonDarlingNormality: 'Normal' | 'Not Normal' | 'Inconclusive';
+  
+  // Regression coefficients
+  coefficients: CoefficientRow[];
+}
+
+/**
+ * Invert a matrix using Gauss-Jordan elimination
+ */
+function invertMatrix(matrix: number[][]): number[][] {
+  const n = matrix.length;
+  const augmented: number[][] = [];
+  
+  // Create augmented matrix [A | I]
+  for (let i = 0; i < n; i++) {
+    augmented[i] = [...matrix[i]];
+    for (let j = 0; j < n; j++) {
+      augmented[i].push(i === j ? 1 : 0);
+    }
+  }
+  
+  // Gauss-Jordan elimination
+  for (let i = 0; i < n; i++) {
+    // Find pivot
+    let maxRow = i;
+    for (let k = i + 1; k < n; k++) {
+      if (Math.abs(augmented[k][i]) > Math.abs(augmented[maxRow][i])) {
+        maxRow = k;
+      }
+    }
+    
+    // Swap rows
+    [augmented[i], augmented[maxRow]] = [augmented[maxRow], augmented[i]];
+    
+    // Check for singular matrix
+    if (Math.abs(augmented[i][i]) < 1e-10) {
+      throw new Error('Matrix is singular and cannot be inverted');
+    }
+    
+    // Scale pivot row
+    const pivot = augmented[i][i];
+    for (let j = 0; j < 2 * n; j++) {
+      augmented[i][j] /= pivot;
+    }
+    
+    // Eliminate column
+    for (let k = 0; k < n; k++) {
+      if (k !== i) {
+        const factor = augmented[k][i];
+        for (let j = 0; j < 2 * n; j++) {
+          augmented[k][j] -= factor * augmented[i][j];
+        }
+      }
+    }
+  }
+  
+  // Extract inverse from augmented matrix
+  const inverse: number[][] = [];
+  for (let i = 0; i < n; i++) {
+    inverse[i] = augmented[i].slice(n);
+  }
+  
+  return inverse;
+}
+
+/**
+ * Calculate regression coefficients using OLS with treatment contrasts
+ * Baseline level is the first level for each factor
+ */
+function calculateCoefficients(
+  factorALevels: string[],
+  factorBLevels: string[],
+  factorAName: string,
+  factorBName: string,
+  cellData: Record<string, number[]>,
+  includeInteraction: boolean,
+  errorMS: number,
+  errorDF: number
+): CoefficientRow[] {
+  // Build response vector and design matrix
+  const y: number[] = [];
+  const X: number[][] = [];
+  
+  // Collect all observations and build design matrix
+  for (const levelA of factorALevels) {
+    for (const levelB of factorBLevels) {
+      const key = `${levelA}-${levelB}`;
+      const data = cellData[key] || [];
+      const validData = data.filter(x => !isNaN(x));
+      
+      for (const val of validData) {
+        y.push(val);
+        
+        // Build row of design matrix
+        const row: number[] = [1]; // Intercept
+        
+        // Factor A dummy variables (omit first level)
+        for (let i = 1; i < factorALevels.length; i++) {
+          row.push(levelA === factorALevels[i] ? 1 : 0);
+        }
+        
+        // Factor B dummy variables (omit first level)
+        for (let j = 1; j < factorBLevels.length; j++) {
+          row.push(levelB === factorBLevels[j] ? 1 : 0);
+        }
+        
+        // Interaction terms if included (omit first levels)
+        if (includeInteraction) {
+          for (let i = 1; i < factorALevels.length; i++) {
+            for (let j = 1; j < factorBLevels.length; j++) {
+              const isInteraction = (levelA === factorALevels[i]) && (levelB === factorBLevels[j]);
+              row.push(isInteraction ? 1 : 0);
+            }
+          }
+        }
+        
+        X.push(row);
+      }
+    }
+  }
+  
+  if (y.length === 0) {
+    return [];
+  }
+  
+  try {
+    // Manual matrix operations since jStat's matrix methods may not be available
+    // Compute X'X
+    const p = X[0].length; // number of parameters
+    const n = X.length; // number of observations
+    
+    const Xt: number[][] = Array(p).fill(0).map(() => Array(n).fill(0));
+    for (let i = 0; i < p; i++) {
+      for (let j = 0; j < n; j++) {
+        Xt[i][j] = X[j][i];
+      }
+    }
+    
+    const XtX: number[][] = Array(p).fill(0).map(() => Array(p).fill(0));
+    for (let i = 0; i < p; i++) {
+      for (let j = 0; j < p; j++) {
+        let sum = 0;
+        for (let k = 0; k < n; k++) {
+          sum += Xt[i][k] * X[k][j];
+        }
+        XtX[i][j] = sum;
+      }
+    }
+    
+    // Compute (X'X)^-1 using manual matrix inversion
+    const XtX_inv = invertMatrix(XtX);
+    
+    // Compute X'y
+    const Xty: number[] = Array(p).fill(0);
+    for (let i = 0; i < p; i++) {
+      let sum = 0;
+      for (let j = 0; j < n; j++) {
+        sum += Xt[i][j] * y[j];
+      }
+      Xty[i] = sum;
+    }
+    
+    // Compute coefficients: β = (X'X)^-1 X'y
+    const coeffEstimates: number[] = Array(p).fill(0);
+    for (let i = 0; i < p; i++) {
+      let sum = 0;
+      for (let j = 0; j < p; j++) {
+        sum += XtX_inv[i][j] * Xty[j];
+      }
+      coeffEstimates[i] = sum;
+    }
+    
+    // Compute standard errors: SE = sqrt(diag((X'X)^-1) * errorMS)
+    const stdErrors = XtX_inv.map((row: any, i: number) => Math.sqrt(row[i] * errorMS));
+    
+    // Build coefficient rows
+    const coefficients: CoefficientRow[] = [];
+    let idx = 0;
+    
+    // Intercept
+    const interceptT = stdErrors[idx] > 0 ? coeffEstimates[idx] / stdErrors[idx] : 0;
+    const interceptP = errorDF > 0 ? 2 * (1 - jStat.studentt.cdf(Math.abs(interceptT), errorDF)) : 1;
+    coefficients.push({
+      term: 'Intercept',
+      estimate: coeffEstimates[idx],
+      stdError: stdErrors[idx],
+      tValue: interceptT,
+      pValue: interceptP
+    });
+    idx++;
+    
+    // Factor A effects (contrasts against first level)
+    for (let i = 1; i < factorALevels.length; i++) {
+      const tValue = stdErrors[idx] > 0 ? coeffEstimates[idx] / stdErrors[idx] : 0;
+      const pValue = errorDF > 0 ? 2 * (1 - jStat.studentt.cdf(Math.abs(tValue), errorDF)) : 1;
+      coefficients.push({
+        term: factorALevels[i],
+        estimate: coeffEstimates[idx],
+        stdError: stdErrors[idx],
+        tValue,
+        pValue
+      });
+      idx++;
+    }
+    
+    // Factor B effects (contrasts against first level)
+    for (let j = 1; j < factorBLevels.length; j++) {
+      const tValue = stdErrors[idx] > 0 ? coeffEstimates[idx] / stdErrors[idx] : 0;
+      const pValue = errorDF > 0 ? 2 * (1 - jStat.studentt.cdf(Math.abs(tValue), errorDF)) : 1;
+      coefficients.push({
+        term: factorBLevels[j],
+        estimate: coeffEstimates[idx],
+        stdError: stdErrors[idx],
+        tValue,
+        pValue
+      });
+      idx++;
+    }
+    
+    // Interaction effects
+    if (includeInteraction) {
+      for (let i = 1; i < factorALevels.length; i++) {
+        for (let j = 1; j < factorBLevels.length; j++) {
+          const tValue = stdErrors[idx] > 0 ? coeffEstimates[idx] / stdErrors[idx] : 0;
+          const pValue = errorDF > 0 ? 2 * (1 - jStat.studentt.cdf(Math.abs(tValue), errorDF)) : 1;
+          coefficients.push({
+            term: `${factorALevels[i]}:${factorBLevels[j]}`,
+            estimate: coeffEstimates[idx],
+            stdError: stdErrors[idx],
+            tValue,
+            pValue
+          });
+          idx++;
+        }
+      }
+    }
+    
+    return coefficients;
+  } catch (error) {
+    console.error('Error calculating coefficients:', error);
+    return [];
+  }
 }
 
 /**
@@ -281,6 +530,18 @@ export function anovaTwoWay(
   // Anderson-Darling test for normality of residuals
   const normalADTest = performNormalityTest(residuals, residualMean, residualStd);
   
+  // Calculate regression coefficients
+  const coefficients = calculateCoefficients(
+    factorALevels,
+    factorBLevels,
+    'A',
+    'B',
+    cellData,
+    includeInteraction,
+    errorMS,
+    errorDF
+  );
+  
   return {
     grandMean,
     totalN,
@@ -319,5 +580,6 @@ export function anovaTwoWay(
     andersonDarlingStatistic: normalADTest.adStatistic,
     andersonDarlingPValue: normalADTest.pValue,
     andersonDarlingNormality: normalADTest.isNormal ? 'Normal' : (normalADTest.isNormal === false ? 'Not Normal' : 'Inconclusive'),
+    coefficients,
   };
 }
