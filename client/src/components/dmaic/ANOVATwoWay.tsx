@@ -930,7 +930,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card>
               <CardHeader>
-                <CardTitle>Main Effect Plot - {factorAName}</CardTitle>
+                <CardTitle>Main Effect Plot</CardTitle>
               </CardHeader>
               <CardContent>
                 <Plot
@@ -953,12 +953,9 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                     },
                   ]}
                   layout={{
+                    title:{ text: `<b>Main Effect Plot - ${factorAName}</b>` },
                     xaxis: { 
                       title: { text: factorAName },
-                      type: 'category',
-                      tickmode: 'array',
-                      tickvals: factorALevels,
-                      ticktext: factorALevels,
                     },
                     yaxis: { 
                       title: { text: responseVariableName },
@@ -968,7 +965,18 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                     hovermode: 'closest',
                     margin: { l: 60, r: 40, t: 40, b: 60 },
                   }}
-                  config={{ displayModeBar: false, responsive: true }}
+                 config={{
+                    responsive: true,
+                    displayModeBar: true,
+                    displaylogo: false,
+                    toImageButtonOptions: {
+                      format: 'png',
+                      filename: `ANOVA_2_Way_Main_Effect_Plot_of_${factorAName} on ${responseVariableName}`,
+                      height: 500,
+                      width: 660,
+                      scale: 1
+                    }
+                  }}
                   className="w-full"
                 />
               </CardContent>
@@ -976,7 +984,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
 
             <Card>
               <CardHeader>
-                <CardTitle>Main Effect Plot - {factorBName}</CardTitle>
+                <CardTitle>Main Effect Plot</CardTitle>
               </CardHeader>
               <CardContent>
                 <Plot
@@ -999,12 +1007,9 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                     },
                   ]}
                   layout={{
+                    title:{ text: `<b>Main Effect Plot - ${factorBName}</b>` },
                     xaxis: { 
                       title: { text: factorBName },
-                      type: 'category',
-                      tickmode: 'array',
-                      tickvals: factorBLevels,
-                      ticktext: factorBLevels,
                     },
                     yaxis: { 
                       title: { text: responseVariableName },
@@ -1014,7 +1019,18 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                     hovermode: 'closest',
                     margin: { l: 60, r: 40, t: 40, b: 60 },
                   }}
-                  config={{ displayModeBar: false, responsive: true }}
+                  config={{
+                    responsive: true,
+                    displayModeBar: true,
+                    displaylogo: false,
+                    toImageButtonOptions: {
+                      format: 'png',
+                      filename: `ANOVA_2_Way_Main_Effect_Plot_of_${factorBName} on ${responseVariableName}`,
+                      height: 500,
+                      width: 660,
+                      scale: 1
+                    }
+                  }}
                   className="w-full"
                 />
               </CardContent>
@@ -1042,13 +1058,9 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                     marker: { size: 8 },
                   }))}
                   layout={{
-                    title: `${factorAName} × ${factorBName} Interaction`,
+                    title: { text: `<b>${factorAName} × ${factorBName} Interaction</b>` },
                     xaxis: { 
                       title: { text: factorBName },
-                      type: 'category',
-                      tickmode: 'array',
-                      tickvals: factorBLevels,
-                      ticktext: factorBLevels,
                     },
                     yaxis: { 
                       title: { text: responseVariableName },
@@ -1057,9 +1069,20 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                     showlegend: true,
                     legend: { title: { text: factorAName } },
                     hovermode: 'closest',
-                    margin: { l: 60, r: 40, t: 60, b: 60 },
+                    margin: { l: 60, r: 160, t: 60, b: 60 },
                   }}
-                  config={{ displayModeBar: true, responsive: true }}
+                  config={{
+                    responsive: true,
+                    displayModeBar: true,
+                    displaylogo: false,
+                    toImageButtonOptions: {
+                      format: 'png',
+                      filename: `ANOVA_2_Way_Interaction_Plot_of_${factorAName}x${factorBName} on ${responseVariableName}`,
+                      height: 500,
+                      width: 800,
+                      scale: 1
+                    }
+                  }}
                   className="w-full"
                 />
               </CardContent>
@@ -1204,9 +1227,9 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Term</TableHead>
-                        <TableHead className="text-right">Estimate</TableHead>
+                        <TableHead className="text-right">Coefficient</TableHead>
                         <TableHead className="text-right">Std. Error</TableHead>
-                        <TableHead className="text-right">t-value</TableHead>
+                        <TableHead className="text-right">T-value</TableHead>
                         <TableHead className="text-right">p-value</TableHead>
                       </TableRow>
                     </TableHeader>
