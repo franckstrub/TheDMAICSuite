@@ -847,6 +847,53 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
             </CardContent>
           </Card>
 
+          {/* Coefficients Table */}
+          {anovaResult.coefficients && anovaResult.coefficients.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Coefficients</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Term</TableHead>
+                        <TableHead className="text-right">Estimate</TableHead>
+                        <TableHead className="text-right">Std. Error</TableHead>
+                        <TableHead className="text-right">t-value</TableHead>
+                        <TableHead className="text-right">p-value</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {anovaResult.coefficients.map((coef, idx) => (
+                        <TableRow key={idx}>
+                          <TableCell className="font-medium" data-testid={`coef-term-${idx}`}>
+                            {coef.term}
+                          </TableCell>
+                          <TableCell className="text-right" data-testid={`coef-estimate-${idx}`}>
+                            {coef.estimate.toFixed(6)}
+                          </TableCell>
+                          <TableCell className="text-right" data-testid={`coef-stderr-${idx}`}>
+                            {coef.stdError.toFixed(4)}
+                          </TableCell>
+                          <TableCell className="text-right" data-testid={`coef-tvalue-${idx}`}>
+                            {coef.tValue.toFixed(2)}
+                          </TableCell>
+                          <TableCell className="text-right" data-testid={`coef-pvalue-${idx}`}>
+                            <span className={coef.pValue < significanceLevel ? "text-green-600 font-semibold" : ""}>
+                              {coef.pValue < 0.0001 ? coef.pValue.toExponential(2) : coef.pValue.toFixed(4)}
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Cell Means */}
           <Card>
             <CardHeader>
