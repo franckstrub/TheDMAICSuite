@@ -834,10 +834,14 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
               <CardTitle>Model Summary</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground">R-Squared</p>
                   <p className="text-2xl font-bold">{(anovaResult.rSquared * 100).toFixed(2)}%</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">R-Squared Adjusted</p>
+                  <p className="text-2xl font-bold">{(anovaResult.rSquaredAdjusted * 100).toFixed(2)}%</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Root MSE</p>
