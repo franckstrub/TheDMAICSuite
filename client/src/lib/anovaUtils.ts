@@ -292,7 +292,7 @@ function calculateCoefficients(
           const tValue = stdErrors[idx] > 0 ? coeffEstimates[idx] / stdErrors[idx] : 0;
           const pValue = errorDF > 0 ? 2 * (1 - jStat.studentt.cdf(Math.abs(tValue), errorDF)) : 1;
           coefficients.push({
-            term: `${factorAName} (level ${factorALevels[i]})x${factorBName} level (${factorBLevels[j]})`,
+            term: `${factorAName} (level ${factorALevels[i]})x${factorBName} (level ${factorBLevels[j]})`,
             estimate: coeffEstimates[idx],
             stdError: stdErrors[idx],
             tValue,
@@ -317,13 +317,17 @@ function calculateCoefficients(
  * @param factorBLevels - Array of factor B level names
  * @param cellData - Object with keys like "A1-B1" and values as arrays of observations
  * @param includeInteraction - Whether to include interaction effect
+ * @param factorAName - Name of Factor A for coefficient labels
+ * @param factorBName - Name of Factor B for coefficient labels
  * @returns AnovaTwoWayResult object with all statistics
  */
 export function anovaTwoWay(
   factorALevels: string[],
   factorBLevels: string[],
   cellData: Record<string, number[]>,
-  includeInteraction: boolean = true
+  includeInteraction: boolean = true,
+  factorAName: string = 'Factor A',
+  factorBName: string = 'Factor B'
 ): AnovaTwoWayResult {
   
   // Validate inputs
@@ -543,8 +547,8 @@ export function anovaTwoWay(
   const coefficients = calculateCoefficients(
     factorALevels,
     factorBLevels,
-    'A',
-    'B',
+    factorAName,
+    factorBName,
     cellData,
     includeInteraction,
     errorMS,
