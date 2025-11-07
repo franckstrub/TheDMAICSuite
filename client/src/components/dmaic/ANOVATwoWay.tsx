@@ -157,11 +157,6 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
 
   const removeFactorALevel = (index: number) => {
     if (factorALevels.length <= 2) {
-      toast({
-        title: "Cannot remove",
-        description: "Must have at least 2 levels for Factor A",
-        variant: "destructive",
-      });
       return;
     }
     const newLevels = factorALevels.filter((_, i) => i !== index);
@@ -178,11 +173,6 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
 
   const removeFactorBLevel = (index: number) => {
     if (factorBLevels.length <= 2) {
-      toast({
-        title: "Cannot remove",
-        description: "Must have at least 2 levels for Factor B",
-        variant: "destructive",
-      });
       return;
     }
     const newLevels = factorBLevels.filter((_, i) => i !== index);
@@ -260,12 +250,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
   const removeReplication = (levelA: string, levelB: string, index: number) => {
     const key = `${levelA}-${levelB}`;
     const currentData = cellData[key] || [];
-    if (currentData.length <= 1 && includeInteraction) {
-      toast({
-        title: "Cannot remove",
-        description: "Each cell must have at least 1 observation (2 if interaction is included)",
-        variant: "destructive",
-      });
+    if (currentData.length <= 1) {
       return;
     }
     
@@ -284,13 +269,45 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
     } catch (error: any) {
       setAnalysisError(error.message);
       setAnovaResult(null);
-      toast({
-        title: "Analysis Error",
-        description: error.message,
-        variant: "destructive",
-      });
     }
   };
+
+  const getDesignStatus = () => {
+    const totalRows = Object.values(cellData).reduce((sum, arr) => sum + arr.length, 0);
+    
+    if (totalRows === 0) {
+      return { status: 'insufficient', message: 'Not enough data to analyze', replicates: 0 };
+    }
+
+    const replicationCounts: number[] = [];
+    let hasEmptyCells = false;
+
+    for (const levelA of factorALevels) {
+      for (const levelB of factorBLevels) {
+        const key = `${levelA}-${levelB}`;
+        const count = cellData[key]?.length || 0;
+        if (count === 0) {
+          hasEmptyCells = true;
+        }
+        replicationCounts.push(count);
+      }
+    }
+
+    if (hasEmptyCells || totalRows < factorALevels.length * factorBLevels.length) {
+      return { status: 'insufficient', message: 'Not enough data to analyze', replicates: 0 };
+    }
+
+    const minReps = Math.min(...replicationCounts);
+    const maxReps = Math.max(...replicationCounts);
+
+    if (minReps === maxReps) {
+      return { status: 'balanced', message: 'Balanced design', replicates: minReps };
+    } else {
+      return { status: 'unbalanced', message: 'Unbalanced design', replicates: 0 };
+    }
+  };
+
+  const designStatus = getDesignStatus();
 
   useEffect(() => {
     if (Object.keys(cellData).length > 0) {
@@ -454,7 +471,32 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle>Data Entry</CardTitle>
+          <CardTitle className="flex items-center justify-between">
+            <span>Data Entry</span>
+            <div className="flex items-center gap-2">
+              {designStatus.status === 'balanced' && (
+                <div className="flex items-center gap-2 text-sm font-normal">
+                  <span className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-md" data-testid="flag-balanced-design">
+                    {designStatus.message} ({designStatus.replicates} replicates)
+                  </span>
+                </div>
+              )}
+              {designStatus.status === 'unbalanced' && (
+                <div className="flex items-center gap-2 text-sm font-normal">
+                  <span className="px-3 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-md" data-testid="flag-unbalanced-design">
+                    {designStatus.message}
+                  </span>
+                </div>
+              )}
+              {designStatus.status === 'insufficient' && (
+                <div className="flex items-center gap-2 text-sm font-normal">
+                  <span className="px-3 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-md" data-testid="flag-insufficient-data">
+                    {designStatus.message}
+                  </span>
+                </div>
+              )}
+            </div>
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
