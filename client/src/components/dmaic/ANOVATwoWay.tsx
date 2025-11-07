@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Trash2, Info, Plus } from "lucide-react";
+import { Loader2, Trash2, Info, Plus, Clipboard, Undo, XCircle } from "lucide-react";
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { HypothesisTestingTabs } from './common/HypothesisTestingTabs';
@@ -13,6 +13,7 @@ import { anovaTwoWay, type AnovaTwoWayResult } from '@/lib/anovaUtils';
 import Plot from 'react-plotly.js';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { parseExcelPaste } from '@/lib/excelPasteUtils';
 
 interface DataRow {
   id: number;
@@ -39,6 +40,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
   
   const [dataRows, setDataRows] = useState<DataRow[]>([]);
   const [nextId, setNextId] = useState(1);
+  const [previousDataRows, setPreviousDataRows] = useState<DataRow[]>([]);
   
   const [cellData, setCellData] = useState<Record<string, number[]>>({});
   const [includeInteraction, setIncludeInteraction] = useState(true);
@@ -91,7 +93,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
         setDataRows(config.dataRows);
         const maxId = Math.max(...config.dataRows.map((r: DataRow) => r.id), 0);
         setNextId(maxId + 1);
-      } else if (config.cellData) {
+      } else if (config.cellData && Object.keys(config.cellData).length > 0) {
         // Convert old cellData format to new dataRows format
         const rows: DataRow[] = [];
         let id = 1;
@@ -103,12 +105,24 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
         });
         setDataRows(rows);
         setNextId(id);
+      } else {
+        // Initialize with one empty row if no data exists
+        setDataRows([{ id: 1, factorA: factorALevels[0] || 'Level 1', factorB: factorBLevels[0] || 'Level 1', response: 0 }]);
+        setNextId(2);
       }
       
       setIncludeInteraction(config.includeInteraction ?? true);
       setSignificanceLevel(config.significanceLevel ?? 0.05);
     }
   }, [configQuery.data]);
+
+  // Initialize with one empty row on first render if no data
+  useEffect(() => {
+    if (!loadedRef.current && dataRows.length === 0) {
+      setDataRows([{ id: 1, factorA: factorALevels[0], factorB: factorBLevels[0], response: 0 }]);
+      setNextId(2);
+    }
+  }, []);
 
   const saveConfigMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -190,6 +204,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
   };
 
   const addDataRow = () => {
+    setPreviousDataRows([...dataRows]);
     const newRow: DataRow = {
       id: nextId,
       factorA: factorALevels[0],
@@ -207,7 +222,142 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
   };
 
   const deleteDataRow = (id: number) => {
+    setPreviousDataRows([...dataRows]);
     setDataRows(dataRows.filter(row => row.id !== id));
+  };
+
+  const handleUndo = () => {
+    if (previousDataRows.length > 0) {
+      setDataRows(previousDataRows);
+      setPreviousDataRows([]);
+    }
+  };
+
+  const handleClearAll = () => {
+    setPreviousDataRows([...dataRows]);
+    setDataRows([{ id: nextId, factorA: factorALevels[0], factorB: factorBLevels[0], response: 0 }]);
+    setNextId(nextId + 1);
+  };
+
+  const parseThreeColumnPaste = (pastedText: string): {
+    success: boolean;
+    rows: DataRow[];
+    errors: string[];
+  } => {
+    const result = parseExcelPaste(pastedText);
+    const errors = [...result.errors];
+    const rows: DataRow[] = [];
+    
+    if (!result.success || result.data.length === 0) {
+      return {
+        success: false,
+        rows: [],
+        errors: errors.length > 0 ? errors : ['No valid data found'],
+      };
+    }
+    
+    let id = nextId;
+    
+    for (let i = 0; i < result.data.length; i++) {
+      const row = result.data[i];
+      
+      if (row.length < 3) {
+        errors.push(`Row ${i + 1}: Expected 3 columns (Factor A, Factor B, Response), found ${row.length}`);
+        continue;
+      }
+      
+      // Try to match factor levels, or use string representation
+      const factorAValue = row[0].toString();
+      const factorBValue = row[1].toString();
+      const responseValue = row[2];
+      
+      // Find matching level or use the value as-is
+      let factorA = factorALevels.find(level => level === factorAValue) || factorALevels[0];
+      let factorB = factorBLevels.find(level => level === factorBValue) || factorBLevels[0];
+      
+      // Check if values look like level indices (1, 2, 3...)
+      const aIndex = Math.floor(row[0]) - 1;
+      const bIndex = Math.floor(row[1]) - 1;
+      
+      if (aIndex >= 0 && aIndex < factorALevels.length && row[0] === Math.floor(row[0])) {
+        factorA = factorALevels[aIndex];
+      }
+      if (bIndex >= 0 && bIndex < factorBLevels.length && row[1] === Math.floor(row[1])) {
+        factorB = factorBLevels[bIndex];
+      }
+      
+      rows.push({
+        id: id++,
+        factorA,
+        factorB,
+        response: responseValue,
+      });
+    }
+    
+    setNextId(id);
+    
+    return {
+      success: errors.length === 0,
+      rows,
+      errors,
+    };
+  };
+
+  const handlePaste = async (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const pastedText = e.clipboardData.getData('text');
+    
+    const result = parseThreeColumnPaste(pastedText);
+    
+    if (!result.success) {
+      toast({
+        title: "Paste error",
+        description: result.errors.join(', '),
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (result.rows.length > 0) {
+      setPreviousDataRows([...dataRows]);
+      setDataRows(result.rows);
+      toast({
+        title: "Success",
+        description: `Successfully pasted ${result.rows.length} data rows`,
+      });
+    }
+  };
+
+  const handlePasteFromExcel = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      
+      const result = parseThreeColumnPaste(text);
+      
+      if (!result.success) {
+        toast({
+          title: "Paste error",
+          description: result.errors.join(', '),
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (result.rows.length > 0) {
+        setPreviousDataRows([...dataRows]);
+        setDataRows(result.rows);
+        toast({
+          title: "Success",
+          description: `Successfully pasted ${result.rows.length} data rows`,
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Clipboard error",
+        description: "Failed to read from clipboard. Please use Ctrl+V instead.",
+        variant: "destructive",
+      });
+    }
   };
 
   const addFactorALevel = () => {
@@ -564,7 +714,44 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="overflow-x-auto">
+          <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg flex-wrap">
+            <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+            <p className="text-sm text-blue-600 dark:text-blue-400 flex-1">
+              Paste Excel data: Copy 3 columns (Factor A, Factor B, Response) from Excel, then paste with Ctrl+V or use the button below.
+            </p>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePasteFromExcel}
+                data-testid="button-paste-from-excel"
+              >
+                <Clipboard className="mr-2 h-4 w-4" />
+                Paste from Excel
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleUndo}
+                disabled={previousDataRows.length === 0}
+                data-testid="button-undo"
+              >
+                <Undo className="mr-2 h-4 w-4" />
+                Undo
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleClearAll}
+                data-testid="button-clear-all"
+              >
+                <XCircle className="mr-2 h-4 w-4" />
+                Clear All
+              </Button>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto" onPaste={handlePaste}>
             <Table>
               <TableHeader>
                 <TableRow>
