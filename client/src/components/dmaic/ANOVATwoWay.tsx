@@ -243,52 +243,45 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
     rows: DataRow[];
     errors: string[];
   } => {
-    const result = parseExcelPaste(pastedText);
-    const errors = [...result.errors];
+    const errors: string[] = [];
     const rows: DataRow[] = [];
     
-    if (!result.success || result.data.length === 0) {
+    if (!pastedText || pastedText.trim() === '') {
       return {
         success: false,
         rows: [],
-        errors: errors.length > 0 ? errors : ['No valid data found'],
+        errors: ['No data to paste'],
       };
     }
     
+    const delimiter = pastedText.includes('\t') ? '\t' : ',';
+    const lines = pastedText.split('\n').filter(line => line.trim() !== '');
+    
     let id = nextId;
     
-    for (let i = 0; i < result.data.length; i++) {
-      const row = result.data[i];
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const cells = line.split(delimiter).map(cell => cell.trim());
       
-      if (row.length < 3) {
-        errors.push(`Row ${i + 1}: Expected 3 columns (Factor A, Factor B, Response), found ${row.length}`);
+      if (cells.length < 3) {
+        errors.push(`Row ${i + 1}: Expected 3 columns (Factor A, Factor B, Response), found ${cells.length}`);
         continue;
       }
       
-      // Try to match factor levels, or use string representation
-      const factorAValue = row[0].toString();
-      const factorBValue = row[1].toString();
-      const responseValue = row[2];
+      const factorAValue = cells[0];
+      const factorBValue = cells[1];
+      const responseText = cells[2].replace(/,/g, '.');
+      const responseValue = parseFloat(responseText);
       
-      // Find matching level or use the value as-is
-      let factorA = factorALevels.find(level => level === factorAValue) || factorALevels[0];
-      let factorB = factorBLevels.find(level => level === factorBValue) || factorBLevels[0];
-      
-      // Check if values look like level indices (1, 2, 3...)
-      const aIndex = Math.floor(row[0]) - 1;
-      const bIndex = Math.floor(row[1]) - 1;
-      
-      if (aIndex >= 0 && aIndex < factorALevels.length && row[0] === Math.floor(row[0])) {
-        factorA = factorALevels[aIndex];
-      }
-      if (bIndex >= 0 && bIndex < factorBLevels.length && row[1] === Math.floor(row[1])) {
-        factorB = factorBLevels[bIndex];
+      if (isNaN(responseValue)) {
+        errors.push(`Row ${i + 1}: Response "${cells[2]}" is not a valid number`);
+        continue;
       }
       
       rows.push({
         id: id++,
-        factorA,
-        factorB,
+        factorA: factorAValue,
+        factorB: factorBValue,
         response: responseValue,
       });
     }
