@@ -773,6 +773,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-[60px] text-center">#</TableHead>
                   <TableHead className="w-[250px]">{factorAName}</TableHead>
                   <TableHead className="w-[250px]">{factorBName}</TableHead>
                   <TableHead className="w-[200px]">{responseVariableName}</TableHead>
@@ -780,8 +781,11 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {dataRows.map((row) => (
+                {dataRows.map((row, index) => (
                   <TableRow key={row.id}>
+                    <TableCell className="text-center text-sm text-muted-foreground">
+                      {index + 1}
+                    </TableCell>
                     <TableCell>
                       <Input
                         value={row.factorA}
