@@ -214,7 +214,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
     setNextId(nextId + 1);
   };
 
-  const updateDataRow = (id: number, field: keyof DataRow, value: string | number) => {
+  const updateDataRow = (id: number, field: keyof DataRow, value: string | number | null) => {
     setDataRows(dataRows.map(row => 
       row.id === id ? { ...row, [field]: value } : row
     ));
@@ -791,7 +791,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                         value={row.factorA}
                         onChange={(e) => updateDataRow(row.id, 'factorA', e.target.value)}
                         data-testid={`input-factor-a-${row.id}`}
-                        placeholder={factorAName}
+                        placeholder={`${factorAName} level: ${factorALevels.join(' or ')}`}
                         list={`factor-a-list-${row.id}`}
                       />
                       <datalist id={`factor-a-list-${row.id}`}>
@@ -805,7 +805,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                         value={row.factorB}
                         onChange={(e) => updateDataRow(row.id, 'factorB', e.target.value)}
                         data-testid={`input-factor-b-${row.id}`}
-                        placeholder={factorBName}
+                        placeholder={`${factorBName} level: ${factorBLevels.join(' or ')}`}
                         list={`factor-b-list-${row.id}`}
                       />
                       <datalist id={`factor-b-list-${row.id}`}>
@@ -818,9 +818,9 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                       <Input
                         type="number"
                         value={row.response}
-                        onChange={(e) => updateDataRow(row.id, 'response', parseFloat(e.target.value) || 0)}
+                        onChange={(e) => updateDataRow(row.id, 'response', parseFloat(e.target.value) || null)}
                         data-testid={`input-response-${row.id}`}
-                        placeholder="0"
+                        placeholder={`Enter ${responseVariableName} value:`}
                       />
                     </TableCell>
                     <TableCell>
