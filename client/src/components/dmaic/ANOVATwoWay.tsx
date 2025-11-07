@@ -497,7 +497,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
   const calculateANOVA = () => {
     setAnalysisError(null);
     try {
-      const result = anovaTwoWay(factorALevels, factorBLevels, cellData, includeInteraction);
+      const result = anovaTwoWay(factorALevels, factorBLevels, cellData, includeInteraction, factorAName, factorBName);
       setAnovaResult(result);
     } catch (error: any) {
       setAnalysisError(error.message);
