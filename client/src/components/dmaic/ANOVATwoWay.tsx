@@ -955,6 +955,10 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                   layout={{
                     xaxis: { 
                       title: { text: factorAName },
+                      type: 'category',
+                      tickmode: 'array',
+                      tickvals: factorALevels,
+                      ticktext: factorALevels,
                     },
                     yaxis: { 
                       title: { text: responseVariableName },
@@ -997,6 +1001,10 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                   layout={{
                     xaxis: { 
                       title: { text: factorBName },
+                      type: 'category',
+                      tickmode: 'array',
+                      tickvals: factorBLevels,
+                      ticktext: factorBLevels,
                     },
                     yaxis: { 
                       title: { text: responseVariableName },
@@ -1037,6 +1045,10 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                     title: `${factorAName} × ${factorBName} Interaction`,
                     xaxis: { 
                       title: { text: factorBName },
+                      type: 'category',
+                      tickmode: 'array',
+                      tickvals: factorBLevels,
+                      ticktext: factorBLevels,
                     },
                     yaxis: { 
                       title: { text: responseVariableName },
