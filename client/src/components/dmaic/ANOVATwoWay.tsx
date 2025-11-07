@@ -12,6 +12,14 @@ import { HypothesisTestingTabs } from './common/HypothesisTestingTabs';
 import { anovaTwoWay, type AnovaTwoWayResult } from '@/lib/anovaUtils';
 import Plot from 'react-plotly.js';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+interface DataRow {
+  id: number;
+  factorA: string;
+  factorB: string;
+  response: number;
+}
 
 interface ANOVATwoWayProps {
   projectId: number;
@@ -26,8 +34,11 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
   const [factorBName, setFactorBName] = useState("Factor B");
   const [responseVariableName, setResponseVariableName] = useState("Response");
   
-  const [factorALevels, setFactorALevels] = useState<string[]>(["A1", "A2"]);
-  const [factorBLevels, setFactorBLevels] = useState<string[]>(["B1", "B2"]);
+  const [factorALevels, setFactorALevels] = useState<string[]>(["Level 1", "Level 2"]);
+  const [factorBLevels, setFactorBLevels] = useState<string[]>(["Level 1", "Level 2"]);
+  
+  const [dataRows, setDataRows] = useState<DataRow[]>([]);
+  const [nextId, setNextId] = useState(1);
   
   const [cellData, setCellData] = useState<Record<string, number[]>>({});
   const [includeInteraction, setIncludeInteraction] = useState(true);
@@ -44,6 +55,21 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
     retry: false,
   });
 
+  // Convert dataRows to cellData format for ANOVA calculation
+  useEffect(() => {
+    const newCellData: Record<string, number[]> = {};
+    
+    dataRows.forEach(row => {
+      const key = `${row.factorA}-${row.factorB}`;
+      if (!newCellData[key]) {
+        newCellData[key] = [];
+      }
+      newCellData[key].push(row.response);
+    });
+    
+    setCellData(newCellData);
+  }, [dataRows]);
+
   useEffect(() => {
     if (configQuery.data && !loadedRef.current) {
       loadedRef.current = true;
@@ -59,9 +85,26 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
       if (config.factorBLevels && config.factorBLevels.length > 0) {
         setFactorBLevels(config.factorBLevels);
       }
-      if (config.cellData) {
-        setCellData(config.cellData);
+      
+      // Load data rows (or convert from old cellData format if needed)
+      if (config.dataRows && config.dataRows.length > 0) {
+        setDataRows(config.dataRows);
+        const maxId = Math.max(...config.dataRows.map((r: DataRow) => r.id), 0);
+        setNextId(maxId + 1);
+      } else if (config.cellData) {
+        // Convert old cellData format to new dataRows format
+        const rows: DataRow[] = [];
+        let id = 1;
+        Object.entries(config.cellData).forEach(([key, values]: [string, any]) => {
+          const [factorA, factorB] = key.split('-');
+          (values as number[]).forEach((response: number) => {
+            rows.push({ id: id++, factorA, factorB, response });
+          });
+        });
+        setDataRows(rows);
+        setNextId(id);
       }
+      
       setIncludeInteraction(config.includeInteraction ?? true);
       setSignificanceLevel(config.significanceLevel ?? 0.05);
     }
@@ -139,10 +182,32 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
       responseVariableName,
       factorALevels,
       factorBLevels,
+      dataRows,
       cellData,
       includeInteraction,
       significanceLevel,
     });
+  };
+
+  const addDataRow = () => {
+    const newRow: DataRow = {
+      id: nextId,
+      factorA: factorALevels[0],
+      factorB: factorBLevels[0],
+      response: 0,
+    };
+    setDataRows([...dataRows, newRow]);
+    setNextId(nextId + 1);
+  };
+
+  const updateDataRow = (id: number, field: keyof DataRow, value: string | number) => {
+    setDataRows(dataRows.map(row => 
+      row.id === id ? { ...row, [field]: value } : row
+    ));
+  };
+
+  const deleteDataRow = (id: number) => {
+    setDataRows(dataRows.filter(row => row.id !== id));
   };
 
   const addFactorALevel = () => {
@@ -498,69 +563,88 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
             </div>
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-center">{factorAName} \ {factorBName}</TableHead>
-                  {factorBLevels.map((levelB, idx) => (
-                    <TableHead key={idx} className="text-center" data-testid={`header-factor-b-${idx}`}>
-                      {levelB}
-                    </TableHead>
-                  ))}
+                  <TableHead className="w-[250px]">{factorAName}</TableHead>
+                  <TableHead className="w-[250px]">{factorBName}</TableHead>
+                  <TableHead className="w-[200px]">{responseVariableName}</TableHead>
+                  <TableHead className="w-[80px]"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {factorALevels.map((levelA, idxA) => (
-                  <TableRow key={idxA}>
-                    <TableCell className="font-medium" data-testid={`cell-factor-a-${idxA}`}>{levelA}</TableCell>
-                    {factorBLevels.map((levelB, idxB) => {
-                      const key = `${levelA}-${levelB}`;
-                      const data = cellData[key] || [];
-                      return (
-                        <TableCell key={idxB} className="p-2">
-                          <div className="space-y-2">
-                            {data.map((value, repIdx) => (
-                              <div key={repIdx} className="flex gap-1">
-                                <Input
-                                  type="number"
-                                  data-testid={`input-cell-${idxA}-${idxB}-${repIdx}`}
-                                  value={value}
-                                  onChange={(e) => updateCellValue(levelA, levelB, repIdx, e.target.value)}
-                                  className="w-20 text-sm"
-                                  placeholder="0"
-                                />
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8"
-                                  data-testid={`button-remove-rep-${idxA}-${idxB}-${repIdx}`}
-                                  onClick={() => removeReplication(levelA, levelB, repIdx)}
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            ))}
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              data-testid={`button-add-rep-${idxA}-${idxB}`}
-                              onClick={() => addReplication(levelA, levelB)}
-                              className="w-full text-xs"
-                            >
-                              <Plus className="h-3 w-3 mr-1" />
-                              Add
-                            </Button>
-                          </div>
-                        </TableCell>
-                      );
-                    })}
+                {dataRows.map((row) => (
+                  <TableRow key={row.id}>
+                    <TableCell>
+                      <Select
+                        value={row.factorA}
+                        onValueChange={(value) => updateDataRow(row.id, 'factorA', value)}
+                      >
+                        <SelectTrigger data-testid={`select-factor-a-${row.id}`}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {factorALevels.map((level) => (
+                            <SelectItem key={level} value={level}>
+                              {level}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell>
+                      <Select
+                        value={row.factorB}
+                        onValueChange={(value) => updateDataRow(row.id, 'factorB', value)}
+                      >
+                        <SelectTrigger data-testid={`select-factor-b-${row.id}`}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {factorBLevels.map((level) => (
+                            <SelectItem key={level} value={level}>
+                              {level}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        type="number"
+                        value={row.response}
+                        onChange={(e) => updateDataRow(row.id, 'response', parseFloat(e.target.value) || 0)}
+                        data-testid={`input-response-${row.id}`}
+                        placeholder="0"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => deleteDataRow(row.id)}
+                        data-testid={`button-delete-row-${row.id}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           </div>
+          
+          <Button
+            onClick={addDataRow}
+            variant="outline"
+            className="w-full"
+            data-testid="button-add-row"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Row
+          </Button>
         </CardContent>
       </Card>
 
