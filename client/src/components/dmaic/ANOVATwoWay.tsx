@@ -12,7 +12,6 @@ import { HypothesisTestingTabs } from './common/HypothesisTestingTabs';
 import { anovaTwoWay, type AnovaTwoWayResult } from '@/lib/anovaUtils';
 import Plot from 'react-plotly.js';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { parseExcelPaste } from '@/lib/excelPasteUtils';
 
 interface DataRow {
@@ -107,7 +106,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
         setNextId(id);
       } else {
         // Initialize with one empty row if no data exists
-        setDataRows([{ id: 1, factorA: factorALevels[0] || 'Level 1', factorB: factorBLevels[0] || 'Level 1', response: 0 }]);
+        setDataRows([{ id: 1, factorA: '', factorB: '', response: 0 }]);
         setNextId(2);
       }
       
@@ -119,7 +118,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
   // Initialize with one empty row on first render if no data
   useEffect(() => {
     if (!loadedRef.current && dataRows.length === 0) {
-      setDataRows([{ id: 1, factorA: factorALevels[0], factorB: factorBLevels[0], response: 0 }]);
+      setDataRows([{ id: 1, factorA: '', factorB: '', response: 0 }]);
       setNextId(2);
     }
   }, []);
@@ -207,8 +206,8 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
     setPreviousDataRows([...dataRows]);
     const newRow: DataRow = {
       id: nextId,
-      factorA: factorALevels[0],
-      factorB: factorBLevels[0],
+      factorA: '',
+      factorB: '',
       response: 0,
     };
     setDataRows([...dataRows, newRow]);
@@ -235,7 +234,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
 
   const handleClearAll = () => {
     setPreviousDataRows([...dataRows]);
-    setDataRows([{ id: nextId, factorA: factorALevels[0], factorB: factorBLevels[0], response: 0 }]);
+    setDataRows([{ id: nextId, factorA: '', factorB: '', response: 0 }]);
     setNextId(nextId + 1);
   };
 
@@ -321,6 +320,19 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
     if (result.rows.length > 0) {
       setPreviousDataRows([...dataRows]);
       setDataRows(result.rows);
+      
+      // Extract unique factor levels from pasted data
+      const uniqueFactorA = Array.from(new Set(result.rows.map(r => r.factorA).filter(f => f)));
+      const uniqueFactorB = Array.from(new Set(result.rows.map(r => r.factorB).filter(f => f)));
+      
+      // Update factor levels if new ones were found
+      if (uniqueFactorA.length > 0) {
+        setFactorALevels(uniqueFactorA);
+      }
+      if (uniqueFactorB.length > 0) {
+        setFactorBLevels(uniqueFactorB);
+      }
+      
       toast({
         title: "Success",
         description: `Successfully pasted ${result.rows.length} data rows`,
@@ -346,6 +358,19 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
       if (result.rows.length > 0) {
         setPreviousDataRows([...dataRows]);
         setDataRows(result.rows);
+        
+        // Extract unique factor levels from pasted data
+        const uniqueFactorA = Array.from(new Set(result.rows.map(r => r.factorA).filter(f => f)));
+        const uniqueFactorB = Array.from(new Set(result.rows.map(r => r.factorB).filter(f => f)));
+        
+        // Update factor levels if new ones were found
+        if (uniqueFactorA.length > 0) {
+          setFactorALevels(uniqueFactorA);
+        }
+        if (uniqueFactorB.length > 0) {
+          setFactorBLevels(uniqueFactorB);
+        }
+        
         toast({
           title: "Success",
           description: `Successfully pasted ${result.rows.length} data rows`,
@@ -765,38 +790,32 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                 {dataRows.map((row) => (
                   <TableRow key={row.id}>
                     <TableCell>
-                      <Select
+                      <Input
                         value={row.factorA}
-                        onValueChange={(value) => updateDataRow(row.id, 'factorA', value)}
-                      >
-                        <SelectTrigger data-testid={`select-factor-a-${row.id}`}>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {factorALevels.map((level) => (
-                            <SelectItem key={level} value={level}>
-                              {level}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        onChange={(e) => updateDataRow(row.id, 'factorA', e.target.value)}
+                        data-testid={`input-factor-a-${row.id}`}
+                        placeholder={factorAName}
+                        list={`factor-a-list-${row.id}`}
+                      />
+                      <datalist id={`factor-a-list-${row.id}`}>
+                        {factorALevels.map((level) => (
+                          <option key={level} value={level} />
+                        ))}
+                      </datalist>
                     </TableCell>
                     <TableCell>
-                      <Select
+                      <Input
                         value={row.factorB}
-                        onValueChange={(value) => updateDataRow(row.id, 'factorB', value)}
-                      >
-                        <SelectTrigger data-testid={`select-factor-b-${row.id}`}>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {factorBLevels.map((level) => (
-                            <SelectItem key={level} value={level}>
-                              {level}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        onChange={(e) => updateDataRow(row.id, 'factorB', e.target.value)}
+                        data-testid={`input-factor-b-${row.id}`}
+                        placeholder={factorBName}
+                        list={`factor-b-list-${row.id}`}
+                      />
+                      <datalist id={`factor-b-list-${row.id}`}>
+                        {factorBLevels.map((level) => (
+                          <option key={level} value={level} />
+                        ))}
+                      </datalist>
                     </TableCell>
                     <TableCell>
                       <Input
