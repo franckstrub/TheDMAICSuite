@@ -262,7 +262,7 @@ function calculateCoefficients(
       const tValue = stdErrors[idx] > 0 ? coeffEstimates[idx] / stdErrors[idx] : 0;
       const pValue = errorDF > 0 ? 2 * (1 - jStat.studentt.cdf(Math.abs(tValue), errorDF)) : 1;
       coefficients.push({
-        term: factorAName + ': level ' + factorALevels[i],
+        term: factorAName + ': ' + factorALevels[i],
         estimate: coeffEstimates[idx],
         stdError: stdErrors[idx],
         tValue,
@@ -276,7 +276,7 @@ function calculateCoefficients(
       const tValue = stdErrors[idx] > 0 ? coeffEstimates[idx] / stdErrors[idx] : 0;
       const pValue = errorDF > 0 ? 2 * (1 - jStat.studentt.cdf(Math.abs(tValue), errorDF)) : 1;
       coefficients.push({
-        term: factorBName + ': level ' + factorBLevels[j],
+        term: factorBName + ': ' + factorBLevels[j],
         estimate: coeffEstimates[idx],
         stdError: stdErrors[idx],
         tValue,
@@ -292,7 +292,7 @@ function calculateCoefficients(
           const tValue = stdErrors[idx] > 0 ? coeffEstimates[idx] / stdErrors[idx] : 0;
           const pValue = errorDF > 0 ? 2 * (1 - jStat.studentt.cdf(Math.abs(tValue), errorDF)) : 1;
           coefficients.push({
-            term: `${factorAName} (level ${factorALevels[i]})x${factorBName} (level ${factorBLevels[j]})`,
+            term: `${factorAName} (${factorALevels[i]}) × ${factorBName} (${factorBLevels[j]})`,
             estimate: coeffEstimates[idx],
             stdError: stdErrors[idx],
             tValue,
