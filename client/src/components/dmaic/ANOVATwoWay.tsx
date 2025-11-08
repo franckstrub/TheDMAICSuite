@@ -12,6 +12,7 @@ import { HypothesisTestingTabs } from './common/HypothesisTestingTabs';
 import { anovaTwoWay, type AnovaTwoWayResult } from '@/lib/anovaUtils';
 import Plot from 'react-plotly.js';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { parseExcelPaste } from '@/lib/excelPasteUtils';
 
 interface DataRow {
@@ -55,6 +56,25 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
     queryKey: [`/api/projects/${projectId}/solutions/${solutionId}/anova-two-way`],
     retry: false,
   });
+
+  // Helper function to create default rows based on factor levels
+  const createDefaultRows = (aLevels: string[], bLevels: string[], startId: number = 1): DataRow[] => {
+    const rows: DataRow[] = [];
+    let id = startId;
+    
+    for (const levelA of aLevels) {
+      for (const levelB of bLevels) {
+        rows.push({
+          id: id++,
+          factorA: levelA,
+          factorB: levelB,
+          response: NaN,
+        });
+      }
+    }
+    
+    return rows;
+  };
 
   // Convert dataRows to cellData format for ANOVA calculation
   useEffect(() => {
@@ -108,9 +128,16 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
         setDataRows(rows);
         setNextId(id);
       } else {
-        // Initialize with one empty row if no data exists
-        setDataRows([{ id: 1, factorA: '', factorB: '', response: NaN }]);
-        setNextId(2);
+        // Initialize with default rows based on factor levels if no data exists
+        const aLevels = config.factorALevels && config.factorALevels.length > 0 
+          ? config.factorALevels 
+          : factorALevels;
+        const bLevels = config.factorBLevels && config.factorBLevels.length > 0 
+          ? config.factorBLevels 
+          : factorBLevels;
+        const defaultRows = createDefaultRows(aLevels, bLevels, 1);
+        setDataRows(defaultRows);
+        setNextId(defaultRows.length + 1);
       }
       
       setIncludeInteraction(config.includeInteraction ?? true);
@@ -118,11 +145,12 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
     }
   }, [configQuery.data]);
 
-  // Initialize with one empty row on first render if no data
+  // Initialize with default rows on first render if no data
   useEffect(() => {
     if (!loadedRef.current && dataRows.length === 0) {
-      setDataRows([{ id: 1, factorA: '', factorB: '', response: NaN }]);
-      setNextId(2);
+      const defaultRows = createDefaultRows(factorALevels, factorBLevels, 1);
+      setDataRows(defaultRows);
+      setNextId(defaultRows.length + 1);
     }
   }, []);
 
@@ -237,8 +265,9 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
 
   const handleClearAll = () => {
     setPreviousDataRows([...dataRows]);
-    setDataRows([{ id: nextId, factorA: '', factorB: '', response: NaN }]);
-    setNextId(nextId + 1);
+    const defaultRows = createDefaultRows(factorALevels, factorBLevels, nextId);
+    setDataRows(defaultRows);
+    setNextId(nextId + defaultRows.length);
   };
 
   const parseThreeColumnPaste = (pastedText: string): {
@@ -773,81 +802,161 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
           </div>
 
           <div className="overflow-x-auto" onPaste={handlePaste}>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[60px] text-center">#</TableHead>
-                  <TableHead className="w-[250px]">{factorAName}</TableHead>
-                  <TableHead className="w-[250px]">{factorBName}</TableHead>
-                  <TableHead className="w-[200px]">{responseVariableName}</TableHead>
-                  <TableHead className="w-[80px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {dataRows.map((row, index) => (
-                  <TableRow key={row.id}>
-                    <TableCell className="text-center text-sm text-muted-foreground">
-                      {index + 1}
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        value={row.factorA}
-                        onChange={(e) => updateDataRow(row.id, 'factorA', e.target.value)}
-                        data-testid={`input-factor-a-${row.id}`}
-                        placeholder={`${factorAName} level: ${factorALevels.join(' or ')}`}
-                        list={`factor-a-list-${row.id}`}
-                      />
-                      <datalist id={`factor-a-list-${row.id}`}>
-                        {factorALevels.map((level) => (
-                          <option key={level} value={level} />
-                        ))}
-                      </datalist>
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        value={row.factorB}
-                        onChange={(e) => updateDataRow(row.id, 'factorB', e.target.value)}
-                        data-testid={`input-factor-b-${row.id}`}
-                        placeholder={`${factorBName} level: ${factorBLevels.join(' or ')}`}
-                        list={`factor-b-list-${row.id}`}
-                      />
-                      <datalist id={`factor-b-list-${row.id}`}>
-                        {factorBLevels.map((level) => (
-                          <option key={level} value={level} />
-                        ))}
-                      </datalist>
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        type="number"
-                        value={isNaN(row.response) ? '' : row.response}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          if (value === '' || value === '-') {
-                            updateDataRow(row.id, 'response', NaN);
-                          } else {
-                            const parsed = parseFloat(value);
-                            updateDataRow(row.id, 'response', parsed);
-                          }
-                        }}
-                        data-testid={`input-response-${row.id}`}
-                        placeholder={`Enter ${responseVariableName} value:`}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => deleteDataRow(row.id)}
-                        data-testid={`button-delete-row-${row.id}`}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
+            {dataRows.length >= 10 ? (
+              <ScrollArea className="h-[500px] w-full rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[60px] text-center">#</TableHead>
+                      <TableHead className="w-[250px]">{factorAName}</TableHead>
+                      <TableHead className="w-[250px]">{factorBName}</TableHead>
+                      <TableHead className="w-[200px]">{responseVariableName}</TableHead>
+                      <TableHead className="w-[80px]"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {dataRows.map((row, index) => (
+                      <TableRow key={row.id}>
+                        <TableCell className="text-center text-sm text-muted-foreground">
+                          {index + 1}
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            value={row.factorA}
+                            onChange={(e) => updateDataRow(row.id, 'factorA', e.target.value)}
+                            data-testid={`input-factor-a-${row.id}`}
+                            placeholder={`${factorAName} level: ${factorALevels.join(' or ')}`}
+                            list={`factor-a-list-${row.id}`}
+                          />
+                          <datalist id={`factor-a-list-${row.id}`}>
+                            {factorALevels.map((level) => (
+                              <option key={level} value={level} />
+                            ))}
+                          </datalist>
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            value={row.factorB}
+                            onChange={(e) => updateDataRow(row.id, 'factorB', e.target.value)}
+                            data-testid={`input-factor-b-${row.id}`}
+                            placeholder={`${factorBName} level: ${factorBLevels.join(' or ')}`}
+                            list={`factor-b-list-${row.id}`}
+                          />
+                          <datalist id={`factor-b-list-${row.id}`}>
+                            {factorBLevels.map((level) => (
+                              <option key={level} value={level} />
+                            ))}
+                          </datalist>
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            value={isNaN(row.response) ? '' : row.response}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              if (value === '' || value === '-') {
+                                updateDataRow(row.id, 'response', NaN);
+                              } else {
+                                const parsed = parseFloat(value);
+                                updateDataRow(row.id, 'response', parsed);
+                              }
+                            }}
+                            data-testid={`input-response-${row.id}`}
+                            placeholder={`Enter ${responseVariableName} value:`}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => deleteDataRow(row.id)}
+                            data-testid={`button-delete-row-${row.id}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </ScrollArea>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[60px] text-center">#</TableHead>
+                    <TableHead className="w-[250px]">{factorAName}</TableHead>
+                    <TableHead className="w-[250px]">{factorBName}</TableHead>
+                    <TableHead className="w-[200px]">{responseVariableName}</TableHead>
+                    <TableHead className="w-[80px]"></TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {dataRows.map((row, index) => (
+                    <TableRow key={row.id}>
+                      <TableCell className="text-center text-sm text-muted-foreground">
+                        {index + 1}
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          value={row.factorA}
+                          onChange={(e) => updateDataRow(row.id, 'factorA', e.target.value)}
+                          data-testid={`input-factor-a-${row.id}`}
+                          placeholder={`${factorAName} level: ${factorALevels.join(' or ')}`}
+                          list={`factor-a-list-${row.id}`}
+                        />
+                        <datalist id={`factor-a-list-${row.id}`}>
+                          {factorALevels.map((level) => (
+                            <option key={level} value={level} />
+                          ))}
+                        </datalist>
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          value={row.factorB}
+                          onChange={(e) => updateDataRow(row.id, 'factorB', e.target.value)}
+                          data-testid={`input-factor-b-${row.id}`}
+                          placeholder={`${factorBName} level: ${factorBLevels.join(' or ')}`}
+                          list={`factor-b-list-${row.id}`}
+                        />
+                        <datalist id={`factor-b-list-${row.id}`}>
+                          {factorBLevels.map((level) => (
+                            <option key={level} value={level} />
+                          ))}
+                        </datalist>
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          value={isNaN(row.response) ? '' : row.response}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (value === '' || value === '-') {
+                              updateDataRow(row.id, 'response', NaN);
+                            } else {
+                              const parsed = parseFloat(value);
+                              updateDataRow(row.id, 'response', parsed);
+                            }
+                          }}
+                          data-testid={`input-response-${row.id}`}
+                          placeholder={`Enter ${responseVariableName} value:`}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => deleteDataRow(row.id)}
+                          data-testid={`button-delete-row-${row.id}`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </div>
           
           <Button
