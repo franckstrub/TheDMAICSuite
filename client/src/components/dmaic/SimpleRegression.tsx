@@ -647,7 +647,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                       <Input
                         type="number"
                         step="any"
-                        value={point.x === 0 ? '' : point.x}
+                        value={point.x}
                         onChange={(e) => {
                           if (!isActualRow) {
                             // Auto-add row if typing in empty row
@@ -667,7 +667,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                       <Input
                         type="number"
                         step="any"
-                        value={point.y === 0 ? '' : point.y}
+                        value={point.y}
                         onChange={(e) => {
                           if (!isActualRow) {
                             // Auto-add row if typing in empty row
