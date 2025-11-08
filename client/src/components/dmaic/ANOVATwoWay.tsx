@@ -12,7 +12,6 @@ import { HypothesisTestingTabs } from './common/HypothesisTestingTabs';
 import { anovaTwoWay, type AnovaTwoWayResult } from '@/lib/anovaUtils';
 import Plot from 'react-plotly.js';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { parseExcelPaste } from '@/lib/excelPasteUtils';
 
 interface DataRow {
@@ -801,162 +800,85 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
             </div>
           </div>
 
-          <div className="overflow-x-auto" onPaste={handlePaste}>
-            {dataRows.length >= 10 ? (
-              <ScrollArea className="h-[500px] w-full rounded-md border">
-                <Table>
-                  <TableHeader className="sticky top-0 z-10 bg-background">
-                    <TableRow>
-                      <TableHead className="w-[60px] text-center bg-background">#</TableHead>
-                      <TableHead className="w-[250px] bg-background">{factorAName}</TableHead>
-                      <TableHead className="w-[250px] bg-background">{factorBName}</TableHead>
-                      <TableHead className="w-[200px] bg-background">{responseVariableName}</TableHead>
-                      <TableHead className="w-[80px] bg-background"></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {dataRows.map((row, index) => (
-                      <TableRow key={row.id}>
-                        <TableCell className="text-center text-sm text-muted-foreground">
-                          {index + 1}
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            value={row.factorA}
-                            onChange={(e) => updateDataRow(row.id, 'factorA', e.target.value)}
-                            data-testid={`input-factor-a-${row.id}`}
-                            placeholder={`${factorAName} level: ${factorALevels.join(' or ')}`}
-                            list={`factor-a-list-${row.id}`}
-                          />
-                          <datalist id={`factor-a-list-${row.id}`}>
-                            {factorALevels.map((level) => (
-                              <option key={level} value={level} />
-                            ))}
-                          </datalist>
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            value={row.factorB}
-                            onChange={(e) => updateDataRow(row.id, 'factorB', e.target.value)}
-                            data-testid={`input-factor-b-${row.id}`}
-                            placeholder={`${factorBName} level: ${factorBLevels.join(' or ')}`}
-                            list={`factor-b-list-${row.id}`}
-                          />
-                          <datalist id={`factor-b-list-${row.id}`}>
-                            {factorBLevels.map((level) => (
-                              <option key={level} value={level} />
-                            ))}
-                          </datalist>
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            value={isNaN(row.response) ? '' : row.response}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              if (value === '' || value === '-') {
-                                updateDataRow(row.id, 'response', NaN);
-                              } else {
-                                const parsed = parseFloat(value);
-                                updateDataRow(row.id, 'response', parsed);
-                              }
-                            }}
-                            data-testid={`input-response-${row.id}`}
-                            placeholder={`Enter ${responseVariableName} value:`}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => deleteDataRow(row.id)}
-                            data-testid={`button-delete-row-${row.id}`}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </ScrollArea>
-            ) : (
-              <Table>
-                <TableHeader className="sticky top-0 z-10 bg-background">
-                  <TableRow>
-                    <TableHead className="w-[60px] text-center bg-background">#</TableHead>
-                    <TableHead className="w-[250px] bg-background">{factorAName}</TableHead>
-                    <TableHead className="w-[250px] bg-background">{factorBName}</TableHead>
-                    <TableHead className="w-[200px] bg-background">{responseVariableName}</TableHead>
-                    <TableHead className="w-[80px] bg-background"></TableHead>
+          <div 
+            className={`overflow-x-auto ${dataRows.length >= 10 ? 'max-h-[500px] overflow-y-auto border rounded-md' : ''}`} 
+            onPaste={handlePaste}
+          >
+            <Table>
+              <TableHeader className="sticky top-0 z-10 bg-background">
+                <TableRow>
+                  <TableHead className="w-[60px] text-center bg-background border-b">#</TableHead>
+                  <TableHead className="w-[250px] bg-background border-b">{factorAName}</TableHead>
+                  <TableHead className="w-[250px] bg-background border-b">{factorBName}</TableHead>
+                  <TableHead className="w-[200px] bg-background border-b">{responseVariableName}</TableHead>
+                  <TableHead className="w-[80px] bg-background border-b"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {dataRows.map((row, index) => (
+                  <TableRow key={row.id}>
+                    <TableCell className="text-center text-sm text-muted-foreground">
+                      {index + 1}
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        value={row.factorA}
+                        onChange={(e) => updateDataRow(row.id, 'factorA', e.target.value)}
+                        data-testid={`input-factor-a-${row.id}`}
+                        placeholder={`${factorAName} level: ${factorALevels.join(' or ')}`}
+                        list={`factor-a-list-${row.id}`}
+                      />
+                      <datalist id={`factor-a-list-${row.id}`}>
+                        {factorALevels.map((level) => (
+                          <option key={level} value={level} />
+                        ))}
+                      </datalist>
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        value={row.factorB}
+                        onChange={(e) => updateDataRow(row.id, 'factorB', e.target.value)}
+                        data-testid={`input-factor-b-${row.id}`}
+                        placeholder={`${factorBName} level: ${factorBLevels.join(' or ')}`}
+                        list={`factor-b-list-${row.id}`}
+                      />
+                      <datalist id={`factor-b-list-${row.id}`}>
+                        {factorBLevels.map((level) => (
+                          <option key={level} value={level} />
+                        ))}
+                      </datalist>
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        type="number"
+                        value={isNaN(row.response) ? '' : row.response}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value === '' || value === '-') {
+                            updateDataRow(row.id, 'response', NaN);
+                          } else {
+                            const parsed = parseFloat(value);
+                            updateDataRow(row.id, 'response', parsed);
+                          }
+                        }}
+                        data-testid={`input-response-${row.id}`}
+                        placeholder={`Enter ${responseVariableName} value:`}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => deleteDataRow(row.id)}
+                        data-testid={`button-delete-row-${row.id}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {dataRows.map((row, index) => (
-                    <TableRow key={row.id}>
-                      <TableCell className="text-center text-sm text-muted-foreground">
-                        {index + 1}
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          value={row.factorA}
-                          onChange={(e) => updateDataRow(row.id, 'factorA', e.target.value)}
-                          data-testid={`input-factor-a-${row.id}`}
-                          placeholder={`${factorAName} level: ${factorALevels.join(' or ')}`}
-                          list={`factor-a-list-${row.id}`}
-                        />
-                        <datalist id={`factor-a-list-${row.id}`}>
-                          {factorALevels.map((level) => (
-                            <option key={level} value={level} />
-                          ))}
-                        </datalist>
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          value={row.factorB}
-                          onChange={(e) => updateDataRow(row.id, 'factorB', e.target.value)}
-                          data-testid={`input-factor-b-${row.id}`}
-                          placeholder={`${factorBName} level: ${factorBLevels.join(' or ')}`}
-                          list={`factor-b-list-${row.id}`}
-                        />
-                        <datalist id={`factor-b-list-${row.id}`}>
-                          {factorBLevels.map((level) => (
-                            <option key={level} value={level} />
-                          ))}
-                        </datalist>
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          type="number"
-                          value={isNaN(row.response) ? '' : row.response}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            if (value === '' || value === '-') {
-                              updateDataRow(row.id, 'response', NaN);
-                            } else {
-                              const parsed = parseFloat(value);
-                              updateDataRow(row.id, 'response', parsed);
-                            }
-                          }}
-                          data-testid={`input-response-${row.id}`}
-                          placeholder={`Enter ${responseVariableName} value:`}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => deleteDataRow(row.id)}
-                          data-testid={`button-delete-row-${row.id}`}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
+                ))}
+              </TableBody>
+            </Table>
           </div>
           
           <Button
