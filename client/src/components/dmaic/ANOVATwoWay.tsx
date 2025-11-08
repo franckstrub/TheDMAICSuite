@@ -811,7 +811,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                       <TableHead className="w-[250px] bg-background">{factorAName}</TableHead>
                       <TableHead className="w-[250px] bg-background">{factorBName}</TableHead>
                       <TableHead className="w-[200px] bg-background">{responseVariableName}</TableHead>
-                      <TableHead className="w-[80px] bg-background"></TableHead>
+                      <TableHead className="w-[80px] bg-background">Action</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -888,7 +888,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                     <TableHead className="w-[250px] bg-background">{factorAName}</TableHead>
                     <TableHead className="w-[250px] bg-background">{factorBName}</TableHead>
                     <TableHead className="w-[200px] bg-background">{responseVariableName}</TableHead>
-                    <TableHead className="w-[80px] bg-background"></TableHead>
+                    <TableHead className="w-[80px] bg-background">Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
