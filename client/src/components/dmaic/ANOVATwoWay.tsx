@@ -801,11 +801,11 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
             </div>
           </div>
 
-          <div className="overflow-auto max-h-[400px] border rounded-lg" onPaste={handlePaste}>
+          <div className="overflow-x-auto" onPaste={handlePaste}>
             {dataRows.length >= 10 ? (
-              
-                <Table className="w-full">
-                  <TableHeader className="bg-gray-50 dark:bg-gray-800 sticky top-0">
+              <ScrollArea className="h-[500px] w-full rounded-md border">
+                <Table>
+                  <TableHeader className="sticky top-0 z-10 bg-background">
                     <TableRow>
                       <TableHead className="w-[60px] text-center bg-background">#</TableHead>
                       <TableHead className="w-[250px] bg-background">{factorAName}</TableHead>
@@ -879,10 +879,10 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                     ))}
                   </TableBody>
                 </Table>
-             
+              </ScrollArea>
             ) : (
               <Table>
-                <TableHeader className="bg-gray-50 dark:bg-gray-800 sticky top-0">
+                <TableHeader className="sticky top-0 z-10 bg-background">
                   <TableRow>
                     <TableHead className="w-[60px] text-center bg-background">#</TableHead>
                     <TableHead className="w-[250px] bg-background">{factorAName}</TableHead>
