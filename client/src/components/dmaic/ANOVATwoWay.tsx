@@ -154,6 +154,53 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
     }
   }, []);
 
+  // Update data rows when factor levels change
+  useEffect(() => {
+    // Only run after initial load is complete
+    if (!loadedRef.current) return;
+    
+    // Get all expected combinations
+    const expectedCombinations = new Set<string>();
+    for (const levelA of factorALevels) {
+      for (const levelB of factorBLevels) {
+        expectedCombinations.add(`${levelA}-${levelB}`);
+      }
+    }
+    
+    // Find which combinations already exist (with or without data)
+    const existingCombinations = new Set<string>();
+    dataRows.forEach(row => {
+      existingCombinations.add(`${row.factorA}-${row.factorB}`);
+    });
+    
+    // Find missing combinations
+    const missingCombinations: Array<{factorA: string, factorB: string}> = [];
+    expectedCombinations.forEach(combo => {
+      if (!existingCombinations.has(combo)) {
+        const [factorA, factorB] = combo.split('-');
+        missingCombinations.push({ factorA, factorB });
+      }
+    });
+    
+    // Add rows for missing combinations
+    if (missingCombinations.length > 0) {
+      const newRows: DataRow[] = [];
+      let id = nextId;
+      
+      for (const combo of missingCombinations) {
+        newRows.push({
+          id: id++,
+          factorA: combo.factorA,
+          factorB: combo.factorB,
+          response: NaN,
+        });
+      }
+      
+      setDataRows([...dataRows, ...newRows]);
+      setNextId(id);
+    }
+  }, [factorALevels, factorBLevels]);
+
   const saveConfigMutation = useMutation({
     mutationFn: async (data: any) => {
       return apiRequest(
