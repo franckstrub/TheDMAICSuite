@@ -801,26 +801,26 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
             </div>
           </div>
 
-          <div className="overflow-x-auto" onPaste={handlePaste}>
+          <div className="overflow-auto max-h-[400px] border rounded-lg" onPaste={handlePaste}>
             {dataRows.length >= 10 ? (
-              <ScrollArea className="h-[500px] w-full rounded-md border">
-                <Table>
-                  <TableHeader className="sticky top-0 z-10 bg-background">
-                    <TableRow>
-                      <TableHead className="w-[60px] text-center bg-background">#</TableHead>
-                      <TableHead className="w-[250px] bg-background">{factorAName}</TableHead>
-                      <TableHead className="w-[250px] bg-background">{factorBName}</TableHead>
-                      <TableHead className="w-[200px] bg-background">{responseVariableName}</TableHead>
-                      <TableHead className="w-[80px] bg-background"></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
+              
+                <table className="w-full">
+                  <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0">
+                    <tr>
+                      <th className="w-[60px] text-center bg-background">#</th>
+                      <th className="w-[250px] bg-background">{factorAName}</th>
+                      <th className="w-[250px] bg-background">{factorBName}</th>
+                      <th className="w-[200px] bg-background">{responseVariableName}</th>
+                      <th className="w-[80px] bg-background"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
                     {dataRows.map((row, index) => (
-                      <TableRow key={row.id}>
-                        <TableCell className="text-center text-sm text-muted-foreground">
+                      <tr key={row.id}>
+                        <td className="text-center text-sm text-muted-foreground">
                           {index + 1}
-                        </TableCell>
-                        <TableCell>
+                        </td>
+                        <td>
                           <Input
                             value={row.factorA}
                             onChange={(e) => updateDataRow(row.id, 'factorA', e.target.value)}
@@ -833,8 +833,8 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                               <option key={level} value={level} />
                             ))}
                           </datalist>
-                        </TableCell>
-                        <TableCell>
+                        </td>
+                        <td>
                           <Input
                             value={row.factorB}
                             onChange={(e) => updateDataRow(row.id, 'factorB', e.target.value)}
@@ -847,8 +847,8 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                               <option key={level} value={level} />
                             ))}
                           </datalist>
-                        </TableCell>
-                        <TableCell>
+                        </td>
+                        <td>
                           <Input
                             type="number"
                             value={isNaN(row.response) ? '' : row.response}
@@ -864,8 +864,8 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                             data-testid={`input-response-${row.id}`}
                             placeholder={`Enter ${responseVariableName} value:`}
                           />
-                        </TableCell>
-                        <TableCell>
+                        </td>
+                        <td>
                           <Button
                             variant="ghost"
                             size="icon"
@@ -874,12 +874,12 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
-                        </TableCell>
-                      </TableRow>
+                        </td>
+                      </tr>
                     ))}
-                  </TableBody>
-                </Table>
-              </ScrollArea>
+                  </tbody>
+                </table>
+             
             ) : (
               <Table>
                 <TableHeader className="sticky top-0 z-10 bg-background">
