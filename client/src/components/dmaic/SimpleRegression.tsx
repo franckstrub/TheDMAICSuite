@@ -59,9 +59,9 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
   const [datasetXDescription, setDatasetXDescription] = useState("X Variable");
   
   const [dataPoints, setDataPoints] = useState<DataPoint[]>([
-    { x: 0, y: 0 },
-    { x: 0, y: 0 },
-    { x: 0, y: 0 },
+    { x: NaN, y: NaN },
+    { x: NaN, y: NaN },
+    { x: NaN, y: NaN },
   ]);
   
   const [dataPointsHistory, setDataPointsHistory] = useState<DataPoint[][]>([]);
@@ -193,9 +193,8 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
   });
 
   const calculateRegressions = (showErrorToast: boolean = false) => {
-    // Filter out empty rows (where BOTH x and y are 0) and invalid numbers
-    // Valid points can include (0,0) as actual data, but we exclude placeholder empty rows
-    const validPoints = dataPoints.filter(p => !isNaN(p.x) && !isNaN(p.y) && (p.x !== 0 || p.y !== 0));
+    // Filter out empty rows (where x or y is NaN) - keep valid data including (0,0)
+    const validPoints = dataPoints.filter(p => !isNaN(p.x) && !isNaN(p.y));
     
     // Only show error toast when explicitly requested (e.g., from Save Data button)
     if (validPoints.length < 2) {
@@ -281,12 +280,12 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
   };
 
   const handleSaveData = async () => {
-    // Remove trailing (0,0) points from the end only
-    // This preserves valid (0,0) data points in the middle
+    // Remove trailing empty (NaN) points from the end only
+    // This preserves valid data points including (0,0) in the middle
     let trimmedPoints = [...dataPoints];
     while (trimmedPoints.length > 0 && 
-           trimmedPoints[trimmedPoints.length - 1].x === 0 && 
-           trimmedPoints[trimmedPoints.length - 1].y === 0) {
+           (isNaN(trimmedPoints[trimmedPoints.length - 1].x) || 
+            isNaN(trimmedPoints[trimmedPoints.length - 1].y))) {
       trimmedPoints.pop();
     }
     
@@ -308,12 +307,12 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
   };
 
   const handleSaveConfiguration = async () => {
-    // Remove trailing (0,0) points from the end only
-    // This preserves valid (0,0) data points in the middle
+    // Remove trailing empty (NaN) points from the end only
+    // This preserves valid data points including (0,0) in the middle
     let trimmedPoints = [...dataPoints];
     while (trimmedPoints.length > 0 && 
-           trimmedPoints[trimmedPoints.length - 1].x === 0 && 
-           trimmedPoints[trimmedPoints.length - 1].y === 0) {
+           (isNaN(trimmedPoints[trimmedPoints.length - 1].x) || 
+            isNaN(trimmedPoints[trimmedPoints.length - 1].y))) {
       trimmedPoints.pop();
     }
     
@@ -341,9 +340,9 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
   const confirmClearAll = () => {
     saveToHistory();
     setDataPoints([
-      { x: 0, y: 0 },
-      { x: 0, y: 0 },
-      { x: 0, y: 0 },
+      { x: NaN, y: NaN },
+      { x: NaN, y: NaN },
+      { x: NaN, y: NaN },
     ]);
     setLinearResult(null);
     setQuadraticResult(null);
@@ -361,7 +360,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
 
   const handleAddRow = () => {
     saveToHistory();
-    setDataPoints([...dataPoints, { x: 0, y: 0 }]);
+    setDataPoints([...dataPoints, { x: NaN, y: NaN }]);
   };
 
   const handleDeleteRow = (index: number) => {
@@ -375,19 +374,19 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
     // Convert French decimal format (comma to dot)
     const convertedValue = value.replace(/,/g, '.');
     
-    // Parse the value - allow empty string to become 0, otherwise parse as float
+    // Parse the value - allow empty string to become NaN, otherwise parse as float
     // This supports positive, negative, and decimal numbers
     let numValue: number;
     if (convertedValue === '' || convertedValue === '-') {
-      numValue = 0;
+      numValue = NaN;
     } else {
       const parsed = parseFloat(convertedValue);
-      numValue = isNaN(parsed) ? 0 : parsed;
+      numValue = parsed;
     }
     
     const newPoints = [...dataPoints];
     while (newPoints.length <= index) {
-      newPoints.push({ x: 0, y: 0 });
+      newPoints.push({ x: NaN, y: NaN });
     }
     newPoints[index][field] = numValue;
     setDataPoints(newPoints);
@@ -637,7 +636,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
             </thead>
             <tbody>
               {Array.from({ length: Math.max(dataPoints.length, 10) }, (_, index) => {
-                const point = dataPoints[index] || { x: 0, y: 0 };
+                const point = dataPoints[index] || { x: NaN, y: NaN };
                 const isActualRow = index < dataPoints.length;
                 
                 return (
@@ -647,13 +646,13 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                       <Input
                         type="number"
                         step="any"
-                        value={point.x}
+                        value={isNaN(point.x) ? '' : point.x}
                         onChange={(e) => {
                           if (!isActualRow) {
                             // Auto-add row if typing in empty row
                             const newPoints = [...dataPoints];
                             while (newPoints.length <= index) {
-                              newPoints.push({ x: 0, y: 0 });
+                              newPoints.push({ x: NaN, y: NaN });
                             }
                             setDataPoints(newPoints);
                           }
@@ -667,13 +666,13 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                       <Input
                         type="number"
                         step="any"
-                        value={point.y}
+                        value={isNaN(point.y) ? '' : point.y}
                         onChange={(e) => {
                           if (!isActualRow) {
                             // Auto-add row if typing in empty row
                             const newPoints = [...dataPoints];
                             while (newPoints.length <= index) {
-                              newPoints.push({ x: 0, y: 0 });
+                              newPoints.push({ x: NaN, y: NaN });
                             }
                             setDataPoints(newPoints);
                           }
