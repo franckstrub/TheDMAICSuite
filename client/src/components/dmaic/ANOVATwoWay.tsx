@@ -805,13 +805,13 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
             {dataRows.length >= 10 ? (
               <ScrollArea className="h-[500px] w-full rounded-md border">
                 <Table>
-                  <TableHeader>
+                  <TableHeader className="sticky top-0 z-10 bg-background">
                     <TableRow>
-                      <TableHead className="w-[60px] text-center">#</TableHead>
-                      <TableHead className="w-[250px]">{factorAName}</TableHead>
-                      <TableHead className="w-[250px]">{factorBName}</TableHead>
-                      <TableHead className="w-[200px]">{responseVariableName}</TableHead>
-                      <TableHead className="w-[80px]"></TableHead>
+                      <TableHead className="w-[60px] text-center bg-background">#</TableHead>
+                      <TableHead className="w-[250px] bg-background">{factorAName}</TableHead>
+                      <TableHead className="w-[250px] bg-background">{factorBName}</TableHead>
+                      <TableHead className="w-[200px] bg-background">{responseVariableName}</TableHead>
+                      <TableHead className="w-[80px] bg-background"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -882,13 +882,13 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
               </ScrollArea>
             ) : (
               <Table>
-                <TableHeader>
+                <TableHeader className="sticky top-0 z-10 bg-background">
                   <TableRow>
-                    <TableHead className="w-[60px] text-center">#</TableHead>
-                    <TableHead className="w-[250px]">{factorAName}</TableHead>
-                    <TableHead className="w-[250px]">{factorBName}</TableHead>
-                    <TableHead className="w-[200px]">{responseVariableName}</TableHead>
-                    <TableHead className="w-[80px]"></TableHead>
+                    <TableHead className="w-[60px] text-center bg-background">#</TableHead>
+                    <TableHead className="w-[250px] bg-background">{factorAName}</TableHead>
+                    <TableHead className="w-[250px] bg-background">{factorBName}</TableHead>
+                    <TableHead className="w-[200px] bg-background">{responseVariableName}</TableHead>
+                    <TableHead className="w-[80px] bg-background"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
