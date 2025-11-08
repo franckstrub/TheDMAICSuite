@@ -151,6 +151,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
       const defaultRows = createDefaultRows(factorALevels, factorBLevels, 1);
       setDataRows(defaultRows);
       setNextId(defaultRows.length + 1);
+      loadedRef.current = true;
     }
   }, []);
 
@@ -850,7 +851,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
 
           <div className="overflow-x-auto" onPaste={handlePaste}>
           {/*}  {dataRows.length >= 10 ? ( */}
-              <div className="h-[500px] w-full rounded-md border overflow-y-auto overflow-x-auto">
+              <div className="max-h-[500px] w-full rounded-md border overflow-y-auto overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-100 dark:bg-gray-800 sticky top-0 z-10">
                     <tr className="border-b">
