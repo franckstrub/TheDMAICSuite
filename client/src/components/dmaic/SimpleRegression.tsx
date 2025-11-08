@@ -626,7 +626,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
 
         <div className="overflow-auto max-h-[400px] border rounded-lg" onPaste={handlePaste}>
           <table className="w-full">
-            <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0">
+            <thead className="bg-gray-100 dark:bg-gray-800 sticky top-0">
               <tr>
                 <th className="px-4 py-2 text-left text-sm font-medium">#</th>
                 <th className="px-4 py-2 text-left text-sm font-medium">{datasetXDescription}</th>
