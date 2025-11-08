@@ -61,11 +61,14 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
     const newCellData: Record<string, number[]> = {};
     
     dataRows.forEach(row => {
-      const key = `${row.factorA}-${row.factorB}`;
-      if (!newCellData[key]) {
-        newCellData[key] = [];
+      // Only include rows with valid (non-NaN) response values
+      if (!isNaN(row.response)) {
+        const key = `${row.factorA}-${row.factorB}`;
+        if (!newCellData[key]) {
+          newCellData[key] = [];
+        }
+        newCellData[key].push(row.response);
       }
-      newCellData[key].push(row.response);
     });
     
     setCellData(newCellData);
@@ -106,7 +109,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
         setNextId(id);
       } else {
         // Initialize with one empty row if no data exists
-        setDataRows([{ id: 1, factorA: '', factorB: '', response: 0 }]);
+        setDataRows([{ id: 1, factorA: '', factorB: '', response: NaN }]);
         setNextId(2);
       }
       
@@ -118,7 +121,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
   // Initialize with one empty row on first render if no data
   useEffect(() => {
     if (!loadedRef.current && dataRows.length === 0) {
-      setDataRows([{ id: 1, factorA: '', factorB: '', response: 0 }]);
+      setDataRows([{ id: 1, factorA: '', factorB: '', response: NaN }]);
       setNextId(2);
     }
   }, []);
@@ -208,7 +211,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
       id: nextId,
       factorA: '',
       factorB: '',
-      response: 0,
+      response: NaN,
     };
     setDataRows([...dataRows, newRow]);
     setNextId(nextId + 1);
@@ -234,7 +237,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
 
   const handleClearAll = () => {
     setPreviousDataRows([...dataRows]);
-    setDataRows([{ id: nextId, factorA: '', factorB: '', response: 0 }]);
+    setDataRows([{ id: nextId, factorA: '', factorB: '', response: NaN }]);
     setNextId(nextId + 1);
   };
 
@@ -817,8 +820,16 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                     <TableCell>
                       <Input
                         type="number"
-                        value={row.response}
-                        onChange={(e) => updateDataRow(row.id, 'response', parseFloat(e.target.value) || null)}
+                        value={isNaN(row.response) ? '' : row.response}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value === '' || value === '-') {
+                            updateDataRow(row.id, 'response', NaN);
+                          } else {
+                            const parsed = parseFloat(value);
+                            updateDataRow(row.id, 'response', parsed);
+                          }
+                        }}
                         data-testid={`input-response-${row.id}`}
                         placeholder={`Enter ${responseVariableName} value:`}
                       />
