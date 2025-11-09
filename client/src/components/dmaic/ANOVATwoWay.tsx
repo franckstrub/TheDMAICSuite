@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Trash2, Info, Plus, Clipboard, Undo, XCircle } from "lucide-react";
 import { useQuery, useMutation } from '@tanstack/react-query';
@@ -758,16 +759,20 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
           </div>
           <div>
             <Label htmlFor="significanceLevel" data-testid="label-significance-level">Significance Level (α)</Label>
-            <Input
-              id="significanceLevel"
-              data-testid="input-significance-level"
-              type="number"
-              min="0.01"
-              max="0.1"
-              step="0.01"
-              value={significanceLevel}
-              onChange={(e) => setSignificanceLevel(parseFloat(e.target.value) || 0)}
-            />
+            <Select
+              value={significanceLevel.toString()}
+              onValueChange={(value) => setSignificanceLevel(parseFloat(value))}
+            >
+              <SelectTrigger id="significanceLevel" data-testid="select-significance-level">
+                <SelectValue placeholder="Select significance level" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="0.01" data-testid="option-significance-0.01">0.01</SelectItem>
+                <SelectItem value="0.05" data-testid="option-significance-0.05">0.05</SelectItem>
+                <SelectItem value="0.10" data-testid="option-significance-0.10">0.10</SelectItem>
+                <SelectItem value="0.20" data-testid="option-significance-0.20">0.20</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
