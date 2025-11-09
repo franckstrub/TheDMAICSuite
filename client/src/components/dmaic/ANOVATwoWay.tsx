@@ -762,11 +762,11 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
               id="significanceLevel"
               data-testid="input-significance-level"
               type="number"
-              min="0.001"
+              min="0.01"
               max="0.1"
               step="0.01"
               value={significanceLevel}
-              onChange={(e) => setSignificanceLevel(parseFloat(e.target.value) || '')}
+              onChange={(e) => setSignificanceLevel(parseFloat(e.target.value) || 0)}
             />
           </div>
         </CardContent>
