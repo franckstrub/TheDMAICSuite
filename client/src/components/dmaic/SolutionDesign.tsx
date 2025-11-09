@@ -15,6 +15,7 @@ import DrawIoProcessMap from "@/components/dmaic/DrawIoProcessMap";
 import ProcessRaciMatrix from "@/components/dmaic/ProcessRaciMatrix";
 import { SimpleRegression } from "@/components/dmaic/SimpleRegression";
 import { ANOVATwoWay } from "@/components/dmaic/ANOVATwoWay";
+import { MultipleRegression } from "@/components/dmaic/MultipleRegression";
 
 interface SolutionDesignProps {
   projectId: number;
@@ -698,6 +699,20 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
                         </CardHeader>
                         <CardContent>
                           <ANOVATwoWay projectId={projectId} solutionId={solution.solutionId} />
+                        </CardContent>
+                      </Card>
+                    </div>
+                  )}
+
+                  {/* Multiple Regression - Show when tfMultipleRegression is checked */}
+                  {currentState.transferFunction && transferFunctionConfigs[solution.solutionId]?.tfMultipleRegression && (
+                    <div className="mt-6">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Multiple Regression Analysis - {solution.solutionId}</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <MultipleRegression projectId={projectId} solutionId={solution.solutionId} />
                         </CardContent>
                       </Card>
                     </div>
