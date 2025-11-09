@@ -380,9 +380,10 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
   return (
     <div className="space-y-4">
       <Tabs defaultValue="setup" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="setup" data-testid="tab-setup">Setup</TabsTrigger>
           <TabsTrigger value="data" data-testid="tab-data">Data Entry</TabsTrigger>
+          <TabsTrigger value="chart" data-testid="tab-chart">Chart</TabsTrigger>
           <TabsTrigger value="analysis" data-testid="tab-analysis">Analysis</TabsTrigger>
         </TabsList>
         
@@ -542,6 +543,104 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                 </div>
               </CardContent>
             </Card>
+        </TabsContent>
+
+        <TabsContent value="chart" className="space-y-4">
+            {regressionResult && selectedPredictors.length >= 2 ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle>3D Scatter Plot</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Factor A (X-Axis)</Label>
+                      <Select
+                        value={String(plot3DFactorX)}
+                        onValueChange={(val) => setPlot3DFactorX(parseInt(val))}
+                      >
+                        <SelectTrigger data-testid="select-3d-factor-x">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {selectedPredictors.map(predIdx => (
+                            <SelectItem key={predIdx} value={String(predIdx)}>
+                              {predictorNames[predIdx]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Factor B (Y-Axis)</Label>
+                      <Select
+                        value={String(plot3DFactorY)}
+                        onValueChange={(val) => setPlot3DFactorY(parseInt(val))}
+                      >
+                        <SelectTrigger data-testid="select-3d-factor-y">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {selectedPredictors.map(predIdx => (
+                            <SelectItem key={predIdx} value={String(predIdx)}>
+                              {predictorNames[predIdx]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  
+                  <Plot
+                    data={[
+                      {
+                        type: 'scatter3d',
+                        mode: 'markers',
+                        x: dataX[plot3DFactorX]?.filter((_, i) => 
+                          !isNaN(dataY[i]) && 
+                          selectedPredictors.every(predIdx => !isNaN(dataX[predIdx][i]))
+                        ) || [],
+                        y: dataX[plot3DFactorY]?.filter((_, i) => 
+                          !isNaN(dataY[i]) && 
+                          selectedPredictors.every(predIdx => !isNaN(dataX[predIdx][i]))
+                        ) || [],
+                        z: dataY.filter((y, i) => 
+                          !isNaN(y) && 
+                          selectedPredictors.every(predIdx => !isNaN(dataX[predIdx][i]))
+                        ) || [],
+                        marker: {
+                          size: 5,
+                          color: 'rgb(59, 130, 246)',
+                          opacity: 0.8,
+                        },
+                      } as any,
+                    ]}
+                    layout={{
+                      autosize: true,
+                      scene: {
+                        xaxis: { title: { text: predictorNames[plot3DFactorX] || 'Factor A' } },
+                        yaxis: { title: { text: predictorNames[plot3DFactorY] || 'Factor B' } },
+                        zaxis: { title: { text: responseVariableName || 'Response' } },
+                      },
+                      margin: { l: 0, r: 0, b: 0, t: 0 },
+                    }}
+                    config={{ responsive: true }}
+                    style={{ width: '100%', height: '500px' }}
+                  />
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardContent className="py-8">
+                  <div className="text-center text-muted-foreground">
+                    {selectedPredictors.length < 2 
+                      ? "Select at least 2 predictors in the Analysis tab to view the 3D chart"
+                      : "Enter data in the Data Entry tab to view the 3D chart"
+                    }
+                  </div>
+                </CardContent>
+              </Card>
+            )}
         </TabsContent>
         
         <TabsContent value="analysis" className="space-y-4">
@@ -711,92 +810,6 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                     </div>
                   </CardContent>
                 </Card>
-
-                {/* 3D Plot */}
-                {selectedPredictors.length >= 2 && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>3D Scatter Plot</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label>X-Axis (Factor 1)</Label>
-                          <Select
-                            value={String(plot3DFactorX)}
-                            onValueChange={(val) => setPlot3DFactorX(parseInt(val))}
-                          >
-                            <SelectTrigger data-testid="select-3d-factor-x">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {selectedPredictors.map(predIdx => (
-                                <SelectItem key={predIdx} value={String(predIdx)}>
-                                  {predictorNames[predIdx]}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label>Y-Axis (Factor 2)</Label>
-                          <Select
-                            value={String(plot3DFactorY)}
-                            onValueChange={(val) => setPlot3DFactorY(parseInt(val))}
-                          >
-                            <SelectTrigger data-testid="select-3d-factor-y">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {selectedPredictors.map(predIdx => (
-                                <SelectItem key={predIdx} value={String(predIdx)}>
-                                  {predictorNames[predIdx]}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                      
-                      <Plot
-                        data={[
-                          {
-                            type: 'scatter3d',
-                            mode: 'markers',
-                            x: dataX[plot3DFactorX]?.filter((_, i) => 
-                              !isNaN(dataY[i]) && 
-                              selectedPredictors.every(predIdx => !isNaN(dataX[predIdx][i]))
-                            ) || [],
-                            y: dataX[plot3DFactorY]?.filter((_, i) => 
-                              !isNaN(dataY[i]) && 
-                              selectedPredictors.every(predIdx => !isNaN(dataX[predIdx][i]))
-                            ) || [],
-                            z: dataY.filter((y, i) => 
-                              !isNaN(y) && 
-                              selectedPredictors.every(predIdx => !isNaN(dataX[predIdx][i]))
-                            ) || [],
-                            marker: {
-                              size: 5,
-                              color: 'rgb(59, 130, 246)',
-                              opacity: 0.8,
-                            },
-                          } as any,
-                        ]}
-                        layout={{
-                          autosize: true,
-                          scene: {
-                            xaxis: { title: { text: predictorNames[plot3DFactorX] || 'X1' } },
-                            yaxis: { title: { text: predictorNames[plot3DFactorY] || 'X2' } },
-                            zaxis: { title: { text: responseVariableName || 'Y' } },
-                          },
-                          margin: { l: 0, r: 0, b: 0, t: 0 },
-                        }}
-                        config={{ responsive: true }}
-                        style={{ width: '100%', height: '500px' }}
-                      />
-                    </CardContent>
-                  </Card>
-                )}
 
                 {/* Residual Analysis */}
                 <Card>
