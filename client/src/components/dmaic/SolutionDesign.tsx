@@ -684,7 +684,7 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
                           <CardTitle>Simple Regression Analysis - {solution.solutionId}</CardTitle>
                         </CardHeader>
                         <CardContent>
-                          <SimpleRegression projectId={projectId} solutionId={solution.solutionId} />
+                          <SimpleRegression key={`${projectId}-${solution.solutionId}`} projectId={projectId} solutionId={solution.solutionId} />
                         </CardContent>
                       </Card>
                     </div>
@@ -698,7 +698,7 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
                           <CardTitle>ANOVA Two-Way Analysis - {solution.solutionId}</CardTitle>
                         </CardHeader>
                         <CardContent>
-                          <ANOVATwoWay projectId={projectId} solutionId={solution.solutionId} />
+                          <ANOVATwoWay key={`${projectId}-${solution.solutionId}`} projectId={projectId} solutionId={solution.solutionId} />
                         </CardContent>
                       </Card>
                     </div>
@@ -712,7 +712,7 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
                           <CardTitle>Multiple Regression Analysis - {solution.solutionId}</CardTitle>
                         </CardHeader>
                         <CardContent>
-                          <MultipleRegression projectId={projectId} solutionId={solution.solutionId} />
+                          <MultipleRegression key={`${projectId}-${solution.solutionId}`} projectId={projectId} solutionId={solution.solutionId} />
                         </CardContent>
                       </Card>
                     </div>
