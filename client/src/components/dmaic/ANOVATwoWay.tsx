@@ -1129,6 +1129,10 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                     title:{ text: `<b>Main Effect Plot - ${factorAName}</b>` },
                     xaxis: { 
                       title: { text: factorAName },
+                      type: 'category',
+                      tickmode: 'array',
+                      tickvals: factorALevels,
+                      ticktext: factorALevels,
                     },
                     yaxis: { 
                       title: { text: responseVariableName },
@@ -1183,6 +1187,10 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                     title:{ text: `<b>Main Effect Plot - ${factorBName}</b>` },
                     xaxis: { 
                       title: { text: factorBName },
+                      type: 'category',
+                      tickmode: 'array',
+                      tickvals: factorBLevels,
+                      ticktext: factorBLevels,
                     },
                     yaxis: { 
                       title: { text: responseVariableName },
@@ -1234,6 +1242,10 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                     title: { text: `<b>${factorAName} × ${factorBName} Interaction</b>` },
                     xaxis: { 
                       title: { text: factorBName },
+                      type: 'category',
+                      tickmode: 'array',
+                      tickvals: factorBLevels,
+                      ticktext: factorBLevels,
                     },
                     yaxis: { 
                       title: { text: responseVariableName },
