@@ -380,8 +380,9 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
   return (
     <div className="space-y-4">
       <Tabs defaultValue="setup" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="setup" data-testid="tab-setup">Setup</TabsTrigger>
+          <TabsTrigger value="data" data-testid="tab-data">Data Entry</TabsTrigger>
           <TabsTrigger value="analysis" data-testid="tab-analysis">Analysis</TabsTrigger>
         </TabsList>
         
@@ -439,7 +440,9 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                 </div>
               </CardContent>
             </Card>
+        </TabsContent>
 
+        <TabsContent value="data" className="space-y-4">
             {/* Data Entry */}
             <Card>
               <CardHeader>
