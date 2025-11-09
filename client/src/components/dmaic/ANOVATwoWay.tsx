@@ -151,18 +151,14 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
       
       setIncludeInteraction(config.includeInteraction ?? true);
       setSignificanceLevel(config.significanceLevel ?? 0.05);
-    }
-  }, [configQuery.data, projectId, solutionId]);
-
-  // Initialize with default rows on first render if no data
-  useEffect(() => {
-    if (!loadedRef.current && dataRows.length === 0) {
+    } else if (configQuery.isSuccess && !loadedRef.current) {
+      // Query succeeded but no saved config exists - initialize with defaults
+      loadedRef.current = true;
       const defaultRows = createDefaultRows(factorALevels, factorBLevels, 1);
       setDataRows(defaultRows);
       setNextId(defaultRows.length + 1);
-      loadedRef.current = true;
     }
-  }, []);
+  }, [configQuery.data, configQuery.isSuccess, projectId, solutionId, factorALevels, factorBLevels]);
 
   // Update data rows when factor levels change
   useEffect(() => {
