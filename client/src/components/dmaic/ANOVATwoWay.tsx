@@ -30,6 +30,7 @@ interface ANOVATwoWayProps {
 export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
   const { toast } = useToast();
   const loadedRef = useRef(false);
+  const lastLoadedKey = useRef<string>('');
   
   const [factorAName, setFactorAName] = useState("Factor A");
   const [factorBName, setFactorBName] = useState("Factor B");
@@ -95,6 +96,14 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
   }, [dataRows]);
 
   useEffect(() => {
+    const currentKey = `${projectId}-${solutionId}`;
+    
+    // Reset loadedRef if we're viewing a different project/solution
+    if (lastLoadedKey.current !== currentKey) {
+      loadedRef.current = false;
+      lastLoadedKey.current = currentKey;
+    }
+    
     if (configQuery.data && !loadedRef.current) {
       loadedRef.current = true;
       
@@ -143,7 +152,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
       setIncludeInteraction(config.includeInteraction ?? true);
       setSignificanceLevel(config.significanceLevel ?? 0.05);
     }
-  }, [configQuery.data]);
+  }, [configQuery.data, projectId, solutionId]);
 
   // Initialize with default rows on first render if no data
   useEffect(() => {
@@ -758,10 +767,10 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
               data-testid="input-significance-level"
               type="number"
               min="0.001"
-              max="0.5"
-              step="0.001"
+              max="0.1"
+              step="0.01"
               value={significanceLevel}
-              onChange={(e) => setSignificanceLevel(parseFloat(e.target.value) || 0.05)}
+              onChange={(e) => setSignificanceLevel(parseFloat(e.target.value) || '')}
             />
           </div>
         </CardContent>
