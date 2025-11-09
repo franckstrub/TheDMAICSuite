@@ -2559,6 +2559,46 @@ export const insertAnovaTwoWayConfigSchema = createInsertSchema(anovaTwoWayConfi
 export type InsertAnovaTwoWayConfig = z.infer<typeof insertAnovaTwoWayConfigSchema>;
 export type AnovaTwoWayConfig = typeof anovaTwoWayConfig.$inferSelect;
 
+// Multiple Regression Configuration for Transfer Function Analysis
+export const multipleRegressionConfig = pgTable(
+  "multiple_regression_config",
+  {
+    id: serial("id").primaryKey(),
+    organizationId: integer("organization_id")
+      .references(() => organizations.id)
+      .notNull(),
+    projectId: integer("project_id").notNull(),
+    solutionId: text("solution_id").notNull(),
+    
+    // Variable descriptions (Y and multiple X variables)
+    responseVariableName: text("response_variable_name").default("Y"),
+    predictorNames: jsonb("predictor_names").$type<string[]>().default(["X1", "X2", "X3"]),
+    
+    // Data arrays - Y and multiple X columns
+    dataY: jsonb("data_y").$type<number[]>().default([]),
+    dataX: jsonb("data_x").$type<number[][]>().default([]), // Array of arrays: [[x1_1, x1_2, ...], [x2_1, x2_2, ...], ...]
+    
+    // Selected predictors for model (allows model reduction)
+    selectedPredictors: jsonb("selected_predictors").$type<number[]>().default([]), // Array of indices (0, 1, 2, ...) indicating which predictors are included
+    
+    // Analysis options
+    significanceLevel: real("significance_level").default(0.05),
+    
+    lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+  },
+  (table) => ({
+    uniqueSolutionMultipleRegression: unique().on(table.projectId, table.solutionId),
+  }),
+);
+
+export const insertMultipleRegressionConfigSchema = createInsertSchema(multipleRegressionConfig).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type InsertMultipleRegressionConfig = z.infer<typeof insertMultipleRegressionConfigSchema>;
+export type MultipleRegressionConfig = typeof multipleRegressionConfig.$inferSelect;
+
 // User Settings Table
 export const userSettings = pgTable(
   "user_settings",
