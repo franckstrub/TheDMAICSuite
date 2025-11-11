@@ -885,7 +885,8 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                         <TableBody>
                           {regressionResult.coefficients.map((coef, idx) => {
                             const isPValueSignificant = coef.pValue < significanceLevel;
-                            const isHighVIF = coef.vif !== null && coef.vif > 10;
+                            const isHighVIF = coef.vif !== null && coef.vif > 5;
+                            const isModerateVIF = coef.vif !== null && coef.vif > 1 && coef.vif <=5;
                             
                             return (
                               <TableRow key={idx}>
@@ -908,7 +909,7 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                                   {coef.pValue.toFixed(4)}
                                 </TableCell>
                                 <TableCell 
-                                  className={`text-right ${isHighVIF ? 'text-red-600 font-semibold' : ''}`}
+                                  className={`text-right ${isHighVIF ? 'text-red-600 font-semibold' : isModerateVIF ? 'text-yellow-400 font-semibold' : ''}`}
                                   data-testid={`coef-vif-${idx}`}
                                 >
                                   {coef.vif !== null ? coef.vif.toFixed(2) : '-'}
@@ -920,7 +921,9 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                       </Table>
                     </div>
                     <div className="mt-2 text-sm text-muted-foreground">
-                      VIF &gt; 10 indicates problematic multicollinearity (shown in red)
+                      VIF &gt; 5 indicates problematic multicollinearity (high correlation between predictors - shown in red)<br></br>
+                      &gt; 1 VIF &le; 5 indicates moderate multicollinearity (correlation between predictors - shown in yellow)<br></br>
+                      VIF &le; 1 indicates no multicollinearity (no correlation between predictors - shown in black)
                     </div>
                   </CardContent>
                 </Card>
