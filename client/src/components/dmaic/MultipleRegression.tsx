@@ -46,6 +46,7 @@ interface MultipleRegressionProps {
 export function MultipleRegression({ projectId, solutionId }: MultipleRegressionProps) {
   const { toast } = useToast();
   const loadedRef = useRef(false);
+  const dataEntryRef = useRef<HTMLDivElement>(null);
   
   // Variable names
   const [responseVariableName, setResponseVariableName] = useState("Y");
@@ -564,7 +565,7 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                   </Button>
                 </div>
 
-                <div className="overflow-auto max-h-96">
+                <div className="overflow-auto max-h-96" onPaste={handlePaste}>
                   <Table>
                     <TableHeader className="sticky top-0 z-10 bg-background">
                       <TableRow>
@@ -576,7 +577,7 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                         <TableHead className="w-[80px] px-4 py-2 text-left text-sm font-medium">Action</TableHead>
                       </TableRow>
                     </TableHeader>
-                    <TableBody onPaste={handlePaste}>
+                    <TableBody>
                       {dataY.map((_, rowIdx) => (
                         <TableRow key={rowIdx}>
                           <TableCell className="text-center text-muted-foreground">
