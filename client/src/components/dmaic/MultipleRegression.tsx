@@ -310,12 +310,12 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
         handleAddPredictor();
       }
       
-      // Extract data
-      const newDataY = rows.map(row => row[row.length - 1]);
+      // Extract data - Response is in first column (index 0)
+      const newDataY = rows.map(row => row[0]);
       const newDataX: number[][] = [];
       
       for (let predIdx = 0; predIdx < numPredictors; predIdx++) {
-        newDataX.push(rows.map(row => row[predIdx]));
+        newDataX.push(rows.map(row => row[predIdx + 1]));
       }
       
       setDataY(newDataY);
@@ -328,7 +328,7 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
     } catch (error) {
       toast({
         title: "Paste error",
-        description: "Could not parse pasted data. Ensure it's in tab-separated format with predictors in columns and response in the last column.",
+        description: "Could not parse pasted data. Ensure it's in tab-separated format with response in the first column and predictors in subsequent columns.",
         variant: "destructive",
       });
     }
@@ -367,12 +367,12 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
         setPredictorNames(newPredictorNames);
       }
       
-      // Extract data
-      const newDataY = rows.map(row => row[row.length - 1]);
+      // Extract data - Response is in first column (index 0)
+      const newDataY = rows.map(row => row[0]);
       const finalDataX: number[][] = [];
       
       for (let predIdx = 0; predIdx < numPredictors; predIdx++) {
-        finalDataX.push(rows.map(row => row[predIdx]));
+        finalDataX.push(rows.map(row => row[predIdx + 1]));
       }
       
       // Preserve existing predictors beyond the pasted ones
@@ -399,7 +399,7 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
     } catch (error) {
       toast({
         title: "Paste error",
-        description: "Could not parse pasted data. Ensure it's in tab-separated format with predictors in columns and response in the last column.",
+        description: "Could not parse pasted data. Ensure it's in tab-separated format with response in the first column and predictors in subsequent columns.",
         variant: "destructive",
       });
     }
@@ -553,7 +553,7 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                 <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
                   <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
                   <p className="text-sm text-blue-600 dark:text-blue-400">
-                    Paste Excel data: Select cells in Excel, copy them to the clipboard (Ctrl+C), then click on a cell in the table below and paste the content of the clipboard (Ctrl+V) or use the "Paste from Excel" button.
+                    Paste Excel data: Copy columns from Excel (Response in first column, then predictors) to the clipboard (Ctrl+C), then click on a cell in the table below and paste (Ctrl+V) or use the "Paste from Excel" button.
                   </p>
                   <Button
                     variant="outline"
@@ -570,10 +570,10 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                     <TableHeader className="sticky top-0 z-10 bg-background">
                       <TableRow>
                         <TableHead className="w-16">#</TableHead>
+                        <TableHead className="min-w-32">{responseVariableName}</TableHead>
                         {predictorNames.map((name, idx) => (
                           <TableHead key={idx} className="min-w-32">{name}</TableHead>
                         ))}
-                        <TableHead className="min-w-32">{responseVariableName}</TableHead>
                         <TableHead className="w-[80px] px-4 py-2 text-left text-sm font-medium">Action</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -582,6 +582,16 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                         <TableRow key={rowIdx}>
                           <TableCell className="text-center text-muted-foreground">
                             {rowIdx + 1}
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              value={isNaN(dataY[rowIdx]) ? '' : String(dataY[rowIdx])}
+                              onChange={(e) => handleCellChange(rowIdx, -1, e.target.value, true)}
+                              placeholder="Enter value"
+                              className="w-full"
+                              data-testid={`input-y-${rowIdx}`}
+                            />
                           </TableCell>
                           {predictorNames.map((_, colIdx) => (
                             <TableCell key={colIdx}>
@@ -595,16 +605,6 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                               />
                             </TableCell>
                           ))}
-                          <TableCell>
-                            <Input
-                              type="number"
-                              value={isNaN(dataY[rowIdx]) ? '' : String(dataY[rowIdx])}
-                              onChange={(e) => handleCellChange(rowIdx, -1, e.target.value, true)}
-                              placeholder="Enter value"
-                              className="w-full"
-                              data-testid={`input-y-${rowIdx}`}
-                            />
-                          </TableCell>
                           <TableCell className="p-4">
                             <Button
                               variant="ghost"
