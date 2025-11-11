@@ -409,9 +409,10 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
     
     if (result.columnX.length > 0) {
       saveToHistory();
-      const newPoints = result.columnX.map((x, i) => ({
-        x,
-        y: result.columnY[i] || 0
+      // Column order is now Y (Response) first, then X (Predictor)
+      const newPoints = result.columnX.map((y, i) => ({
+        y,  // First column is Y (Response)
+        x: result.columnY[i] || 0  // Second column is X (Predictor)
       }));
       setDataPoints(newPoints);
       toast({
@@ -438,9 +439,10 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
       
       if (result.columnX.length > 0) {
         saveToHistory();
-        const newPoints = result.columnX.map((x, i) => ({
-          x,
-          y: result.columnY[i] || 0
+        // Column order is now Y (Response) first, then X (Predictor)
+        const newPoints = result.columnX.map((y, i) => ({
+          y,  // First column is Y (Response)
+          x: result.columnY[i] || 0  // Second column is X (Predictor)
         }));
         setDataPoints(newPoints);
         toast({
@@ -612,7 +614,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
         <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
           <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
           <p className="text-sm text-blue-600 dark:text-blue-400">
-            Paste Excel data: Select cells in Excel, copy them to the clipboard (Ctrl+C), then click on a cell in the table below and paste the content of the clipboard (Ctrl+V) or use the "Paste from Excel" button.
+            Paste Excel data: Copy 2 columns from Excel (Response in first column, then predictor) to the clipboard (Ctrl+C), then click on a cell in the table below and paste (Ctrl+V) or use the "Paste from Excel" button.
           </p>
           <Button
             variant="outline"
@@ -629,8 +631,8 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
             <thead className="bg-gray-100 dark:bg-gray-800 sticky top-0">
               <tr>
                 <th className="px-4 py-2 text-left text-sm font-medium">#</th>
-                <th className="px-4 py-2 text-left text-sm font-medium">{datasetXDescription}</th>
                 <th className="px-4 py-2 text-left text-sm font-medium">{datasetYDescription}</th>
+                <th className="px-4 py-2 text-left text-sm font-medium">{datasetXDescription}</th>
                 <th className="px-4 py-2 text-center text-sm font-medium">Actions</th>
               </tr>
             </thead>
@@ -642,26 +644,6 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                 return (
                   <tr key={index} className="border-t hover:bg-gray-50 dark:hover:bg-gray-800">
                     <td className="px-4 py-2 text-sm">{index + 1}</td>
-                    <td className="px-4 py-2">
-                      <Input
-                        type="number"
-                        step="any"
-                        value={isNaN(point.x) ? '' : point.x}
-                        onChange={(e) => {
-                          if (!isActualRow) {
-                            // Auto-add row if typing in empty row
-                            const newPoints = [...dataPoints];
-                            while (newPoints.length <= index) {
-                              newPoints.push({ x: NaN, y: NaN });
-                            }
-                            setDataPoints(newPoints);
-                          }
-                          handleDataChange(index, 'x', e.target.value);
-                        }}
-                        className="w-full"
-                        data-testid={`input-x-${index}`}
-                      />
-                    </td>
                     <td className="px-4 py-2">
                       <Input
                         type="number"
@@ -680,6 +662,26 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                         }}
                         className="w-full"
                         data-testid={`input-y-${index}`}
+                      />
+                    </td>
+                    <td className="px-4 py-2">
+                      <Input
+                        type="number"
+                        step="any"
+                        value={isNaN(point.x) ? '' : point.x}
+                        onChange={(e) => {
+                          if (!isActualRow) {
+                            // Auto-add row if typing in empty row
+                            const newPoints = [...dataPoints];
+                            while (newPoints.length <= index) {
+                              newPoints.push({ x: NaN, y: NaN });
+                            }
+                            setDataPoints(newPoints);
+                          }
+                          handleDataChange(index, 'x', e.target.value);
+                        }}
+                        className="w-full"
+                        data-testid={`input-x-${index}`}
                       />
                     </td>
                     <td className="px-4 py-2 text-center">

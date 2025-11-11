@@ -350,17 +350,18 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
       const cells = line.split(delimiter).map(cell => cell.trim());
       
       if (cells.length < 3) {
-        errors.push(`Row ${i + 1}: Expected 3 columns (Factor A, Factor B, Response), found ${cells.length}`);
+        errors.push(`Row ${i + 1}: Expected 3 columns (Response, Factor A, Factor B), found ${cells.length}`);
         continue;
       }
       
-      const factorAValue = cells[0];
-      const factorBValue = cells[1];
-      const responseText = cells[2].replace(/,/g, '.');
+      // Column order is now: Response, Factor A, Factor B
+      const responseText = cells[0].replace(/,/g, '.');
       const responseValue = parseFloat(responseText);
+      const factorAValue = cells[1];
+      const factorBValue = cells[2];
       
       if (isNaN(responseValue)) {
-        errors.push(`Row ${i + 1}: Response "${cells[2]}" is not a valid number`);
+        errors.push(`Row ${i + 1}: Response "${cells[0]}" is not a valid number`);
         continue;
       }
       
@@ -825,7 +826,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
           <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg flex-wrap">
             <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
             <p className="text-sm text-blue-600 dark:text-blue-400 flex-1">
-              Paste Excel data: Copy 3 columns (Factor A, Factor B, Response) from Excel in clipboard with Ctrl+C, then paste them with Ctrl+V or use the button "Paste from Excel".
+              Paste Excel data: Copy 3 columns (Response, Factor A, Factor B) from Excel in clipboard with Ctrl+C, then paste them with Ctrl+V or use the button "Paste from Excel".
             </p>
             <div className="flex gap-2">
               <Button
@@ -846,9 +847,9 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                 <thead className="bg-gray-100 dark:bg-gray-800 sticky top-0 z-10">
                   <tr className="border-b">
                     <th className="w-[60px] px-4 py-2 text-left text-sm font-medium">#</th>
+                    <th className="w-[200px] px-4 py-2 text-left text-sm font-medium">{responseVariableName}</th>
                     <th className="w-[250px] px-4 py-2 text-left text-sm font-medium">{factorAName}</th>
                     <th className="w-[250px] px-4 py-2 text-left text-sm font-medium">{factorBName}</th>
-                    <th className="w-[200px] px-4 py-2 text-left text-sm font-medium">{responseVariableName}</th>
                     <th className="w-[80px] px-4 py-2 text-left text-sm font-medium">Action</th>
                   </tr>
                 </thead>
@@ -857,6 +858,23 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                     <tr key={row.id} className="border-b">
                       <td className="text-center text-sm text-muted-foreground p-4">
                         {index + 1}
+                      </td>
+                      <td className="p-4">
+                        <Input
+                          type="number"
+                          value={isNaN(row.response) ? '' : row.response}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (value === '' || value === '-') {
+                              updateDataRow(row.id, 'response', NaN);
+                            } else {
+                              const parsed = parseFloat(value);
+                              updateDataRow(row.id, 'response', parsed);
+                            }
+                          }}
+                          data-testid={`input-response-${row.id}`}
+                          placeholder={`Enter ${responseVariableName} value:`}
+                        />
                       </td>
                       <td className="p-4">
                         <Input
@@ -885,23 +903,6 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                             <option key={level} value={level} />
                           ))}
                         </datalist>
-                      </td>
-                      <td className="p-4">
-                        <Input
-                          type="number"
-                          value={isNaN(row.response) ? '' : row.response}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            if (value === '' || value === '-') {
-                              updateDataRow(row.id, 'response', NaN);
-                            } else {
-                              const parsed = parseFloat(value);
-                              updateDataRow(row.id, 'response', parsed);
-                            }
-                          }}
-                          data-testid={`input-response-${row.id}`}
-                          placeholder={`Enter ${responseVariableName} value:`}
-                        />
                       </td>
                       <td className="p-4">
                         <Button
