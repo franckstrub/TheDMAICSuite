@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Trash2, Clipboard, Undo, Plus, Minus } from "lucide-react";
+import { Loader2, Trash2, Info, Clipboard, Undo, Plus, Minus } from "lucide-react";
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -49,18 +49,19 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
   
   // Variable names
   const [responseVariableName, setResponseVariableName] = useState("Y");
-  const [predictorNames, setPredictorNames] = useState<string[]>(["X1", "X2", "X3"]);
+  const [predictorNames, setPredictorNames] = useState<string[]>(["X1", "X2"]);
   
   // Data (column-major: dataX[predictorIdx][rowIdx])
-  const [dataY, setDataY] = useState<number[]>([NaN, NaN, NaN]);
+  const [dataY, setDataY] = useState<number[]>([NaN, NaN, NaN, NaN]);
   const [dataX, setDataX] = useState<number[][]>([
-    [NaN, NaN, NaN],
-    [NaN, NaN, NaN],
-    [NaN, NaN, NaN],
+    [NaN, NaN],
+    [NaN, NaN],
+    [NaN, NaN],
+    [NaN, NaN],
   ]);
   
   // Selected predictors (indices into dataX and predictorNames)
-  const [selectedPredictors, setSelectedPredictors] = useState<number[]>([0, 1, 2]);
+  const [selectedPredictors, setSelectedPredictors] = useState<number[]>([0, 1]);
   
   // Analysis options
   const [significanceLevel, setSignificanceLevel] = useState(0.05);
@@ -131,8 +132,8 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
     },
     onSuccess: () => {
       toast({
-        title: "Data saved",
-        description: "Your data has been saved successfully.",
+        title: "Setup & Data saved",
+        description: "Your setup and data have been saved successfully.",
       });
       queryClient.invalidateQueries({
         queryKey: [`/api/projects/${projectId}/solutions/${solutionId}/multiple-regression`]
@@ -268,10 +269,10 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
   };
 
   const handleRemovePredictor = () => {
-    if (predictorNames.length <= 1) {
+    if (predictorNames.length <= 2) {
       toast({
         title: "Cannot remove",
-        description: "Must have at least one predictor.",
+        description: "Must have at least two predictors.",
         variant: "destructive",
       });
       return;
@@ -318,6 +319,77 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
       
       setDataY(newDataY);
       setDataX(newDataX);
+      
+      toast({
+        title: "Data pasted",
+        description: `Pasted ${rows.length} rows with ${numPredictors} predictors.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Paste error",
+        description: "Could not parse pasted data. Ensure it's in tab-separated format with predictors in columns and response in the last column.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handlePasteFromExcel = async () => {
+    try {
+      const pastedText = await navigator.clipboard.readText();
+      
+      const lines = pastedText.trim().split('\n');
+      const rows = lines.map(line => line.split('\t').map(cell => {
+        const num = parseFloat(cell.trim().replace(',', '.'));
+        return isNaN(num) ? NaN : num;
+      }));
+      
+      if (rows.length === 0 || rows[0].length < 2) {
+        throw new Error('Invalid paste data');
+      }
+      
+      saveToHistory();
+      
+      const numCols = rows[0].length;
+      const numPredictors = numCols - 1;
+      
+      // Ensure we have enough predictor columns
+      const currentPredictorCount = predictorNames.length;
+      const newPredictorNames = [...predictorNames];
+      const newDataX = [...dataX];
+      
+      if (numPredictors > currentPredictorCount) {
+        // Add new predictors if needed
+        for (let i = currentPredictorCount; i < numPredictors; i++) {
+          newPredictorNames.push(`X${i + 1}`);
+          newDataX.push(Array(dataY.length).fill(NaN));
+        }
+        setPredictorNames(newPredictorNames);
+      }
+      
+      // Extract data
+      const newDataY = rows.map(row => row[row.length - 1]);
+      const finalDataX: number[][] = [];
+      
+      for (let predIdx = 0; predIdx < numPredictors; predIdx++) {
+        finalDataX.push(rows.map(row => row[predIdx]));
+      }
+      
+      // Preserve existing predictors beyond the pasted ones
+      for (let predIdx = numPredictors; predIdx < newPredictorNames.length; predIdx++) {
+        finalDataX.push(newDataX[predIdx] || Array(newDataY.length).fill(NaN));
+      }
+      
+      setDataY(newDataY);
+      setDataX(finalDataX);
+      
+      // Update selected predictors to include the newly pasted ones
+      const newSelectedPredictors = [...selectedPredictors];
+      for (let i = 0; i < numPredictors; i++) {
+        if (!newSelectedPredictors.includes(i)) {
+          newSelectedPredictors.push(i);
+        }
+      }
+      setSelectedPredictors(newSelectedPredictors.sort((a, b) => a - b));
       
       toast({
         title: "Data pasted",
@@ -438,6 +510,33 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                       data-testid={`input-predictor-name-${idx}`}
                     />
                   ))}
+                  <div>
+                    <Label htmlFor="significanceLevel" data-testid="label-significance-level">Significance Level (α)</Label>
+                    <Select
+                      value={significanceLevel.toString()}
+                      onValueChange={(value) => setSignificanceLevel(parseFloat(value))}
+                    >
+                      <SelectTrigger id="significanceLevel" data-testid="select-significance-level">
+                        <SelectValue placeholder="Select significance level" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="0.01" data-testid="option-significance-0.01">0.01</SelectItem>
+                        <SelectItem value="0.05" data-testid="option-significance-0.05">0.05</SelectItem>
+                        <SelectItem value="0.10" data-testid="option-significance-0.10">0.10</SelectItem>
+                        <SelectItem value="0.20" data-testid="option-significance-0.20">0.20</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex gap-2 flex-wrap">
+                    <Button
+                      onClick={handleSaveData}
+                      disabled={saveDataMutation.isPending}
+                      data-testid="button-save-data"
+                    >
+                      {saveDataMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Save Setup
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -450,53 +549,19 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                 <CardTitle>Data Entry</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex gap-2 flex-wrap">
-                  <Button
-                    onClick={handleSaveData}
-                    disabled={saveDataMutation.isPending}
-                    data-testid="button-save-data"
-                  >
-                    {saveDataMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Save Data
-                  </Button>
+                <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
+                  <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                  <p className="text-sm text-blue-600 dark:text-blue-400">
+                    Paste Excel data: Select cells in Excel, copy them to the clipboard (Ctrl+C), then click on a cell in the table below and paste the content of the clipboard (Ctrl+V) or use the "Paste from Excel" button.
+                  </p>
                   <Button
                     variant="outline"
-                    onClick={handleUndo}
-                    disabled={dataHistory.length === 0}
-                    data-testid="button-undo"
+                    onClick={handlePasteFromExcel}
+                    data-testid="button-paste-from-excel"
                   >
-                    <Undo className="mr-2 h-4 w-4" />
-                    Undo
+                    <Clipboard className="mr-2 h-4 w-4" />
+                    Paste from Excel
                   </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowClearDialog(true)}
-                    data-testid="button-clear-data"
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Clear Data
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={handleAddRow}
-                    data-testid="button-add-row"
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Row
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={handleRemoveRow}
-                    data-testid="button-remove-row"
-                  >
-                    <Minus className="mr-2 h-4 w-4" />
-                    Remove Row
-                  </Button>
-                </div>
-
-                <div className="text-sm text-muted-foreground flex items-center gap-2">
-                  <Clipboard className="h-4 w-4" />
-                  Paste from Excel: Select and paste tab-separated data (predictors in columns, response in last column)
                 </div>
 
                 <div className="overflow-auto max-h-96">
@@ -508,6 +573,7 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                           <TableHead key={idx} className="min-w-32">{name}</TableHead>
                         ))}
                         <TableHead className="min-w-32">{responseVariableName}</TableHead>
+                        <TableHead className="w-[80px] px-4 py-2 text-left text-sm font-medium">Action</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody onPaste={handlePaste}>
@@ -519,9 +585,10 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                           {predictorNames.map((_, colIdx) => (
                             <TableCell key={colIdx}>
                               <Input
+                                type="number"
                                 value={isNaN(dataX[colIdx][rowIdx]) ? '' : String(dataX[colIdx][rowIdx])}
                                 onChange={(e) => handleCellChange(rowIdx, colIdx, e.target.value, false)}
-                                placeholder="0"
+                                placeholder="Enter value"
                                 className="w-full"
                                 data-testid={`input-x${colIdx}-${rowIdx}`}
                               />
@@ -529,17 +596,63 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                           ))}
                           <TableCell>
                             <Input
+                              type="number"
                               value={isNaN(dataY[rowIdx]) ? '' : String(dataY[rowIdx])}
                               onChange={(e) => handleCellChange(rowIdx, -1, e.target.value, true)}
-                              placeholder="0"
+                              placeholder="Enter value"
                               className="w-full"
                               data-testid={`input-y-${rowIdx}`}
                             />
+                          </TableCell>
+                          <TableCell className="p-4">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={handleRemoveRow}
+                              data-testid="button-remove-row"
+                            >
+                              <Trash2 className="h-4 w-4 text-red-500" />
+                            </Button>
                           </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                  <Button
+                    variant="outline"
+                    onClick={handleAddRow}
+                    data-testid="button-add-row"
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Row
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={handleUndo}
+                    disabled={dataHistory.length === 0}
+                    data-testid="button-undo"
+                  >
+                    <Undo className="mr-2 h-4 w-4" />
+                    Undo
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={() => setShowClearDialog(true)}
+                    data-testid="button-clear-data"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Clear All Data
+                  </Button>
+                  <Button
+                    onClick={handleSaveData}
+                    disabled={saveDataMutation.isPending}
+                    data-testid="button-save-data"
+                  >
+                    {saveDataMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Save Data
+                  </Button>
                 </div>
               </CardContent>
             </Card>
