@@ -825,7 +825,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
           <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg flex-wrap">
             <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
             <p className="text-sm text-blue-600 dark:text-blue-400 flex-1">
-              Paste Excel data: Copy 3 columns (Factor A, Factor B, Response) from Excel, then paste with Ctrl+V or use the button below.
+              Paste Excel data: Copy 3 columns (Factor A, Factor B, Response) from Excel in clipboard with Ctrl+C, then paste them with Ctrl+V or use the button "Paste from Excel".
             </p>
             <div className="flex gap-2">
               <Button
@@ -837,125 +837,28 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                 <Clipboard className="mr-2 h-4 w-4" />
                 Paste from Excel
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleUndo}
-                disabled={previousDataRows.length === 0}
-                data-testid="button-undo"
-              >
-                <Undo className="mr-2 h-4 w-4" />
-                Undo
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleClearAll}
-                data-testid="button-clear-all"
-              >
-                <XCircle className="mr-2 h-4 w-4" />
-                Clear All
-              </Button>
             </div>
           </div>
 
           <div className="overflow-x-auto" onPaste={handlePaste}>
-          {/*}  {dataRows.length >= 10 ? ( */}
-              <div className="max-h-[500px] w-full rounded-md border overflow-y-auto overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-100 dark:bg-gray-800 sticky top-0 z-10">
-                    <tr className="border-b">
-                      <th className="w-[60px] px-4 py-2 text-left text-sm font-medium">#</th>
-                      <th className="w-[250px] px-4 py-2 text-left text-sm font-medium">{factorAName}</th>
-                      <th className="w-[250px] px-4 py-2 text-left text-sm font-medium">{factorBName}</th>
-                      <th className="w-[200px] px-4 py-2 text-left text-sm font-medium">{responseVariableName}</th>
-                      <th className="w-[80px] px-4 py-2 text-left text-sm font-medium">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {dataRows.map((row, index) => (
-                      <tr key={row.id} className="border-b">
-                        <td className="text-center text-sm text-muted-foreground p-4">
-                          {index + 1}
-                        </td>
-                        <td className="p-4">
-                          <Input
-                            value={row.factorA}
-                            onChange={(e) => updateDataRow(row.id, 'factorA', e.target.value)}
-                            data-testid={`input-factor-a-${row.id}`}
-                            placeholder={`${factorAName} level: ${factorALevels.join(' or ')}`}
-                            list={`factor-a-list-${row.id}`}
-                          />
-                          <datalist id={`factor-a-list-${row.id}`}>
-                            {factorALevels.map((level) => (
-                              <option key={level} value={level} />
-                            ))}
-                          </datalist>
-                        </td>
-                        <td className="p-4">
-                          <Input
-                            value={row.factorB}
-                            onChange={(e) => updateDataRow(row.id, 'factorB', e.target.value)}
-                            data-testid={`input-factor-b-${row.id}`}
-                            placeholder={`${factorBName} level: ${factorBLevels.join(' or ')}`}
-                            list={`factor-b-list-${row.id}`}
-                          />
-                          <datalist id={`factor-b-list-${row.id}`}>
-                            {factorBLevels.map((level) => (
-                              <option key={level} value={level} />
-                            ))}
-                          </datalist>
-                        </td>
-                        <td className="p-4">
-                          <Input
-                            type="number"
-                            value={isNaN(row.response) ? '' : row.response}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              if (value === '' || value === '-') {
-                                updateDataRow(row.id, 'response', NaN);
-                              } else {
-                                const parsed = parseFloat(value);
-                                updateDataRow(row.id, 'response', parsed);
-                              }
-                            }}
-                            data-testid={`input-response-${row.id}`}
-                            placeholder={`Enter ${responseVariableName} value:`}
-                          />
-                        </td>
-                        <td className="p-4">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => deleteDataRow(row.id)}
-                            data-testid={`button-delete-row-${row.id}`}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-          {/*  ) : (
-              <Table>
-                <TableHeader className="sticky top-0 z-10 bg-background">
-                  <TableRow>
-                    <TableHead className="w-[60px] text-center bg-background">#</TableHead>
-                    <TableHead className="w-[250px] bg-background">{factorAName}</TableHead>
-                    <TableHead className="w-[250px] bg-background">{factorBName}</TableHead>
-                    <TableHead className="w-[200px] bg-background">{responseVariableName}</TableHead>
-                    <TableHead className="w-[80px] bg-background">Action</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+            <div className="max-h-[500px] w-full rounded-md border overflow-y-auto overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-100 dark:bg-gray-800 sticky top-0 z-10">
+                  <tr className="border-b">
+                    <th className="w-[60px] px-4 py-2 text-left text-sm font-medium">#</th>
+                    <th className="w-[250px] px-4 py-2 text-left text-sm font-medium">{factorAName}</th>
+                    <th className="w-[250px] px-4 py-2 text-left text-sm font-medium">{factorBName}</th>
+                    <th className="w-[200px] px-4 py-2 text-left text-sm font-medium">{responseVariableName}</th>
+                    <th className="w-[80px] px-4 py-2 text-left text-sm font-medium">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
                   {dataRows.map((row, index) => (
-                    <TableRow key={row.id}>
-                      <TableCell className="text-center text-sm text-muted-foreground">
+                    <tr key={row.id} className="border-b">
+                      <td className="text-center text-sm text-muted-foreground p-4">
                         {index + 1}
-                      </TableCell>
-                      <TableCell>
+                      </td>
+                      <td className="p-4">
                         <Input
                           value={row.factorA}
                           onChange={(e) => updateDataRow(row.id, 'factorA', e.target.value)}
@@ -968,8 +871,8 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                             <option key={level} value={level} />
                           ))}
                         </datalist>
-                      </TableCell>
-                      <TableCell>
+                      </td>
+                      <td className="p-4">
                         <Input
                           value={row.factorB}
                           onChange={(e) => updateDataRow(row.id, 'factorB', e.target.value)}
@@ -982,8 +885,8 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                             <option key={level} value={level} />
                           ))}
                         </datalist>
-                      </TableCell>
-                      <TableCell>
+                      </td>
+                      <td className="p-4">
                         <Input
                           type="number"
                           value={isNaN(row.response) ? '' : row.response}
@@ -999,45 +902,58 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                           data-testid={`input-response-${row.id}`}
                           placeholder={`Enter ${responseVariableName} value:`}
                         />
-                      </TableCell>
-                      <TableCell>
+                      </td>
+                      <td className="p-4">
                         <Button
                           variant="ghost"
                           size="icon"
                           onClick={() => deleteDataRow(row.id)}
                           data-testid={`button-delete-row-${row.id}`}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-4 w-4 text-red-500" />
                         </Button>
-                      </TableCell>
-                    </TableRow>
+                      </td>
+                    </tr>
                   ))}
-                </TableBody>
-              </Table>
-            )} */}
+                </tbody>
+              </table>
+            </div>
+            <div className="mt-4 flex gap-2 flex-wrap">
+              <Button
+                variant="outline"
+                onClick={addDataRow}
+                data-testid="button-add-row"
+              >
+                Add Row
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleUndo}
+                disabled={previousDataRows.length === 0}
+                data-testid="button-undo"
+              >
+                <Undo className="mr-2 h-4 w-4" />
+                Undo
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleClearAll}
+                data-testid="button-clear-all"
+              >
+                Clear All Data
+              </Button>
+              <Button
+                onClick={handleSaveData}
+                disabled={saveDataMutation.isPending}
+                data-testid="button-save-data"
+              >
+                {saveDataMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Save Data
+              </Button>
+            </div>
           </div>
-          
-          <Button
-            onClick={addDataRow}
-            variant="outline"
-            className="w-full"
-            data-testid="button-add-row"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Row
-          </Button>
         </CardContent>
       </Card>
-
-      <Button
-        onClick={handleSaveData}
-        data-testid="button-save-data"
-        disabled={saveDataMutation.isPending}
-        className="w-full"
-      >
-        {saveDataMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        Save Data
-      </Button>
     </div>
   );
 
@@ -1382,6 +1298,44 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
             </CardContent>
           </Card>
 
+          {/* Interpretation */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Interpretation (α = {significanceLevel})</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div>
+                <p className="font-semibold">{factorAName} Effect:</p>
+                <p className={anovaResult.factorAPValue < significanceLevel ? "text-green-600" : "text-muted-foreground"}>
+                  {anovaResult.factorAPValue < significanceLevel
+                    ? `✓ Significant (p = ${anovaResult.factorAPValue.toFixed(4)}). ${factorAName} has a significant effect on ${responseVariableName}.`
+                    : `✗ Not significant (p = ${anovaResult.factorAPValue.toFixed(4)}). ${factorAName} does not have a significant effect on ${responseVariableName}.`
+                  }
+                </p>
+              </div>
+              <div>
+                <p className="font-semibold">{factorBName} Effect:</p>
+                <p className={anovaResult.factorBPValue < significanceLevel ? "text-green-600" : "text-muted-foreground"}>
+                  {anovaResult.factorBPValue < significanceLevel
+                    ? `✓ Significant (p = ${anovaResult.factorBPValue.toFixed(4)}). ${factorBName} has a significant effect on ${responseVariableName}.`
+                    : `✗ Not significant (p = ${anovaResult.factorBPValue.toFixed(4)}). ${factorBName} does not have a significant effect on ${responseVariableName}.`
+                  }
+                </p>
+              </div>
+              {includeInteraction && (
+                <div>
+                  <p className="font-semibold">Interaction Effect:</p>
+                  <p className={anovaResult.interactionPValue < significanceLevel ? "text-green-600" : "text-muted-foreground"}>
+                    {anovaResult.interactionPValue < significanceLevel
+                      ? `✓ Significant (p = ${anovaResult.interactionPValue.toFixed(4)}). There is a significant interaction between ${factorAName} and ${factorBName}.`
+                      : `✗ Not significant (p = ${anovaResult.interactionPValue.toFixed(4)}). There is no significant interaction between ${factorAName} and ${factorBName}.`
+                    }
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Model Summary */}
           <Card>
             <CardHeader>
@@ -1492,44 +1446,6 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                   </TableBody>
                 </Table>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Interpretation */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Interpretation (α = {significanceLevel})</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div>
-                <p className="font-semibold">{factorAName} Effect:</p>
-                <p className={anovaResult.factorAPValue < significanceLevel ? "text-green-600" : "text-muted-foreground"}>
-                  {anovaResult.factorAPValue < significanceLevel
-                    ? `✓ Significant (p = ${anovaResult.factorAPValue.toFixed(4)}). ${factorAName} has a significant effect on ${responseVariableName}.`
-                    : `✗ Not significant (p = ${anovaResult.factorAPValue.toFixed(4)}). ${factorAName} does not have a significant effect on ${responseVariableName}.`
-                  }
-                </p>
-              </div>
-              <div>
-                <p className="font-semibold">{factorBName} Effect:</p>
-                <p className={anovaResult.factorBPValue < significanceLevel ? "text-green-600" : "text-muted-foreground"}>
-                  {anovaResult.factorBPValue < significanceLevel
-                    ? `✓ Significant (p = ${anovaResult.factorBPValue.toFixed(4)}). ${factorBName} has a significant effect on ${responseVariableName}.`
-                    : `✗ Not significant (p = ${anovaResult.factorBPValue.toFixed(4)}). ${factorBName} does not have a significant effect on ${responseVariableName}.`
-                  }
-                </p>
-              </div>
-              {includeInteraction && (
-                <div>
-                  <p className="font-semibold">Interaction Effect:</p>
-                  <p className={anovaResult.interactionPValue < significanceLevel ? "text-green-600" : "text-muted-foreground"}>
-                    {anovaResult.interactionPValue < significanceLevel
-                      ? `✓ Significant (p = ${anovaResult.interactionPValue.toFixed(4)}). There is a significant interaction between ${factorAName} and ${factorBName}.`
-                      : `✗ Not significant (p = ${anovaResult.interactionPValue.toFixed(4)}). There is no significant interaction between ${factorAName} and ${factorBName}.`
-                    }
-                  </p>
-                </div>
-              )}
             </CardContent>
           </Card>
 
