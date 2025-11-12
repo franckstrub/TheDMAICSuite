@@ -772,7 +772,22 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                     <CardTitle>Regression Equation</CardTitle>
                   </CardHeader>
                   <CardContent>
-{/*}                    {regressionResult.equation} */}
+                    <div className="space-y-2">
+                      <p className="text-lg font-mono">
+                        {responseVariableName} = {regressionResult.coefficients[0].estimate.toFixed(4)}
+                        {regressionResult.coefficients.slice(1).map((coef, idx) => {
+                          const sign = coef.estimate >= 0 ? ' + ' : ' - ';
+                          const absValue = Math.abs(coef.estimate).toFixed(4);
+                          return `${sign}${absValue}(${coef.term})`;
+                        }).join('')}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        where {regressionResult.coefficients[0].term} is the intercept
+                        {regressionResult.coefficients.slice(1).map((coef, idx) => 
+                          `, ${coef.term} is ${predictorNames[selectedPredictors[idx]] || coef.term}`
+                        ).join('')}
+                      </p>
+                    </div>
                   </CardContent>
                 </Card>
 
