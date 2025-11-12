@@ -1214,9 +1214,8 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                       {showNormalProbPlot && (() => {
                         const sorted = [...regressionResult.residuals].sort((a, b) => a - b);
                         const n = sorted.length;
-                        const theoreticalQuantiles = sorted.map((_, i) => {
-                          const p = (i + 0.5) / n;
-                          return jStat.normal.inv(p, 0, 1);
+                        const percentiles = sorted.map((_, i) => {
+                          return ((i + 0.5) / n) * 100; // Convert to percentage (0-100%)
                         });
                         
                         return (
@@ -1225,16 +1224,17 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                               {
                                 type: 'scatter',
                                 mode: 'markers',
-                                x: theoreticalQuantiles,
-                                y: sorted,
+                                x: sorted,
+                                y: percentiles,
                                 marker: { color: 'rgb(59, 130, 246)', size: 6 },
                               } as any,
                             ]}
                             layout={{
-                              xaxis: { title: { text: 'Theoretical Quantiles' } },
+                              xaxis: { title: { text: 'Residuals' } },
                               yaxis: { 
-                                title: { text: 'Sample Quantiles' },
-                                type: 'log'
+                                title: { text: 'Percent' },
+                                type: 'log',
+                                range: [0, 2] // log10(1) = 0, log10(100) = 2
                               },
                               showlegend: false,
                               margin: { l: 60, r: 20, t: 20, b: 60 },
