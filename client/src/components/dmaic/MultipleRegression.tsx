@@ -739,14 +739,26 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                     layout={{
                       autosize: true,
                       scene: {
-                        xaxis: { title: { text: predictorNames[plot3DFactorX]  || `X${plot3DFactorX + 1}` } },
-                        yaxis: { title: { text: predictorNames[plot3DFactorY]  || `X${plot3DFactorY + 1}` } },
+                        xaxis: { title: { text: predictorNames[plot3DFactorX] || `X${plot3DFactorX + 1}` } },
+                        yaxis: { title: { text: predictorNames[plot3DFactorY] || `X${plot3DFactorY + 1}` } },
                         zaxis: { title: { text: responseVariableName || 'Y Response' } },
                       },
                       margin: { l: 0, r: 0, b: 0, t: 0 },
-                    }}
-                    config={{ responsive: true }}
+                    }}                  
+                    useResizeHandler
                     style={{ width: '100%', height: '500px' }}
+                    config={{
+                      responsive: true,
+                      displayModeBar: true,
+                      displaylogo: false,
+                      toImageButtonOptions: {
+                        format: 'png',
+                        filename: `Multiple_Regression_Chart_${responseVariableName || 'Y Response'}=f(${predictorNames[plot3DFactorX] || 'X'}${plot3DFactorX + 1}, ${predictorNames[plot3DFactorY] || 'X'}${plot3DFactorY + 1})`,
+                        height: 500,
+                        width: 800,
+                        scale: 1
+                      }
+                    }}
                   />
                 </CardContent>
               </Card>
@@ -774,18 +786,23 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                   <CardContent>
                     <div className="space-y-2">
                       <p className="text-lg font-mono">
-                        {responseVariableName} = {regressionResult.coefficients[0].estimate.toFixed(4)}
+                        Y = {regressionResult.coefficients[0].estimate.toFixed(4)}
                         {regressionResult.coefficients.slice(1).map((coef, idx) => {
                           const sign = coef.estimate >= 0 ? ' + ' : ' - ';
                           const absValue = Math.abs(coef.estimate).toFixed(4);
                           return `${sign}${absValue}(${coef.term})`;
                         }).join('')}
                       </p>
+                      <p className="text-lg font-mono text-blue-600 dark:text-blue-400 mt-1">
+                        {responseVariableName || `Y Response`} = {regressionResult.coefficients[0].estimate.toFixed(4)}
+                        {regressionResult.coefficients.slice(1).map((coef, idx) => {
+                          const sign = coef.estimate >= 0 ? ' + ' : ' - ';
+                          const absValue = Math.abs(coef.estimate).toFixed(4);
+                          return `${sign}${absValue}*${predictorNames[selectedPredictors[idx]] || coef.term}`;
+                        }).join('')}
+                      </p>
                       <p className="text-sm text-muted-foreground">
-                        where {regressionResult.coefficients[0].term} is the intercept
-                        {regressionResult.coefficients.slice(1).map((coef, idx) => 
-                          `, ${coef.term} is ${predictorNames[selectedPredictors[idx]] || coef.term}`
-                        ).join('')}
+                        where {regressionResult.coefficients[0].estimate.toFixed(4)} is the intercept
                       </p>
                     </div>
                   </CardContent>
@@ -1023,8 +1040,20 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                             showlegend: false,
                             margin: { l: 60, r: 20, t: 20, b: 60 },
                           }}
-                          config={{ responsive: true }}
                           style={{ width: '100%', height: '400px' }}
+                          useResizeHandler
+                          config={{
+                            responsive: true,
+                            displayModeBar: true,
+                            displaylogo: false,
+                            toImageButtonOptions: {
+                              format: 'png',
+                              filename: `Multiple_Regression_Chart_${responseVariableName || 'Y Response'}=f(X predictors)_Residuals_vs_Fitted`,
+                              height: 500,
+                              width: 800,
+                              scale: 1
+                            }
+                          }}
                         />
                       )}
                     </div>
@@ -1065,8 +1094,20 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                             showlegend: false,
                             margin: { l: 60, r: 20, t: 20, b: 60 },
                           }}
-                          config={{ responsive: true }}
                           style={{ width: '100%', height: '400px' }}
+                          useResizeHandler
+                          config={{
+                            responsive: true,
+                            displayModeBar: true,
+                            displaylogo: false,
+                            toImageButtonOptions: {
+                              format: 'png',
+                              filename: `Multiple_Regression_Chart_${responseVariableName || 'Y Response'}=f(X predictors)_Residuals_vs_Observation_Order`,
+                              height: 500,
+                              width: 800,
+                              scale: 1
+                            }
+                          }}
                         />
                       )}
                     </div>
@@ -1107,7 +1148,19 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                               showlegend: false,
                               margin: { l: 60, r: 20, t: 20, b: 60 },
                             }}
-                            config={{ responsive: true }}
+                            useResizeHandler
+                            config={{
+                              responsive: true,
+                              displayModeBar: true,
+                              displaylogo: false,
+                              toImageButtonOptions: {
+                                format: 'png',
+                                filename: `Multiple_Regression_Chart_${responseVariableName || 'Y Response'}=f(X predictors)_Residuals_Normal_Probability_Plot`,
+                                height: 500,
+                                width: 800,
+                                scale: 1
+                              }
+                            }}
                             style={{ width: '100%', height: '400px' }}
                           />
                         );

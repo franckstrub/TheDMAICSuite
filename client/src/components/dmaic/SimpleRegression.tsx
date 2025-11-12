@@ -631,8 +631,8 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
             <thead className="bg-gray-100 dark:bg-gray-800 sticky top-0">
               <tr>
                 <th className="px-4 py-2 text-left text-sm font-medium">#</th>
-                <th className="px-4 py-2 text-left text-sm font-medium">{datasetYDescription}</th>
-                <th className="px-4 py-2 text-left text-sm font-medium">{datasetXDescription}</th>
+                <th className="px-4 py-2 text-left text-sm font-medium">{datasetYDescription || 'Y Response'}</th>
+                <th className="px-4 py-2 text-left text-sm font-medium">{datasetXDescription || 'X Predictor'}</th>
                 <th className="px-4 py-2 text-center text-sm font-medium">Actions</th>
               </tr>
             </thead>
@@ -795,7 +795,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                 ${enableCubic && cubicResult ? `<br><span style="color:purple; font-size:14px;">Cubic model: ${cubicResult.equation} (R²=${(cubicResult.r2*100).toFixed(2)}%) (R²-Adj=${(cubicResult.statistics.r2Adjusted*100).toFixed(2)}%)</span>` : ''}
               `;
           const chartTitle = `
-            <b style="font-size:18px;">Simple Regression of ${datasetYDescription} vs ${datasetXDescription}</b>
+            <b style="font-size:18px;">Simple Regression of ${datasetYDescription || 'Y Response'} vs ${datasetXDescription || 'X Predictor'}</b>
             ${modelEquation}
           `;
 
@@ -939,11 +939,11 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                 margin: { t: 160 },
                 title: { text: chartTitle, font: { size: 16 } },
                 xaxis: { title: {
-                                  text: `<b>${datasetXDescription}</b>`,
+                                  text: `<b>${datasetXDescription || 'X Predictor'}</b>`,
                                   standoff: 35 // ← increase to move it farther from the axis, decrease for closer
                                 }, },
                 yaxis: { 
-                  title: { text: '<b>' + datasetYDescription + '</b>'},
+                  title: { text: `<b> ${datasetYDescription || 'Y Response'}</b>`},
                   range: [yAxisMin, yAxisMax]
                 },
                 showlegend: true,
@@ -1060,7 +1060,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                 displaylogo: false,
                 toImageButtonOptions: {
                   format: 'png',
-                  filename: `Simple_Regression_Chart_${datasetYDescription}_vs_${datasetXDescription}`,
+                  filename: `Simple_Regression_Chart_${datasetYDescription || 'Y Response'}_vs_${datasetXDescription || 'X Predictor'}`,
                   height: 500,
                   width: 800,
                   scale: 1
@@ -1130,7 +1130,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
               <p className="font-medium">Equation:</p>
               <p className="text-lg">{linearResult.equation}</p>
               <p className="text-lg text-blue-600 dark:text-blue-400 mt-1">
-                {datasetYDescription} = {linearResult.a.toFixed(4)} {linearResult.b >= 0 ? '+' : ''} {linearResult.b.toFixed(4)}*{datasetXDescription}
+                {datasetYDescription || 'Y Response'} = {linearResult.a.toFixed(4)} {linearResult.b >= 0 ? '+' : ''} {linearResult.b.toFixed(4)}*{datasetXDescription || 'X Predictor'}
               </p>
             </div>
             
@@ -1345,7 +1345,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                         config={{ responsive: true, displayModeBar: true, displaylogo: false,
                           toImageButtonOptions: {
                             format: 'png',
-                            filename: `Residuals vs Fits_${datasetYDescription} vs ${datasetXDescription}_Linear Regression`,
+                            filename: `Residuals vs Fits_${datasetYDescription || 'Y Response'}=f(${datasetXDescription  || 'X Predictor'})_Linear Regression`,
                             height: 500,
                             width: 600,
                             scale: 1
@@ -1386,7 +1386,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                         config={{ responsive: true, displayModeBar: true, displaylogo: false,
                           toImageButtonOptions: {
                             format: 'png',
-                            filename: `Residuals vs Order of Data_${datasetYDescription} vs ${datasetXDescription}_Linear Regression`,
+                            filename: `Residuals vs Order of Data_${datasetYDescription || 'Y Response'}=f(${datasetXDescription  || 'X Predictor'})_Linear Regression`,
                             height: 500,
                             width: 600,
                             scale: 1
@@ -1412,7 +1412,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
               <p className="font-medium">Equation:</p>
               <p className="text-lg">{quadraticResult.equation}</p>
               <p className="text-lg text-blue-600 dark:text-blue-400 mt-1">
-                {datasetYDescription} = {quadraticResult.a.toFixed(4)} {quadraticResult.b >= 0 ? '+' : ''} {quadraticResult.b.toFixed(4)}({datasetXDescription}) {quadraticResult.c >= 0 ? '+' : ''} {quadraticResult.c.toFixed(4)}({datasetXDescription})²
+                {datasetYDescription || 'Y Response'} = {quadraticResult.a.toFixed(4)} {quadraticResult.b >= 0 ? '+' : ''} {quadraticResult.b.toFixed(4)}*{datasetXDescription || 'X Predictor'} {quadraticResult.c >= 0 ? '+' : ''} {quadraticResult.c.toFixed(4)}*{datasetXDescription || 'X Predictor'}²
               </p>
             </div>
             
@@ -1622,7 +1622,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                         config={{ responsive: true, displayModeBar: true, displaylogo: false,
                           toImageButtonOptions: {
                             format: 'png',
-                            filename: `Residuals vs Fits_${datasetYDescription} vs ${datasetXDescription}_Quadraticic Regression`,
+                            filename: `Residuals vs Fits_${datasetYDescription || 'Y Response'}=f(${datasetXDescription  || 'X Predictor'})_Quadraticic Regression`,
                             height: 500,
                             width: 600,
                             scale: 1
@@ -1663,7 +1663,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                         config={{ responsive: true, displayModeBar: true, displaylogo: false,
                         toImageButtonOptions: {
                           format: 'png',
-                          filename: `Residuals vs Order of Data_${datasetYDescription} vs ${datasetXDescription}_Quadratic Regression`,
+                          filename: `Residuals vs Order of Data_${datasetYDescription || 'Y Response'}=f(${datasetXDescription  || 'X Predictor'})_Quadratic Regression`,
                           height: 500,
                           width: 600,
                           scale: 1
@@ -1689,7 +1689,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
               <p className="font-medium">Equation:</p>
               <p className="text-lg">{cubicResult.equation}</p>
               <p className="text-lg text-blue-600 dark:text-blue-400 mt-1">
-                {datasetYDescription} = {cubicResult.a.toFixed(4)} {cubicResult.b >= 0 ? '+' : ''} {cubicResult.b.toFixed(4)}({datasetXDescription}) {cubicResult.c >= 0 ? '+' : ''} {cubicResult.c.toFixed(4)}({datasetXDescription})² {cubicResult.d >= 0 ? '+' : ''} {cubicResult.d.toFixed(4)}({datasetXDescription})³
+                {datasetYDescription || 'Y Response'} = {cubicResult.a.toFixed(4)} {cubicResult.b >= 0 ? '+' : ''} {cubicResult.b.toFixed(4)}*{datasetXDescription || 'X Predictor'} {cubicResult.c >= 0 ? '+' : ''} {cubicResult.c.toFixed(4)}*{datasetXDescription || 'X Predictor'}² {cubicResult.d >= 0 ? '+' : ''} {cubicResult.d.toFixed(4)}*{datasetXDescription || 'X Predictor'}³
               </p>
             </div>
             
@@ -1904,7 +1904,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                         config={{ responsive: true, displayModeBar: true, displaylogo: false,
                         toImageButtonOptions: {
                           format: 'png',
-                          filename: `Residuals vs Fits_${datasetYDescription} vs ${datasetXDescription}_Cubic Regression`,
+                          filename: `Residuals vs Fits_${datasetYDescription || 'Y Response'}=f(${datasetXDescription  || 'X Predictor'})_Cubic Regression`,
                           height: 500,
                           width: 600,
                           scale: 1
@@ -1945,7 +1945,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                         config={{ responsive: true, displayModeBar: true, displaylogo: false,
                         toImageButtonOptions: {
                           format: 'png',
-                          filename: `Residuals vs Order of Data_${datasetYDescription} vs ${datasetXDescription}_Cubic Regression`,
+                          filename: `Residuals vs Order of Data_${datasetYDescription || 'Y Response'}=f(${datasetXDescription || 'X Predictor'})_Cubic Regression`,
                           height: 500,
                           width: 600,
                           scale: 1
