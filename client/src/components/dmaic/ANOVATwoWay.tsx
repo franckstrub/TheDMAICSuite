@@ -584,7 +584,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
   const calculateANOVA = () => {
     setAnalysisError(null);
     try {
-      const result = anovaTwoWay(factorALevels, factorBLevels, cellData, includeInteraction, factorAName, factorBName);
+      const result = anovaTwoWay(factorALevels, factorBLevels, cellData, includeInteraction, factorAName || 'Factor A', factorBName || 'factor B');
       setAnovaResult(result);
     } catch (error: any) {
       setAnalysisError(error.message);
@@ -651,7 +651,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                 data-testid="input-factor-a-name"
                 value={factorAName}
                 onChange={(e) => setFactorAName(e.target.value)}
-                placeholder="e.g., Temperature"
+                placeholder="Y Response e.g., Temperature"
               />
             </div>
             <div>
@@ -661,7 +661,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                 data-testid="input-factor-b-name"
                 value={factorBName}
                 onChange={(e) => setFactorBName(e.target.value)}
-                placeholder="e.g., Pressure"
+                placeholder="Factor A e.g., Pressure"
               />
             </div>
             <div>
@@ -671,7 +671,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                 data-testid="input-response-variable"
                 value={responseVariableName}
                 onChange={(e) => setResponseVariableName(e.target.value)}
-                placeholder="e.g., Yield"
+                placeholder="Factor B e.g., Yield"
               />
             </div>
           </div>
@@ -847,9 +847,9 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                 <thead className="bg-gray-100 dark:bg-gray-800 sticky top-0 z-10">
                   <tr className="border-b">
                     <th className="w-[60px] px-4 py-2 text-left text-sm font-medium">#</th>
-                    <th className="w-[200px] px-4 py-2 text-left text-sm font-medium">{responseVariableName}</th>
-                    <th className="w-[250px] px-4 py-2 text-left text-sm font-medium">{factorAName}</th>
-                    <th className="w-[250px] px-4 py-2 text-left text-sm font-medium">{factorBName}</th>
+                    <th className="w-[200px] px-4 py-2 text-left text-sm font-medium">{responseVariableName || 'Y Response'}</th>
+                    <th className="w-[250px] px-4 py-2 text-left text-sm font-medium">{factorAName || 'Factor A'}</th>
+                    <th className="w-[250px] px-4 py-2 text-left text-sm font-medium">{factorBName || 'Factor B'}</th>
                     <th className="w-[80px] px-4 py-2 text-left text-sm font-medium">Action</th>
                   </tr>
                 </thead>
@@ -873,7 +873,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                             }
                           }}
                           data-testid={`input-response-${row.id}`}
-                          placeholder={`Enter ${responseVariableName} value:`}
+                          placeholder={`Enter ${responseVariableName || 'Y Response'} value:`}
                         />
                       </td>
                       <td className="p-4">
@@ -881,7 +881,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                           value={row.factorA}
                           onChange={(e) => updateDataRow(row.id, 'factorA', e.target.value)}
                           data-testid={`input-factor-a-${row.id}`}
-                          placeholder={`${factorAName} level: ${factorALevels.join(' or ')}`}
+                          placeholder={`${factorAName || 'Factor A'} level: ${factorALevels.join(' or ')}`}
                           list={`factor-a-list-${row.id}`}
                         />
                         <datalist id={`factor-a-list-${row.id}`}>
@@ -895,7 +895,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                           value={row.factorB}
                           onChange={(e) => updateDataRow(row.id, 'factorB', e.target.value)}
                           data-testid={`input-factor-b-${row.id}`}
-                          placeholder={`${factorBName} level: ${factorBLevels.join(' or ')}`}
+                          placeholder={`${factorBName || 'Factor A'} level: ${factorBLevels.join(' or ')}`}
                           list={`factor-b-list-${row.id}`}
                         />
                         <datalist id={`factor-b-list-${row.id}`}>
@@ -1048,16 +1048,16 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                     },
                   ]}
                   layout={{
-                    title:{ text: `<b>Main Effect Plot - ${factorAName}</b>` },
+                    title:{ text: `<b>Main Effect Plot - ${factorAName || 'Factor A'}</b>` },
                     xaxis: { 
-                      title: { text: factorAName },
+                      title: { text: factorAName || 'Factor A' },
                       type: 'category',
                       tickmode: 'array',
                       tickvals: factorALevels,
                       ticktext: factorALevels,
                     },
                     yaxis: { 
-                      title: { text: responseVariableName },
+                      title: { text: responseVariableName || 'Y Response' },
                       range: yAxisRange,
                     },
                     showlegend: false,
@@ -1070,7 +1070,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                     displaylogo: false,
                     toImageButtonOptions: {
                       format: 'png',
-                      filename: `ANOVA_2_Way_Main_Effect_Plot_of_${factorAName} on ${responseVariableName}`,
+                      filename: `ANOVA_2_Way_Main_Effect_Plot_of_${factorAName || 'Factor A'} on ${responseVariableName || 'Y Response'}`,
                       height: 500,
                       width: 660,
                       scale: 1
@@ -1106,16 +1106,16 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                     },
                   ]}
                   layout={{
-                    title:{ text: `<b>Main Effect Plot - ${factorBName}</b>` },
+                    title:{ text: `<b>Main Effect Plot - ${factorBName || 'Factor B'}</b>` },
                     xaxis: { 
-                      title: { text: factorBName },
+                      title: { text: factorBName || 'Factor B' },
                       type: 'category',
                       tickmode: 'array',
                       tickvals: factorBLevels,
                       ticktext: factorBLevels,
                     },
                     yaxis: { 
-                      title: { text: responseVariableName },
+                      title: { text: responseVariableName || 'Y Response' },
                       range: yAxisRange,
                     },
                     showlegend: false,
@@ -1128,7 +1128,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                     displaylogo: false,
                     toImageButtonOptions: {
                       format: 'png',
-                      filename: `ANOVA_2_Way_Main_Effect_Plot_of_${factorBName} on ${responseVariableName}`,
+                      filename: `ANOVA_2_Way_Main_Effect_Plot_of_${factorBName || 'Factor B'} on ${responseVariableName || 'Y Response'}`,
                       height: 500,
                       width: 660,
                       scale: 1
@@ -1161,20 +1161,20 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                     marker: { size: 8 },
                   }))}
                   layout={{
-                    title: { text: `<b>${factorAName} × ${factorBName} Interaction</b>` },
+                    title: { text: `<b>${factorAName  || 'Factor A'} × ${factorBName || 'Factor B'} Interaction</b>` },
                     xaxis: { 
-                      title: { text: factorBName },
+                      title: { text: factorBName || 'Factor B' },
                       type: 'category',
                       tickmode: 'array',
                       tickvals: factorBLevels,
                       ticktext: factorBLevels,
                     },
                     yaxis: { 
-                      title: { text: responseVariableName },
+                      title: { text: responseVariableName || 'Y Response' },
                       range: yAxisRange,
                     },
                     showlegend: true,
-                    legend: { title: { text: factorAName } },
+                    legend: { title: { text: factorAName || 'Factor A' } },
                     hovermode: 'closest',
                     margin: { l: 60, r: 160, t: 60, b: 60 },
                   }}
@@ -1184,7 +1184,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                     displaylogo: false,
                     toImageButtonOptions: {
                       format: 'png',
-                      filename: `ANOVA_2_Way_Interaction_Plot_of_${factorAName}x${factorBName} on ${responseVariableName}`,
+                      filename: `ANOVA_2_Way_Interaction_Plot_of_${factorAName || 'Factor A'}x${factorBName || 'Factor B'} on ${responseVariableName || 'Y Response'}`,
                       height: 500,
                       width: 800,
                       scale: 1
@@ -1240,7 +1240,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                   </TableHeader>
                   <TableBody>
                     <TableRow>
-                      <TableCell className="font-medium">{factorAName}</TableCell>
+                      <TableCell className="font-medium">{factorAName || 'Factor A'}</TableCell>
                       <TableCell className="text-right">{anovaResult.factorADF}</TableCell>
                       <TableCell className="text-right">{anovaResult.factorASS.toFixed(4)}</TableCell>
                       <TableCell className="text-right">{anovaResult.factorAMS.toFixed(4)}</TableCell>
@@ -1252,7 +1252,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                       </TableCell>
                     </TableRow>
                     <TableRow>
-                      <TableCell className="font-medium">{factorBName}</TableCell>
+                      <TableCell className="font-medium">{factorBName || 'Factor B'}</TableCell>
                       <TableCell className="text-right">{anovaResult.factorBDF}</TableCell>
                       <TableCell className="text-right">{anovaResult.factorBSS.toFixed(4)}</TableCell>
                       <TableCell className="text-right">{anovaResult.factorBMS.toFixed(4)}</TableCell>
@@ -1265,7 +1265,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                     </TableRow>
                     {includeInteraction && (
                       <TableRow>
-                        <TableCell className="font-medium">{factorAName} × {factorBName}</TableCell>
+                        <TableCell className="font-medium">{factorAName || 'Factor A'} × {factorBName || 'Factor B'}</TableCell>
                         <TableCell className="text-right">{anovaResult.interactionDF}</TableCell>
                         <TableCell className="text-right">{anovaResult.interactionSS.toFixed(4)}</TableCell>
                         <TableCell className="text-right">{anovaResult.interactionMS.toFixed(4)}</TableCell>
@@ -1309,8 +1309,8 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                 <p className="font-semibold">{factorAName} Effect:</p>
                 <p className={anovaResult.factorAPValue < significanceLevel ? "text-green-600" : "text-muted-foreground"}>
                   {anovaResult.factorAPValue < significanceLevel
-                    ? `✓ Significant (p = ${anovaResult.factorAPValue.toFixed(4)}). ${factorAName} has a significant effect on ${responseVariableName}.`
-                    : `✗ Not significant (p = ${anovaResult.factorAPValue.toFixed(4)}). ${factorAName} does not have a significant effect on ${responseVariableName}.`
+                    ? `✓ Significant (p = ${anovaResult.factorAPValue.toFixed(4)}). ${factorAName || 'Factor A'} has a significant effect on ${responseVariableName || 'Y Response'}.`
+                    : `✗ Not significant (p = ${anovaResult.factorAPValue.toFixed(4)}). ${factorAName || 'Factor A'} does not have a significant effect on ${responseVariableName || 'Y Response'}.`
                   }
                 </p>
               </div>
@@ -1318,8 +1318,8 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                 <p className="font-semibold">{factorBName} Effect:</p>
                 <p className={anovaResult.factorBPValue < significanceLevel ? "text-green-600" : "text-muted-foreground"}>
                   {anovaResult.factorBPValue < significanceLevel
-                    ? `✓ Significant (p = ${anovaResult.factorBPValue.toFixed(4)}). ${factorBName} has a significant effect on ${responseVariableName}.`
-                    : `✗ Not significant (p = ${anovaResult.factorBPValue.toFixed(4)}). ${factorBName} does not have a significant effect on ${responseVariableName}.`
+                    ? `✓ Significant (p = ${anovaResult.factorBPValue.toFixed(4)}). ${factorBName || 'Factor B'} has a significant effect on ${responseVariableName || 'Y Response'}.`
+                    : `✗ Not significant (p = ${anovaResult.factorBPValue.toFixed(4)}). ${factorBName || 'Factor B'} does not have a significant effect on ${responseVariableName || 'Y Response'}.`
                   }
                 </p>
               </div>
@@ -1328,8 +1328,8 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                   <p className="font-semibold">Interaction Effect:</p>
                   <p className={anovaResult.interactionPValue < significanceLevel ? "text-green-600" : "text-muted-foreground"}>
                     {anovaResult.interactionPValue < significanceLevel
-                      ? `✓ Significant (p = ${anovaResult.interactionPValue.toFixed(4)}). There is a significant interaction between ${factorAName} and ${factorBName}.`
-                      : `✗ Not significant (p = ${anovaResult.interactionPValue.toFixed(4)}). There is no significant interaction between ${factorAName} and ${factorBName}.`
+                      ? `✓ Significant (p = ${anovaResult.interactionPValue.toFixed(4)}). There is a significant interaction between ${factorAName || 'Factor A'} and ${factorBName || 'Factor B'}.`
+                      : `✗ Not significant (p = ${anovaResult.interactionPValue.toFixed(4)}). There is no significant interaction between ${factorAName || 'Factor A'} and ${factorBName || 'Factor B'}.`
                     }
                   </p>
                 </div>
@@ -1421,7 +1421,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>{factorAName} \ {factorBName}</TableHead>
+                      <TableHead>{factorAName || 'Factor A'} ↓ \ {factorBName || 'Factor B'} →</TableHead>
                       {factorBLevels.map((levelB, idx) => (
                         <TableHead key={idx} className="text-right">{levelB}</TableHead>
                       ))}
@@ -1547,7 +1547,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                         config={{ 
                           displayModeBar: true,
                           toImageButtonOptions: {
-                            filename: `Residuals vs Fitted Values_${responseVariableName}_ANOVA Two-Way`,
+                            filename: `Residuals vs Fitted Values_${responseVariableName || 'Y Response'}_ANOVA Two-Way`,
                             height: 500,
                             width: 600,
                             scale: 1
@@ -1589,7 +1589,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                         config={{ 
                           displayModeBar: true,
                           toImageButtonOptions: {
-                            filename: `Residuals vs Observation Order_${responseVariableName}_ANOVA Two-Way`,
+                            filename: `Residuals vs Observation Order_${responseVariableName || 'Y Response'}_ANOVA Two-Way`,
                             height: 500,
                             width: 600,
                             scale: 1
