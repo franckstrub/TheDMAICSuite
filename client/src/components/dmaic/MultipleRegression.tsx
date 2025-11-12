@@ -784,7 +784,7 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                     <CardTitle>
                       Regression Equation
                       {selectedPredictors.length < predictorNames.length && (
-                        <span className="ml-2 text-sm font-normal text-orange-600 dark:text-orange-400">(Reduced Model)</span>
+                        <span className="p-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-xl ml-4 text-sm font-normal">Reduced Model</span>
                       )}
                     </CardTitle>
                   </CardHeader>
@@ -819,7 +819,7 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                     <CardTitle>
                       Coefficients
                       {selectedPredictors.length < predictorNames.length && (
-                        <span className="ml-2 text-sm font-normal text-orange-600 dark:text-orange-400">(Reduced Model)</span>
+                        <span className="p-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-xl ml-24 text-sm font-normal justify-right">Reduced Model</span>
                       )}
                     </CardTitle>
                   </CardHeader>
@@ -827,14 +827,14 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                     <div className="overflow-x-auto">
                       <Table>
                         <TableHeader>
-                          <TableRow>
-                            <TableHead className="text-center">Include</TableHead>
+                          <TableRow>                            
                             <TableHead>Term</TableHead>
                             <TableHead className="text-right">Coefficient</TableHead>
                             <TableHead className="text-right">Std. Error</TableHead>
                             <TableHead className="text-right">T-value</TableHead>
                             <TableHead className="text-right">p-value</TableHead>
                             <TableHead className="text-right">VIF</TableHead>
+                            <TableHead className="text-center">Include</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -845,9 +845,6 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                             
                             return (
                               <TableRow key={0}>
-                                <TableCell className="text-center">
-                                  -
-                                </TableCell>
                                 <TableCell className="font-medium" data-testid={`coef-term-0`}>
                                   {coef.term}
                                 </TableCell>
@@ -869,6 +866,9 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                                 <TableCell className="text-right" data-testid={`coef-vif-0`}>
                                   -
                                 </TableCell>
+                                 <TableCell className="text-center">
+                                  -
+                                </TableCell>
                               </TableRow>
                             );
                           })()}
@@ -886,15 +886,8 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                               
                               return (
                                 <TableRow key={predIdx}>
-                                  <TableCell className="text-center">
-                                    <Checkbox
-                                      checked={true}
-                                      onCheckedChange={() => togglePredictor(predIdx)}
-                                      data-testid={`checkbox-coef-${predIdx}`}
-                                    />
-                                  </TableCell>
                                   <TableCell className="font-medium" data-testid={`coef-term-${predIdx}`}>
-                                    {predName}
+                                    {predName ? predName : `X${predIdx + 1}`}
                                   </TableCell>
                                   <TableCell className="text-right" data-testid={`coef-estimate-${predIdx}`}>
                                     {coef.estimate.toFixed(6)}
@@ -917,24 +910,31 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                                   >
                                     {coef.vif !== null ? coef.vif.toFixed(2) : '-'}
                                   </TableCell>
+                                  <TableCell className="text-center">
+                                    <Checkbox
+                                      checked={true}
+                                      onCheckedChange={() => togglePredictor(predIdx)}
+                                      data-testid={`checkbox-coef-${predIdx}`}
+                                    />
+                                  </TableCell>
                                 </TableRow>
                               );
                             } else {
                               // Deselected predictor - show grayed out row
                               return (
                                 <TableRow key={predIdx} className="bg-gray-50 dark:bg-gray-900/50">
-                                  <TableCell className="text-center">
+                                  <TableCell className="font-medium text-muted-foreground" data-testid={`coef-term-${predIdx}`}>
+                                    {predName || `X${predIdx + 1}`}
+                                  </TableCell>
+                                  <TableCell colSpan={5} className="text-center text-muted-foreground italic">
+                                    <span className="text-sm">Term not included</span>
+                                  </TableCell>
+                                   <TableCell className="text-center">
                                     <Checkbox
                                       checked={false}
                                       onCheckedChange={() => togglePredictor(predIdx)}
                                       data-testid={`checkbox-coef-${predIdx}`}
                                     />
-                                  </TableCell>
-                                  <TableCell className="font-medium text-muted-foreground" data-testid={`coef-term-${predIdx}`}>
-                                    {predName}
-                                  </TableCell>
-                                  <TableCell colSpan={5} className="text-center text-muted-foreground italic">
-                                    <span className="text-sm">Term not selected</span>
                                   </TableCell>
                                 </TableRow>
                               );
@@ -957,7 +957,7 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                     <CardTitle>
                       Goodness of Fit
                       {selectedPredictors.length < predictorNames.length && (
-                        <span className="ml-2 text-sm font-normal text-orange-600 dark:text-orange-400">(Reduced Model)</span>
+                        <span className="p-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-xl ml-24 text-sm font-normal justify-right">Reduced Model</span>
                       )}
                     </CardTitle>
                   </CardHeader>
@@ -997,7 +997,7 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                     <CardTitle>
                       ANOVA Table
                       {selectedPredictors.length < predictorNames.length && (
-                        <span className="ml-2 text-sm font-normal text-orange-600 dark:text-orange-400">(Reduced Model)</span>
+                        <span className="p-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-xl ml-24 text-sm font-normal justify-right">Reduced Model</span>
                       )}
                     </CardTitle>
                   </CardHeader>
@@ -1057,34 +1057,42 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                     <CardTitle>
                       Residual Analysis
                       {selectedPredictors.length < predictorNames.length && (
-                        <span className="ml-2 text-sm font-normal text-orange-600 dark:text-orange-400">(Reduced Model)</span>
+                        <span className="p-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-xl ml-24 text-sm font-normal justify-right">Reduced Model</span>
                       )}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div>
-                        <div className="text-sm text-muted-foreground">Residual Mean</div>
-                        <div className="text-lg font-semibold" data-testid="residual-mean">
-                          {regressionResult.residualMean.toFixed(6)}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-sm text-muted-foreground">Residual Std Dev</div>
-                        <div className="text-lg font-semibold" data-testid="residual-std">
-                          {regressionResult.residualStd.toFixed(4)}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-sm text-muted-foreground">AD Normality</div>
-                        <div className={`text-lg font-semibold ${
-                          regressionResult.andersonDarlingNormality === 'Normal' ? 'text-green-600' : 'text-red-600'
-                        }`} data-testid="residual-normality">
-                          {regressionResult.andersonDarlingNormality}
-                        </div>
-                      </div>
+                    <div>
+                      <p className="font-semibold mb-2">Residuals Analysis:</p>
+                      <table className="w-full border-collapse">
+                        <tbody>
+                          <th className="text-sm text-muted-foreground py-2 pr-4 w-1/4">Standard Deviation:</th>
+                          <th className="text-sm text-muted-foreground py-2 pr-4 align-top w-3/4">Normality Test (Anderson-Darling):</th>
+                          <tr>
+                            <td className="font-medium py-2">{regressionResult.residualStd.toFixed(6)}</td>
+                            <table className="w-full">
+                              <tbody>                         
+                                <th className="text-sm text-muted-foreground pb-1 w-1/5">AD Statistic:</th>
+                                <th className="text-sm text-muted-foreground pb-1 w 1/5">p-value:</th>
+                                <th className="text-sm text-muted-foreground pb-1 w-3/5">Conclusion (5% significance (α)):</th>
+                                <tr>
+                                  <td className="font-medium pb-1 text-center">{regressionResult.andersonDarlingStatistic.toFixed(4)}</td>
+                                  <td className="font-medium pb-1 text-center">{regressionResult.andersonDarlingPValue.toFixed(4)}</td>
+                                  <td className={`font-medium pb-1  text-center ${
+                                    regressionResult.andersonDarlingNormality === 'Normal' ? 'text-green-600 dark:text-green-400' :
+                                    regressionResult.andersonDarlingNormality === 'Not Normal' ? 'text-red-600 dark:text-red-400' :
+                                    'text-yellow-600 dark:text-yellow-400'
+                                    }`}>
+                                    {regressionResult.andersonDarlingNormality}
+                                  </td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </tr>
+                        </tbody>
+                      </table>
                     </div>
-
+                    
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
                         <Checkbox
