@@ -1232,7 +1232,10 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                             ]}
                             layout={{
                               xaxis: { title: { text: 'Theoretical Quantiles' } },
-                              yaxis: { title: { text: 'Sample Quantiles' } },
+                              yaxis: { 
+                                title: { text: 'Sample Quantiles' },
+                                type: 'log'
+                              },
                               showlegend: false,
                               margin: { l: 60, r: 20, t: 20, b: 60 },
                             }}
