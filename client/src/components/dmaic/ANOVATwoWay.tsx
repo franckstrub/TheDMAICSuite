@@ -35,7 +35,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
   
   const [factorAName, setFactorAName] = useState("Factor A");
   const [factorBName, setFactorBName] = useState("Factor B");
-  const [responseVariableName, setResponseVariableName] = useState("Response");
+  const [responseVariableName, setResponseVariableName] = useState("Y Response");
   
   const [factorALevels, setFactorALevels] = useState<string[]>(["Level 1", "Level 2"]);
   const [factorBLevels, setFactorBLevels] = useState<string[]>(["Level 1", "Level 2"]);
@@ -111,7 +111,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
       const config = configQuery.data as any;
       setFactorAName(config.factorAName || "Factor A");
       setFactorBName(config.factorBName || "Factor B");
-      setResponseVariableName(config.responseVariableName || "Response");
+      setResponseVariableName(config.responseVariableName || "Y Response");
       
       if (config.factorALevels && config.factorALevels.length > 0) {
         setFactorALevels(config.factorALevels);
@@ -350,7 +350,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
       const cells = line.split(delimiter).map(cell => cell.trim());
       
       if (cells.length < 3) {
-        errors.push(`Row ${i + 1}: Expected 3 columns (Response, Factor A, Factor B), found ${cells.length}`);
+        errors.push(`Row ${i + 1}: Expected 3 columns (Y Response, Factor A, Factor B), found ${cells.length}`);
         continue;
       }
       
@@ -826,7 +826,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
           <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg flex-wrap">
             <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
             <p className="text-sm text-blue-600 dark:text-blue-400 flex-1">
-              Paste Excel data: Copy 3 columns (Response, Factor A, Factor B) from Excel in clipboard with Ctrl+C, then paste them with Ctrl+V or use the button "Paste from Excel".
+              Paste Excel data: Copy 3 columns (Y Response, Factor A, Factor B) from Excel in clipboard with Ctrl+C, then paste them with Ctrl+V or use the button "Paste from Excel".
             </p>
             <div className="flex gap-2">
               <Button

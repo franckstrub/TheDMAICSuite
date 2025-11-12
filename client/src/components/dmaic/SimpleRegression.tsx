@@ -55,8 +55,8 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
   const [enableQuadratic, setEnableQuadratic] = useState(false);
   const [enableCubic, setEnableCubic] = useState(false);
   
-  const [datasetYDescription, setDatasetYDescription] = useState("Y Variable");
-  const [datasetXDescription, setDatasetXDescription] = useState("X Variable");
+  const [datasetYDescription, setDatasetYDescription] = useState("Y Response");
+  const [datasetXDescription, setDatasetXDescription] = useState("X Predictor");
   
   const [dataPoints, setDataPoints] = useState<DataPoint[]>([
     { x: NaN, y: NaN },
@@ -97,8 +97,8 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
       setEnableLinear(config.enableLinear || false);
       setEnableQuadratic(config.enableQuadratic || false);
       setEnableCubic(config.enableCubic || false);
-      setDatasetYDescription(config.datasetYDescription || "Y Variable");
-      setDatasetXDescription(config.datasetXDescription || "X Variable");
+      setDatasetYDescription(config.datasetYDescription || "Y Response");
+      setDatasetXDescription(config.datasetXDescription || "X Predictor");
       
       if (config.dataX && config.dataY && config.dataX.length > 0) {
         const points: DataPoint[] = config.dataX.map((x: number, i: number) => ({
@@ -574,7 +574,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
               id="y-description"
               value={datasetYDescription}
               onChange={(e) => setDatasetYDescription(e.target.value)}
-              placeholder="Response"
+              placeholder="Y Response"
               title="Enter your Y Variable Description (Response)"
               data-testid="input-y-description"
             />
@@ -585,7 +585,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
               id="x-description"
               value={datasetXDescription}
               onChange={(e) => setDatasetXDescription(e.target.value)}
-              placeholder="e.g., Input, Predictor, Independent Variable"
+              placeholder="X Predictor (Independent Variable)"
               title="Enter your X Variable Description (Predictor). This should be an Independent Variable."
               data-testid="input-x-description"
             />

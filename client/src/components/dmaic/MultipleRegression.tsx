@@ -49,8 +49,8 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
   const dataEntryRef = useRef<HTMLDivElement>(null);
   
   // Variable names
-  const [responseVariableName, setResponseVariableName] = useState("Y");
-  const [predictorNames, setPredictorNames] = useState<string[]>(["X1", "X2"]);
+  const [responseVariableName, setResponseVariableName] = useState("Y Response");
+  const [predictorNames, setPredictorNames] = useState<string[]>(["Predictor X1", "Predictor X2"]);
   
   // Data (column-major: dataX[predictorIdx][rowIdx])
   const [dataY, setDataY] = useState<number[]>([NaN, NaN, NaN, NaN]);
@@ -264,7 +264,7 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
   const handleAddPredictor = () => {
     saveToHistory();
     const newIdx = predictorNames.length;
-    setPredictorNames([...predictorNames, `X${newIdx + 1}`]);
+    setPredictorNames([...predictorNames, `X${newIdx + 1} Predictor`]);
     setDataX([...dataX, Array(dataY.length).fill(NaN)]);
     setSelectedPredictors([...selectedPredictors, newIdx]);
   };
@@ -468,17 +468,17 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label>Response Variable Name</Label>
+                  <Label>Y Response Variable Name</Label>
                   <Input
                     value={responseVariableName}
                     onChange={(e) => setResponseVariableName(e.target.value)}
-                    placeholder="Y"
+                    placeholder="Y Response"
                     data-testid="input-response-name"
                   />
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label>Predictor Variable Names</Label>
+                    <Label>X Predictor Variable Names</Label>
                     <div className="flex gap-2">
                       <Button
                         size="sm"
@@ -507,7 +507,7 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                         newNames[idx] = e.target.value;
                         setPredictorNames(newNames);
                       }}
-                      placeholder={`X${idx + 1}`}
+                      placeholder={`X${idx + 1} Predictor`}
                       data-testid={`input-predictor-name-${idx}`}
                     />
                   ))}
@@ -553,7 +553,7 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                 <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
                   <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
                   <p className="text-sm text-blue-600 dark:text-blue-400">
-                    Paste Excel data: Copy columns from Excel (Response in first column, then predictors) to the clipboard (Ctrl+C), then click on a cell in the table below and paste (Ctrl+V) or use the "Paste from Excel" button.
+                    Paste Excel data: Copy columns from Excel (Y Response in first column, then X predictors) to the clipboard (Ctrl+C), then click on a cell in the table below and paste (Ctrl+V) or use the "Paste from Excel" button.
                   </p>
                   <Button
                     variant="outline"
@@ -566,24 +566,24 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                 </div>
 
                 <div className="overflow-auto max-h-96" onPaste={handlePaste}>
-                  <Table>
-                    <TableHeader className="sticky top-0 z-10 bg-background">
-                      <TableRow>
-                        <TableHead className="w-16">#</TableHead>
-                        <TableHead className="min-w-32">{responseVariableName}</TableHead>
+                  <table className="w-full">
+                    <thead className="bg-gray-100 dark:bg-gray-800 sticky top-0 z-10">
+                      <tr className="border-b">
+                        <th className="w-16 px-4 py-2 text-left text-sm font-medium">#</th>
+                        <th className="min-w-32 px-4 py-2 text-left text-sm font-medium">{responseVariableName}</th>
                         {predictorNames.map((name, idx) => (
-                          <TableHead key={idx} className="min-w-32">{name}</TableHead>
+                          <th key={idx} className="min-w-32 px-4 py-2 text-left text-sm font-medium">{name}</th>
                         ))}
-                        <TableHead className="w-[80px] px-4 py-2 text-left text-sm font-medium">Action</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
+                        <th className="w-[80px] px-4 py-2 text-left text-sm font-medium">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
                       {dataY.map((_, rowIdx) => (
-                        <TableRow key={rowIdx}>
-                          <TableCell className="text-center text-muted-foreground">
+                        <tr key={rowIdx}>
+                          <td className="text-center text-muted-foreground">
                             {rowIdx + 1}
-                          </TableCell>
-                          <TableCell>
+                          </td>
+                          <td>
                             <Input
                               type="number"
                               value={isNaN(dataY[rowIdx]) ? '' : String(dataY[rowIdx])}
@@ -592,9 +592,9 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                               className="w-full"
                               data-testid={`input-y-${rowIdx}`}
                             />
-                          </TableCell>
+                          </td>
                           {predictorNames.map((_, colIdx) => (
-                            <TableCell key={colIdx}>
+                            <td key={colIdx}>
                               <Input
                                 type="number"
                                 value={isNaN(dataX[colIdx][rowIdx]) ? '' : String(dataX[colIdx][rowIdx])}
@@ -603,9 +603,9 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                                 className="w-full"
                                 data-testid={`input-x${colIdx}-${rowIdx}`}
                               />
-                            </TableCell>
+                            </td>
                           ))}
-                          <TableCell className="p-4">
+                          <td className="p-4">
                             <Button
                               variant="ghost"
                               size="icon"
@@ -614,11 +614,11 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                             >
                               <Trash2 className="h-4 w-4 text-red-500" />
                             </Button>
-                          </TableCell>
-                        </TableRow>
+                          </td>
+                        </tr>
                       ))}
-                    </TableBody>
-                  </Table>
+                    </tbody>
+                  </table>
                 </div>
                 <div className="flex gap-2 flex-wrap">
                   <Button
@@ -732,9 +732,9 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                     layout={{
                       autosize: true,
                       scene: {
-                        xaxis: { title: { text: predictorNames[plot3DFactorX] || 'Factor A' } },
-                        yaxis: { title: { text: predictorNames[plot3DFactorY] || 'Factor B' } },
-                        zaxis: { title: { text: responseVariableName || 'Response' } },
+                        xaxis: { title: { text: predictorNames[plot3DFactorX] || 'Predictor X1' } },
+                        yaxis: { title: { text: predictorNames[plot3DFactorY] || 'Predictor X2' } },
+                        zaxis: { title: { text: responseVariableName || 'Y Response' } },
                       },
                       margin: { l: 0, r: 0, b: 0, t: 0 },
                     }}
