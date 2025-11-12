@@ -781,7 +781,12 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
               <>
                 <Card>
                   <CardHeader>
-                    <CardTitle>Regression Equation</CardTitle>
+                    <CardTitle>
+                      Regression Equation
+                      {selectedPredictors.length < predictorNames.length && (
+                        <span className="ml-2 text-sm font-normal text-orange-600 dark:text-orange-400">(Reduced Model)</span>
+                      )}
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
@@ -811,13 +816,19 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                 {/* Coefficients Table */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>Coefficients</CardTitle>
+                    <CardTitle>
+                      Coefficients
+                      {selectedPredictors.length < predictorNames.length && (
+                        <span className="ml-2 text-sm font-normal text-orange-600 dark:text-orange-400">(Reduced Model)</span>
+                      )}
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="overflow-x-auto">
                       <Table>
                         <TableHeader>
                           <TableRow>
+                            <TableHead className="text-center">Include</TableHead>
                             <TableHead>Term</TableHead>
                             <TableHead className="text-right">Coefficient</TableHead>
                             <TableHead className="text-right">Std. Error</TableHead>
@@ -827,39 +838,107 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {regressionResult.coefficients.map((coef, idx) => {
+                          {/* Intercept (always included) */}
+                          {regressionResult.coefficients.length > 0 && (() => {
+                            const coef = regressionResult.coefficients[0];
                             const isPValueSignificant = coef.pValue < significanceLevel;
-                            const isHighVIF = coef.vif !== null && coef.vif > 5;
-                            const isModerateVIF = coef.vif !== null && coef.vif > 1 && coef.vif <=5;
                             
                             return (
-                              <TableRow key={idx}>
-                                <TableCell className="font-medium" data-testid={`coef-term-${idx}`}>
+                              <TableRow key={0}>
+                                <TableCell className="text-center">
+                                  -
+                                </TableCell>
+                                <TableCell className="font-medium" data-testid={`coef-term-0`}>
                                   {coef.term}
                                 </TableCell>
-                                <TableCell className="text-right" data-testid={`coef-estimate-${idx}`}>
+                                <TableCell className="text-right" data-testid={`coef-estimate-0`}>
                                   {coef.estimate.toFixed(6)}
                                 </TableCell>
-                                <TableCell className="text-right" data-testid={`coef-stderr-${idx}`}>
+                                <TableCell className="text-right" data-testid={`coef-stderr-0`}>
                                   {coef.stdError.toFixed(4)}
                                 </TableCell>
-                                <TableCell className="text-right" data-testid={`coef-tvalue-${idx}`}>
+                                <TableCell className="text-right" data-testid={`coef-tvalue-0`}>
                                   {coef.tValue.toFixed(4)}
                                 </TableCell>
                                 <TableCell 
                                   className={`text-right ${isPValueSignificant ? 'text-green-600 font-semibold' : ''}`}
-                                  data-testid={`coef-pvalue-${idx}`}
+                                  data-testid={`coef-pvalue-0`}
                                 >
                                   {coef.pValue.toFixed(4)}
                                 </TableCell>
-                                <TableCell 
-                                  className={`text-right ${isHighVIF ? 'text-red-600 font-semibold' : isModerateVIF ? 'text-yellow-400 font-semibold' : ''}`}
-                                  data-testid={`coef-vif-${idx}`}
-                                >
-                                  {coef.vif !== null ? coef.vif.toFixed(2) : '-'}
+                                <TableCell className="text-right" data-testid={`coef-vif-0`}>
+                                  -
                                 </TableCell>
                               </TableRow>
                             );
+                          })()}
+                          
+                          {/* All predictors (selected and deselected) */}
+                          {predictorNames.map((predName, predIdx) => {
+                            const isSelected = selectedPredictors.includes(predIdx);
+                            const coefIndex = isSelected ? selectedPredictors.indexOf(predIdx) + 1 : -1;
+                            const coef = coefIndex > 0 ? regressionResult.coefficients[coefIndex] : null;
+                            
+                            if (isSelected && coef) {
+                              const isPValueSignificant = coef.pValue < significanceLevel;
+                              const isHighVIF = coef.vif !== null && coef.vif > 5;
+                              const isModerateVIF = coef.vif !== null && coef.vif > 1 && coef.vif <= 5;
+                              
+                              return (
+                                <TableRow key={predIdx}>
+                                  <TableCell className="text-center">
+                                    <Checkbox
+                                      checked={true}
+                                      onCheckedChange={() => togglePredictor(predIdx)}
+                                      data-testid={`checkbox-coef-${predIdx}`}
+                                    />
+                                  </TableCell>
+                                  <TableCell className="font-medium" data-testid={`coef-term-${predIdx}`}>
+                                    {predName}
+                                  </TableCell>
+                                  <TableCell className="text-right" data-testid={`coef-estimate-${predIdx}`}>
+                                    {coef.estimate.toFixed(6)}
+                                  </TableCell>
+                                  <TableCell className="text-right" data-testid={`coef-stderr-${predIdx}`}>
+                                    {coef.stdError.toFixed(4)}
+                                  </TableCell>
+                                  <TableCell className="text-right" data-testid={`coef-tvalue-${predIdx}`}>
+                                    {coef.tValue.toFixed(4)}
+                                  </TableCell>
+                                  <TableCell 
+                                    className={`text-right ${isPValueSignificant ? 'text-green-600 font-semibold' : ''}`}
+                                    data-testid={`coef-pvalue-${predIdx}`}
+                                  >
+                                    {coef.pValue.toFixed(4)}
+                                  </TableCell>
+                                  <TableCell 
+                                    className={`text-right ${isHighVIF ? 'text-red-600 font-semibold' : isModerateVIF ? 'text-yellow-400 font-semibold' : ''}`}
+                                    data-testid={`coef-vif-${predIdx}`}
+                                  >
+                                    {coef.vif !== null ? coef.vif.toFixed(2) : '-'}
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            } else {
+                              // Deselected predictor - show grayed out row
+                              return (
+                                <TableRow key={predIdx} className="bg-gray-50 dark:bg-gray-900/50">
+                                  <TableCell className="text-center">
+                                    <Checkbox
+                                      checked={false}
+                                      onCheckedChange={() => togglePredictor(predIdx)}
+                                      data-testid={`checkbox-coef-${predIdx}`}
+                                    />
+                                  </TableCell>
+                                  <TableCell className="font-medium text-muted-foreground" data-testid={`coef-term-${predIdx}`}>
+                                    {predName}
+                                  </TableCell>
+                                  <TableCell colSpan={5} className="text-center text-muted-foreground italic">
+                                    <span className="text-sm">Term not selected</span>
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            }
                           })}
                         </TableBody>
                       </Table>
@@ -875,7 +954,12 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                 {/* Model Statistics */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>Goodness of Fit</CardTitle>
+                    <CardTitle>
+                      Goodness of Fit
+                      {selectedPredictors.length < predictorNames.length && (
+                        <span className="ml-2 text-sm font-normal text-orange-600 dark:text-orange-400">(Reduced Model)</span>
+                      )}
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -910,7 +994,12 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                 {/* ANOVA Table */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>ANOVA Table</CardTitle>
+                    <CardTitle>
+                      ANOVA Table
+                      {selectedPredictors.length < predictorNames.length && (
+                        <span className="ml-2 text-sm font-normal text-orange-600 dark:text-orange-400">(Reduced Model)</span>
+                      )}
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="overflow-x-auto">
@@ -923,16 +1012,11 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                             <TableHead className="text-right">Mean Square</TableHead>
                             <TableHead className="text-right">F-value</TableHead>
                             <TableHead className="text-right">p-value</TableHead>
-                            <TableHead className="text-center">Include</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {regressionResult.anovaTable.map((row, idx) => {
                             const isPredictor = row.source.startsWith('  ');
-                            const predictorName = isPredictor ? row.source.trim() : null;
-                            const predictorIdx = predictorName ? 
-                              predictorNames.findIndex(name => name === predictorName) : -1;
-                            const isSelected = predictorIdx >= 0 && selectedPredictors.includes(predictorIdx);
                             const isPValueSignificant = row.pValue !== null && row.pValue < significanceLevel;
                             
                             return (
@@ -958,15 +1042,6 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                                 >
                                   {row.pValue !== null ? row.pValue.toFixed(4) : '-'}
                                 </TableCell>
-                                <TableCell className="text-center">
-                                  {isPredictor && predictorIdx >= 0 && (
-                                    <Checkbox
-                                      checked={isSelected}
-                                      onCheckedChange={() => togglePredictor(predictorIdx)}
-                                      data-testid={`checkbox-predictor-${predictorIdx}`}
-                                    />
-                                  )}
-                                </TableCell>
                               </TableRow>
                             );
                           })}
@@ -979,7 +1054,12 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                 {/* Residual Analysis */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>Residual Analysis</CardTitle>
+                    <CardTitle>
+                      Residual Analysis
+                      {selectedPredictors.length < predictorNames.length && (
+                        <span className="ml-2 text-sm font-normal text-orange-600 dark:text-orange-400">(Reduced Model)</span>
+                      )}
+                    </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
