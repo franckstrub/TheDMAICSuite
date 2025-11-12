@@ -614,7 +614,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
         <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
           <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
           <p className="text-sm text-blue-600 dark:text-blue-400">
-            Paste Excel data: Copy 2 columns from Excel (Response in first column, then predictor) to the clipboard (Ctrl+C), then click on a cell in the table below and paste (Ctrl+V) or use the "Paste from Excel" button.
+            Paste Excel data: Copy 2 columns from Excel (Y Response in first column, then X predictor) to the clipboard (Ctrl+C), then click on a cell in the table below and paste (Ctrl+V) or use the "Paste from Excel" button.
           </p>
           <Button
             variant="outline"
