@@ -49,8 +49,8 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
   const dataEntryRef = useRef<HTMLDivElement>(null);
   
   // Variable names
-  const [responseVariableName, setResponseVariableName] = useState("Y Response");
-  const [predictorNames, setPredictorNames] = useState<string[]>(["Predictor X1", "Predictor X2"]);
+  const [responseVariableName, setResponseVariableName] = useState("");
+  const [predictorNames, setPredictorNames] = useState<any[]>(["X1", "X2"]);
   
   // Data (column-major: dataX[predictorIdx][rowIdx])
   const [dataY, setDataY] = useState<number[]>([NaN, NaN, NaN, NaN]);
@@ -264,7 +264,7 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
   const handleAddPredictor = () => {
     saveToHistory();
     const newIdx = predictorNames.length;
-    setPredictorNames([...predictorNames, `X${newIdx + 1} Predictor`]);
+    setPredictorNames([...predictorNames, `X${newIdx + 1}`]);
     setDataX([...dataX, Array(dataY.length).fill(NaN)]);
     setSelectedPredictors([...selectedPredictors, newIdx]);
   };
@@ -570,9 +570,16 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                     <thead className="bg-gray-100 dark:bg-gray-800 sticky top-0 z-10">
                       <tr className="border-b">
                         <th className="w-16 px-4 py-2 text-left text-sm font-medium">#</th>
-                        <th className="min-w-32 px-4 py-2 text-left text-sm font-medium">{responseVariableName}</th>
+                        {responseVariableName ?
+                          <th className="min-w-32 px-4 py-2 text-left text-sm font-medium">{responseVariableName}</th>
+                          :
+                          <th className="min-w-32 px-4 py-2 text-left text-sm font-medium">Y Response</th>
+                        }
+                        
                         {predictorNames.map((name, idx) => (
-                          <th key={idx} className="min-w-32 px-4 py-2 text-left text-sm font-medium">{name}</th>
+                          name ? <th key={idx} className="min-w-32 px-4 py-2 text-left text-sm font-medium">{name}</th>
+                          :
+                          <th key={idx} className="min-w-32 px-4 py-2 text-left text-sm font-medium">{`X${idx + 1}`}</th>
                         ))}
                         <th className="w-[80px] px-4 py-2 text-left text-sm font-medium">Action</th>
                       </tr>
@@ -663,12 +670,12 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
             {regressionResult && selectedPredictors.length >= 2 ? (
               <Card>
                 <CardHeader>
-                  <CardTitle>3D Scatter Plot</CardTitle>
+                  <CardTitle>3D Scatter Plot of Y Response (Z-axis)</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label>Factor A (X-Axis)</Label>
+                      <Label>Predictor A (X-Axis)</Label>
                       <Select
                         value={String(plot3DFactorX)}
                         onValueChange={(val) => setPlot3DFactorX(parseInt(val))}
@@ -679,14 +686,14 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                         <SelectContent>
                           {selectedPredictors.map(predIdx => (
                             <SelectItem key={predIdx} value={String(predIdx)}>
-                              {predictorNames[predIdx]}
+                              {predictorNames[predIdx]  || `X${predIdx + 1}`}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
                     <div>
-                      <Label>Factor B (Y-Axis)</Label>
+                      <Label>Predictor B (Y-Axis)</Label>
                       <Select
                         value={String(plot3DFactorY)}
                         onValueChange={(val) => setPlot3DFactorY(parseInt(val))}
@@ -697,7 +704,7 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                         <SelectContent>
                           {selectedPredictors.map(predIdx => (
                             <SelectItem key={predIdx} value={String(predIdx)}>
-                              {predictorNames[predIdx]}
+                              {predictorNames[predIdx]  || `X${predIdx + 1}`}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -732,8 +739,8 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                     layout={{
                       autosize: true,
                       scene: {
-                        xaxis: { title: { text: predictorNames[plot3DFactorX] || 'Predictor X1' } },
-                        yaxis: { title: { text: predictorNames[plot3DFactorY] || 'Predictor X2' } },
+                        xaxis: { title: { text: predictorNames[plot3DFactorX]  || `X${plot3DFactorX + 1}` } },
+                        yaxis: { title: { text: predictorNames[plot3DFactorY]  || `X${plot3DFactorY + 1}` } },
                         zaxis: { title: { text: responseVariableName || 'Y Response' } },
                       },
                       margin: { l: 0, r: 0, b: 0, t: 0 },
@@ -748,7 +755,7 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                 <CardContent className="py-8">
                   <div className="text-center text-muted-foreground">
                     {selectedPredictors.length < 2 
-                      ? "Select at least 2 predictors in the Analysis tab to view the 3D chart"
+                      ? "Select at least 2 predictors in the Analysis tab to view the 3D chart of Y Response"
                       : "Enter data in the Data Entry tab to view the 3D chart"
                     }
                   </div>
@@ -760,10 +767,83 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
         <TabsContent value="analysis" className="space-y-4">
             {regressionResult ? (
               <>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Regression Equation</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+{/*}                    {regressionResult.equation} */}
+                  </CardContent>
+                </Card>
+
+                {/* Coefficients Table */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Coefficients</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Term</TableHead>
+                            <TableHead className="text-right">Coefficient</TableHead>
+                            <TableHead className="text-right">Std. Error</TableHead>
+                            <TableHead className="text-right">T-value</TableHead>
+                            <TableHead className="text-right">p-value</TableHead>
+                            <TableHead className="text-right">VIF</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {regressionResult.coefficients.map((coef, idx) => {
+                            const isPValueSignificant = coef.pValue < significanceLevel;
+                            const isHighVIF = coef.vif !== null && coef.vif > 5;
+                            const isModerateVIF = coef.vif !== null && coef.vif > 1 && coef.vif <=5;
+                            
+                            return (
+                              <TableRow key={idx}>
+                                <TableCell className="font-medium" data-testid={`coef-term-${idx}`}>
+                                  {coef.term}
+                                </TableCell>
+                                <TableCell className="text-right" data-testid={`coef-estimate-${idx}`}>
+                                  {coef.estimate.toFixed(6)}
+                                </TableCell>
+                                <TableCell className="text-right" data-testid={`coef-stderr-${idx}`}>
+                                  {coef.stdError.toFixed(4)}
+                                </TableCell>
+                                <TableCell className="text-right" data-testid={`coef-tvalue-${idx}`}>
+                                  {coef.tValue.toFixed(4)}
+                                </TableCell>
+                                <TableCell 
+                                  className={`text-right ${isPValueSignificant ? 'text-green-600 font-semibold' : ''}`}
+                                  data-testid={`coef-pvalue-${idx}`}
+                                >
+                                  {coef.pValue.toFixed(4)}
+                                </TableCell>
+                                <TableCell 
+                                  className={`text-right ${isHighVIF ? 'text-red-600 font-semibold' : isModerateVIF ? 'text-yellow-400 font-semibold' : ''}`}
+                                  data-testid={`coef-vif-${idx}`}
+                                >
+                                  {coef.vif !== null ? coef.vif.toFixed(2) : '-'}
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </div>
+                    <div className="mt-2 text-sm text-muted-foreground">
+                      VIF &gt; 5 indicates problematic multicollinearity (high correlation between predictors - shown in red)<br></br>
+                      &gt; 1 VIF &le; 5 indicates moderate multicollinearity (correlation between predictors - shown in yellow)<br></br>
+                      VIF &le; 1 indicates no multicollinearity (no correlation between predictors - shown in black)
+                    </div>
+                  </CardContent>
+                </Card>
+                
                 {/* Model Statistics */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>Model Statistics</CardTitle>
+                    <CardTitle>Goodness of Fit</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -860,70 +940,6 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                           })}
                         </TableBody>
                       </Table>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Coefficients Table */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Coefficients</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Term</TableHead>
-                            <TableHead className="text-right">Coefficient</TableHead>
-                            <TableHead className="text-right">Std. Error</TableHead>
-                            <TableHead className="text-right">T-value</TableHead>
-                            <TableHead className="text-right">p-value</TableHead>
-                            <TableHead className="text-right">VIF</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {regressionResult.coefficients.map((coef, idx) => {
-                            const isPValueSignificant = coef.pValue < significanceLevel;
-                            const isHighVIF = coef.vif !== null && coef.vif > 5;
-                            const isModerateVIF = coef.vif !== null && coef.vif > 1 && coef.vif <=5;
-                            
-                            return (
-                              <TableRow key={idx}>
-                                <TableCell className="font-medium" data-testid={`coef-term-${idx}`}>
-                                  {coef.term}
-                                </TableCell>
-                                <TableCell className="text-right" data-testid={`coef-estimate-${idx}`}>
-                                  {coef.estimate.toFixed(6)}
-                                </TableCell>
-                                <TableCell className="text-right" data-testid={`coef-stderr-${idx}`}>
-                                  {coef.stdError.toFixed(4)}
-                                </TableCell>
-                                <TableCell className="text-right" data-testid={`coef-tvalue-${idx}`}>
-                                  {coef.tValue.toFixed(4)}
-                                </TableCell>
-                                <TableCell 
-                                  className={`text-right ${isPValueSignificant ? 'text-green-600 font-semibold' : ''}`}
-                                  data-testid={`coef-pvalue-${idx}`}
-                                >
-                                  {coef.pValue.toFixed(4)}
-                                </TableCell>
-                                <TableCell 
-                                  className={`text-right ${isHighVIF ? 'text-red-600 font-semibold' : isModerateVIF ? 'text-yellow-400 font-semibold' : ''}`}
-                                  data-testid={`coef-vif-${idx}`}
-                                >
-                                  {coef.vif !== null ? coef.vif.toFixed(2) : '-'}
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })}
-                        </TableBody>
-                      </Table>
-                    </div>
-                    <div className="mt-2 text-sm text-muted-foreground">
-                      VIF &gt; 5 indicates problematic multicollinearity (high correlation between predictors - shown in red)<br></br>
-                      &gt; 1 VIF &le; 5 indicates moderate multicollinearity (correlation between predictors - shown in yellow)<br></br>
-                      VIF &le; 1 indicates no multicollinearity (no correlation between predictors - shown in black)
                     </div>
                   </CardContent>
                 </Card>
