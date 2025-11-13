@@ -63,6 +63,7 @@ export interface AnovaTwoWayResult {
   rSquaredAdjusted: number;
   
   // Residual statistics
+  residualMean: number;
   residualStd: number;
   andersonDarlingStatistic: number;
   andersonDarlingPValue: number;
@@ -590,6 +591,7 @@ export function anovaTwoWay(
     fittedValues,
     rSquared,
     rSquaredAdjusted,
+    residualMean,
     residualStd,
     andersonDarlingStatistic: normalADTest.adStatistic,
     andersonDarlingPValue: normalADTest.pValue,

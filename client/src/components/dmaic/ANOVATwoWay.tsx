@@ -12,6 +12,7 @@ import { apiRequest, queryClient } from '@/lib/queryClient';
 import { HypothesisTestingTabs } from './common/HypothesisTestingTabs';
 import { anovaTwoWay, type AnovaTwoWayResult } from '@/lib/anovaUtils';
 import Plot from 'react-plotly.js';
+import jStat from 'jstat';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { parseExcelPaste } from '@/lib/excelPasteUtils';
@@ -53,6 +54,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
   
   const [showResidualsVsFits, setShowResidualsVsFits] = useState(false);
   const [showResidualsVsOrder, setShowResidualsVsOrder] = useState(false);
+  const [showNormalProbPlot, setShowNormalProbPlot] = useState(false);
 
   const configQuery = useQuery({
     queryKey: [`/api/projects/${projectId}/solutions/${solutionId}/anova-two-way`],
@@ -1511,9 +1513,19 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                     Graph of residuals versus order of data (verify the independence of the residuals)
                   </Label>
                 </div>
+
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="normal-prob-plot"
+                    checked={showNormalProbPlot}
+                    onCheckedChange={(checked) => setShowNormalProbPlot(!!checked)}
+                    data-testid="checkbox-normal-prob-plot"
+                  />
+                  <Label htmlFor="normal-prob-plot">Normal Probability Plot</Label>
+                </div>
               </div>
 
-              {(showResidualsVsFits || showResidualsVsOrder) && anovaResult.residuals && (
+              {(showResidualsVsFits || showResidualsVsOrder || showNormalProbPlot) && anovaResult.residuals && (
                 <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                   {showResidualsVsFits && (
                     <div>
@@ -1540,7 +1552,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                           yaxis: { title: { text: '<b>Residuals</b>' } },
                           showlegend: false,
                           hovermode: 'closest',
-                          margin: { l: 60, r: 40, t: 60, b: 60 },
+                          margin: { l: 60, r: 80, t: 50, b: 60 },
                         }}
                         useResizeHandler
                         style={{ width: '100%', height: '400px' }}
@@ -1582,7 +1594,7 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                           yaxis: { title: { text: '<b>Residuals</b>' } },
                           showlegend: false,
                           hovermode: 'closest',
-                          margin: { l: 60, r: 40, t: 60, b: 60 },
+                          margin: { l: 60, r: 80, t: 50, b: 60 },
                         }}
                         useResizeHandler
                         style={{ width: '100%', height: '400px' }}
@@ -1598,6 +1610,94 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                       />
                     </div>
                   )}
+
+                  {showNormalProbPlot && (() => {
+                    const sorted = [...anovaResult.residuals].sort((a, b) => a - b);
+                    const n = sorted.length;
+                    
+                    // Calculate theoretical quantiles (z-scores) for each data point
+                    const theoreticalQuantiles = sorted.map((_, i) => {
+                      const p = (i + 0.5) / n; // plotting position
+                      return jStat.normal.inv(p, 0, 1); // standard normal quantile (z-score)
+                    });
+                    
+                    // Calculate reference line for perfect normality
+                    // Line passes through Q1 and Q3 of the data
+                    {/*const q1Index = Math.floor(n * 0.25);
+                    const q3Index = Math.floor(n * 0.75);
+                    const q1Data = sorted[q1Index];
+                    const q3Data = sorted[q3Index];
+                    const q1Theoretical = jStat.normal.inv(0.25, 0, 1);
+                    const q3Theoretical = jStat.normal.inv(0.75, 0, 1);
+                    
+                    // Calculate slope and intercept
+                    const slope = (q3Data - q1Data) / (q3Theoretical - q1Theoretical);
+                    const intercept = q1Data - slope * q1Theoretical;
+                    
+                    // Generate reference line points
+                    const minQ = Math.min(...theoreticalQuantiles);
+                    const maxQ = Math.max(...theoreticalQuantiles);
+                    //const lineY = [minQ, maxQ];
+                    //const lineX = lineY.map(x => slope * x + intercept);
+                    */}
+                    
+                    // x-pos at residuals mean. +/- 3 standard deviation
+                    const lineX = [anovaResult.residualMean-3*anovaResult.residualStd, anovaResult.residualMean+3*anovaResult.residualStd];
+                    const lineY = [-3,3]; //Z=-3 and Z=3 y-pos
+                    return (
+                      <Plot
+                        data={[
+                          {
+                            type: 'scatter',
+                            mode: 'markers',
+                            x: sorted,
+                            y: theoreticalQuantiles,          
+                            marker: { color: 'rgb(59, 130, 246)', size: 6 },
+                            name: 'Residuals'
+                          } as any,
+                          { 
+                            type: 'scatter',
+                            mode: 'lines',
+                            x: lineX,
+                            y: lineY,
+                            line: { color: 'red', dash: 'dash', width: 2 },
+                            name: 'Normal line'
+                          } as any,
+                        ]}
+                        
+                        layout={{
+                          title: {text:'<b>Normal Probaility (Q-Q) Plot</b>'},
+                          xaxis: {
+                            title: { text: '<b>Residuals/<b>' },
+                            zeroline: true,
+                            showgrid: true,
+                          },
+                          yaxis: { 
+                            title: { text: '<b>Theoritical Quantiles (Z)</b>' },
+                            zeroline: true,
+                            showgrid: true,
+                          },
+                          showlegend: false,
+                          margin: { l: 70, r: 80, t: 50, b: 60 },
+                        }}
+
+                        useResizeHandler
+                        config={{
+                          responsive: true,
+                          displayModeBar: true,
+                          displaylogo: false,
+                          toImageButtonOptions: {
+                            format: 'png',
+                            filename: `ANOVA 2-Way Normal_Probability_Plot_${responseVariableName || 'Y Response'}_Residuals`,
+                            height: 500,
+                            width: 800,
+                            scale: 1
+                          }
+                        }}
+                        style={{ width: '100%', height: '400px' }}
+                      />
+                    );
+                  })()}
                 </div>
               )}
             </CardContent>

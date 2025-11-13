@@ -36,6 +36,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import Plot from 'react-plotly.js';
+import jStat from 'jstat';
 
 interface SimpleRegressionProps {
   projectId: number;
@@ -79,10 +80,13 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
   
   const [showLinearResidualsVsFits, setShowLinearResidualsVsFits] = useState(false);
   const [showLinearResidualsVsOrder, setShowLinearResidualsVsOrder] = useState(false);
+  const [showLinearNormalProbPlot, setShowLinearNormalProbPlot] = useState(false);
   const [showQuadraticResidualsVsFits, setShowQuadraticResidualsVsFits] = useState(false);
   const [showQuadraticResidualsVsOrder, setShowQuadraticResidualsVsOrder] = useState(false);
+  const [showQuadraticNormalProbPlot, setShowQuadraticNormalProbPlot] = useState(false);
   const [showCubicResidualsVsFits, setShowCubicResidualsVsFits] = useState(false);
   const [showCubicResidualsVsOrder, setShowCubicResidualsVsOrder] = useState(false);
+  const [showCubicNormalProbPlot, setShowCubicNormalProbPlot] = useState(false);
 
   const configQuery = useQuery({
     queryKey: [`/api/projects/${projectId}/solutions/${solutionId}/simple-regression`],
@@ -1310,9 +1314,18 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                     Graph of residuals versus order of data (verify the independence of the residuals)
                   </Label>
                 </div>
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="linear-normal-prob-plot"
+                    checked={showLinearNormalProbPlot}
+                    onCheckedChange={(checked) => setShowLinearNormalProbPlot(!!checked)}
+                    data-testid="checkbox-linear-normal-prob-plot"
+                  />
+                  <Label htmlFor="linear-normal-prob-plot">Normal Probability Plot</Label>
+                </div>
               </div>
               
-              {(showLinearResidualsVsFits || showLinearResidualsVsOrder) && linearResult.statistics.residuals && (
+              {(showLinearResidualsVsFits || showLinearResidualsVsOrder || showLinearNormalProbPlot) && linearResult.statistics.residuals && (
                 <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                   {showLinearResidualsVsFits && (
                     <div>
@@ -1339,6 +1352,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                           yaxis: { title: { text: '<b>Residuals</b>' } },
                           showlegend: false,
                           hovermode: 'closest',
+                          margin: { l: 70, r: 80, t: 50, b: 60 },
                         }}
                         useResizeHandler
                         style={{ width: '100%', height: '400px' }}
@@ -1380,6 +1394,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                           yaxis: { title: { text: '<b>Residuals</b>' } },
                           showlegend: false,
                           hovermode: 'closest',
+                          margin: { l: 70, r: 80, t: 50, b: 60 },
                         }}
                         useResizeHandler
                         style={{ width: '100%', height: '400px' }}
@@ -1395,6 +1410,93 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                       />
                     </div>
                   )}
+                  {showLinearNormalProbPlot && (() => {
+                    const sorted = [...linearResult.residuals].sort((a, b) => a - b);
+                    const n = sorted.length;
+                    
+                    // Calculate theoretical quantiles (z-scores) for each data point
+                    const theoreticalQuantiles = sorted.map((_, i) => {
+                      const p = (i + 0.5) / n; // plotting position
+                      return jStat.normal.inv(p, 0, 1); // standard normal quantile (z-score)
+                    });
+                    
+                    // Calculate reference line for perfect normality
+                    // Line passes through Q1 and Q3 of the data
+                    {/*const q1Index = Math.floor(n * 0.25);
+                    const q3Index = Math.floor(n * 0.75);
+                    const q1Data = sorted[q1Index];
+                    const q3Data = sorted[q3Index];
+                    const q1Theoretical = jStat.normal.inv(0.25, 0, 1);
+                    const q3Theoretical = jStat.normal.inv(0.75, 0, 1);
+                    
+                    // Calculate slope and intercept
+                    const slope = (q3Data - q1Data) / (q3Theoretical - q1Theoretical);
+                    const intercept = q1Data - slope * q1Theoretical;
+                    
+                    // Generate reference line points
+                    const minQ = Math.min(...theoreticalQuantiles);
+                    const maxQ = Math.max(...theoreticalQuantiles);
+                    //const lineY = [minQ, maxQ];
+                    //const lineX = lineY.map(x => slope * x + intercept);
+                    */}
+                    
+                    // x-pos at residuals mean. +/- 3 standard deviation
+                    const lineX = [linearResult.statistics.residualMean-3*linearResult.statistics.residualStd, linearResult.statistics.residualMean+3*linearResult.statistics.residualStd];
+                    const lineY = [-3,3]; //Z=-3 and Z=3 y-pos
+                    return (
+                      <Plot
+                        data={[
+                          {
+                            type: 'scatter',
+                            mode: 'markers',
+                            x: sorted,
+                            y: theoreticalQuantiles,          
+                            marker: { color: 'rgb(59, 130, 246)', size: 6 },
+                            name: 'Residuals'
+                          } as any,
+                          { 
+                            type: 'scatter',
+                            mode: 'lines',
+                            x: lineX,
+                            y: lineY,
+                            line: { color: 'red', dash: 'dash', width: 2 },
+                            name: 'Normal line'
+                          } as any,
+                        ]}
+                        
+                        layout={{
+                          title: {text:'<b>Normal Probaility (Q-Q) Plot</b>'},
+                          xaxis: {
+                            title: { text: '<b>Residuals</b>' },
+                            zeroline: true,
+                            showgrid: true,
+                          },
+                          yaxis: { 
+                            title: { text: '<b>Theoritical Quantiles (Z)</b>' },
+                            zeroline: true,
+                            showgrid: true,
+                          },
+                          showlegend: false,
+                          margin: { l: 70, r: 80, t: 50, b: 60 },
+                        }}
+
+                        useResizeHandler
+                        config={{
+                          responsive: true,
+                          displayModeBar: true,
+                          displaylogo: false,
+                          toImageButtonOptions: {
+                            format: 'png',
+                            filename: `Linear Regression Normal_Probability_Plot_${datasetYDescription || 'Y Response'}_Residuals`,
+                            height: 500,
+                            width: 600,
+                            scale: 1
+                          }
+                        }}
+                        style={{ width: '100%', height: '400px' }}
+                      />
+                    );
+                  })()}
                 </div>
               )}
             </div>
@@ -1587,9 +1689,18 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                     Graph of residuals versus order of data (verify the independence of the residuals)
                   </Label>
                 </div>
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="quadratic-normal-prob-plot"
+                    checked={showQuadraticNormalProbPlot}
+                    onCheckedChange={(checked) => setShowQuadraticNormalProbPlot(!!checked)}
+                    data-testid="checkbox-quadratic-normal-prob-plot"
+                  />
+                  <Label htmlFor="quadratic-normal-prob-plot">Normal Probability Plot</Label>
+                </div>
               </div>
               
-              {(showQuadraticResidualsVsFits || showQuadraticResidualsVsOrder) && quadraticResult.statistics.residuals && (
+              {(showQuadraticResidualsVsFits || showQuadraticResidualsVsOrder || showQuadraticNormalProbPlot) && quadraticResult.statistics.residuals && (
                 <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                   {showQuadraticResidualsVsFits && (
                     <div>
@@ -1616,6 +1727,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                           yaxis: { title: { text: '<b>Residuals</b>' } },
                           showlegend: false,
                           hovermode: 'closest',
+                          margin: { l: 70, r: 80, t: 50, b: 60 },
                         }}
                         useResizeHandler
                         style={{ width: '100%', height: '400px' }}
@@ -1657,6 +1769,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                           yaxis: { title: { text: '<b>Residuals</b>' } },
                           showlegend: false,
                           hovermode: 'closest',
+                          margin: { l: 70, r: 80, t: 50, b: 60 },
                         }}
                         useResizeHandler
                         style={{ width: '100%', height: '400px' }}
@@ -1668,10 +1781,98 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                           width: 600,
                           scale: 1
                         }
- }}
+                        }}
                       />
                     </div>
                   )}
+                  
+                  {showQuadraticNormalProbPlot && (() => {
+                    const sorted = [...quadraticResult.residuals].sort((a, b) => a - b);
+                    const n = sorted.length;
+                    
+                    // Calculate theoretical quantiles (z-scores) for each data point
+                    const theoreticalQuantiles = sorted.map((_, i) => {
+                      const p = (i + 0.5) / n; // plotting position
+                      return jStat.normal.inv(p, 0, 1); // standard normal quantile (z-score)
+                    });
+                    
+                    // Calculate reference line for perfect normality
+                    // Line passes through Q1 and Q3 of the data
+                    {/*const q1Index = Math.floor(n * 0.25);
+                    const q3Index = Math.floor(n * 0.75);
+                    const q1Data = sorted[q1Index];
+                    const q3Data = sorted[q3Index];
+                    const q1Theoretical = jStat.normal.inv(0.25, 0, 1);
+                    const q3Theoretical = jStat.normal.inv(0.75, 0, 1);
+                    
+                    // Calculate slope and intercept
+                    const slope = (q3Data - q1Data) / (q3Theoretical - q1Theoretical);
+                    const intercept = q1Data - slope * q1Theoretical;
+                    
+                    // Generate reference line points
+                    const minQ = Math.min(...theoreticalQuantiles);
+                    const maxQ = Math.max(...theoreticalQuantiles);
+                    //const lineY = [minQ, maxQ];
+                    //const lineX = lineY.map(x => slope * x + intercept);
+                    */}
+                    
+                    // x-pos at residuals mean. +/- 3 standard deviation
+                    const lineX = [quadraticResult.statistics.residualMean-3*quadraticResult.statistics.residualStd, quadraticResult.statistics.residualMean+3*quadraticResult.statistics.residualStd];
+                    const lineY = [-3,3]; //Z=-3 and Z=3 y-pos
+                    return (
+                      <Plot
+                        data={[
+                          {
+                            type: 'scatter',
+                            mode: 'markers',
+                            x: sorted,
+                            y: theoreticalQuantiles,          
+                            marker: { color: 'rgb(59, 130, 246)', size: 6 },
+                            name: 'Residuals'
+                          } as any,
+                          { 
+                            type: 'scatter',
+                            mode: 'lines',
+                            x: lineX,
+                            y: lineY,
+                            line: { color: 'red', dash: 'dash', width: 2 },
+                            name: 'Normal line'
+                          } as any,
+                        ]}
+                        
+                        layout={{
+                          title: {text:'<b>Normal Probaility (Q-Q) Plot</b>'},
+                          xaxis: {
+                            title: { text: '<b>Residuals</b>' },
+                            zeroline: true,
+                            showgrid: true,
+                          },
+                          yaxis: { 
+                            title: { text: '<b>Theoritical Quantiles (Z)</b>' },
+                            zeroline: true,
+                            showgrid: true,
+                          },
+                          showlegend: false,
+                          margin: { l: 70, r: 80, t: 50, b: 60 },
+                        }}
+
+                        useResizeHandler
+                        config={{
+                          responsive: true,
+                          displayModeBar: true,
+                          displaylogo: false,
+                          toImageButtonOptions: {
+                            format: 'png',
+                            filename: `Quadratic Regression Normal_Probability_Plot_${datasetYDescription || 'Y Response'}_Residuals`,
+                            height: 500,
+                            width: 600,
+                            scale: 1
+                          }
+                        }}
+                        style={{ width: '100%', height: '400px' }}
+                      />
+                    );
+                  })()}
                 </div>
               )}
             </div>
@@ -1869,9 +2070,18 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                     Graph of residuals versus order of data (verify the independence of the residuals)
                   </Label>
                 </div>
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="cubic-normal-prob-plot"
+                    checked={showCubicNormalProbPlot}
+                    onCheckedChange={(checked) => setShowCubicNormalProbPlot(!!checked)}
+                    data-testid="checkbox-cubic-normal-prob-plot"
+                  />
+                  <Label htmlFor="cubic-normal-prob-plot">Normal Probability Plot</Label>
+                </div>
               </div>
               
-              {(showCubicResidualsVsFits || showCubicResidualsVsOrder) && cubicResult.statistics.residuals && (
+              {(showCubicResidualsVsFits || showCubicResidualsVsOrder || showCubicNormalProbPlot) && cubicResult.statistics.residuals && (
                 <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                   {showCubicResidualsVsFits && (
                     <div>
@@ -1898,6 +2108,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                           yaxis: { title: { text: '<b>Residuals</b>' } },
                           showlegend: false,
                           hovermode: 'closest',
+                          margin: { l: 70, r: 80, t: 50, b: 60 },
                         }}
                         useResizeHandler
                         style={{ width: '100%', height: '400px' }}
@@ -1915,7 +2126,6 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                   )}
                   
                   {showCubicResidualsVsOrder && (
-                    <div>
                       <Plot
                         data={[{
                           x: cubicResult.statistics.residuals.map((_, i) => i + 1),
@@ -1939,6 +2149,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                           yaxis: { title: { text: '<b>Residuals</b>' } },
                           showlegend: false,
                           hovermode: 'closest',
+                          margin: { l: 70, r: 80, t: 50, b: 60 },
                         }}
                         useResizeHandler
                         style={{ width: '100%', height: '400px' }}
@@ -1952,8 +2163,97 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                         }
                          }}
                       />
-                    </div>
                   )}
+
+                  {showCubicNormalProbPlot && (() => {
+                    const sorted = [...cubicResult.residuals].sort((a, b) => a - b);
+                    const n = sorted.length;
+                    
+                    // Calculate theoretical quantiles (z-scores) for each data point
+                    const theoreticalQuantiles = sorted.map((_, i) => {
+                      const p = (i + 0.5) / n; // plotting position
+                      return jStat.normal.inv(p, 0, 1); // standard normal quantile (z-score)
+                    });
+                    
+                    // Calculate reference line for perfect normality
+                    // Line passes through Q1 and Q3 of the data
+                    {/*const q1Index = Math.floor(n * 0.25);
+                    const q3Index = Math.floor(n * 0.75);
+                    const q1Data = sorted[q1Index];
+                    const q3Data = sorted[q3Index];
+                    const q1Theoretical = jStat.normal.inv(0.25, 0, 1);
+                    const q3Theoretical = jStat.normal.inv(0.75, 0, 1);
+                    
+                    // Calculate slope and intercept
+                    const slope = (q3Data - q1Data) / (q3Theoretical - q1Theoretical);
+                    const intercept = q1Data - slope * q1Theoretical;
+                    
+                    // Generate reference line points
+                    const minQ = Math.min(...theoreticalQuantiles);
+                    const maxQ = Math.max(...theoreticalQuantiles);
+                    //const lineY = [minQ, maxQ];
+                    //const lineX = lineY.map(x => slope * x + intercept);
+                    */}
+                    
+                    // x-pos at residuals mean. +/- 3 standard deviation
+                    const lineX = [cubicResult.statistics.residualMean-3*cubicResult.statistics.residualStd, cubicResult.statistics.residualMean+3*cubicResult.statistics.residualStd];
+                    const lineY = [-3,3]; //Z=-3 and Z=3 y-pos
+                    return (
+                      <div>
+                      <Plot
+                        data={[
+                          {
+                            type: 'scatter',
+                            mode: 'markers',
+                            x: sorted,
+                            y: theoreticalQuantiles,          
+                            marker: { color: 'rgb(59, 130, 246)', size: 6 },
+                            name: 'Residuals'
+                          } as any,
+                          { 
+                            type: 'scatter',
+                            mode: 'lines',
+                            x: lineX,
+                            y: lineY,
+                            line: { color: 'red', dash: 'dash', width: 2 },
+                            name: 'Normal line'
+                          } as any,
+                        ]}
+                        
+                        layout={{
+                          title: {text:'<b>Normal Probaility (Q-Q) Plot</b>'},
+                          xaxis: {
+                            title: { text: '<b>Residuals</b>' },
+                            zeroline: true,
+                            showgrid: true,
+                          },
+                          yaxis: { 
+                            title: { text: '<b>Theoritical Quantiles (Z)</b>' },
+                            zeroline: true,
+                            showgrid: true,
+                          },
+                          showlegend: false,
+                          margin: { l: 70, r: 80, t: 50, b: 60 },
+                        }}
+
+                        useResizeHandler
+                        config={{
+                          responsive: true,
+                          displayModeBar: true,
+                          displaylogo: false,
+                          toImageButtonOptions: {
+                            format: 'png',
+                            filename: `Cubic Regression Normal_Probability_Plot_${datasetYDescription || 'Y Response'}_Residuals`,
+                            height: 500,
+                            width: 600,
+                            scale: 1
+                          }
+                        }}
+                        style={{ width: '100%', height: '400px' }}
+                      />
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
             </div>

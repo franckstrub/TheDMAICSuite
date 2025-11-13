@@ -966,13 +966,13 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                       <div>
                         <div className="text-sm text-muted-foreground">R²</div>
                         <div className="text-2xl font-bold" data-testid="stat-r-squared">
-                          {regressionResult.rSquared.toFixed(4)}
+                          {(regressionResult.rSquared * 100).toFixed(2)}%
                         </div>
                       </div>
                       <div>
                         <div className="text-sm text-muted-foreground">Adjusted R²</div>
                         <div className="text-2xl font-bold" data-testid="stat-adj-r-squared">
-                          {regressionResult.rSquaredAdjusted.toFixed(4)}
+                          {(regressionResult.rSquaredAdjusted * 100).toFixed(2)}%
                         </div>
                       </div>
                       <div>
@@ -1103,7 +1103,29 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                         />
                         <Label htmlFor="residuals-vs-fits">Residuals vs Fitted Values</Label>
                       </div>
-                      
+
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          id="residuals-vs-order"
+                          checked={showResidualsVsOrder}
+                          onCheckedChange={(checked) => setShowResidualsVsOrder(!!checked)}
+                          data-testid="checkbox-residuals-vs-order"
+                        />
+                        <Label htmlFor="residuals-vs-order">Residuals vs Order</Label>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          id="normal-prob-plot"
+                          checked={showNormalProbPlot}
+                          onCheckedChange={(checked) => setShowNormalProbPlot(!!checked)}
+                          data-testid="checkbox-normal-prob-plot"
+                        />
+                        <Label htmlFor="normal-prob-plot">Normal Probability Plot</Label>
+                      </div>
+                    </div>
+                    {(showResidualsVsFits || showResidualsVsOrder || showNormalProbPlot) && regressionResult.residuals && (  
+                      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                       {showResidualsVsFits && (
                         <Plot
                           data={[
@@ -1123,10 +1145,11 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                             } as any,
                           ]}
                           layout={{
-                            xaxis: { title: { text: 'Fitted Values' } },
-                            yaxis: { title: { text: 'Residuals' } },
+                            title: { text: '<b>Residuals vs Fitted Values</b>' },
+                            xaxis: { title: { text: '<b>Fitted Values</b>' } },
+                            yaxis: { title: { text: '<b>Residuals</b>' } },
                             showlegend: false,
-                            margin: { l: 60, r: 20, t: 20, b: 60 },
+                            margin: { l: 60, r: 80, t: 50, b: 60 },
                           }}
                           style={{ width: '100%', height: '400px' }}
                           useResizeHandler
@@ -1136,7 +1159,7 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                             displaylogo: false,
                             toImageButtonOptions: {
                               format: 'png',
-                              filename: `Multiple_Regression_Chart_${responseVariableName || 'Y Response'}=f(X predictors)_Residuals_vs_Fitted`,
+                              filename: `Multiple_Regression_${responseVariableName || 'Y Response'}=f(X predictors)_Residuals_vs_Fitted`,
                               height: 500,
                               width: 800,
                               scale: 1
@@ -1144,18 +1167,6 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                           }}
                         />
                       )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <Checkbox
-                          id="residuals-vs-order"
-                          checked={showResidualsVsOrder}
-                          onCheckedChange={(checked) => setShowResidualsVsOrder(!!checked)}
-                          data-testid="checkbox-residuals-vs-order"
-                        />
-                        <Label htmlFor="residuals-vs-order">Residuals vs Order</Label>
-                      </div>
                       
                       {showResidualsVsOrder && (
                         <Plot
@@ -1177,10 +1188,11 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                             } as any,
                           ]}
                           layout={{
-                            xaxis: { title: { text: 'Observation Order' } },
-                            yaxis: { title: { text: 'Residuals' } },
+                            title: { text: '<b>Residuals vs Observation Order</b>' },
+                            xaxis: { title: { text: '<b>Observation Order</b>' } },
+                            yaxis: { title: { text: '<b>Residuals</b>' } },
                             showlegend: false,
-                            margin: { l: 60, r: 20, t: 20, b: 60 },
+                            margin: { l: 60, r: 80, t: 50, b: 60 },
                           }}
                           style={{ width: '100%', height: '400px' }}
                           useResizeHandler
@@ -1190,7 +1202,7 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                             displaylogo: false,
                             toImageButtonOptions: {
                               format: 'png',
-                              filename: `Multiple_Regression_Chart_${responseVariableName || 'Y Response'}=f(X predictors)_Residuals_vs_Observation_Order`,
+                              filename: `Multiple_Regression_${responseVariableName || 'Y Response'}=f(X predictors)_Residuals_vs_Observation_Order`,
                               height: 500,
                               width: 800,
                               scale: 1
@@ -1198,26 +1210,40 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                           }}
                         />
                       )}
-                    </div>
 
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <Checkbox
-                          id="normal-prob-plot"
-                          checked={showNormalProbPlot}
-                          onCheckedChange={(checked) => setShowNormalProbPlot(!!checked)}
-                          data-testid="checkbox-normal-prob-plot"
-                        />
-                        <Label htmlFor="normal-prob-plot">Normal Probability Plot</Label>
-                      </div>
-                      
                       {showNormalProbPlot && (() => {
                         const sorted = [...regressionResult.residuals].sort((a, b) => a - b);
                         const n = sorted.length;
-                        const percentiles = sorted.map((_, i) => {
-                          return ((i + 0.5) / n) * 100; // Convert to percentage (0-100%)
+                        
+                        // Calculate theoretical quantiles (z-scores) for each data point
+                        const theoreticalQuantiles = sorted.map((_, i) => {
+                          const p = (i + 0.5) / n; // plotting position
+                          return jStat.normal.inv(p, 0, 1); // standard normal quantile (z-score)
                         });
                         
+                        // Calculate reference line for perfect normality
+                        // Line passes through Q1 and Q3 of the data
+                        {/*const q1Index = Math.floor(n * 0.25);
+                        const q3Index = Math.floor(n * 0.75);
+                        const q1Data = sorted[q1Index];
+                        const q3Data = sorted[q3Index];
+                        const q1Theoretical = jStat.normal.inv(0.25, 0, 1);
+                        const q3Theoretical = jStat.normal.inv(0.75, 0, 1);
+                        
+                        // Calculate slope and intercept
+                        const slope = (q3Data - q1Data) / (q3Theoretical - q1Theoretical);
+                        const intercept = q1Data - slope * q1Theoretical;
+                        
+                        // Generate reference line points
+                        const minQ = Math.min(...theoreticalQuantiles);
+                        const maxQ = Math.max(...theoreticalQuantiles);
+                        //const lineY = [minQ, maxQ];
+                        //const lineX = lineY.map(x => slope * x + intercept);
+                        */}
+
+                        // x-pos at residuals mean. +/- 3 standard deviation
+                        const lineX = [regressionResult.residualMean-3*regressionResult.residualStd, regressionResult.residualMean+3*regressionResult.residualStd];
+                        const lineY = [-3,3]; //Z=-3 and Z=3 y-pos
                         return (
                           <Plot
                             data={[
@@ -1225,20 +1251,36 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                                 type: 'scatter',
                                 mode: 'markers',
                                 x: sorted,
-                                y: percentiles,
+                                y: theoreticalQuantiles,          
                                 marker: { color: 'rgb(59, 130, 246)', size: 6 },
+                                name: 'Residuals'
+                              } as any,
+                              { 
+                                type: 'scatter',
+                                mode: 'lines',
+                                x: lineX,
+                                y: lineY,
+                                line: { color: 'red', dash: 'dash', width: 2 },
+                                name: 'Normal line'
                               } as any,
                             ]}
+                            
                             layout={{
-                              xaxis: { title: { text: 'Residuals' } },
+                              title: {text:'<b>Normal Probaility (Q-Q) Plot</b>'},
+                              xaxis: {
+                                title: { text: '<b>Residuals</b>' },
+                                zeroline: true,
+                                showgrid: true,
+                              },
                               yaxis: { 
-                                title: { text: 'Percent' },
-                                type: 'log',
-                                range: [0, 2] // log10(1) = 0, log10(100) = 2
+                                title: { text: '<b>Theoritical Quantiles (Z)</b>' },
+                                zeroline: true,
+                                showgrid: true,
                               },
                               showlegend: false,
-                              margin: { l: 60, r: 20, t: 20, b: 60 },
+                              margin: { l: 70, r: 80, t: 50, b: 60 },
                             }}
+
                             useResizeHandler
                             config={{
                               responsive: true,
@@ -1246,9 +1288,9 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                               displaylogo: false,
                               toImageButtonOptions: {
                                 format: 'png',
-                                filename: `Multiple_Regression_Chart_${responseVariableName || 'Y Response'}=f(X predictors)_Residuals_Normal_Probability_Plot`,
+                                filename: `Multiple_Regression Normal_Probability_Plot_${responseVariableName || 'Y Response'}_Residuals`,
                                 height: 500,
-                                width: 800,
+                                width: 600,
                                 scale: 1
                               }
                             }}
@@ -1256,7 +1298,9 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                           />
                         );
                       })()}
+                    
                     </div>
+                    )}
                   </CardContent>
                 </Card>
               </>
