@@ -530,7 +530,7 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
     }
   }, [selectedPredictors, predictorNames]);
 
-    const saveTargetYMutation = useMutation({
+    const saveSolvingSetupMutation = useMutation({
       mutationFn: async (data: any) => {
         return apiRequest(
           'POST',
@@ -540,8 +540,8 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
       },
       onSuccess: () => {
         toast({
-          title: "Target Y saved",
-          description: "Target Y value has been saved successfully.",
+          title: "Solving setup saved",
+          description: "Your solving setup (target Y, predictor selection, and constraints) has been saved successfully.",
         });
         queryClient.invalidateQueries({
           queryKey: [`/api/projects/${projectId}/solutions/${solutionId}/multiple-regression`]
@@ -550,7 +550,7 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
       onError: (error: any) => {
         toast({
           title: "Error",
-          description: error.message || "Failed to save target Y",
+          description: error.message || "Failed to save solving setup",
           variant: "destructive",
         });
       },
@@ -614,7 +614,7 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
     computeSolvedPredictor();
   }, [targetY, solveForPredictorIdx, constraintValues, regressionResult, selectedPredictors]);
 
-  const handleSaveTargetY = async () => {
+  const handleSaveSolvingSetup = async () => {
     // Get current config data from loaded data
     const config = configQuery.data as any;
     
@@ -631,7 +631,7 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
       constraintValues,
     };
     
-    await saveTargetYMutation.mutateAsync(configData);
+    await saveSolvingSetupMutation.mutateAsync(configData);
   };
 
   return (
@@ -1511,37 +1511,17 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                     
                     <div className="space-y-2">
                       <Label htmlFor="target-y">Target Y Value (solutions calculated for one Predictor X<sup>i</sup> with constraints on all other predictors)</Label>
-                      <div className="flex gap-2">
-                        <Input
-                          id="target-y"
-                          type="number"
-                          step="any"
-                          value={targetY || ''}
-                          onChange={(e) => setTargetY(parseFloat(e.target.value) || null)}
-                          placeholder="Enter target Y value"
-                          disabled={!regressionResult}
-                          data-testid="input-target-y"
-                          className="flex-1"
-                        />
-                        <Button
-                          onClick={handleSaveTargetY}
-                          disabled={targetY === null || saveTargetYMutation.isPending || !regressionResult}
-                          data-testid="button-save-target-y"
-                        >
-                          {saveTargetYMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                          Save Y Target
-                        </Button>
-                      </div>
+                      <Input
+                        id="target-y"
+                        type="number"
+                        step="any"
+                        value={targetY || ''}
+                        onChange={(e) => setTargetY(parseFloat(e.target.value) || null)}
+                        placeholder="Enter target Y value"
+                        disabled={!regressionResult}
+                        data-testid="input-target-y"
+                      />
                     </div>
-          
-                    {/* Target Y information message */}
-                    {targetY !== null && (
-                      <div className="p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-md">
-                        <p className="text-sm text-blue-800 dark:text-blue-200">
-                          ℹ️ Target Y value set to <strong>{targetY.toFixed(4)}</strong>. Set constraints below to solve for a predictor.
-                        </p>
-                      </div>
-                    )}
 
                     {/* Select Predictor to Solve For */}
                     {targetY !== null && regressionResult && selectedPredictors.length > 0 && (
@@ -1606,6 +1586,17 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                                   </div>
                                 ))}
                             </div>
+                            
+                            {/* Save Solving Setup Button */}
+                            <Button
+                              onClick={handleSaveSolvingSetup}
+                              disabled={saveSolvingSetupMutation.isPending || !regressionResult}
+                              className="w-full"
+                              data-testid="button-save-solving-setup"
+                            >
+                              {saveSolvingSetupMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                              Save Solving Setup
+                            </Button>
                           </div>
                         )}
 
