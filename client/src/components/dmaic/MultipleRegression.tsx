@@ -77,6 +77,12 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
   // 3D plot selection
   const [plot3DFactorX, setPlot3DFactorX] = useState(0);
   const [plot3DFactorY, setPlot3DFactorY] = useState(1);
+
+  // Solve for X state
+  const [targetY, setTargetY] = useState<number | null>(null);
+  const [solveForPredictorIdx, setSolveForPredictorIdx] = useState<number | null>(null);
+  const [constraintValues, setConstraintValues] = useState<Record<number, number | null>>({});
+  const [solvedX, setSolvedX] = useState<number | null>(null);
   
   // Load config from API
   const configQuery = useQuery({
@@ -118,6 +124,24 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
       
       if (config.significanceLevel !== null && config.significanceLevel !== undefined) {
         setSignificanceLevel(config.significanceLevel);
+      }
+      
+      // Load Solve for X settings
+      if (config.targetY !== null && config.targetY !== undefined) {
+        setTargetY(config.targetY);
+      }
+      
+      if (config.solveForPredictorIdx !== null && config.solveForPredictorIdx !== undefined) {
+        setSolveForPredictorIdx(config.solveForPredictorIdx);
+      }
+      
+      if (config.constraintValues && typeof config.constraintValues === 'object') {
+        // Convert string keys back to numbers and null values back to null
+        const constraints: Record<number, number | null> = {};
+        Object.entries(config.constraintValues).forEach(([key, value]) => {
+          constraints[parseInt(key)] = value === null ? null : Number(value);
+        });
+        setConstraintValues(constraints);
       }
     }
   }, [configQuery.data]);
@@ -225,6 +249,10 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
       dataX: dataX.map(col => col.map(v => isNaN(v) ? null : v)),
       selectedPredictors,
       significanceLevel,
+      // Solve for X settings
+      targetY,
+      solveForPredictorIdx,
+      constraintValues,
     };
     
     await saveDataMutation.mutateAsync(data);
@@ -460,6 +488,110 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
       setPlot3DFactorY(selected[0]);
     }
   }, [selectedPredictors, predictorNames]);
+
+    const saveTargetYMutation = useMutation({
+      mutationFn: async (data: any) => {
+        return apiRequest(
+          'POST',
+          `/api/projects/${projectId}/solutions/${solutionId}/multiple-regression`,
+          data
+        );
+      },
+      onSuccess: () => {
+        toast({
+          title: "Target Y saved",
+          description: "Target Y value has been saved successfully.",
+        });
+        queryClient.invalidateQueries({
+          queryKey: [`/api/projects/${projectId}/solutions/${solutionId}/multiple-regression`]
+        });
+      },
+      onError: (error: any) => {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to save target Y",
+          variant: "destructive",
+        });
+      },
+    });
+  // Compute solved predictor value
+  const computeSolvedPredictor = () => {
+    // Check for valid inputs - targetY can be 0, so check for null/undefined specifically
+    if (targetY === null || targetY === undefined || !Number.isFinite(targetY) || !regressionResult || solveForPredictorIdx === null) {
+      setSolvedX(null);
+      return;
+    }
+
+    try {
+      const coefficients = regressionResult.coefficients;
+      const intercept = coefficients[0].estimate; // β0
+      
+      // Get coefficient for the predictor we're solving for
+      const solveCoeffIdx = selectedPredictors.indexOf(solveForPredictorIdx);
+      if (solveCoeffIdx === -1) {
+        setSolvedX(null);
+        return;
+      }
+      
+      const betaI = coefficients[solveCoeffIdx + 1].estimate; // +1 because intercept is first
+      
+      // Guard against coefficient too close to zero
+      if (Math.abs(betaI) < 1e-10) {
+        setSolvedX(null);
+        return;
+      }
+      
+      // Check all constraints are provided for other selected predictors
+      let sum = intercept;
+      for (const predIdx of selectedPredictors) {
+        if (predIdx === solveForPredictorIdx) continue;
+        
+        const constraintValue = constraintValues[predIdx];
+        if (constraintValue === null || constraintValue === undefined || !Number.isFinite(constraintValue)) {
+          // Missing constraint
+          setSolvedX(null);
+          return;
+        }
+        
+        const coeffIdx = selectedPredictors.indexOf(predIdx);
+        const betaJ = coefficients[coeffIdx + 1].estimate; // +1 for intercept
+        sum += betaJ * constraintValue;
+      }
+      
+      // Solve: targetY = β0 + Σ_{j≠i} βj * constraint_j + βi * Xi
+      // Xi = (targetY - β0 - Σ_{j≠i} βj * constraint_j) / βi
+      const solved = (targetY - sum) / betaI;
+      setSolvedX(solved);
+      
+    } catch (error) {
+      setSolvedX(null);
+    }
+  };
+
+  // Auto-calculate solution when inputs change
+  useEffect(() => {
+    computeSolvedPredictor();
+  }, [targetY, solveForPredictorIdx, constraintValues, regressionResult, selectedPredictors]);
+
+  const handleSaveTargetY = async () => {
+    // Get current config data from loaded data
+    const config = configQuery.data as any;
+    
+    const configData = {
+      responseVariableName: config?.responseVariableName || responseVariableName,
+      predictorNames: config?.predictorNames || predictorNames,
+      dataX: config?.dataX || [],
+      dataY: config?.dataY || [],
+      selectedPredictors: config?.selectedPredictors || selectedPredictors,
+      significanceLevel: config?.significanceLevel || significanceLevel,
+      // Solve for X settings
+      targetY,
+      solveForPredictorIdx,
+      constraintValues,
+    };
+    
+    await saveTargetYMutation.mutateAsync(configData);
+  };
 
   return (
     <div className="space-y-4">
@@ -1311,6 +1443,217 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                       })()}
                     
                     </div>
+                    )}                    
+                  </CardContent>
+                </Card>
+
+                <Card className={regressionResult ? '' : 'opacity-60'}>
+                  <CardHeader>
+                    <CardTitle>Solve for X (given target Y)</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {!regressionResult && (
+                      <div className="p-3 bg-muted rounded-md mb-4">
+                        <p className="text-sm text-muted-foreground">
+                          Insufficient data for solving equations. Please ensure you have valid regression results in the Graph tab.
+                        </p>
+                      </div>
+                    )}
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="target-y">Target Y Value (solutions calculated for one Predictor X<sup>i</sup> with constraints on all other predictors)</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="target-y"
+                          type="number"
+                          step="any"
+                          value={targetY || ''}
+                          onChange={(e) => setTargetY(parseFloat(e.target.value) || null)}
+                          placeholder="Enter target Y value"
+                          disabled={!regressionResult}
+                          data-testid="input-target-y"
+                          className="flex-1"
+                        />
+                        <Button
+                          onClick={handleSaveTargetY}
+                          disabled={targetY === null || saveTargetYMutation.isPending || !regressionResult}
+                          data-testid="button-save-target-y"
+                        >
+                          {saveTargetYMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                          Save Y Target
+                        </Button>
+                      </div>
+                    </div>
+          
+                    {/* Target Y information message */}
+                    {targetY !== null && (
+                      <div className="p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-md">
+                        <p className="text-sm text-blue-800 dark:text-blue-200">
+                          ℹ️ Target Y value set to <strong>{targetY.toFixed(4)}</strong>. Set constraints below to solve for a predictor.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Select Predictor to Solve For */}
+                    {targetY !== null && regressionResult && selectedPredictors.length > 0 && (
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="solve-for-predictor">Select Predictor to Solve For</Label>
+                          <Select
+                            value={solveForPredictorIdx !== null ? String(solveForPredictorIdx) : undefined}
+                            onValueChange={(value) => {
+                              const idx = parseInt(value);
+                              setSolveForPredictorIdx(idx);
+                              // Initialize constraint values for other predictors if not set
+                              const newConstraints = { ...constraintValues };
+                              selectedPredictors.forEach(predIdx => {
+                                if (predIdx !== idx && !(predIdx in newConstraints)) {
+                                  newConstraints[predIdx] = null;
+                                }
+                              });
+                              setConstraintValues(newConstraints);
+                            }}
+                          >
+                            <SelectTrigger id="solve-for-predictor" data-testid="select-solve-for-predictor">
+                              <SelectValue placeholder="Select a predictor" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {selectedPredictors.map(predIdx => (
+                                <SelectItem key={predIdx} value={String(predIdx)}>
+                                  {predictorNames[predIdx]}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* Constraint Inputs for Other Predictors */}
+                        {solveForPredictorIdx !== null && (
+                          <div className="space-y-3">
+                            <Label>Set Constraint Values for Other Predictors</Label>
+                            <div className="grid grid-cols-2 gap-3">
+                              {selectedPredictors
+                                .filter(predIdx => predIdx !== solveForPredictorIdx)
+                                .map(predIdx => (
+                                  <div key={predIdx} className="space-y-1">
+                                    <Label htmlFor={`constraint-${predIdx}`} className="text-sm">
+                                      {predictorNames[predIdx]}
+                                    </Label>
+                                    <Input
+                                      id={`constraint-${predIdx}`}
+                                      type="number"
+                                      step="any"
+                                      value={constraintValues[predIdx] ?? ''}
+                                      onChange={(e) => {
+                                        const value = e.target.value === '' ? null : parseFloat(e.target.value);
+                                        setConstraintValues({
+                                          ...constraintValues,
+                                          [predIdx]: value
+                                        });
+                                      }}
+                                      placeholder={`Enter ${predictorNames[predIdx]} value`}
+                                      data-testid={`input-constraint-${predIdx}`}
+                                    />
+                                  </div>
+                                ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Display error messages when no solution */}
+                        {solveForPredictorIdx !== null && solvedX === null && targetY !== null && regressionResult && (() => {
+                          // Check why no solution
+                          const solveCoeffIdx = selectedPredictors.indexOf(solveForPredictorIdx);
+                          if (solveCoeffIdx === -1) return null;
+                          
+                          const betaI = regressionResult.coefficients[solveCoeffIdx + 1].estimate;
+                          
+                          // Check if coefficient is near zero
+                          if (Math.abs(betaI) < 1e-10) {
+                            return (
+                              <div className="p-3 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-md">
+                                <p className="text-sm text-red-800 dark:text-red-200">
+                                  ❌ <strong>Cannot solve:</strong> The coefficient for {predictorNames[solveForPredictorIdx]} is too close to zero ({betaI.toExponential(2)}). This predictor cannot be uniquely solved. Please select a different predictor.
+                                </p>
+                              </div>
+                            );
+                          }
+                          
+                          // Check for missing constraints
+                          const missingConstraints = selectedPredictors
+                            .filter(predIdx => predIdx !== solveForPredictorIdx)
+                            .filter(predIdx => {
+                              const val = constraintValues[predIdx];
+                              return val === null || val === undefined || !Number.isFinite(val);
+                            });
+                          
+                          if (missingConstraints.length > 0) {
+                            return (
+                              <div className="p-3 bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-md">
+                                <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                                  ⚠️ <strong>Missing constraints:</strong> Please set values for the following predictors: {missingConstraints.map(idx => predictorNames[idx]).join(', ')}
+                                </p>
+                              </div>
+                            );
+                          }
+                          
+                          return null;
+                        })()}
+
+                        {/* Display Solution */}
+                        {solveForPredictorIdx !== null && solvedX !== null && (() => {
+                          // Check if solution is within inference space
+                          const validData = dataX[solveForPredictorIdx].filter(v => !isNaN(v));
+                          const minX = Math.min(...validData);
+                          const maxX = Math.max(...validData);
+                          const isInInferenceSpace = solvedX >= minX && solvedX <= maxX;
+                          
+                          // Check if coefficient is significant
+                          const solveCoeffIdx = selectedPredictors.indexOf(solveForPredictorIdx);
+                          const coeffRow = regressionResult.coefficients[solveCoeffIdx + 1];
+                          const pValue = coeffRow.pValue;
+                          const isSignificant = pValue < significanceLevel;
+                          
+                          return (
+                            <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg space-y-2 border border-green-200 dark:border-green-800">
+                              <p className="font-medium mb-2">Solution:</p>
+                              <div className="space-y-2">
+                                <p className="text-lg">
+                                  <strong>{predictorNames[solveForPredictorIdx]}</strong> = <strong>{solvedX.toFixed(4)}</strong>
+                                </p>
+                                
+                                {!isInInferenceSpace && (
+                                  <div className="p-2 bg-orange-100 dark:bg-orange-900 border border-orange-300 dark:border-orange-700 rounded">
+                                    <p className="text-sm text-orange-800 dark:text-orange-200">
+                                      ⚠️ <strong>Warning:</strong> Solved value is outside the inference space [{minX.toFixed(4)}, {maxX.toFixed(4)}]. This is extrapolation and may not be reliable.
+                                    </p>
+                                  </div>
+                                )}
+                                
+                                {!isSignificant && (
+                                  <div className="p-2 bg-yellow-100 dark:bg-yellow-900 border border-yellow-300 dark:border-yellow-700 rounded">
+                                    <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                                      ⚠️ <strong>Note:</strong> The coefficient for {predictorNames[solveForPredictorIdx]} is not statistically significant (p = {pValue.toFixed(4)}). Consider using a different predictor.
+                                    </p>
+                                  </div>
+                                )}
+                                
+                                <div className="pt-2 text-sm text-muted-foreground">
+                                  <p>Regression equation used:</p>
+                                  <p className="font-mono text-xs mt-1">
+                                    {responseVariableName || 'Y'} = {regressionResult.coefficients[0].estimate.toFixed(4)}
+                                    {selectedPredictors.map((predIdx, i) => {
+                                      const coeff = regressionResult.coefficients[i + 1].estimate;
+                                      const sign = coeff >= 0 ? ' + ' : ' - ';
+                                      return `${sign}${Math.abs(coeff).toFixed(4)}*${predictorNames[predIdx]}`;
+                                    }).join('')}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </div>
                     )}
                   </CardContent>
                 </Card>
