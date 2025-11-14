@@ -936,6 +936,105 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                           opacity: 0.8,
                         },
                       } as any,
+                      // Target Y plane (horizontal)
+                      ...(targetY !== null && (() => {
+                        const xData = dataX[plot3DFactorX]?.filter((_, i) => 
+                          !isNaN(dataY[i]) && selectedPredictors.every(predIdx => !isNaN(dataX[predIdx][i]))
+                        ) || [];
+                        const yData = dataX[plot3DFactorY]?.filter((_, i) => 
+                          !isNaN(dataY[i]) && selectedPredictors.every(predIdx => !isNaN(dataX[predIdx][i]))
+                        ) || [];
+                        
+                        if (xData.length === 0 || yData.length === 0) return [];
+                        
+                        const xMin = Math.min(...xData);
+                        const xMax = Math.max(...xData);
+                        const yMin = Math.min(...yData);
+                        const yMax = Math.max(...yData);
+                        
+                        return [{
+                          type: 'mesh3d',
+                          x: [xMin, xMax, xMax, xMin],
+                          y: [yMin, yMin, yMax, yMax],
+                          z: [targetY, targetY, targetY, targetY],
+                          opacity: 0.3,
+                          color: 'orange',
+                          name: `Target Y = ${targetY.toFixed(4)}`,
+                          hoverinfo: 'name',
+                        }];
+                      })() || []),
+                      // Constraint line for plot3DFactorX (if it has a constraint)
+                      ...(constraintValues[plot3DFactorX] !== null && constraintValues[plot3DFactorX] !== undefined && (() => {
+                        const yData = dataX[plot3DFactorY]?.filter((_, i) => 
+                          !isNaN(dataY[i]) && selectedPredictors.every(predIdx => !isNaN(dataX[predIdx][i]))
+                        ) || [];
+                        const zData = dataY.filter((y, i) => 
+                          !isNaN(y) && selectedPredictors.every(predIdx => !isNaN(dataX[predIdx][i]))
+                        ) || [];
+                        
+                        if (yData.length === 0 || zData.length === 0) return [];
+                        
+                        const yMin = Math.min(...yData);
+                        const yMax = Math.max(...yData);
+                        const zMin = Math.min(...zData);
+                        const zMax = Math.max(...zData);
+                        const xVal = constraintValues[plot3DFactorX]!;
+                        
+                        return [{
+                          type: 'scatter3d',
+                          mode: 'lines',
+                          x: [xVal, xVal, xVal, xVal],
+                          y: [yMin, yMin, yMax, yMax],
+                          z: [zMin, zMax, zMax, zMin],
+                          line: { color: 'red', width: 4, dash: 'dash' },
+                          name: `${predictorNames[plot3DFactorX]} = ${xVal.toFixed(2)}`,
+                          hoverinfo: 'name',
+                        }];
+                      })() || []),
+                      // Constraint line for plot3DFactorY (if it has a constraint)
+                      ...(constraintValues[plot3DFactorY] !== null && constraintValues[plot3DFactorY] !== undefined && (() => {
+                        const xData = dataX[plot3DFactorX]?.filter((_, i) => 
+                          !isNaN(dataY[i]) && selectedPredictors.every(predIdx => !isNaN(dataX[predIdx][i]))
+                        ) || [];
+                        const zData = dataY.filter((y, i) => 
+                          !isNaN(y) && selectedPredictors.every(predIdx => !isNaN(dataX[predIdx][i]))
+                        ) || [];
+                        
+                        if (xData.length === 0 || zData.length === 0) return [];
+                        
+                        const xMin = Math.min(...xData);
+                        const xMax = Math.max(...xData);
+                        const zMin = Math.min(...zData);
+                        const zMax = Math.max(...zData);
+                        const yVal = constraintValues[plot3DFactorY]!;
+                        
+                        return [{
+                          type: 'scatter3d',
+                          mode: 'lines',
+                          x: [xMin, xMin, xMax, xMax],
+                          y: [yVal, yVal, yVal, yVal],
+                          z: [zMin, zMax, zMax, zMin],
+                          line: { color: 'green', width: 4, dash: 'dash' },
+                          name: `${predictorNames[plot3DFactorY]} = ${yVal.toFixed(2)}`,
+                          hoverinfo: 'name',
+                        }];
+                      })() || []),
+                      // Solved point (if one of the plot factors is being solved for)
+                      ...(solvedX !== null && targetY !== null && solveForPredictorIdx !== null && 
+                          (solveForPredictorIdx === plot3DFactorX || solveForPredictorIdx === plot3DFactorY) ? [{
+                        type: 'scatter3d',
+                        mode: 'markers',
+                        x: [solveForPredictorIdx === plot3DFactorX ? solvedX : constraintValues[plot3DFactorX] || 0],
+                        y: [solveForPredictorIdx === plot3DFactorY ? solvedX : constraintValues[plot3DFactorY] || 0],
+                        z: [targetY],
+                        marker: {
+                          size: 10,
+                          color: 'purple',
+                          symbol: 'diamond',
+                        },
+                        name: `Solved ${predictorNames[solveForPredictorIdx]} = ${solvedX.toFixed(4)}`,
+                        hoverinfo: 'name',
+                      } as any] : []),
                     ]}
                     layout={{
                       autosize: true,
