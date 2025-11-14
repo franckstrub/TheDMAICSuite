@@ -73,6 +73,7 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
   const [showResidualsVsFits, setShowResidualsVsFits] = useState(false);
   const [showResidualsVsOrder, setShowResidualsVsOrder] = useState(false);
   const [showNormalProbPlot, setShowNormalProbPlot] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>("setup");
   
   // 3D plot selection
   const [plot3DFactorX, setPlot3DFactorX] = useState(0);
@@ -634,9 +635,25 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
     await saveSolvingSetupMutation.mutateAsync(configData);
   };
 
+  // Load active tab from localStorage on mount
+  useEffect(() => {
+    const storageKey = `multipleRegression:activeTab:${projectId}:${solutionId}`;
+    const savedTab = localStorage.getItem(storageKey);
+    if (savedTab && ['setup', 'data', 'chart', 'analysis'].includes(savedTab)) {
+      setActiveTab(savedTab);
+    }
+  }, [projectId, solutionId]);
+
+  // Save active tab to localStorage when it changes
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    const storageKey = `multipleRegression:activeTab:${projectId}:${solutionId}`;
+    localStorage.setItem(storageKey, value);
+  };
+
   return (
     <div className="space-y-4">
-      <Tabs defaultValue="setup" className="w-full">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="setup" data-testid="tab-setup">Setup</TabsTrigger>
           <TabsTrigger value="data" data-testid="tab-data">Data Entry</TabsTrigger>
