@@ -182,6 +182,38 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
     },
   });
 
+  // Save selected coefficients mutation
+  const saveSelectedCoefficientsMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest(
+        'POST',
+        `/api/projects/${projectId}/solutions/${solutionId}/multiple-regression`,
+        {
+          selectedPredictors,
+          targetY: targetY !== null ? targetY : undefined,
+          solveForPredictorIdx: solveForPredictorIdx !== null ? solveForPredictorIdx : undefined,
+          constraintValues
+        }
+      );
+    },
+    onSuccess: () => {
+      toast({
+        title: "Coefficient selections saved",
+        description: "Your coefficient selections have been saved successfully.",
+      });
+      queryClient.invalidateQueries({
+        queryKey: [`/api/projects/${projectId}/solutions/${solutionId}/multiple-regression`]
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save coefficient selections.",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Calculate regression results using useMemo for efficiency
   const regressionResult = useMemo<MultipleRegressionResult | null>(() => {
     try {
@@ -967,13 +999,21 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
 
                 {/* Coefficients Table */}
                 <Card>
-                  <CardHeader>
+                  <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle>
                       Coefficients
                       {selectedPredictors.length < predictorNames.length && (
                         <span className="p-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-xl ml-24 text-sm font-normal justify-right">Reduced Model</span>
                       )}
                     </CardTitle>
+                    <Button
+                      onClick={() => saveSelectedCoefficientsMutation.mutate()}
+                      disabled={saveSelectedCoefficientsMutation.isPending}
+                      size="sm"
+                      data-testid="button-save-selected-coefficients"
+                    >
+                      {saveSelectedCoefficientsMutation.isPending ? "Saving..." : "Save Selected Coefficients"}
+                    </Button>
                   </CardHeader>
                   <CardContent>
                     <div className="overflow-x-auto">
