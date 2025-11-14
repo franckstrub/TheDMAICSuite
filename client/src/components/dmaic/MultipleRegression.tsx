@@ -1019,13 +1019,12 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                           hoverinfo: 'name',
                         }];
                       })() || []),
-                      // Solved point (if one of the plot factors is being solved for)
-                      ...(solvedX !== null && targetY !== null && solveForPredictorIdx !== null && 
-                          (solveForPredictorIdx === plot3DFactorX || solveForPredictorIdx === plot3DFactorY) ? [{
+                      // Solved point (always show when available)
+                      ...(solvedX !== null && targetY !== null && solveForPredictorIdx !== null ? [{
                         type: 'scatter3d',
                         mode: 'markers',
-                        x: [solveForPredictorIdx === plot3DFactorX ? solvedX : constraintValues[plot3DFactorX] || 0],
-                        y: [solveForPredictorIdx === plot3DFactorY ? solvedX : constraintValues[plot3DFactorY] || 0],
+                        x: [solveForPredictorIdx === plot3DFactorX ? solvedX : (constraintValues[plot3DFactorX] ?? 0)],
+                        y: [solveForPredictorIdx === plot3DFactorY ? solvedX : (constraintValues[plot3DFactorY] ?? 0)],
                         z: [targetY],
                         marker: {
                           size: 10,
@@ -1035,6 +1034,28 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                         name: `Solved ${predictorNames[solveForPredictorIdx]} = ${solvedX.toFixed(4)}`,
                         hoverinfo: 'name',
                       } as any] : []),
+                      // Legend entries for all constraints (not displayed on axes)
+                      ...(Object.entries(constraintValues)
+                        .filter(([predIdxStr, value]) => {
+                          const predIdx = parseInt(predIdxStr);
+                          return value !== null && value !== undefined && 
+                                 predIdx !== plot3DFactorX && predIdx !== plot3DFactorY;
+                        })
+                        .map(([predIdxStr, value]) => {
+                          const predIdx = parseInt(predIdxStr);
+                          return {
+                            type: 'scatter3d',
+                            mode: 'markers',
+                            x: [null],
+                            y: [null],
+                            z: [null],
+                            marker: { size: 0 },
+                            name: `${predictorNames[predIdx]} = ${(value as number).toFixed(2)} (constraint)`,
+                            showlegend: true,
+                            hoverinfo: 'skip',
+                          } as any;
+                        })
+                      ),
                     ]}
                     layout={{
                       autosize: true,
