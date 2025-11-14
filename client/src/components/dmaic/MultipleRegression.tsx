@@ -1064,7 +1064,7 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                                   </TableCell>
                                   <TableCell className="text-center">
                                     <Checkbox
-                                      checked={true}
+                                      checked={isSelected}
                                       onCheckedChange={() => togglePredictor(predIdx)}
                                       data-testid={`checkbox-coef-${predIdx}`}
                                     />
@@ -1083,7 +1083,7 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                                   </TableCell>
                                    <TableCell className="text-center">
                                     <Checkbox
-                                      checked={false}
+                                      checked={isSelected}
                                       onCheckedChange={() => togglePredictor(predIdx)}
                                       data-testid={`checkbox-coef-${predIdx}`}
                                     />
