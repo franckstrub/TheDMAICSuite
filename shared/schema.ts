@@ -2584,6 +2584,11 @@ export const multipleRegressionConfig = pgTable(
     // Analysis options
     significanceLevel: real("significance_level").default(0.05),
     
+    // Solve for X settings
+    targetY: real("target_y"),
+    solveForPredictorIdx: integer("solve_for_predictor_idx"),
+    constraintValues: jsonb("constraint_values").$type<Record<number, number | null>>().default({}),
+    
     lastUpdated: timestamp("last_updated").notNull().defaultNow(),
   },
   (table) => ({
