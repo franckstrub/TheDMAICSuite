@@ -305,9 +305,17 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
       const numCols = rows[0].length;
       const numPredictors = numCols - 1;
       
-      // Ensure we have enough predictor columns
-      while (predictorNames.length < numPredictors) {
-        handleAddPredictor();
+      // Prepare new predictor names and data arrays
+      const currentPredictorCount = predictorNames.length;
+      const newPredictorNames = [...predictorNames];
+      const newSelectedPredictors = [...selectedPredictors];
+      
+      if (numPredictors > currentPredictorCount) {
+        // Add new predictors if needed
+        for (let i = currentPredictorCount; i < numPredictors; i++) {
+          newPredictorNames.push(`X${i + 1}`);
+          newSelectedPredictors.push(i);
+        }
       }
       
       // Extract data - Response is in first column (index 0)
@@ -318,6 +326,9 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
         newDataX.push(rows.map(row => row[predIdx + 1]));
       }
       
+      // Update all state at once
+      setPredictorNames(newPredictorNames);
+      setSelectedPredictors(newSelectedPredictors);
       setDataY(newDataY);
       setDataX(newDataX);
       
