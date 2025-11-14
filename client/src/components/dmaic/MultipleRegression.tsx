@@ -91,10 +91,13 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
   });
 
   useEffect(() => {
-    if (configQuery.data && !loadedRef.current) {
-      loadedRef.current = true;
-      
+    if (configQuery.data) {
       const config = configQuery.data as any;
+      
+      // Only set loadedRef after we've actually loaded the data
+      if (!loadedRef.current) {
+        loadedRef.current = true;
+      }
       
       if (config.responseVariableName) {
         setResponseVariableName(config.responseVariableName);
@@ -136,10 +139,16 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
       }
       
       if (config.constraintValues && typeof config.constraintValues === 'object') {
-        // Convert string keys back to numbers and null values back to null
+        // Convert string keys back to numbers
         const constraints: Record<number, number | null> = {};
         Object.entries(config.constraintValues).forEach(([key, value]) => {
-          constraints[parseInt(key)] = value === null ? null : Number(value);
+          const numKey = parseInt(key);
+          // Handle both null and numeric values
+          if (value === null || value === undefined) {
+            constraints[numKey] = null;
+          } else {
+            constraints[numKey] = Number(value);
+          }
         });
         setConstraintValues(constraints);
       }
