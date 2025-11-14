@@ -1019,36 +1019,6 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                           hoverinfo: 'name',
                         }];
                       })() || []),
-                      // Vertical dashed line from base to solved point
-                      ...(solvedX !== null && targetY !== null && solveForPredictorIdx !== null && (() => {
-                        const xData = dataX[plot3DFactorX]?.filter((_, i) => 
-                          !isNaN(dataY[i]) && selectedPredictors.every(predIdx => !isNaN(dataX[predIdx][i]))
-                        ) || [];
-                        const yData = dataX[plot3DFactorY]?.filter((_, i) => 
-                          !isNaN(dataY[i]) && selectedPredictors.every(predIdx => !isNaN(dataX[predIdx][i]))
-                        ) || [];
-                        const zData = dataY.filter((y, i) => 
-                          !isNaN(y) && selectedPredictors.every(predIdx => !isNaN(dataX[predIdx][i]))
-                        ) || [];
-                        
-                        if (xData.length === 0 || yData.length === 0 || zData.length === 0) return [];
-                        
-                        const zMin = Math.min(...zData);
-                        const xPos = solveForPredictorIdx === plot3DFactorX ? solvedX : (constraintValues[plot3DFactorX] ?? 0);
-                        const yPos = solveForPredictorIdx === plot3DFactorY ? solvedX : (constraintValues[plot3DFactorY] ?? 0);
-                        
-                        return [{
-                          type: 'scatter3d',
-                          mode: 'lines',
-                          x: [xPos, xPos],
-                          y: [yPos, yPos],
-                          z: [zMin, targetY],
-                          line: { color: 'purple', width: 3, dash: 'dash' },
-                          name: `Solved line`,
-                          showlegend: false,
-                          hoverinfo: 'skip',
-                        }];
-                      })() || []),
                       // Solved point (always show when available)
                       ...(solvedX !== null && targetY !== null && solveForPredictorIdx !== null ? [{
                         type: 'scatter3d',
