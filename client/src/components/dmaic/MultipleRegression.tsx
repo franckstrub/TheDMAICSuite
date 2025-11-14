@@ -1034,12 +1034,13 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                         name: `Solved ${predictorNames[solveForPredictorIdx]} = ${solvedX.toFixed(4)}`,
                         hoverinfo: 'name',
                       } as any] : []),
-                      // Legend entries for all constraints (not displayed on axes)
+                      // Legend entries for constraints on selected predictors (not displayed on axes)
                       ...(Object.entries(constraintValues)
                         .filter(([predIdxStr, value]) => {
                           const predIdx = parseInt(predIdxStr);
                           return value !== null && value !== undefined && 
-                                 predIdx !== plot3DFactorX && predIdx !== plot3DFactorY;
+                                 predIdx !== plot3DFactorX && predIdx !== plot3DFactorY &&
+                                 selectedPredictors.includes(predIdx);
                         })
                         .map(([predIdxStr, value]) => {
                           const predIdx = parseInt(predIdxStr);
