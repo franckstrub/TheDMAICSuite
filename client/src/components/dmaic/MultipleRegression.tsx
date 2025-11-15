@@ -931,11 +931,17 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                           selectedPredictors.every(predIdx => !isNaN(dataX[predIdx][i]))
                         ) || [],
                         marker: {
-                          size: 5,
+                          size: 4,
                           color: 'rgb(59, 130, 246)',
                           opacity: 0.8,
                         },
+                        name: 'Regression Points',
+                        hovertemplate:
+                          `${predictorNames[plot3DFactorX] || `X${plot3DFactorX + 1}`}: %{x}<br>` +
+                          `${predictorNames[plot3DFactorY] || `X${plot3DFactorY + 1}`}: %{y}<br>` +
+                          `Y Response: %{z}<extra></extra>`,
                       } as any,
+
                       // Target Y plane (horizontal)
                       ...(targetY !== null && (() => {
                         const xData = dataX[plot3DFactorX]?.filter((_, i) => 
@@ -961,10 +967,14 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                           color: 'orange',
                           name: `Target Y = ${targetY.toFixed(4)}`,
                           hoverinfo: 'name',
+                          showlegend: true,
                         }];
                       })() || []),
                       // Constraint line for plot3DFactorX (if it has a constraint)
                       ...(constraintValues[plot3DFactorX] !== null && constraintValues[plot3DFactorX] !== undefined && (() => {
+                        const xData = dataX[plot3DFactorX]?.filter((_, i) => 
+                          !isNaN(dataY[i]) && selectedPredictors.every(predIdx => !isNaN(dataX[predIdx][i]))
+                        ) || [];
                         const yData = dataX[plot3DFactorY]?.filter((_, i) => 
                           !isNaN(dataY[i]) && selectedPredictors.every(predIdx => !isNaN(dataX[predIdx][i]))
                         ) || [];
@@ -972,27 +982,38 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                           !isNaN(y) && selectedPredictors.every(predIdx => !isNaN(dataX[predIdx][i]))
                         ) || [];
                         
-                        if (yData.length === 0 || zData.length === 0) return [];
+                        if (xData.length === 0 || yData.length === 0 || zData.length === 0) return [];
                         
                         const yMin = Math.min(...yData);
                         const yMax = Math.max(...yData);
                         const zMin = Math.min(...zData);
                         const zMax = Math.max(...zData);
                         const xVal = constraintValues[plot3DFactorX]!;
+                        const xMin = Math.min(...xData);
+                        const xMax = Math.max(...xData);
+                        const yVal = constraintValues[plot3DFactorY]!;
+                        const zVal = targetY!;
+
                         
                         return [{
                           type: 'scatter3d',
                           mode: 'lines',
-                          x: [xVal, xVal, xVal, xVal],
-                          y: [yMin, yMin, yMax, yMax],
-                          z: [zMin, zMax, zMax, zMin],
+                          x: [xVal, xVal, xVal, xVal, xVal],
+                          y: [yMin, yMin, yMax, yMax, yMin],
+                          z: [zMin, zMax, zMax, zMin, zMin],
+                          //x: [xVal, xVal, xVal, xVal, xVal],
+                          //y: [yMin, yMin, yMax, yMax, yMin],
+                          //z: [zMin, zVal, zVal, zMin, zMin],
+                          //x: [xVal, xVal, xVal, xVal],
+                          //y: [yVal, yVal, yVal, yVal],
+                          //z: [zMin, zVal, zMin, zVal],
                           line: { color: 'red', width: 4, dash: 'dash' },
-                          name: `${predictorNames[plot3DFactorX]} = ${xVal.toFixed(2)}`,
+                          name: `Constraint ${predictorNames[plot3DFactorX]} = ${xVal.toFixed(2)}`,
                           hoverinfo: 'name',
                         }];
                       })() || []),
                       // Constraint line for plot3DFactorY (if it has a constraint)
-                      ...(constraintValues[plot3DFactorY] !== null && constraintValues[plot3DFactorY] !== undefined && (() => {
+                      ...(((constraintValues[plot3DFactorY] !== null && constraintValues[plot3DFactorY] !== undefined) || solveForPredictorIdx === plot3DFactorY) && (() => {
                         const xData = dataX[plot3DFactorX]?.filter((_, i) => 
                           !isNaN(dataY[i]) && selectedPredictors.every(predIdx => !isNaN(dataX[predIdx][i]))
                         ) || [];
@@ -1006,16 +1027,17 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                         const xMax = Math.max(...xData);
                         const zMin = Math.min(...zData);
                         const zMax = Math.max(...zData);
-                        const yVal = constraintValues[plot3DFactorY]!;
+                        const yVal = constraintValues[plot3DFactorY]! || solvedX!;
+                        const myName = solveForPredictorIdx === plot3DFactorY ? `Solving for ` : `Constraint `;  
                         
                         return [{
                           type: 'scatter3d',
                           mode: 'lines',
-                          x: [xMin, xMin, xMax, xMax],
-                          y: [yVal, yVal, yVal, yVal],
-                          z: [zMin, zMax, zMax, zMin],
+                          x: [xMin, xMin, xMax, xMax, xMin],
+                          y: [yVal, yVal, yVal, yVal, yVal],
+                          z: [zMin, zMax, zMax, zMin, zMin],
                           line: { color: 'green', width: 4, dash: 'dash' },
-                          name: `${predictorNames[plot3DFactorY]} = ${yVal.toFixed(2)}`,
+                          name: myName + `${predictorNames[plot3DFactorY]} = ${yVal.toFixed(2)}`,
                           hoverinfo: 'name',
                         }];
                       })() || []),
@@ -1027,11 +1049,11 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                         y: [solveForPredictorIdx === plot3DFactorY ? solvedX : (constraintValues[plot3DFactorY] ?? 0)],
                         z: [targetY],
                         marker: {
-                          size: 10,
+                          size: 7,
                           color: 'purple',
                           symbol: 'diamond',
                         },
-                        name: `Solved ${predictorNames[solveForPredictorIdx]} = ${solvedX.toFixed(4)}`,
+                        name: `Solution Point`,
                         hoverinfo: 'name',
                       } as any] : []),
                       // Legend entries for constraints on selected predictors (not displayed on axes)
@@ -1051,7 +1073,7 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                             y: [null],
                             z: [null],
                             marker: { size: 0 },
-                            name: `${predictorNames[predIdx]} = ${(value as number).toFixed(2)} (constraint)`,
+                            name: `Constraint ${predictorNames[predIdx]} = ${(value as number).toFixed(2)} (constraint)`,
                             showlegend: true,
                             hoverinfo: 'skip',
                           } as any;
@@ -1063,8 +1085,14 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                       scene: {
                         xaxis: { title: { text: predictorNames[plot3DFactorX] || `X${plot3DFactorX + 1}` } },
                         yaxis: { title: { text: predictorNames[plot3DFactorY] || `X${plot3DFactorY + 1}` } },
-                        zaxis: { title: { text: responseVariableName || 'Y Response' } },
+                        zaxis: { title: { text: responseVariableName || '<b>Y Response</b>' } },
                       },
+                      /*scene: {
+                        xaxis: { title: { text: {predictorNames[plot3DFactorX] ? (`<b>${predictorNames[plot3DFactorX]}</b>`) : (`<b>X${plot3DFactorX + 1}</b>`) } }},
+                        yaxis: { title: { text: `<b>${predictorNames[plot3DFactorY]}</b>` || `<b>X${plot3DFactorY + 1}</b>` } },
+                        zaxis: { title: { text: `<b>${responseVariableName}</b>` || "<b>Y Response</b>" } },
+                      }, */
+                      legend: { x: 0.9, y: 0.55 },
                       margin: { l: 0, r: 0, b: 0, t: 0 },
                     }}                  
                     useResizeHandler
