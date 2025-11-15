@@ -1013,7 +1013,11 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                         }];
                       })() || []),
                       // Constraint line for plot3DFactorY (if it has a constraint)
-                      ...(((constraintValues[plot3DFactorY] !== null && constraintValues[plot3DFactorY] !== undefined) || solveForPredictorIdx === plot3DFactorY) && (() => {
+                      ...((() => {
+                        const yVal = solveForPredictorIdx === plot3DFactorY ? solvedX : constraintValues[plot3DFactorY];
+                        
+                        if (yVal === null || yVal === undefined) return [];
+                        
                         const xData = dataX[plot3DFactorX]?.filter((_, i) => 
                           !isNaN(dataY[i]) && selectedPredictors.every(predIdx => !isNaN(dataX[predIdx][i]))
                         ) || [];
@@ -1027,7 +1031,6 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                         const xMax = Math.max(...xData);
                         const zMin = Math.min(...zData);
                         const zMax = Math.max(...zData);
-                        const yVal = constraintValues[plot3DFactorY]! || solvedX!;
                         const myName = solveForPredictorIdx === plot3DFactorY ? `Solving for ` : `Constraint `;  
                         
                         return [{
@@ -1767,7 +1770,7 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                                     .filter(([predIdxStr]) => parseInt(predIdxStr) !== solveForPredictorIdx)
                                     .map(([predIdxStr, value]) => `${predictorNames[parseInt(predIdxStr)]} = ${value?.toFixed(2) ?? 'not set'}`)
                                     .join(', ')}</strong><br></br>
-                                  The solution is shown below and displayed as diamond marker on the regression 3D graph only if it falls within the inference space.
+                                  The solution is presented below and displayed as a diamond-shaped marker on the 3D regression graph only if it lies within the inference space.
                                 </p>
                               </div>
                             )}

@@ -2303,7 +2303,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
           {targetY !== null && (
             <div className="p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-md">
               <p className="text-sm text-blue-800 dark:text-blue-200">
-                ℹ️ Target Y value set to <strong>{targetY.toFixed(4)}</strong>. The solved X value(s) are shown below and displayed as diamond markers on the regression graph only if they fall within the inference space.
+                ℹ️ Target Y value set to <strong>{targetY.toFixed(4)}</strong>. The solved X value(s) are presented below and displayed as diamond-shaped markers on the regression graph only if they lie within the inference space.
               </p>
             </div>
           )}
