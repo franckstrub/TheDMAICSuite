@@ -529,8 +529,7 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
       setPlot3DFactorX(selected[0]);
       setPlot3DFactorY(selected[0]);
     }
-    setResponseVariableName(responseVariableName);
-  }, [selectedPredictors, predictorNames, responseVariableName]);
+  }, [selectedPredictors, predictorNames]);
 
     const saveSolvingSetupMutation = useMutation({
       mutationFn: async (data: any) => {
@@ -940,7 +939,7 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                         hovertemplate:
                           `${predictorNames[plot3DFactorX] || `X${plot3DFactorX + 1}`}: %{x}<br>` +
                           `${predictorNames[plot3DFactorY] || `X${plot3DFactorY + 1}`}: %{y}<br>` +
-                          `Y Response: %{z}<extra></extra>`,
+                          `${responseVariableName || `Y Response`}: %{z}<extra></extra>`,
                       } as any,
 
                       // Target Y plane (horizontal)
@@ -1050,12 +1049,16 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                         y: [solveForPredictorIdx === plot3DFactorY ? solvedX : (constraintValues[plot3DFactorY] ?? 0)],
                         z: [targetY],
                         marker: {
-                          size: 12,
+                          size: 7,
                           color: 'purple',
                           symbol: 'diamond',
                         },
                         name: `Solution Point`,
-                        hoverinfo: 'name',
+                        hovertemplate:
+                        `Solution Point:<br>` +
+                          `${predictorNames[plot3DFactorX] || `X${plot3DFactorX + 1}`}: %{x}<br>` +
+                          `${predictorNames[plot3DFactorY] || `X${plot3DFactorY + 1}`}: %{y}<br>` +
+                          `Target ${responseVariableName || 'Y'}: %{z}<extra></extra>`,
                       } as any] : []),
                       // Legend entries for constraints on selected predictors (not displayed on axes)
                       ...(Object.entries(constraintValues)
@@ -1084,13 +1087,18 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                   layout={{
                       autosize: true,
                       scene: {
-                        xaxis: { title: { text: predictorNames[plot3DFactorX] ? `<b>${predictorNames[plot3DFactorX]}</b>` : `<b>X${plot3DFactorX + 1}</b>` } },
-                        yaxis: { title: { text: predictorNames[plot3DFactorY] ? `<b>${predictorNames[plot3DFactorY]}</b>` : `<b>X${plot3DFactorY + 1}</b>` } },
-                        zaxis: { title: { text: responseVariableName ? `<b>${responseVariableName}</b>` : '<b>Y Response</b>' } },
+                        xaxis: { title: { text: '<b>'+(predictorNames[plot3DFactorX] || `X${plot3DFactorX + 1}`) + '</b>' } },
+                        yaxis: { title: { text: '<b>'+(predictorNames[plot3DFactorY] || `X${plot3DFactorY + 1}`) + '</b>' } },
+                        zaxis: { title: { text: '<b>'+(responseVariableName || 'Y Response')+'</b>' } },
                       },
                       legend: { x: 0.9, y: 0.55 },
                       margin: { l: 0, r: 0, b: 0, t: 0 },
-                    }}               
+                    }}   
+                    /*scene: {
+                        xaxis: { title: { text: {predictorNames[plot3DFactorX] ? (`<b>${predictorNames[plot3DFactorX]}</b>`) : (`<b>X${plot3DFactorX + 1}</b>`) } }},
+                        yaxis: { title: { text: `<b>${predictorNames[plot3DFactorY]}</b>` || `<b>X${plot3DFactorY + 1}</b>` } },
+                        zaxis: { title: { text: `<b>${responseVariableName}</b>` || "<b>Y Response</b>" } },
+                      }, */               
                     useResizeHandler
                     style={{ width: '100%', height: '500px' }}
                     config={{
@@ -1748,6 +1756,22 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                                   </div>
                                 ))}
                             </div>
+
+                            {/* Target Y & X Predictor to Solve For information message */}
+                            {targetY !== null && (
+                              <div className="p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-md">
+                                <p className="text-sm text-blue-800 dark:text-blue-200">
+                                  ℹ️ Target Y value set to <strong>{targetY.toFixed(4)}</strong><br></br>
+                                  ℹ️ X Predictor to Solve For set to <strong>{predictorNames[solveForPredictorIdx]}</strong><br></br>
+                                  ℹ️ Constraints on other X Predictors: <strong>{Object.entries(constraintValues)
+                                    .filter(([predIdxStr]) => parseInt(predIdxStr) !== solveForPredictorIdx)
+                                    .map(([predIdxStr, value]) => `${predictorNames[parseInt(predIdxStr)]} = ${value?.toFixed(2) ?? 'not set'}`)
+                                    .join(', ')}</strong><br></br>
+                                  The solution is shown below and displayed as diamond marker on the regression 3D graph only if it falls within the inference space.
+                                </p>
+                              </div>
+                            )}
+
                             
                             {/* Save Solving Setup Button */}
                             <Button
