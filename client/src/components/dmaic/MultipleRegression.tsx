@@ -529,7 +529,8 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
       setPlot3DFactorX(selected[0]);
       setPlot3DFactorY(selected[0]);
     }
-  }, [selectedPredictors, predictorNames]);
+    setResponseVariableName(responseVariableName);
+  }, [selectedPredictors, predictorNames, responseVariableName]);
 
     const saveSolvingSetupMutation = useMutation({
       mutationFn: async (data: any) => {
@@ -1049,7 +1050,7 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                         y: [solveForPredictorIdx === plot3DFactorY ? solvedX : (constraintValues[plot3DFactorY] ?? 0)],
                         z: [targetY],
                         marker: {
-                          size: 7,
+                          size: 12,
                           color: 'purple',
                           symbol: 'diamond',
                         },
@@ -1080,21 +1081,21 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                         })
                       ),
                     ]}
-                    layout={{
+                  layout={{
                       autosize: true,
                       scene: {
-                        xaxis: { title: { text: predictorNames[plot3DFactorX] || `X${plot3DFactorX + 1}` } },
-                        yaxis: { title: { text: predictorNames[plot3DFactorY] || `X${plot3DFactorY + 1}` } },
-                        zaxis: { title: { text: responseVariableName || '<b>Y Response</b>' } },
+                        xaxis: { title: { text: '<b>'+predictorNames[plot3DFactorX]+'</b>' || `<b>X${plot3DFactorX + 1}</b>` } },
+                        yaxis: { title: { text: '<b>'+predictorNames[plot3DFactorY]+'</b>' || `<b>X${plot3DFactorY + 1}</b>` } },
+                        zaxis: { title: { text: '<b>'+responseVariableName+'</b>' || '<b>Y Response</b>' } },
                       },
-                      /*scene: {
+                      legend: { x: 0.9, y: 0.55 },
+                      margin: { l: 0, r: 0, b: 0, t: 0 },
+                    }}   
+                    /*scene: {
                         xaxis: { title: { text: {predictorNames[plot3DFactorX] ? (`<b>${predictorNames[plot3DFactorX]}</b>`) : (`<b>X${plot3DFactorX + 1}</b>`) } }},
                         yaxis: { title: { text: `<b>${predictorNames[plot3DFactorY]}</b>` || `<b>X${plot3DFactorY + 1}</b>` } },
                         zaxis: { title: { text: `<b>${responseVariableName}</b>` || "<b>Y Response</b>" } },
-                      }, */
-                      legend: { x: 0.9, y: 0.55 },
-                      margin: { l: 0, r: 0, b: 0, t: 0 },
-                    }}                  
+                      }, */               
                     useResizeHandler
                     style={{ width: '100%', height: '500px' }}
                     config={{
