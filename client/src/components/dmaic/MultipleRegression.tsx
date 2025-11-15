@@ -1084,18 +1084,13 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                   layout={{
                       autosize: true,
                       scene: {
-                        xaxis: { title: { text: '<b>'+predictorNames[plot3DFactorX]+'</b>' || `<b>X${plot3DFactorX + 1}</b>` } },
-                        yaxis: { title: { text: '<b>'+predictorNames[plot3DFactorY]+'</b>' || `<b>X${plot3DFactorY + 1}</b>` } },
-                        zaxis: { title: { text: '<b>'+responseVariableName+'</b>' || '<b>Y Response</b>' } },
+                        xaxis: { title: { text: predictorNames[plot3DFactorX] ? `<b>${predictorNames[plot3DFactorX]}</b>` : `<b>X${plot3DFactorX + 1}</b>` } },
+                        yaxis: { title: { text: predictorNames[plot3DFactorY] ? `<b>${predictorNames[plot3DFactorY]}</b>` : `<b>X${plot3DFactorY + 1}</b>` } },
+                        zaxis: { title: { text: responseVariableName ? `<b>${responseVariableName}</b>` : '<b>Y Response</b>' } },
                       },
                       legend: { x: 0.9, y: 0.55 },
                       margin: { l: 0, r: 0, b: 0, t: 0 },
-                    }}   
-                    /*scene: {
-                        xaxis: { title: { text: {predictorNames[plot3DFactorX] ? (`<b>${predictorNames[plot3DFactorX]}</b>`) : (`<b>X${plot3DFactorX + 1}</b>`) } }},
-                        yaxis: { title: { text: `<b>${predictorNames[plot3DFactorY]}</b>` || `<b>X${plot3DFactorY + 1}</b>` } },
-                        zaxis: { title: { text: `<b>${responseVariableName}</b>` || "<b>Y Response</b>" } },
-                      }, */               
+                    }}               
                     useResizeHandler
                     style={{ width: '100%', height: '500px' }}
                     config={{
