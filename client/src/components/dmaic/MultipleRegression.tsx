@@ -1026,9 +1026,24 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                           z: zGrid,
                           opacity: 0.5,
                           colorscale: 'Viridis',
-                          name: 'Regression Surface',
+                          name: 'Regression model',
                           showscale: false,
+                          showlegend: true,
+                          hoverlabel: {
+                            namelength: -1,  // Show full text without truncation
+                            // You can also add:
+                            //font: { size: 12 },
+                            //bgcolor: 'white',
+                            //bordercolor: 'black',
+                          },
                           hovertemplate: 
+                          `Regression equation:<br>` +
+                          `${responseVariableName || `Y`} = ${regressionResult.coefficients[0].estimate.toFixed(4)}` +
+                          `${selectedPredictors.map((predIdx, i) => {
+                            const coeff = regressionResult.coefficients[i + 1].estimate;
+                            const sign = coeff >= 0 ? ' + ' : ' - ';
+                            return `${sign}${Math.abs(coeff).toFixed(4)}*${predictorNames[predIdx]}`;
+                          }).join('')}<br>` +
                             `${predictorNames[plot3DFactorX] || `X${plot3DFactorX + 1}`}: %{x:.2f}<br>` +
                             `${predictorNames[plot3DFactorY] || `X${plot3DFactorY + 1}`}: %{y:.2f}<br>` +
                             `Predicted ${responseVariableName || 'Y'}: %{z:.2f}<extra></extra>`,
@@ -1055,12 +1070,15 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                         const yMax = Math.max(...yData, y);
                         
                         return [{
-                          type: 'mesh3d',
-                          x: [xMin, xMax, xMax, xMin],
-                          y: [yMin, yMin, yMax, yMax],
-                          z: [targetY, targetY, targetY, targetY],
-                          opacity: 0.3,
-                          color: 'orange',
+                          //type: 'mesh3d',
+                          type: 'scatter3d',
+                          mode: 'lines',
+                          x: [xMin, xMax, xMax, xMin, xMin],
+                          y: [yMin, yMin, yMax, yMax, yMin],
+                          z: [targetY, targetY, targetY, targetY, targetY],
+                          //opacity: 0.3,
+                          //color: 'orange',
+                          line: { color: 'orange', width: 4, dash: 'dash' },
                           name: `Target Y = ${targetY.toFixed(4)}`,
                           hoverlabel: {
                             namelength: -1,  // Show full text without truncation
@@ -1198,7 +1216,7 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                             y: [null],
                             z: [null],
                             marker: { size: 0 },
-                            name: `Constraint ${predictorNames[predIdx]} = ${(value as number).toFixed(2)} (constraint)`,
+                            name: `Constraint ${predictorNames[predIdx]} = ${(value as number).toFixed(2)}`,
                             showlegend: true,
                             hoverinfo: 'skip',
                           } as any;
@@ -1207,14 +1225,15 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                     ]}
                   layout={{
                       autosize: true,
+                      title: { text: '<b>3D Scatter Plot of ' + (responseVariableName || 'Y Response') + '</b>', font: { size: 16 } },
                       scene: {
                         xaxis: { title: { text: '<b>'+(predictorNames[plot3DFactorX] || `X${plot3DFactorX + 1}`) + '</b>' } },
                         yaxis: { title: { text: '<b>'+(predictorNames[plot3DFactorY] || `X${plot3DFactorY + 1}`) + '</b>' } },
                         zaxis: { title: { text: '<b>'+(responseVariableName || 'Y Response')+'</b>' } },
                       },
-                      legend: { title: {text: 'Click on any legend<br>below to show/hide<br>3D graph elements.'}, font: { size: 10 },
-                      x: 0.9, y: 0.50 },
-                      margin: { l: 0, r: 0, b: 0, t: 0 },
+                      legend: { title: {text: 'Click on any legend below<br>to show/hide the 3D graph<br>elements'}, font: { size: 10 },
+                      x: 0.9, y: 0.47 },
+                      margin: { l: 0, r: 0, b: 0, t: 40 },
                     }}   
                     /*scene: {
                         xaxis: { title: { text: {predictorNames[plot3DFactorX] ? (`<b>${predictorNames[plot3DFactorX]}</b>`) : (`<b>X${plot3DFactorX + 1}</b>`) } }},

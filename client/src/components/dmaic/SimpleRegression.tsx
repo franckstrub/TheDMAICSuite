@@ -951,7 +951,8 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                   range: [yAxisMin, yAxisMax]
                 },
                 showlegend: true,
-                legend: { x: 1, y: 0 },
+                legend: { title: {text: 'Click on any legend below<br>to show/hide the graph<br>elements'}, font: { size: 10 },
+                      x: 1, y: 0 },
                 hovermode: 'closest',
                 annotations: [
                   // Target Y label on Y axis
