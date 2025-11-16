@@ -513,6 +513,11 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
         return;
       }
       setSelectedPredictors(selectedPredictors.filter(idx => idx !== predIdx));
+      
+      // Clear constraint value for deselected predictor
+      const newConstraintValues = { ...constraintValues };
+      delete newConstraintValues[predIdx];
+      setConstraintValues(newConstraintValues);
     } else {
       // Select
       setSelectedPredictors([...selectedPredictors, predIdx].sort((a, b) => a - b));
