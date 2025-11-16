@@ -1199,6 +1199,20 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                           `${predictorNames[plot3DFactorY] || `X${plot3DFactorY + 1}`}: %{y}<br>` +
                           `Target ${responseVariableName || 'Y'}: %{z}<extra></extra>`,
                       } as any] : []),
+                      // Legend entry for solved predictor if not displayed on axes
+                      ...(solvedX !== null && solveForPredictorIdx !== null && 
+                          solveForPredictorIdx !== plot3DFactorX && 
+                          solveForPredictorIdx !== plot3DFactorY ? [{
+                        type: 'scatter3d',
+                        mode: 'markers',
+                        x: [null],
+                        y: [null],
+                        z: [null],
+                        marker: { size: 0 },
+                        name: `Solved ${predictorNames[solveForPredictorIdx]} = ${solvedX.toFixed(4)}`,
+                        showlegend: true,
+                        hoverinfo: 'skip',
+                      } as any] : []),
                       // Legend entries for constraints on selected predictors (not displayed on axes)
                       ...(Object.entries(constraintValues)
                         .filter(([predIdxStr, value]) => {
