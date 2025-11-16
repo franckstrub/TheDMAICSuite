@@ -966,10 +966,13 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                         
                         if (xData.length === 0 || yData.length === 0) return [];
                         
-                        const xMin = Math.min(...xData);
-                        const xMax = Math.max(...xData);
-                        const yMin = Math.min(...yData);
-                        const yMax = Math.max(...yData);
+                        const x = solveForPredictorIdx === plot3DFactorX ? solvedX! : constraintValues[plot3DFactorX]! ?? NaN;
+                        const y = solveForPredictorIdx === plot3DFactorY ? solvedX! : constraintValues[plot3DFactorY]! ?? NaN;
+                        const xMin = Math.min(...xData, x);
+                        const xMax = Math.max(...xData, x);
+
+                        const yMin = Math.min(...yData, y);
+                        const yMax = Math.max(...yData, y);
                         
                         return [{
                           type: 'mesh3d',
@@ -990,11 +993,12 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                           showlegend: true,
                         }];
                       })() || []),
-                      // Constraint line for plot3DFactorX (if it has a constraint)
-                      ...(constraintValues[plot3DFactorX] !== null && constraintValues[plot3DFactorX] !== undefined && (() => {
-                        const xData = dataX[plot3DFactorX]?.filter((_, i) => 
-                          !isNaN(dataY[i]) && selectedPredictors.every(predIdx => !isNaN(dataX[predIdx][i]))
-                        ) || [];
+                      // Constraint line or Solved for Predictor plot3DFactorX (if it has a value)
+                      ...((() => {
+                        const xVal = solveForPredictorIdx === plot3DFactorX ? solvedX : constraintValues[plot3DFactorX];
+                        
+                        if (xVal === null || xVal === undefined) return [];
+
                         const yData = dataX[plot3DFactorY]?.filter((_, i) => 
                           !isNaN(dataY[i]) && selectedPredictors.every(predIdx => !isNaN(dataX[predIdx][i]))
                         ) || [];
@@ -1002,33 +1006,24 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                           !isNaN(y) && selectedPredictors.every(predIdx => !isNaN(dataX[predIdx][i]))
                         ) || [];
                         
-                        if (xData.length === 0 || yData.length === 0 || zData.length === 0) return [];
+                        if (yData.length === 0 || zData.length === 0) return [];
                         
-                        const yMin = Math.min(...yData);
-                        const yMax = Math.max(...yData);
-                        const zMin = Math.min(...zData);
-                        const zMax = Math.max(...zData);
-                        const xVal = constraintValues[plot3DFactorX]!;
-                        const xMin = Math.min(...xData);
-                        const xMax = Math.max(...xData);
-                        const yVal = constraintValues[plot3DFactorY]!;
-                        const zVal = targetY!;
+                        const y = solveForPredictorIdx === plot3DFactorY ? solvedX! : constraintValues[plot3DFactorY]! ?? NaN;
+                        const yMin = Math.min(...yData, y);
+                        const yMax = Math.max(...yData, y);
+                        const zMin = Math.min(...zData, targetY !== null ? targetY : NaN);
+                        const zMax = Math.max(...zData, targetY !== null ? targetY : NaN);                        
 
-                        
+                        const myName = solveForPredictorIdx === plot3DFactorX ? `Solving for ` : `Constraint `; 
+
                         return [{
                           type: 'scatter3d',
                           mode: 'lines',
                           x: [xVal, xVal, xVal, xVal, xVal],
                           y: [yMin, yMin, yMax, yMax, yMin],
                           z: [zMin, zMax, zMax, zMin, zMin],
-                          //x: [xVal, xVal, xVal, xVal, xVal],
-                          //y: [yMin, yMin, yMax, yMax, yMin],
-                          //z: [zMin, zVal, zVal, zMin, zMin],
-                          //x: [xVal, xVal, xVal, xVal],
-                          //y: [yVal, yVal, yVal, yVal],
-                          //z: [zMin, zVal, zMin, zVal],
                           line: { color: 'red', width: 4, dash: 'dash' },
-                          name: `Constraint ${predictorNames[plot3DFactorX]} = ${xVal.toFixed(2)}`,
+                          name: myName + `${predictorNames[plot3DFactorX]} = ${xVal.toFixed(2)}`,
                           hoverlabel: {
                             namelength: -1,  // Show full text without truncation
                             // You can also add:
@@ -1039,7 +1034,7 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                           hoverinfo: 'name',
                         }];
                       })() || []),
-                      // Constraint line for plot3DFactorY (if it has a constraint)
+                      // Constraint line or Solved for Predictor plot3DFactorY (if it has a value)
                       ...((() => {
                         const yVal = solveForPredictorIdx === plot3DFactorY ? solvedX : constraintValues[plot3DFactorY];
                         
@@ -1054,10 +1049,12 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                         
                         if (xData.length === 0 || zData.length === 0) return [];
                         
-                        const xMin = Math.min(...xData);
-                        const xMax = Math.max(...xData);
-                        const zMin = Math.min(...zData);
-                        const zMax = Math.max(...zData);
+                        const x = solveForPredictorIdx === plot3DFactorX ? solvedX! : constraintValues[plot3DFactorX]! ?? NaN;
+                        
+                        const xMin = Math.min(...xData, x);
+                        const xMax = Math.max(...xData, x);
+                        const zMin = Math.min(...zData, targetY !== null ? targetY : NaN);
+                        const zMax = Math.max(...zData, targetY !== null ? targetY : NaN);
                         const myName = solveForPredictorIdx === plot3DFactorY ? `Solving for ` : `Constraint `;  
                         
                         return [{
@@ -1135,7 +1132,8 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                         yaxis: { title: { text: '<b>'+(predictorNames[plot3DFactorY] || `X${plot3DFactorY + 1}`) + '</b>' } },
                         zaxis: { title: { text: '<b>'+(responseVariableName || 'Y Response')+'</b>' } },
                       },
-                      legend: { x: 0.9, y: 0.55 },
+                      legend: { title: {text: 'Click on any legend<br>below to show/hide<br>3D graph elements.'}, font: { size: 10 },
+                      x: 0.9, y: 0.50 },
                       margin: { l: 0, r: 0, b: 0, t: 0 },
                     }}   
                     /*scene: {
@@ -1811,7 +1809,7 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                                     .filter(([predIdxStr]) => parseInt(predIdxStr) !== solveForPredictorIdx)
                                     .map(([predIdxStr, value]) => `${predictorNames[parseInt(predIdxStr)]} = ${value?.toFixed(2) ?? 'not set'}`)
                                     .join(', ')}</strong><br></br>
-                                  The solution is presented below and displayed as a diamond-shaped marker on the 3D regression graph only if it lies within the inference space.
+                                  The solution is presented below and displayed as a diamond-shaped marker on the 3D regression graph.
                                 </p>
                               </div>
                             )}
