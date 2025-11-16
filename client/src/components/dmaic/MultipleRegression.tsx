@@ -955,6 +955,86 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                           `${responseVariableName || `Y Response`}: %{z}<extra></extra>`,
                       } as any,
 
+                      // Regression surface mesh (only for 1 or 2 predictors)
+                      ...(regressionResult && selectedPredictors.length <= 2 && (() => {
+                        // Check if the displayed axes match the selected predictors
+                        const displayedPredictors = [plot3DFactorX, plot3DFactorY];
+                        const allDisplayedAreSelected = displayedPredictors.every(p => selectedPredictors.includes(p));
+                        
+                        if (!allDisplayedAreSelected) return [];
+                        
+                        // Get data ranges
+                        const xData = dataX[plot3DFactorX]?.filter((_, i) => 
+                          !isNaN(dataY[i]) && selectedPredictors.every(predIdx => !isNaN(dataX[predIdx][i]))
+                        ) || [];
+                        const yData = dataX[plot3DFactorY]?.filter((_, i) => 
+                          !isNaN(dataY[i]) && selectedPredictors.every(predIdx => !isNaN(dataX[predIdx][i]))
+                        ) || [];
+                        
+                        if (xData.length === 0 || yData.length === 0) return [];
+                        
+                        const xMin = Math.min(...xData);
+                        const xMax = Math.max(...xData);
+                        const yMin = Math.min(...yData);
+                        const yMax = Math.max(...yData);
+                        
+                        // Create grid
+                        const gridSize = 20;
+                        const xGrid = [];
+                        const yGrid = [];
+                        const zGrid = [];
+                        
+                        for (let i = 0; i <= gridSize; i++) {
+                          const xRow = [];
+                          const yRow = [];
+                          const zRow = [];
+                          
+                          for (let j = 0; j <= gridSize; j++) {
+                            const x = xMin + (xMax - xMin) * i / gridSize;
+                            const y = yMin + (yMax - yMin) * j / gridSize;
+                            
+                            // Calculate Z using regression equation
+                            let z = regressionResult.coefficients[0].estimate; // Intercept
+                            
+                            // Add contribution from each selected predictor
+                            selectedPredictors.forEach((predIdx, idx) => {
+                              const coeff = regressionResult.coefficients[idx + 1].estimate;
+                              if (predIdx === plot3DFactorX) {
+                                z += coeff * x;
+                              } else if (predIdx === plot3DFactorY) {
+                                z += coeff * y;
+                              } else {
+                                // Use constraint value for other predictors
+                                z += coeff * (constraintValues[predIdx] ?? 0);
+                              }
+                            });
+                            
+                            xRow.push(x);
+                            yRow.push(y);
+                            zRow.push(z);
+                          }
+                          
+                          xGrid.push(xRow);
+                          yGrid.push(yRow);
+                          zGrid.push(zRow);
+                        }
+                        
+                        return [{
+                          type: 'surface',
+                          x: xGrid,
+                          y: yGrid,
+                          z: zGrid,
+                          opacity: 0.5,
+                          colorscale: 'Viridis',
+                          name: 'Regression Surface',
+                          showscale: false,
+                          hovertemplate: 
+                            `${predictorNames[plot3DFactorX] || `X${plot3DFactorX + 1}`}: %{x:.2f}<br>` +
+                            `${predictorNames[plot3DFactorY] || `X${plot3DFactorY + 1}`}: %{y:.2f}<br>` +
+                            `Predicted ${responseVariableName || 'Y'}: %{z:.2f}<extra></extra>`,
+                        }];
+                      })() || []),
+
                       // Target Y plane (horizontal)
                       ...(targetY !== null && (() => {
                         const xData = dataX[plot3DFactorX]?.filter((_, i) => 
