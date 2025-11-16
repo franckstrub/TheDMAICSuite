@@ -935,8 +935,16 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                           color: 'rgb(59, 130, 246)',
                           opacity: 0.8,
                         },
-                        name: 'Regression Points',
+                        name: 'Regression point',
+                        hoverlabel: {
+                          namelength: -1,  // Show full text without truncation
+                          // You can also add:
+                          //font: { size: 12 },
+                          //bgcolor: 'white',
+                          //bordercolor: 'black',
+                        },
                         hovertemplate:
+                        `Regression point:<br>` +
                           `${predictorNames[plot3DFactorX] || `X${plot3DFactorX + 1}`}: %{x}<br>` +
                           `${predictorNames[plot3DFactorY] || `X${plot3DFactorY + 1}`}: %{y}<br>` +
                           `${responseVariableName || `Y Response`}: %{z}<extra></extra>`,
@@ -966,6 +974,13 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                           opacity: 0.3,
                           color: 'orange',
                           name: `Target Y = ${targetY.toFixed(4)}`,
+                          hoverlabel: {
+                            namelength: -1,  // Show full text without truncation
+                            // You can also add:
+                            //font: { size: 12 },
+                            //bgcolor: 'white',
+                            //bordercolor: 'black',
+                          },
                           hoverinfo: 'name',
                           showlegend: true,
                         }];
@@ -1009,6 +1024,13 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                           //z: [zMin, zVal, zMin, zVal],
                           line: { color: 'red', width: 4, dash: 'dash' },
                           name: `Constraint ${predictorNames[plot3DFactorX]} = ${xVal.toFixed(2)}`,
+                          hoverlabel: {
+                            namelength: -1,  // Show full text without truncation
+                            // You can also add:
+                            //font: { size: 12 },
+                            //bgcolor: 'white',
+                            //bordercolor: 'black',
+                          },
                           hoverinfo: 'name',
                         }];
                       })() || []),
@@ -1041,6 +1063,13 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                           z: [zMin, zMax, zMax, zMin, zMin],
                           line: { color: 'green', width: 4, dash: 'dash' },
                           name: myName + `${predictorNames[plot3DFactorY]} = ${yVal.toFixed(2)}`,
+                          hoverlabel: {
+                            namelength: -1,  // Show full text without truncation
+                            // You can also add:
+                            //font: { size: 12 },
+                            //bgcolor: 'white',
+                            //bordercolor: 'black',
+                          },
                           hoverinfo: 'name',
                         }];
                       })() || []),
@@ -1052,13 +1081,20 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                         y: [solveForPredictorIdx === plot3DFactorY ? solvedX : (constraintValues[plot3DFactorY] ?? 0)],
                         z: [targetY],
                         marker: {
-                          size: 7,
+                          size: 6,
                           color: 'purple',
                           symbol: 'diamond',
                         },
-                        name: `Solution Point`,
+                        name: `Solution point`,
+                        hoverlabel: {
+                          namelength: -1,  // Show full text without truncation
+                          // You can also add:
+                          //font: { size: 12 },
+                          //bgcolor: 'white',
+                          //bordercolor: 'black',
+                        },
                         hovertemplate:
-                        `Solution Point:<br>` +
+                        `Solution point:<br>` +
                           `${predictorNames[plot3DFactorX] || `X${plot3DFactorX + 1}`}: %{x}<br>` +
                           `${predictorNames[plot3DFactorY] || `X${plot3DFactorY + 1}`}: %{y}<br>` +
                           `Target ${responseVariableName || 'Y'}: %{z}<extra></extra>`,
