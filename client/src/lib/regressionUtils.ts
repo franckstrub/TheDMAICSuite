@@ -844,7 +844,15 @@ export function calculateLinearYIntervals(
 ): YInterval {
   const n = xData.length;
   const df = n - 2;
-  if(df===0) {
+  if (df < 0) {
+    return {
+      confidenceIntervalLower: NaN,
+      confidenceIntervalUpper: NaN,
+      predictionIntervalLower: NaN,
+      predictionIntervalUpper: NaN,
+    };
+  }
+  else if( df===0 ) {
     return {
       confidenceIntervalLower: targetY,
       confidenceIntervalUpper: targetY,
@@ -889,7 +897,15 @@ export function calculateQuadraticYIntervals(
 ): YInterval {
   const n = xData.length;
   const df = n - 3;
-  if(df===0) {
+  if (df < 0) {
+    return {
+      confidenceIntervalLower: NaN,
+      confidenceIntervalUpper: NaN,
+      predictionIntervalLower: NaN,
+      predictionIntervalUpper: NaN,
+    };
+  }
+  else if( df===0 ) {
     return {
       confidenceIntervalLower: targetY,
       confidenceIntervalUpper: targetY,
@@ -1022,7 +1038,15 @@ export function calculateCubicYIntervals(
 ): YInterval {
   const n = xData.length;
   const df = n - 4;
-  if(df===0) {
+  if (df < 0) {
+    return {
+      confidenceIntervalLower: NaN,
+      confidenceIntervalUpper: NaN,
+      predictionIntervalLower: NaN,
+      predictionIntervalUpper: NaN,
+    };
+  }
+  else if( df===0 ) {
     return {
       confidenceIntervalLower: targetY,
       confidenceIntervalUpper: targetY,

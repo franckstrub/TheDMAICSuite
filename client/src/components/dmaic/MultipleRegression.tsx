@@ -2010,11 +2010,38 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                           );
                           
                           // Calculate Y intervals
-                          const yIntervals = calculateYIntervals(xValues, selectedDataX, validDataY, regressionResult);
+                          const yIntervals = calculateYIntervals(targetY, xValues, selectedDataX, validDataY, regressionResult);
                           
                           return (
                             <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg space-y-3 border border-green-200 dark:border-green-800">
                               <p className="font-medium mb-2">Solution:</p>
+                <table className="w-full border-collapse">
+                  <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0">
+                    <tr>
+                      <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">Solution:</th>
+                      <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">Target {responseVariableName || 'Y'} 95% Confidence Interval:</th>
+                      <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">Target {responseVariableName || 'Y'} 95% Prediction Interval:</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td className="font-medium pb-1 align-text-top">X = {isInInferenceSpace ? <strong>{solvedXLinear.toFixed(4)}</strong> : solvedXLinear.toFixed(4)}
+                      {!isInInferenceSpace && (
+                        <span className="text-sm text-orange-600 dark:text-orange-400 mt-2">
+                          &nbsp;(⚠️ Outside the inference space. Solution not shown on the graph!)
+                        </span>
+                      )}</td>
+                      <td className="font-medium pb-1 align-text-top">{isNaN(intervals.confidenceIntervalLower) ? 
+                            <span className="text-orange-600 dark:text-orange-400">Cannot compute (numerical issue)</span> :
+                            `[${intervals.confidenceIntervalLower.toFixed(4)}, ${intervals.confidenceIntervalUpper.toFixed(4)}]`
+                          }</td>
+                      <td className="font-medium pb-1 align-text-top">{isNaN(intervals.predictionIntervalLower) ? 
+                            <span className="text-orange-600 dark:text-orange-400">Cannot compute (numerical issue)</span> :
+                            `[${intervals.predictionIntervalLower.toFixed(4)}, ${intervals.predictionIntervalUpper.toFixed(4)}]`
+                          }</td>
+                    </tr>
+                  </tbody>
+                </table>
                               <div className="space-y-2">
                                 <p className="text-lg">
                                   <strong>{predictorNames[solveForPredictorIdx]}</strong> = <strong>{solvedX.toFixed(4)}</strong>

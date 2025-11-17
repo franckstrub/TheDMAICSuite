@@ -478,7 +478,6 @@ export function multipleRegression(
  * For multiple regression: Y = β0 + β1*X1 + β2*X2 + ... + βk*Xk
  */
 export interface YInterval {
-  predictedY: number;
   confidenceIntervalLower: number;
   confidenceIntervalUpper: number;
   predictionIntervalLower: number;
@@ -486,6 +485,7 @@ export interface YInterval {
 }
 
 export function calculateYIntervals(
+  targetY: number,
   xValues: number[], // Values for all predictors [x1, x2, ..., xk]
   dataX: number[][], // All X data [n x k]
   dataY: number[], // All Y data [n]
@@ -494,13 +494,28 @@ export function calculateYIntervals(
   const n = dataY.length;
   const k = result.k; // Number of predictors
   const df = n - k - 1; // Degrees of freedom
+  if (df < 0) {
+    return {
+      confidenceIntervalLower: NaN,
+      confidenceIntervalUpper: NaN,
+      predictionIntervalLower: NaN,
+      predictionIntervalUpper: NaN,
+    };
+  }
+  else if (df ===0) {
+    return {
+      confidenceIntervalLower: targetY,
+      confidenceIntervalUpper: targetY,
+      predictionIntervalLower: targetY,
+      predictionIntervalUpper: targetY,
+    };
+  }
   const tValue = jStat.studentt.inv(0.975, df);
   
   // Calculate residual standard error from ANOVA table
   const errorRow = result.anovaTable.find(row => row.source === 'Error');
   if (!errorRow) {
     return {
-      predictedY: NaN,
       confidenceIntervalLower: NaN,
       confidenceIntervalUpper: NaN,
       predictionIntervalLower: NaN,
@@ -514,10 +529,10 @@ export function calculateYIntervals(
   const xRow = [1, ...xValues];
   
   // Calculate predicted Y value
-  let predictedY = result.coefficients[0].estimate; // Intercept
-  for (let i = 0; i < k; i++) {
-    predictedY += result.coefficients[i + 1].estimate * xValues[i];
-  }
+  //let predictedY = result.coefficients[0].estimate; // Intercept
+  //for (let i = 0; i < k; i++) {
+  //  predictedY += result.coefficients[i + 1].estimate * xValues[i];
+  //}
   
   // Build full design matrix from data
   const X: number[][] = [];
@@ -543,7 +558,6 @@ export function calculateYIntervals(
   const XtXInv = invertMatrix(XtX);
   if (!XtXInv) {
     return {
-      predictedY,
       confidenceIntervalLower: NaN,
       confidenceIntervalUpper: NaN,
       predictionIntervalLower: NaN,
@@ -567,10 +581,9 @@ export function calculateYIntervals(
   const seYPrediction = Math.sqrt(Math.max(0, varYConfidence + s * s));
   
   return {
-    predictedY,
-    confidenceIntervalLower: predictedY - tValue * seYConfidence,
-    confidenceIntervalUpper: predictedY + tValue * seYConfidence,
-    predictionIntervalLower: predictedY - tValue * seYPrediction,
-    predictionIntervalUpper: predictedY + tValue * seYPrediction,
+    confidenceIntervalLower: targetY - tValue * seYConfidence,
+    confidenceIntervalUpper: targetY + tValue * seYConfidence,
+    predictionIntervalLower: targetY - tValue * seYPrediction,
+    predictionIntervalUpper: targetY + tValue * seYPrediction,
   };
 }
