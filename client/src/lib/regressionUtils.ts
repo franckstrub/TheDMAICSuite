@@ -825,3 +825,244 @@ function invert4x4Matrix(matrix: number[][]): number[][] | null {
   // Extract inverse from augmented matrix
   return augmented.map(row => row.slice(n));
 }
+
+/**
+ * Calculate confidence and prediction intervals for Y given X (forward prediction)
+ * For linear regression: Y = a + bX
+ */
+export function calculateLinearYIntervals(
+  x: number,
+  xData: number[],
+  yData: number[],
+  result: LinearRegressionResult
+): XInterval {
+  const n = xData.length;
+  const df = n - 2;
+  const tValue = jStat.studentt.inv(0.975, df);
+  
+  // Calculate residual standard error
+  const s = Math.sqrt(result.sse / df);
+  
+  // Calculate mean of X
+  const meanX = xData.reduce((sum, val) => sum + val, 0) / n;
+  
+  // Calculate sum of squares of X
+  const ssX = xData.reduce((sum, val) => sum + Math.pow(val - meanX, 2), 0);
+  
+  // Predicted Y value
+  const predictedY = result.a + result.b * x;
+  
+  // Standard error for confidence interval (mean Y at X)
+  const seYConfidence = s * Math.sqrt(1/n + Math.pow(x - meanX, 2) / ssX);
+  
+  // Standard error for prediction interval (individual Y at X)
+  const seYPrediction = s * Math.sqrt(1 + 1/n + Math.pow(x - meanX, 2) / ssX);
+  
+  return {
+    xValue: x,
+    confidenceIntervalLower: predictedY - tValue * seYConfidence,
+    confidenceIntervalUpper: predictedY + tValue * seYConfidence,
+    predictionIntervalLower: predictedY - tValue * seYPrediction,
+    predictionIntervalUpper: predictedY + tValue * seYPrediction,
+  };
+}
+
+/**
+ * Calculate confidence and prediction intervals for Y given X (quadratic regression)
+ * For quadratic: Y = a + bX + cX²
+ */
+export function calculateQuadraticYIntervals(
+  x: number,
+  xData: number[],
+  yData: number[],
+  result: QuadraticRegressionResult
+): XInterval {
+  const n = xData.length;
+  const df = n - 3;
+  const tValue = jStat.studentt.inv(0.975, df);
+  
+  // Calculate residual standard error
+  const s = Math.sqrt(result.sse / df);
+  
+  // Build design matrix row for this X
+  const xRow = [1, x, x*x];
+  
+  // Calculate X'X manually (matching existing pattern)
+  const XtX: number[][] = [
+    [0, 0, 0],
+    [0, 0, 0],
+    [0, 0, 0]
+  ];
+  
+  for (let i = 0; i < n; i++) {
+    const xi = xData[i];
+    const row = [1, xi, xi * xi];
+    for (let j = 0; j < 3; j++) {
+      for (let k = 0; k < 3; k++) {
+        XtX[j][k] += row[j] * row[k];
+      }
+    }
+  }
+  
+  // Invert 3x3 matrix using Gauss-Jordan (simpler than calling external function)
+  const XtXInv = invert3x3Matrix(XtX);
+  
+  if (!XtXInv) {
+    return {
+      xValue: x,
+      confidenceIntervalLower: NaN,
+      confidenceIntervalUpper: NaN,
+      predictionIntervalLower: NaN,
+      predictionIntervalUpper: NaN,
+    };
+  }
+  
+  // Predicted Y value
+  const predictedY = result.a + result.b * x + result.c * x * x;
+  
+  // Variance of prediction: x'(X'X)^-1 x
+  let varYConfidence = 0;
+  for (let i = 0; i < 3; i++) {
+    for (let j = 0; j < 3; j++) {
+      varYConfidence += xRow[i] * XtXInv[i][j] * xRow[j];
+    }
+  }
+  varYConfidence *= (s * s);
+  
+  // Standard error for confidence interval
+  const seYConfidence = Math.sqrt(Math.max(0, varYConfidence));
+  
+  // Standard error for prediction interval (adds individual observation variance)
+  const seYPrediction = Math.sqrt(Math.max(0, varYConfidence + s * s));
+  
+  return {
+    xValue: x,
+    confidenceIntervalLower: predictedY - tValue * seYConfidence,
+    confidenceIntervalUpper: predictedY + tValue * seYConfidence,
+    predictionIntervalLower: predictedY - tValue * seYPrediction,
+    predictionIntervalUpper: predictedY + tValue * seYPrediction,
+  };
+}
+
+/**
+ * Helper function to invert a 3x3 matrix using Gauss-Jordan elimination
+ */
+function invert3x3Matrix(matrix: number[][]): number[][] | null {
+  const n = 3;
+  // Create augmented matrix [A | I]
+  const augmented: number[][] = matrix.map((row, i) => [
+    ...row,
+    ...[0, 0, 0].map((_, j) => (i === j ? 1 : 0))
+  ]);
+  
+  // Forward elimination with partial pivoting
+  for (let i = 0; i < n; i++) {
+    // Find pivot
+    let maxRow = i;
+    for (let k = i + 1; k < n; k++) {
+      if (Math.abs(augmented[k][i]) > Math.abs(augmented[maxRow][i])) {
+        maxRow = k;
+      }
+    }
+    
+    // Swap rows
+    [augmented[i], augmented[maxRow]] = [augmented[maxRow], augmented[i]];
+    
+    // Check for singular matrix
+    if (Math.abs(augmented[i][i]) < 1e-10) {
+      return null;
+    }
+    
+    // Scale pivot row
+    const pivot = augmented[i][i];
+    for (let j = 0; j < 2 * n; j++) {
+      augmented[i][j] /= pivot;
+    }
+    
+    // Eliminate column
+    for (let k = 0; k < n; k++) {
+      if (k !== i) {
+        const factor = augmented[k][i];
+        for (let j = 0; j < 2 * n; j++) {
+          augmented[k][j] -= factor * augmented[i][j];
+        }
+      }
+    }
+  }
+  
+  // Extract inverse from augmented matrix
+  return augmented.map(row => row.slice(n));
+}
+
+/**
+ * Calculate confidence and prediction intervals for Y given X (cubic regression)
+ * For cubic: Y = a + bX + cX² + dX³
+ */
+export function calculateCubicYIntervals(
+  x: number,
+  xData: number[],
+  yData: number[],
+  result: CubicRegressionResult
+): XInterval {
+  const n = xData.length;
+  const df = n - 4;
+  const tValue = jStat.studentt.inv(0.975, df);
+  
+  // Calculate residual standard error
+  const s = Math.sqrt(result.sse / df);
+  
+  // Build design matrix row for this X
+  const xRow = [1, x, x*x, x*x*x];
+  
+  // Calculate X'X manually
+  const XtX: number[][] = Array(4).fill(0).map(() => Array(4).fill(0));
+  
+  for (let i = 0; i < n; i++) {
+    const xi = xData[i];
+    const row = [1, xi, xi * xi, xi * xi * xi];
+    for (let j = 0; j < 4; j++) {
+      for (let k = 0; k < 4; k++) {
+        XtX[j][k] += row[j] * row[k];
+      }
+    }
+  }
+  
+  // Invert 4x4 matrix using existing function
+  const XtXInv = invert4x4Matrix(XtX);
+  
+  if (!XtXInv) {
+    return {
+      xValue: x,
+      confidenceIntervalLower: NaN,
+      confidenceIntervalUpper: NaN,
+      predictionIntervalLower: NaN,
+      predictionIntervalUpper: NaN,
+    };
+  }
+  
+  // Predicted Y value
+  const predictedY = result.a + result.b * x + result.c * x * x + result.d * x * x * x;
+  
+  // Variance of prediction: x'(X'X)^-1 x
+  let varYConfidence = 0;
+  for (let i = 0; i < 4; i++) {
+    for (let j = 0; j < 4; j++) {
+      varYConfidence += xRow[i] * XtXInv[i][j] * xRow[j];
+    }
+  }
+  varYConfidence *= (s * s);
+  
+  // Standard error for confidence interval
+  const seYConfidence = Math.sqrt(Math.max(0, varYConfidence));
+  
+  // Standard error for prediction interval (adds individual observation variance)
+  const seYPrediction = Math.sqrt(Math.max(0, varYConfidence + s * s));
+  
+  return {
+    xValue: x,
+    confidenceIntervalLower: predictedY - tValue * seYConfidence,
+    confidenceIntervalUpper: predictedY + tValue * seYConfidence,
+    predictionIntervalLower: predictedY - tValue * seYPrediction,
+    predictionIntervalUpper: predictedY + tValue * seYPrediction,
+  };
+}

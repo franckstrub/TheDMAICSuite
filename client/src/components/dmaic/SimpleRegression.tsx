@@ -16,9 +16,9 @@ import {
   solveLinearForX,
   solveQuadraticForX,
   solveCubicForX,
-  calculateLinearXIntervals,
-  calculateQuadraticXIntervals,
-  calculateCubicXIntervals,
+  calculateLinearYIntervals,
+  calculateQuadraticYIntervals,
+  calculateCubicYIntervals,
   type LinearRegressionResult,
   type QuadraticRegressionResult,
   type CubicRegressionResult,
@@ -2317,8 +2317,8 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
             const maxX = Math.max(...xValues);
             const isInInferenceSpace = solvedXLinear >= minX && solvedXLinear <= maxX;
             
-            // Calculate confidence and prediction intervals
-            const intervals = calculateLinearXIntervals(targetY, xValues, yValues, linearResult);
+            // Calculate confidence and prediction intervals for Y at the solved X
+            const intervals = calculateLinearYIntervals(solvedXLinear, xValues, yValues, linearResult);
             
             return (
               <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg space-y-2">
@@ -2366,7 +2366,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                 <p className="font-medium mb-2">Quadratic Solutions:</p>
                 {solvedXQuadratic.map((x, i) => {
                   const isInInferenceSpace = x >= minX && x <= maxX;
-                  const intervals = calculateQuadraticXIntervals(targetY, xValues, yValues, quadraticResult, x);
+                  const intervals = calculateQuadraticYIntervals(x, xValues, yValues, quadraticResult);
                   
                   return (
                     <div key={i} className="mb-4 last:mb-0 pb-3 border-b last:border-b-0 border-green-200 dark:border-green-800">
@@ -2416,7 +2416,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                 <p className="font-medium mb-2">Cubic Solutions:</p>
                 {solvedXCubic.map((x, i) => {
                   const isInInferenceSpace = x >= minX && x <= maxX;
-                  const intervals = calculateCubicXIntervals(targetY, xValues, yValues, cubicResult, x);
+                  const intervals = calculateCubicYIntervals(x, xValues, yValues, cubicResult);
                   
                   return (
                     <div key={i} className="mb-4 last:mb-0 pb-3 border-b last:border-b-0 border-purple-200 dark:border-purple-800">
