@@ -9,7 +9,7 @@ import { Loader2, Trash2, Info, Clipboard, Undo, Plus, Minus } from "lucide-reac
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { multipleRegression, type MultipleRegressionResult } from '@/lib/multipleRegressionUtils';
+import { multipleRegression, type MultipleRegressionResult, calculateYIntervals, type YInterval } from '@/lib/multipleRegressionUtils';
 import jStat from 'jstat';
 import { 
   Table,
@@ -1982,7 +1982,7 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                         })()}
 
                         {/* Display Solution */}
-                        {solveForPredictorIdx !== null && solvedX !== null && (() => {
+                        {solveForPredictorIdx !== null && solvedX !== null && targetY !== null && (() => {
                           // Check if solution is within inference space
                           const validData = dataX[solveForPredictorIdx].filter(v => !isNaN(v));
                           const minX = Math.min(...validData);
@@ -1995,13 +1995,44 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                           const pValue = coeffRow.pValue;
                           const isSignificant = pValue < significanceLevel;
                           
+                          // Build xValues array for all selected predictors
+                          const xValues: number[] = selectedPredictors.map(predIdx => {
+                            if (predIdx === solveForPredictorIdx) {
+                              return solvedX;
+                            }
+                            return constraintValues[predIdx] ?? 0;
+                          });
+                          
+                          // Get data arrays for selected predictors only
+                          const selectedDataX = selectedPredictors.map(predIdx => dataX[predIdx]);
+                          const validDataY = dataY.filter((y, i) => 
+                            !isNaN(y) && selectedPredictors.every(predIdx => !isNaN(dataX[predIdx][i]))
+                          );
+                          
+                          // Calculate Y intervals
+                          const yIntervals = calculateYIntervals(xValues, selectedDataX, validDataY, regressionResult);
+                          
                           return (
-                            <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg space-y-2 border border-green-200 dark:border-green-800">
+                            <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg space-y-3 border border-green-200 dark:border-green-800">
                               <p className="font-medium mb-2">Solution:</p>
                               <div className="space-y-2">
                                 <p className="text-lg">
                                   <strong>{predictorNames[solveForPredictorIdx]}</strong> = <strong>{solvedX.toFixed(4)}</strong>
                                 </p>
+                                
+                                <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-950 rounded border border-blue-200 dark:border-blue-800">
+                                  <p className="font-medium text-sm mb-2">Target {responseVariableName || 'Y'} = {targetY.toFixed(4)}</p>
+                                  <div className="space-y-1 text-sm">
+                                    <p>
+                                      <strong>95% Confidence Interval:</strong><br />
+                                      [{yIntervals.confidenceIntervalLower.toFixed(4)}, {yIntervals.confidenceIntervalUpper.toFixed(4)}]
+                                    </p>
+                                    <p className="mt-2">
+                                      <strong>95% Prediction Interval:</strong><br />
+                                      [{yIntervals.predictionIntervalLower.toFixed(4)}, {yIntervals.predictionIntervalUpper.toFixed(4)}]
+                                    </p>
+                                  </div>
+                                </div>
                                 
                                 {!isInInferenceSpace && (
                                   <div className="p-2 bg-orange-100 dark:bg-orange-900 border border-orange-300 dark:border-orange-700 rounded">
