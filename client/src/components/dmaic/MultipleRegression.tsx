@@ -2025,19 +2025,19 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                   </thead>
                   <tbody>
                     <tr>
-                      <td className="font-medium pb-1 align-text-top">X = {isInInferenceSpace ? <strong>{solvedXLinear.toFixed(4)}</strong> : solvedXLinear.toFixed(4)}
+                      <td className="font-medium pb-1 align-text-top">{predictorNames[solveForPredictorIdx]} = {isInInferenceSpace ? <strong>{solvedX.toFixed(4)}</strong> : solvedX.toFixed(4)}
                       {!isInInferenceSpace && (
                         <span className="text-sm text-orange-600 dark:text-orange-400 mt-2">
-                          &nbsp;(⚠️ Outside the inference space. Solution not shown on the graph!)
+                          &nbsp;(⚠️ Outside the inference space)
                         </span>
                       )}</td>
-                      <td className="font-medium pb-1 align-text-top">{isNaN(intervals.confidenceIntervalLower) ? 
+                      <td className="font-medium pb-1 align-text-top">{isNaN(yIntervals.confidenceIntervalLower) ? 
                             <span className="text-orange-600 dark:text-orange-400">Cannot compute (numerical issue)</span> :
-                            `[${intervals.confidenceIntervalLower.toFixed(4)}, ${intervals.confidenceIntervalUpper.toFixed(4)}]`
+                            `[${yIntervals.confidenceIntervalLower.toFixed(4)}, ${yIntervals.confidenceIntervalUpper.toFixed(4)}]`
                           }</td>
-                      <td className="font-medium pb-1 align-text-top">{isNaN(intervals.predictionIntervalLower) ? 
+                      <td className="font-medium pb-1 align-text-top">{isNaN(yIntervals.predictionIntervalLower) ? 
                             <span className="text-orange-600 dark:text-orange-400">Cannot compute (numerical issue)</span> :
-                            `[${intervals.predictionIntervalLower.toFixed(4)}, ${intervals.predictionIntervalUpper.toFixed(4)}]`
+                            `[${yIntervals.predictionIntervalLower.toFixed(4)}, ${yIntervals.predictionIntervalUpper.toFixed(4)}]`
                           }</td>
                     </tr>
                   </tbody>
