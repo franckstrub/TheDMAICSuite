@@ -2318,7 +2318,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
             const isInInferenceSpace = solvedXLinear >= minX && solvedXLinear <= maxX;
             
             // Calculate confidence and prediction intervals for Y at the solved X
-            const intervals = calculateLinearYIntervals(solvedXLinear, xValues, yValues, linearResult);
+            const intervals = calculateLinearYIntervals(targetY, solvedXLinear, xValues, linearResult);
             
             return (
               <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg space-y-2">
@@ -2327,8 +2327,8 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                   <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0">
                     <tr>
                       <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">Solution:</th>
-                      <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">95% Confidence Interval:</th>
-                      <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">95% Prediction Interval:</th>
+                      <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">Target Y 95% Confidence Interval:</th>
+                      <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">Target Y 95% Prediction Interval:</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -2366,7 +2366,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                 <p className="font-medium mb-2">Quadratic Solutions:</p>
                 {solvedXQuadratic.map((x, i) => {
                   const isInInferenceSpace = x >= minX && x <= maxX;
-                  const intervals = calculateQuadraticYIntervals(x, xValues, yValues, quadraticResult);
+                  const intervals = calculateQuadraticYIntervals(targetY, x, xValues, quadraticResult);
                   
                   return (
                     <div key={i} className="mb-4 last:mb-0 pb-3 border-b last:border-b-0 border-green-200 dark:border-green-800">
@@ -2374,8 +2374,8 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                         <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0">
                           <tr>
                             <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">Solutions:</th>
-                            <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">95% Confidence Interval:</th>
-                            <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">95% Prediction Interval:</th>
+                            <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">Target Y 95% Confidence Interval:</th>
+                            <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">Target Y 95% Prediction Interval:</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -2416,7 +2416,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                 <p className="font-medium mb-2">Cubic Solutions:</p>
                 {solvedXCubic.map((x, i) => {
                   const isInInferenceSpace = x >= minX && x <= maxX;
-                  const intervals = calculateCubicYIntervals(x, xValues, yValues, cubicResult);
+                  const intervals = calculateCubicYIntervals(targetY, x, xValues, cubicResult);
                   
                   return (
                     <div key={i} className="mb-4 last:mb-0 pb-3 border-b last:border-b-0 border-purple-200 dark:border-purple-800">
@@ -2424,8 +2424,8 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                         <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0">
                           <tr>
                             <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">Solutions:</th>
-                            <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">95% Confidence Interval:</th>
-                            <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">95% Prediction Interval:</th>
+                            <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">Target Y 95% Confidence Interval:</th>
+                            <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">Target Y 95% Prediction Interval:</th>
                           </tr>
                         </thead>
                         <tbody>

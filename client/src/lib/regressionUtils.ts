@@ -830,14 +830,28 @@ function invert4x4Matrix(matrix: number[][]): number[][] | null {
  * Calculate confidence and prediction intervals for Y given X (forward prediction)
  * For linear regression: Y = a + bX
  */
+export interface YInterval {
+  confidenceIntervalLower: number;
+  confidenceIntervalUpper: number;
+  predictionIntervalLower: number;
+  predictionIntervalUpper: number;
+}
 export function calculateLinearYIntervals(
-  x: number,
+  targetY: number,
+  solvedX: number,
   xData: number[],
-  yData: number[],
   result: LinearRegressionResult
-): XInterval {
+): YInterval {
   const n = xData.length;
   const df = n - 2;
+  if(df===0) {
+    return {
+      confidenceIntervalLower: targetY,
+      confidenceIntervalUpper: targetY,
+      predictionIntervalLower: targetY,
+      predictionIntervalUpper: targetY,
+    };
+  }
   const tValue = jStat.studentt.inv(0.975, df);
   
   // Calculate residual standard error
@@ -849,21 +863,17 @@ export function calculateLinearYIntervals(
   // Calculate sum of squares of X
   const ssX = xData.reduce((sum, val) => sum + Math.pow(val - meanX, 2), 0);
   
-  // Predicted Y value
-  const predictedY = result.a + result.b * x;
-  
   // Standard error for confidence interval (mean Y at X)
-  const seYConfidence = s * Math.sqrt(1/n + Math.pow(x - meanX, 2) / ssX);
+  const seYConfidence = s * Math.sqrt(1/n + Math.pow(solvedX - meanX, 2) / ssX);
   
   // Standard error for prediction interval (individual Y at X)
-  const seYPrediction = s * Math.sqrt(1 + 1/n + Math.pow(x - meanX, 2) / ssX);
+  const seYPrediction = s * Math.sqrt(1 + 1/n + Math.pow(solvedX - meanX, 2) / ssX);
   
   return {
-    xValue: x,
-    confidenceIntervalLower: predictedY - tValue * seYConfidence,
-    confidenceIntervalUpper: predictedY + tValue * seYConfidence,
-    predictionIntervalLower: predictedY - tValue * seYPrediction,
-    predictionIntervalUpper: predictedY + tValue * seYPrediction,
+    confidenceIntervalLower: targetY - tValue * seYConfidence,
+    confidenceIntervalUpper: targetY + tValue * seYConfidence,
+    predictionIntervalLower: targetY - tValue * seYPrediction,
+    predictionIntervalUpper: targetY + tValue * seYPrediction,
   };
 }
 
@@ -872,13 +882,21 @@ export function calculateLinearYIntervals(
  * For quadratic: Y = a + bX + cX²
  */
 export function calculateQuadraticYIntervals(
+  targetY: number,
   x: number,
   xData: number[],
-  yData: number[],
   result: QuadraticRegressionResult
-): XInterval {
+): YInterval {
   const n = xData.length;
   const df = n - 3;
+  if(df===0) {
+    return {
+      confidenceIntervalLower: targetY,
+      confidenceIntervalUpper: targetY,
+      predictionIntervalLower: targetY,
+      predictionIntervalUpper: targetY,
+    };
+  }
   const tValue = jStat.studentt.inv(0.975, df);
   
   // Calculate residual standard error
@@ -909,7 +927,6 @@ export function calculateQuadraticYIntervals(
   
   if (!XtXInv) {
     return {
-      xValue: x,
       confidenceIntervalLower: NaN,
       confidenceIntervalUpper: NaN,
       predictionIntervalLower: NaN,
@@ -918,7 +935,7 @@ export function calculateQuadraticYIntervals(
   }
   
   // Predicted Y value
-  const predictedY = result.a + result.b * x + result.c * x * x;
+  //const predictedY = result.a + result.b * x + result.c * x * x;
   
   // Variance of prediction: x'(X'X)^-1 x
   let varYConfidence = 0;
@@ -936,11 +953,10 @@ export function calculateQuadraticYIntervals(
   const seYPrediction = Math.sqrt(Math.max(0, varYConfidence + s * s));
   
   return {
-    xValue: x,
-    confidenceIntervalLower: predictedY - tValue * seYConfidence,
-    confidenceIntervalUpper: predictedY + tValue * seYConfidence,
-    predictionIntervalLower: predictedY - tValue * seYPrediction,
-    predictionIntervalUpper: predictedY + tValue * seYPrediction,
+    confidenceIntervalLower: targetY - tValue * seYConfidence,
+    confidenceIntervalUpper: targetY + tValue * seYConfidence,
+    predictionIntervalLower: targetY - tValue * seYPrediction,
+    predictionIntervalUpper: targetY + tValue * seYPrediction,
   };
 }
 
@@ -999,13 +1015,21 @@ function invert3x3Matrix(matrix: number[][]): number[][] | null {
  * For cubic: Y = a + bX + cX² + dX³
  */
 export function calculateCubicYIntervals(
+  targetY: number,
   x: number,
   xData: number[],
-  yData: number[],
   result: CubicRegressionResult
-): XInterval {
+): YInterval {
   const n = xData.length;
   const df = n - 4;
+  if(df===0) {
+    return {
+      confidenceIntervalLower: targetY,
+      confidenceIntervalUpper: targetY,
+      predictionIntervalLower: targetY,
+      predictionIntervalUpper: targetY,
+    };
+  }
   const tValue = jStat.studentt.inv(0.975, df);
   
   // Calculate residual standard error
@@ -1032,7 +1056,6 @@ export function calculateCubicYIntervals(
   
   if (!XtXInv) {
     return {
-      xValue: x,
       confidenceIntervalLower: NaN,
       confidenceIntervalUpper: NaN,
       predictionIntervalLower: NaN,
@@ -1041,7 +1064,7 @@ export function calculateCubicYIntervals(
   }
   
   // Predicted Y value
-  const predictedY = result.a + result.b * x + result.c * x * x + result.d * x * x * x;
+  // const predictedY = result.a + result.b * x + result.c * x * x + result.d * x * x * x;
   
   // Variance of prediction: x'(X'X)^-1 x
   let varYConfidence = 0;
@@ -1059,10 +1082,9 @@ export function calculateCubicYIntervals(
   const seYPrediction = Math.sqrt(Math.max(0, varYConfidence + s * s));
   
   return {
-    xValue: x,
-    confidenceIntervalLower: predictedY - tValue * seYConfidence,
-    confidenceIntervalUpper: predictedY + tValue * seYConfidence,
-    predictionIntervalLower: predictedY - tValue * seYPrediction,
-    predictionIntervalUpper: predictedY + tValue * seYPrediction,
+    confidenceIntervalLower: targetY - tValue * seYConfidence,
+    confidenceIntervalUpper: targetY + tValue * seYConfidence,
+    predictionIntervalLower: targetY - tValue * seYPrediction,
+    predictionIntervalUpper: targetY + tValue * seYPrediction,
   };
 }

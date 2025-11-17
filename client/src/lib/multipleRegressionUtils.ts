@@ -472,3 +472,105 @@ export function multipleRegression(
     k,
   };
 }
+
+/**
+ * Calculate confidence and prediction intervals for Y at given X values (forward prediction)
+ * For multiple regression: Y = β0 + β1*X1 + β2*X2 + ... + βk*Xk
+ */
+export interface YInterval {
+  predictedY: number;
+  confidenceIntervalLower: number;
+  confidenceIntervalUpper: number;
+  predictionIntervalLower: number;
+  predictionIntervalUpper: number;
+}
+
+export function calculateYIntervals(
+  xValues: number[], // Values for all predictors [x1, x2, ..., xk]
+  dataX: number[][], // All X data [n x k]
+  dataY: number[], // All Y data [n]
+  result: MultipleRegressionResult
+): YInterval {
+  const n = dataY.length;
+  const k = result.k; // Number of predictors
+  const df = n - k - 1; // Degrees of freedom
+  const tValue = jStat.studentt.inv(0.975, df);
+  
+  // Calculate residual standard error from ANOVA table
+  const errorRow = result.anovaTable.find(row => row.source === 'Error');
+  if (!errorRow) {
+    return {
+      predictedY: NaN,
+      confidenceIntervalLower: NaN,
+      confidenceIntervalUpper: NaN,
+      predictionIntervalLower: NaN,
+      predictionIntervalUpper: NaN,
+    };
+  }
+  
+  const s = Math.sqrt(errorRow.ms);
+  
+  // Build design matrix row for these X values: [1, x1, x2, ..., xk]
+  const xRow = [1, ...xValues];
+  
+  // Calculate predicted Y value
+  let predictedY = result.coefficients[0].estimate; // Intercept
+  for (let i = 0; i < k; i++) {
+    predictedY += result.coefficients[i + 1].estimate * xValues[i];
+  }
+  
+  // Build full design matrix from data
+  const X: number[][] = [];
+  for (let i = 0; i < n; i++) {
+    const row = [1]; // intercept
+    for (let j = 0; j < k; j++) {
+      row.push(dataX[j][i]);
+    }
+    X.push(row);
+  }
+  
+  // Calculate X'X
+  const XtX: number[][] = Array(k + 1).fill(0).map(() => Array(k + 1).fill(0));
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < k + 1; j++) {
+      for (let l = 0; l < k + 1; l++) {
+        XtX[j][l] += X[i][j] * X[i][l];
+      }
+    }
+  }
+  
+  // Invert (X'X)
+  const XtXInv = invertMatrix(XtX);
+  if (!XtXInv) {
+    return {
+      predictedY,
+      confidenceIntervalLower: NaN,
+      confidenceIntervalUpper: NaN,
+      predictionIntervalLower: NaN,
+      predictionIntervalUpper: NaN,
+    };
+  }
+  
+  // Calculate variance of prediction: x'(X'X)^-1 x
+  let varYConfidence = 0;
+  for (let i = 0; i < k + 1; i++) {
+    for (let j = 0; j < k + 1; j++) {
+      varYConfidence += xRow[i] * XtXInv[i][j] * xRow[j];
+    }
+  }
+  varYConfidence *= (s * s);
+  
+  // Standard error for confidence interval (mean Y at X)
+  const seYConfidence = Math.sqrt(Math.max(0, varYConfidence));
+  
+  // Standard error for prediction interval (adds individual observation variance)
+  const seYPrediction = Math.sqrt(Math.max(0, varYConfidence + s * s));
+  
+  return {
+    predictedY,
+    confidenceIntervalLower: predictedY - tValue * seYConfidence,
+    confidenceIntervalUpper: predictedY + tValue * seYConfidence,
+    predictionIntervalLower: predictedY - tValue * seYPrediction,
+    predictionIntervalUpper: predictedY + tValue * seYPrediction,
+  };
+}
