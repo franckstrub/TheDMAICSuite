@@ -317,6 +317,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
       dataX: xData,
       dataY: yData,
       targetY,
+      significanceLevel,
     };
     
     await saveDataMutation.mutateAsync(data);
@@ -344,6 +345,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
       dataX: xData,
       dataY: yData,
       targetY,
+      significanceLevel,
     };
     
     await saveConfigMutation.mutateAsync(configData);
