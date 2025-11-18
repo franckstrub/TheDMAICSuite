@@ -2607,6 +2607,135 @@ export const insertMultipleRegressionConfigSchema = createInsertSchema(multipleR
 export type InsertMultipleRegressionConfig = z.infer<typeof insertMultipleRegressionConfigSchema>;
 export type MultipleRegressionConfig = typeof multipleRegressionConfig.$inferSelect;
 
+// DOE Fractional Factorial Configuration (2^(k-p) designs)
+export const doeFractionalFactorialConfig = pgTable(
+  "doe_fractional_factorial_config",
+  {
+    id: serial("id").primaryKey(),
+    organizationId: integer("organization_id")
+      .references(() => organizations.id)
+      .notNull(),
+    projectId: integer("project_id").notNull(),
+    solutionId: text("solution_id").notNull(),
+    
+    // Design type selection
+    enableFullFactorial: boolean("enable_full_factorial").default(false),
+    enableFractionalFactorial: boolean("enable_fractional_factorial").default(false),
+    
+    // Response variable name
+    responseVariableName: text("response_variable_name").default("Y Response"),
+    
+    // Factors configuration
+    // For continuous: { name: "Temperature", type: "continuous", lowValue: 100, highValue: 200 }
+    // For categorical: { name: "Material", type: "categorical", levels: ["Plastic", "Metal"] }
+    factors: jsonb("factors").$type<Array<{
+      name: string;
+      type: "continuous" | "categorical";
+      lowValue?: number;  // For continuous: actual low value (e.g., 100°C)
+      highValue?: number; // For continuous: actual high value (e.g., 200°C)
+      levels?: string[];  // For categorical: level names (e.g., ["Low", "High"])
+    }>>().default([]),
+    
+    // Experimental run data
+    // Structure: [{ run: 1, factors: [-1, 1, -1, ...], response: 45.2 }, ...]
+    runData: jsonb("run_data").$type<Array<{
+      run: number;
+      factors: number[]; // Coded values: -1, 0, +1
+      response: number | null;
+    }>>().default([]),
+    
+    // Design options
+    numberOfReplicates: integer("number_of_replicates").default(1),
+    randomizeRuns: boolean("randomize_runs").default(false),
+    includeCenterPoints: boolean("include_center_points").default(false),
+    numberOfCenterPoints: integer("number_of_center_points").default(3),
+    
+    // Fractional factorial specifics
+    resolution: text("resolution"), // III, IV, V
+    generatingRelations: jsonb("generating_relations").$type<string[]>().default([]),
+    
+    // Analysis options
+    significanceLevel: real("significance_level").default(0.05),
+    
+    // Follow-up full factorial flag
+    generateFollowUpFullFactorial: boolean("generate_follow_up_full_factorial").default(false),
+    significantFactors: jsonb("significant_factors").$type<number[]>().default([]), // Indices of significant factors
+    
+    lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+  },
+  (table) => ({
+    uniqueSolutionDOEFractional: unique().on(table.projectId, table.solutionId),
+  }),
+);
+
+export const insertDoeFractionalFactorialConfigSchema = createInsertSchema(doeFractionalFactorialConfig).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type InsertDoeFractionalFactorialConfig = z.infer<typeof insertDoeFractionalFactorialConfigSchema>;
+export type DoeFractionalFactorialConfig = typeof doeFractionalFactorialConfig.$inferSelect;
+
+// DOE Full Factorial Configuration (2^k designs or follow-up from fractional)
+export const doeFullFactorialConfig = pgTable(
+  "doe_full_factorial_config",
+  {
+    id: serial("id").primaryKey(),
+    organizationId: integer("organization_id")
+      .references(() => organizations.id)
+      .notNull(),
+    projectId: integer("project_id").notNull(),
+    solutionId: text("solution_id").notNull(),
+    
+    // Parent fractional factorial ID (if this is a follow-up)
+    parentFractionalId: integer("parent_fractional_id"),
+    isFollowUp: boolean("is_follow_up").default(false),
+    
+    // Response variable name
+    responseVariableName: text("response_variable_name").default("Y Response"),
+    
+    // Factors configuration (same structure as fractional)
+    // For continuous: { name: "Temperature", type: "continuous", lowValue: 100, highValue: 200 }
+    // For categorical: { name: "Material", type: "categorical", levels: ["Plastic", "Metal"] }
+    factors: jsonb("factors").$type<Array<{
+      name: string;
+      type: "continuous" | "categorical";
+      lowValue?: number;
+      highValue?: number;
+      levels?: string[];
+    }>>().default([]),
+    
+    // Experimental run data
+    runData: jsonb("run_data").$type<Array<{
+      run: number;
+      factors: number[];
+      response: number | null;
+    }>>().default([]),
+    
+    // Design options
+    numberOfReplicates: integer("number_of_replicates").default(1),
+    randomizeRuns: boolean("randomize_runs").default(false),
+    includeCenterPoints: boolean("include_center_points").default(false),
+    numberOfCenterPoints: integer("number_of_center_points").default(3),
+    
+    // Analysis options
+    significanceLevel: real("significance_level").default(0.05),
+    
+    lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+  },
+  (table) => ({
+    uniqueSolutionDOEFull: unique().on(table.projectId, table.solutionId),
+  }),
+);
+
+export const insertDoeFullFactorialConfigSchema = createInsertSchema(doeFullFactorialConfig).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type InsertDoeFullFactorialConfig = z.infer<typeof insertDoeFullFactorialConfigSchema>;
+export type DoeFullFactorialConfig = typeof doeFullFactorialConfig.$inferSelect;
+
 // User Settings Table
 export const userSettings = pgTable(
   "user_settings",
