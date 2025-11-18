@@ -50,6 +50,8 @@ import {
   insertSimpleRegressionConfigSchema,
   insertAnovaTwoWayConfigSchema,
   insertMultipleRegressionConfigSchema,
+  insertDoeFractionalFactorialConfigSchema,
+  insertDoeFullFactorialConfigSchema,
 } from "@shared/schema";
 import {
   CustomerRequirement,
@@ -118,6 +120,8 @@ import {
   simpleRegressionConfig,
   anovaTwoWayConfig,
   multipleRegressionConfig,
+  doeFractionalFactorialConfig,
+  doeFullFactorialConfig,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, asc, desc, ne, and, or, ilike, sql, inArray } from "drizzle-orm";
@@ -7712,6 +7716,244 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       } catch (err) {
         console.error("Multiple Regression config error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // DOE Fractional Factorial Routes (DMAIC Improve Phase - Design of Experiments)
+  app.get(
+    "/api/projects/:projectId/solutions/:solutionId/doe-fractional",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        const solutionId = req.params.solutionId;
+
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res
+            .status(400)
+            .json({ message: "User organization not found" });
+        }
+
+        const [config] = await db
+          .select()
+          .from(doeFractionalFactorialConfig)
+          .where(
+            and(
+              eq(doeFractionalFactorialConfig.projectId, projectId),
+              eq(doeFractionalFactorialConfig.solutionId, solutionId),
+              eq(doeFractionalFactorialConfig.organizationId, userRecord.organizationId),
+            ),
+          )
+          .limit(1);
+
+        if (!config) {
+          return res.status(404).json({ message: "Configuration not found" });
+        }
+
+        return res.json(config);
+      } catch (err) {
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  app.post(
+    "/api/projects/:projectId/solutions/:solutionId/doe-fractional",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        const solutionId = req.params.solutionId;
+
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res
+            .status(400)
+            .json({ message: "User organization not found" });
+        }
+
+        const configData = {
+          projectId,
+          solutionId,
+          organizationId: userRecord.organizationId,
+          ...req.body,
+        };
+
+        const validatedData = insertDoeFractionalFactorialConfigSchema.parse(configData);
+
+        const [existing] = await db
+          .select()
+          .from(doeFractionalFactorialConfig)
+          .where(
+            and(
+              eq(doeFractionalFactorialConfig.projectId, projectId),
+              eq(doeFractionalFactorialConfig.solutionId, solutionId),
+              eq(doeFractionalFactorialConfig.organizationId, userRecord.organizationId),
+            ),
+          )
+          .limit(1);
+
+        if (existing) {
+          const [updated] = await db
+            .update(doeFractionalFactorialConfig)
+            .set({
+              ...validatedData,
+              lastUpdated: new Date(),
+            })
+            .where(
+              and(
+                eq(doeFractionalFactorialConfig.projectId, projectId),
+                eq(doeFractionalFactorialConfig.solutionId, solutionId),
+                eq(doeFractionalFactorialConfig.organizationId, userRecord.organizationId),
+              ),
+            )
+            .returning();
+          return res.json(updated);
+        } else {
+          const [saved] = await db
+            .insert(doeFractionalFactorialConfig)
+            .values(validatedData)
+            .returning();
+          return res.status(201).json(saved);
+        }
+      } catch (err) {
+        console.error("DOE Fractional Factorial config error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // DOE Full Factorial Routes (DMAIC Improve Phase - Design of Experiments)
+  app.get(
+    "/api/projects/:projectId/solutions/:solutionId/doe-full",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        const solutionId = req.params.solutionId;
+
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res
+            .status(400)
+            .json({ message: "User organization not found" });
+        }
+
+        const [config] = await db
+          .select()
+          .from(doeFullFactorialConfig)
+          .where(
+            and(
+              eq(doeFullFactorialConfig.projectId, projectId),
+              eq(doeFullFactorialConfig.solutionId, solutionId),
+              eq(doeFullFactorialConfig.organizationId, userRecord.organizationId),
+            ),
+          )
+          .limit(1);
+
+        if (!config) {
+          return res.status(404).json({ message: "Configuration not found" });
+        }
+
+        return res.json(config);
+      } catch (err) {
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  app.post(
+    "/api/projects/:projectId/solutions/:solutionId/doe-full",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        const solutionId = req.params.solutionId;
+
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res
+            .status(400)
+            .json({ message: "User organization not found" });
+        }
+
+        const configData = {
+          projectId,
+          solutionId,
+          organizationId: userRecord.organizationId,
+          ...req.body,
+        };
+
+        const validatedData = insertDoeFullFactorialConfigSchema.parse(configData);
+
+        const [existing] = await db
+          .select()
+          .from(doeFullFactorialConfig)
+          .where(
+            and(
+              eq(doeFullFactorialConfig.projectId, projectId),
+              eq(doeFullFactorialConfig.solutionId, solutionId),
+              eq(doeFullFactorialConfig.organizationId, userRecord.organizationId),
+            ),
+          )
+          .limit(1);
+
+        if (existing) {
+          const [updated] = await db
+            .update(doeFullFactorialConfig)
+            .set({
+              ...validatedData,
+              lastUpdated: new Date(),
+            })
+            .where(
+              and(
+                eq(doeFullFactorialConfig.projectId, projectId),
+                eq(doeFullFactorialConfig.solutionId, solutionId),
+                eq(doeFullFactorialConfig.organizationId, userRecord.organizationId),
+              ),
+            )
+            .returning();
+          return res.json(updated);
+        } else {
+          const [saved] = await db
+            .insert(doeFullFactorialConfig)
+            .values(validatedData)
+            .returning();
+          return res.status(201).json(saved);
+        }
+      } catch (err) {
+        console.error("DOE Full Factorial config error:", err);
         return handleErrors(err, res);
       }
     },
