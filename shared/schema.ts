@@ -2501,6 +2501,9 @@ export const simpleRegressionConfig = pgTable(
     // Target Y value for solving equations (coefficients and solutions calculated on render)
     targetY: real("target_y"),
     
+    // Significance level for statistical tests (default 0.05 for 95% confidence)
+    significanceLevel: real("significance_level").default(0.05),
+    
     lastUpdated: timestamp("last_updated").notNull().defaultNow(),
   },
   (table) => ({

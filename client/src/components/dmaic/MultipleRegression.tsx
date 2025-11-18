@@ -727,10 +727,10 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                         <SelectValue placeholder="Select significance level" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="0.01" data-testid="option-significance-0.01">0.01</SelectItem>
-                        <SelectItem value="0.05" data-testid="option-significance-0.05">0.05</SelectItem>
-                        <SelectItem value="0.10" data-testid="option-significance-0.10">0.10</SelectItem>
-                        <SelectItem value="0.20" data-testid="option-significance-0.20">0.20</SelectItem>
+                        <SelectItem value="0.01" data-testid="option-significance-0.01">1%</SelectItem>
+                        <SelectItem value="0.05" data-testid="option-significance-0.05">5%</SelectItem>
+                        <SelectItem value="0.10" data-testid="option-significance-0.10">10%</SelectItem>
+                        <SelectItem value="0.20" data-testid="option-significance-0.20">20%</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -2010,85 +2010,39 @@ export function MultipleRegression({ projectId, solutionId }: MultipleRegression
                           );
                           
                           // Calculate Y intervals
-                          const yIntervals = calculateYIntervals(targetY, xValues, selectedDataX, validDataY, regressionResult);
+                          const yIntervals = calculateYIntervals(targetY, xValues, selectedDataX, validDataY, regressionResult, significanceLevel);
                           
                           return (
                             <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg space-y-3 border border-green-200 dark:border-green-800">
-                              <p className="font-medium mb-2">Solution:</p>
-                <table className="w-full border-collapse">
-                  <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0">
-                    <tr>
-                      <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">Solution:</th>
-                      <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">Target {responseVariableName || 'Y'} 95% Confidence Interval:</th>
-                      <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">Target {responseVariableName || 'Y'} 95% Prediction Interval:</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td className="font-medium pb-1 align-text-top">{predictorNames[solveForPredictorIdx]} = {isInInferenceSpace ? <strong>{solvedX.toFixed(4)}</strong> : solvedX.toFixed(4)}
-                      {!isInInferenceSpace && (
-                        <span className="text-sm text-orange-600 dark:text-orange-400 mt-2">
-                          &nbsp;(⚠️ Outside the inference space)
-                        </span>
-                      )}</td>
-                      <td className="font-medium pb-1 align-text-top">{isNaN(yIntervals.confidenceIntervalLower) ? 
-                            <span className="text-orange-600 dark:text-orange-400">Cannot compute (numerical issue)</span> :
-                            `[${yIntervals.confidenceIntervalLower.toFixed(4)}, ${yIntervals.confidenceIntervalUpper.toFixed(4)}]`
-                          }</td>
-                      <td className="font-medium pb-1 align-text-top">{isNaN(yIntervals.predictionIntervalLower) ? 
-                            <span className="text-orange-600 dark:text-orange-400">Cannot compute (numerical issue)</span> :
-                            `[${yIntervals.predictionIntervalLower.toFixed(4)}, ${yIntervals.predictionIntervalUpper.toFixed(4)}]`
-                          }</td>
-                    </tr>
-                  </tbody>
-                </table>
-                              <div className="space-y-2">
-                                <p className="text-lg">
-                                  <strong>{predictorNames[solveForPredictorIdx]}</strong> = <strong>{solvedX.toFixed(4)}</strong>
-                                </p>
-                                
-                                <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-950 rounded border border-blue-200 dark:border-blue-800">
-                                  <p className="font-medium text-sm mb-2">Target {responseVariableName || 'Y'} = {targetY.toFixed(4)}</p>
-                                  <div className="space-y-1 text-sm">
-                                    <p>
-                                      <strong>95% Confidence Interval:</strong><br />
-                                      [{yIntervals.confidenceIntervalLower.toFixed(4)}, {yIntervals.confidenceIntervalUpper.toFixed(4)}]
-                                    </p>
-                                    <p className="mt-2">
-                                      <strong>95% Prediction Interval:</strong><br />
-                                      [{yIntervals.predictionIntervalLower.toFixed(4)}, {yIntervals.predictionIntervalUpper.toFixed(4)}]
-                                    </p>
-                                  </div>
-                                </div>
-                                
-                                {!isInInferenceSpace && (
-                                  <div className="p-2 bg-orange-100 dark:bg-orange-900 border border-orange-300 dark:border-orange-700 rounded">
-                                    <p className="text-sm text-orange-800 dark:text-orange-200">
-                                      ⚠️ <strong>Warning:</strong> Solved value is outside the inference space [{minX.toFixed(4)}, {maxX.toFixed(4)}]. This is extrapolation and may not be reliable.
-                                    </p>
-                                  </div>
-                                )}
-                                
-                                {!isSignificant && (
-                                  <div className="p-2 bg-yellow-100 dark:bg-yellow-900 border border-yellow-300 dark:border-yellow-700 rounded">
-                                    <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                                      ⚠️ <strong>Note:</strong> The coefficient for {predictorNames[solveForPredictorIdx]} is not statistically significant (p = {pValue.toFixed(4)}). Consider using a different predictor.
-                                    </p>
-                                  </div>
-                                )}
-                                
-                                <div className="pt-2 text-sm text-muted-foreground">
-                                  <p>Regression equation used:</p>
-                                  <p className="font-mono text-xs mt-1">
-                                    {responseVariableName || 'Y'} = {regressionResult.coefficients[0].estimate.toFixed(4)}
-                                    {selectedPredictors.map((predIdx, i) => {
-                                      const coeff = regressionResult.coefficients[i + 1].estimate;
-                                      const sign = coeff >= 0 ? ' + ' : ' - ';
-                                      return `${sign}${Math.abs(coeff).toFixed(4)}*${predictorNames[predIdx]}`;
-                                    }).join('')}
-                                  </p>
-                                </div>
-                              </div>
+                              <p className="text-xl font-medium mb-2"><b>Solution:</b></p>
+                              <table className="w-full border-collapse">
+                                <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0">
+                                  <tr>
+                                    <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">Solution:</th>
+                                    <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">Target Y {(1-significanceLevel)*100}% Confidence Interval:</th>
+                                    <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">Target Y {(1-significanceLevel)*100}% Prediction Interval:</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  <tr>
+                                    <td className="font-medium pb-1 align-text-top"><strong>{predictorNames[solveForPredictorIdx]}</strong> = {isInInferenceSpace ? <strong>{solvedX.toFixed(4)}</strong> : solvedX.toFixed(4)}
+                                    {!isInInferenceSpace && (
+                                      <span className="text-sm text-orange-600 dark:text-orange-400 mt-2">
+                                        &nbsp;(⚠️ Outside the inference space)
+                                      </span>
+                                    )}</td>
+                                    <td className="font-medium pb-1 align-text-top">{isNaN(yIntervals.confidenceIntervalLower) ? 
+                                          <span className="text-orange-600 dark:text-orange-400">Cannot compute (numerical issue)</span> :
+                                          `[${yIntervals.confidenceIntervalLower.toFixed(4)}, ${yIntervals.confidenceIntervalUpper.toFixed(4)}]`
+                                        }</td>
+                                    <td className="font-medium pb-1 align-text-top">{isNaN(yIntervals.predictionIntervalLower) ? 
+                                          <span className="text-orange-600 dark:text-orange-400">Cannot compute (numerical issue)</span> :
+                                          `[${yIntervals.predictionIntervalLower.toFixed(4)}, ${yIntervals.predictionIntervalUpper.toFixed(4)}]`
+                                        }</td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                              
                             </div>
                           );
                         })()}

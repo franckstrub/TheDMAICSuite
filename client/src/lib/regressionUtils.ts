@@ -840,7 +840,8 @@ export function calculateLinearYIntervals(
   targetY: number,
   solvedX: number,
   xData: number[],
-  result: LinearRegressionResult
+  result: LinearRegressionResult,
+  significanceLevel: number,
 ): YInterval {
   const n = xData.length;
   const df = n - 2;
@@ -860,7 +861,7 @@ export function calculateLinearYIntervals(
       predictionIntervalUpper: targetY,
     };
   }
-  const tValue = jStat.studentt.inv(0.975, df);
+  const tValue = jStat.studentt.inv((1-significanceLevel/2), df);
   
   // Calculate residual standard error
   const s = Math.sqrt(result.sse / df);
@@ -893,7 +894,8 @@ export function calculateQuadraticYIntervals(
   targetY: number,
   x: number,
   xData: number[],
-  result: QuadraticRegressionResult
+  result: QuadraticRegressionResult,
+  significanceLevel: number,
 ): YInterval {
   const n = xData.length;
   const df = n - 3;
@@ -913,7 +915,7 @@ export function calculateQuadraticYIntervals(
       predictionIntervalUpper: targetY,
     };
   }
-  const tValue = jStat.studentt.inv(0.975, df);
+  const tValue = jStat.studentt.inv((1-significanceLevel/2), df);
   
   // Calculate residual standard error
   const s = Math.sqrt(result.sse / df);
@@ -1034,7 +1036,8 @@ export function calculateCubicYIntervals(
   targetY: number,
   x: number,
   xData: number[],
-  result: CubicRegressionResult
+  result: CubicRegressionResult,
+  significanceLevel: number,
 ): YInterval {
   const n = xData.length;
   const df = n - 4;
@@ -1054,7 +1057,7 @@ export function calculateCubicYIntervals(
       predictionIntervalUpper: targetY,
     };
   }
-  const tValue = jStat.studentt.inv(0.975, df);
+  const tValue = jStat.studentt.inv((1-significanceLevel/2), df);
   
   // Calculate residual standard error
   const s = Math.sqrt(result.sse / df);

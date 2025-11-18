@@ -770,10 +770,10 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
                 <SelectValue placeholder="Select significance level" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="0.01" data-testid="option-significance-0.01">0.01</SelectItem>
-                <SelectItem value="0.05" data-testid="option-significance-0.05">0.05</SelectItem>
-                <SelectItem value="0.10" data-testid="option-significance-0.10">0.10</SelectItem>
-                <SelectItem value="0.20" data-testid="option-significance-0.20">0.20</SelectItem>
+                <SelectItem value="0.01" data-testid="option-significance-0.01">1%</SelectItem>
+                <SelectItem value="0.05" data-testid="option-significance-0.05">5%</SelectItem>
+                <SelectItem value="0.10" data-testid="option-significance-0.10">10%</SelectItem>
+                <SelectItem value="0.20" data-testid="option-significance-0.20">20%</SelectItem>
               </SelectContent>
             </Select>
           </div>
