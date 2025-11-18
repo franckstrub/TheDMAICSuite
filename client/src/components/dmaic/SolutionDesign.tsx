@@ -16,6 +16,7 @@ import ProcessRaciMatrix from "@/components/dmaic/ProcessRaciMatrix";
 import { SimpleRegression } from "@/components/dmaic/SimpleRegression";
 import { ANOVATwoWay } from "@/components/dmaic/ANOVATwoWay";
 import { MultipleRegression } from "@/components/dmaic/MultipleRegression";
+import { DesignOfExperiments } from "@/components/dmaic/DesignOfExperiments";
 
 interface SolutionDesignProps {
   projectId: number;
@@ -715,6 +716,13 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
                           <MultipleRegression key={`${projectId}-${solution.solutionId}`} projectId={projectId} solutionId={solution.solutionId} />
                         </CardContent>
                       </Card>
+                    </div>
+                  )}
+
+                  {/* Design of Experiments (DOE) - Show when tfDoe is checked */}
+                  {currentState.transferFunction && transferFunctionConfigs[solution.solutionId]?.tfDoe && (
+                    <div className="mt-6">
+                      <DesignOfExperiments key={`${projectId}-${solution.solutionId}`} projectId={projectId} solutionId={solution.solutionId} />
                     </div>
                   )}
 
