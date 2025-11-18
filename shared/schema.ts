@@ -2644,6 +2644,14 @@ export const doeFractionalFactorialConfig = pgTable(
       response: number | null;
     }>>().default([]),
     
+    // Generated plan (persisted to ensure consistency on reload)
+    // Structure: [{ standardOrder: 1, runOrder: 3, factors: [-1, 1, -1, ...] }, ...]
+    generatedPlan: jsonb("generated_plan").$type<Array<{
+      standardOrder: number;
+      runOrder: number;
+      factors: number[]; // Coded values: -1, 0, +1
+    }>>().default([]),
+    
     // Design options
     numberOfReplicates: integer("number_of_replicates").default(1),
     randomizeRuns: boolean("randomize_runs").default(false),
@@ -2710,6 +2718,14 @@ export const doeFullFactorialConfig = pgTable(
       run: number;
       factors: number[];
       response: number | null;
+    }>>().default([]),
+    
+    // Generated plan (persisted to ensure consistency on reload)
+    // Structure: [{ standardOrder: 1, runOrder: 3, factors: [-1, 1, -1, ...] }, ...]
+    generatedPlan: jsonb("generated_plan").$type<Array<{
+      standardOrder: number;
+      runOrder: number;
+      factors: number[]; // Coded values: -1, 0, +1
     }>>().default([]),
     
     // Design options
