@@ -2659,6 +2659,7 @@ export const doeFractionalFactorialConfig = pgTable(
     numberOfCenterPoints: integer("number_of_center_points").default(3),
     
     // Fractional factorial specifics
+    fractionalResolution: integer("fractional_resolution").default(1), // p value in 2^(k-p)
     resolution: text("resolution"), // III, IV, V
     generatingRelations: jsonb("generating_relations").$type<string[]>().default([]),
     

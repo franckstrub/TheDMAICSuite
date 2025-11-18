@@ -45,6 +45,7 @@ export function DesignOfExperiments({ projectId, solutionId }: DesignOfExperimen
   // State for Setup tab
   const [enableFullFactorial, setEnableFullFactorial] = useState(false);
   const [enableFractionalFactorial, setEnableFractionalFactorial] = useState(true);
+  const [fractionalResolution, setFractionalResolution] = useState(1);
   const [responseVariableName, setResponseVariableName] = useState("Y Response");
   const [factors, setFactors] = useState<DOEFactor[]>([
     { name: "Factor A", type: "continuous", lowValue: -1, highValue: 1, units: "" },
@@ -102,6 +103,10 @@ export function DesignOfExperiments({ projectId, solutionId }: DesignOfExperimen
       
       if (config.enableFractionalFactorial !== undefined) {
         setEnableFractionalFactorial(config.enableFractionalFactorial);
+      }
+      
+      if (config.fractionalResolution !== undefined) {
+        setFractionalResolution(config.fractionalResolution);
       }
       
       if (config.responseVariableName) {
@@ -191,6 +196,7 @@ export function DesignOfExperiments({ projectId, solutionId }: DesignOfExperimen
     saveConfigMutation.mutate({
       enableFullFactorial,
       enableFractionalFactorial,
+      fractionalResolution,
       responseVariableName,
       factors,
       numberOfReplicates,
@@ -204,6 +210,16 @@ export function DesignOfExperiments({ projectId, solutionId }: DesignOfExperimen
   
   const handleSaveData = () => {
     saveConfigMutation.mutate({
+      enableFullFactorial,
+      enableFractionalFactorial,
+      fractionalResolution,
+      responseVariableName,
+      factors,
+      numberOfReplicates,
+      randomizeRuns,
+      includeCenterPoints,
+      numberOfCenterPoints,
+      significanceLevel,
       runData,
       generatedPlan: transformGeneratedPlanForSaving(generatedPlan, factors),
     });
@@ -294,7 +310,7 @@ export function DesignOfExperiments({ projectId, solutionId }: DesignOfExperimen
     if (enableFullFactorial) {
       plan = generateFullFactorialPlan(factors, centerPoints, randomizeRuns);
     } else {
-      plan = generateFractionalFactorialPlan(factors, 4, centerPoints, randomizeRuns);
+      plan = generateFractionalFactorialPlan(factors, fractionalResolution, centerPoints, randomizeRuns);
     }
     
     setGeneratedPlan(plan);
@@ -430,6 +446,38 @@ export function DesignOfExperiments({ projectId, solutionId }: DesignOfExperimen
                       </div>
                     </div>
                   </div>
+                  
+                  {/* Fractional Factorial Resolution - Show only when Fractional Factorial is selected */}
+                  {enableFractionalFactorial && (
+                    <div className="space-y-2">
+                      <Label htmlFor="fractional-resolution">Fractional Factorial Design (2^(k-p))</Label>
+                      {factors.length >= 4 ? (
+                        <>
+                          <Select
+                            value={fractionalResolution.toString()}
+                            onValueChange={(value) => setFractionalResolution(parseInt(value))}
+                          >
+                            <SelectTrigger id="fractional-resolution" data-testid="select-fractional-resolution">
+                              <SelectValue placeholder="Select resolution" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {factors.length === 4 && <SelectItem value="1">2^(4-1) - Resolution IV (8 runs)</SelectItem>}
+                              {factors.length === 5 && <SelectItem value="1">2^(5-1) - Resolution V (16 runs)</SelectItem>}
+                              {factors.length === 6 && <SelectItem value="2">2^(6-2) - Resolution IV (16 runs)</SelectItem>}
+                              {factors.length === 7 && <SelectItem value="3">2^(7-3) - Resolution IV (16 runs)</SelectItem>}
+                            </SelectContent>
+                          </Select>
+                          <div className="text-sm text-muted-foreground">
+                            The fractional design reduces experimental runs while maintaining analysis capability.
+                          </div>
+                        </>
+                      ) : (
+                        <div className="text-sm text-muted-foreground py-2 px-3 bg-muted rounded-md">
+                          Fractional factorial designs require at least 4 factors. Add more factors or use Full Factorial Design.
+                        </div>
+                      )}
+                    </div>
+                  )}
                   
                   {/* Response Variable */}
                   <div className="space-y-2">
