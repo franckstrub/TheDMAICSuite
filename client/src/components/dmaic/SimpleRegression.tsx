@@ -26,6 +26,13 @@ import {
 } from '@/lib/regressionUtils';
 import { parseTwoColumnPaste } from '@/lib/excelPasteUtils';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -58,6 +65,8 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
   
   const [datasetYDescription, setDatasetYDescription] = useState("Y Response");
   const [datasetXDescription, setDatasetXDescription] = useState("X Predictor");
+  const [significanceLevel, setSignificanceLevel] = useState(0.05);
+  
   
   const [dataPoints, setDataPoints] = useState<DataPoint[]>([
     { x: NaN, y: NaN },
@@ -114,6 +123,9 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
       
       if (config.targetY !== null && config.targetY !== undefined) {
         setTargetY(config.targetY);
+      }
+      if (config.significanceLevel !== null && config.significanceLevel !== undefined) {
+        setSignificanceLevel(config.significanceLevel);
       }
     }
   }, [configQuery.data]);
@@ -593,7 +605,24 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
               title="Enter your X Variable Description (Predictor). This should be an Independent Variable."
               data-testid="input-x-description"
             />
-          </div>
+          </div>          
+        </div>
+        <div>
+          <Label htmlFor="significanceLevel" data-testid="label-significance-level">Significance Level (α)</Label>
+          <Select
+            value={significanceLevel.toString()}
+            onValueChange={(value) => setSignificanceLevel(parseFloat(value))}
+          >
+            <SelectTrigger id="significanceLevel" data-testid="select-significance-level">
+              <SelectValue placeholder="Select significance level" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="0.01" data-testid="option-significance-0.01">1%</SelectItem>
+              <SelectItem value="0.05" data-testid="option-significance-0.05">5%</SelectItem>
+              <SelectItem value="0.10" data-testid="option-significance-0.10">10%</SelectItem>
+              <SelectItem value="0.20" data-testid="option-significance-0.20">20%</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <Button
@@ -1242,17 +1271,17 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">
-                    Conclusion (α=5%)
-                    {/*(5% significance (α)):*/}
+                    Conclusion (α={significanceLevel*100}%)
+                    {/*(x% significance (α)):*/}
                   </p>
                   <p
                     className={`font-medium ${
-                      linearResult.statistics.regressionPValue < 0.05
+                      linearResult.statistics.regressionPValue < significanceLevel
                         ? 'text-green-600 dark:text-green-400'
                         : 'text-red-600 dark:text-red-400'
                     }`}
                   >
-                    {linearResult.statistics.regressionPValue < 0.05
+                    {linearResult.statistics.regressionPValue < significanceLevel
                       ? 'Significant'
                       : 'Non-significant'}
                   </p>
@@ -1617,17 +1646,17 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">
-                    Conclusion (α=5%)
-                    {/*(5% significance (α)):*/}
+                    Conclusion (α={significanceLevel*100}%)
+                    {/*(x% significance (α)):*/}
                   </p>
                   <p
                     className={`font-medium ${
-                      quadraticResult.statistics.regressionPValue < 0.05
+                      quadraticResult.statistics.regressionPValue < significanceLevel
                         ? 'text-green-600 dark:text-green-400'
                         : 'text-red-600 dark:text-red-400'
                     }`}
                   >
-                    {quadraticResult.statistics.regressionPValue < 0.05
+                    {quadraticResult.statistics.regressionPValue < significanceLevel
                       ? 'Significant'
                       : 'Non-significant'}
                   </p>
@@ -1998,17 +2027,17 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">
-                    Conclusion (α=5%)
-                    {/*(5% significance (α)):*/}
+                    Conclusion (α={significanceLevel*100}%)
+                    {/*(x% significance (α)):*/}
                   </p>
                   <p
                     className={`font-medium ${
-                      cubicResult.statistics.regressionPValue < 0.05
+                      cubicResult.statistics.regressionPValue < significanceLevel
                         ? 'text-green-600 dark:text-green-400'
                         : 'text-red-600 dark:text-red-400'
                     }`}
                   >
-                    {cubicResult.statistics.regressionPValue < 0.05
+                    {cubicResult.statistics.regressionPValue < significanceLevel
                       ? 'Significant'
                       : 'Non-significant'}
                   </p>
@@ -2318,7 +2347,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
             const isInInferenceSpace = solvedXLinear >= minX && solvedXLinear <= maxX;
             
             // Calculate confidence and prediction intervals for Y at the solved X
-            const intervals = calculateLinearYIntervals(targetY, solvedXLinear, xValues, linearResult);
+            const intervals = calculateLinearYIntervals(targetY, solvedXLinear, xValues, linearResult, significanceLevel);
             
             return (
               <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg space-y-2">
@@ -2327,8 +2356,8 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                   <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0">
                     <tr>
                       <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">Solution:</th>
-                      <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">Target Y 95% Confidence Interval:</th>
-                      <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">Target Y 95% Prediction Interval:</th>
+                      <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">Target Y {(1-significanceLevel)*100}% Confidence Interval:</th>
+                      <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">Target Y {(1-significanceLevel)*100}% Prediction Interval:</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -2366,7 +2395,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                 <p className="font-medium mb-2">Quadratic Solutions:</p>
                 {solvedXQuadratic.map((x, i) => {
                   const isInInferenceSpace = x >= minX && x <= maxX;
-                  const intervals = calculateQuadraticYIntervals(targetY, x, xValues, quadraticResult);
+                  const intervals = calculateQuadraticYIntervals(targetY, x, xValues, quadraticResult, significanceLevel);
                   
                   return (
                     <div key={i} className="mb-4 last:mb-0 pb-3 border-b last:border-b-0 border-green-200 dark:border-green-800">
@@ -2374,8 +2403,8 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                         <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0">
                           <tr>
                             <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">Solutions:</th>
-                            <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">Target Y 95% Confidence Interval:</th>
-                            <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">Target Y 95% Prediction Interval:</th>
+                            <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">Target Y {(1-significanceLevel)*100}% Confidence Interval:</th>
+                            <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">Target Y {(1-significanceLevel)*100}% Prediction Interval:</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -2416,7 +2445,7 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                 <p className="font-medium mb-2">Cubic Solutions:</p>
                 {solvedXCubic.map((x, i) => {
                   const isInInferenceSpace = x >= minX && x <= maxX;
-                  const intervals = calculateCubicYIntervals(targetY, x, xValues, cubicResult);
+                  const intervals = calculateCubicYIntervals(targetY, x, xValues, cubicResult, significanceLevel);
                   
                   return (
                     <div key={i} className="mb-4 last:mb-0 pb-3 border-b last:border-b-0 border-purple-200 dark:border-purple-800">
@@ -2424,8 +2453,8 @@ export function SimpleRegression({ projectId, solutionId }: SimpleRegressionProp
                         <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0">
                           <tr>
                             <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">Solutions:</th>
-                            <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">Target Y 95% Confidence Interval:</th>
-                            <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">Target Y 95% Prediction Interval:</th>
+                            <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">Target Y {(1-significanceLevel)*100}% Confidence Interval:</th>
+                            <th className="text-sm text-muted-foreground pb-1 text-left w-1/3">Target Y {(1-significanceLevel)*100}% Prediction Interval:</th>
                           </tr>
                         </thead>
                         <tbody>

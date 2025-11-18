@@ -489,7 +489,8 @@ export function calculateYIntervals(
   xValues: number[], // Values for all predictors [x1, x2, ..., xk]
   dataX: number[][], // All X data [n x k]
   dataY: number[], // All Y data [n]
-  result: MultipleRegressionResult
+  result: MultipleRegressionResult,
+  significanceLevel: number,
 ): YInterval {
   const n = dataY.length;
   const k = result.k; // Number of predictors
@@ -510,7 +511,7 @@ export function calculateYIntervals(
       predictionIntervalUpper: targetY,
     };
   }
-  const tValue = jStat.studentt.inv(0.975, df);
+  const tValue = jStat.studentt.inv((1-significanceLevel/2), df);
   
   // Calculate residual standard error from ANOVA table
   const errorRow = result.anovaTable.find(row => row.source === 'Error');
