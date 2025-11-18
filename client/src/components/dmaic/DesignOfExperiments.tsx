@@ -400,7 +400,12 @@ export function DesignOfExperiments({ projectId, solutionId }: DesignOfExperimen
                         <Checkbox
                           id="enable-full-factorial"
                           checked={enableFullFactorial}
-                          onCheckedChange={(checked) => setEnableFullFactorial(checked as boolean)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setEnableFullFactorial(true);
+                              setEnableFractionalFactorial(false);
+                            }
+                          }}
                           data-testid="checkbox-enable-full-factorial"
                         />
                         <Label htmlFor="enable-full-factorial">
@@ -411,7 +416,12 @@ export function DesignOfExperiments({ projectId, solutionId }: DesignOfExperimen
                         <Checkbox
                           id="enable-fractional-factorial"
                           checked={enableFractionalFactorial}
-                          onCheckedChange={(checked) => setEnableFractionalFactorial(checked as boolean)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setEnableFractionalFactorial(true);
+                              setEnableFullFactorial(false);
+                            }
+                          }}
                           data-testid="checkbox-enable-fractional-factorial"
                         />
                         <Label htmlFor="enable-fractional-factorial">
