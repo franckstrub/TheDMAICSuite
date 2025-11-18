@@ -1,0 +1,717 @@
+import jStat from 'jstat';
+
+/**
+ * DOE Factor definition - supports both continuous and categorical factors
+ */
+export type DOEFactor =
+  | { name: string; type: "continuous"; lowValue: number; highValue: number; units?: string }
+  | { name: string; type: "categorical"; levels: string[] };
+
+/**
+ * DOE Plan row (one experimental run)
+ */
+export interface DOEPlanRow {
+  standardOrder: number;
+  runOrder: number;
+  [key: string]: number | string; // Factor columns with coded values (-1, 0, +1)
+}
+
+/**
+ * Main effect result
+ */
+export interface MainEffect {
+  factor: string;
+  effect: number;
+  absoluteEffect: number;
+}
+
+/**
+ * Interaction effect result
+ */
+export interface InteractionEffect {
+  factorA: string;
+  factorB: string;
+  interaction: string;
+  effect: number;
+  absoluteEffect: number;
+}
+
+/**
+ * ANOVA table row for DOE
+ */
+export interface DOEAnovaRow {
+  source: string;
+  df: number;
+  ss: number;
+  ms: number;
+  fValue: number | null;
+  pValue: number | null;
+  significant: boolean;
+}
+
+/**
+ * Full factorial design result
+ */
+export interface FullFactorialPlan {
+  plan: DOEPlanRow[];
+  factors: DOEFactor[];
+  designType: string;
+}
+
+/**
+ * Fractional factorial design result
+ */
+export interface FractionalFactorialPlan {
+  plan: DOEPlanRow[];
+  factors: DOEFactor[];
+  designType: string;
+  definingRelation: string;
+  resolution: number;
+}
+
+/**
+ * Generate a full factorial design (2^k)
+ * 
+ * @param factors Array of factor definitions
+ * @param centerPoints Number of center points to add (default 0)
+ * @param randomize Whether to randomize run order (default true)
+ * @returns Full factorial design plan
+ */
+export function generateFullFactorialPlan(
+  factors: DOEFactor[],
+  centerPoints: number = 0,
+  randomize: boolean = true
+): FullFactorialPlan {
+  const k = factors.length;
+  const n = Math.pow(2, k); // Total runs in full factorial
+  
+  const plan: DOEPlanRow[] = [];
+  
+  // Generate all combinations of -1 and +1
+  for (let i = 0; i < n; i++) {
+    const row: DOEPlanRow = {
+      standardOrder: i + 1,
+      runOrder: i + 1, // Will be shuffled if randomize is true
+    };
+    
+    // For each factor, determine if it's at low (-1) or high (+1) level
+    for (let j = 0; j < k; j++) {
+      const factorName = factors[j].name;
+      // Use bit manipulation to determine level
+      const level = (i & (1 << j)) ? 1 : -1;
+      row[factorName] = level;
+    }
+    
+    plan.push(row);
+  }
+  
+  // Add center points if requested
+  for (let i = 0; i < centerPoints; i++) {
+    const row: DOEPlanRow = {
+      standardOrder: n + i + 1,
+      runOrder: n + i + 1,
+    };
+    
+    // All factors at center level (0)
+    for (const factor of factors) {
+      row[factor.name] = 0;
+    }
+    
+    plan.push(row);
+  }
+  
+  // Randomize run order if requested
+  if (randomize) {
+    const runOrders = plan.map((_, idx) => idx + 1);
+    // Fisher-Yates shuffle
+    for (let i = runOrders.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [runOrders[i], runOrders[j]] = [runOrders[j], runOrders[i]];
+    }
+    
+    plan.forEach((row, idx) => {
+      row.runOrder = runOrders[idx];
+    });
+    
+    // Sort by run order for display
+    plan.sort((a, b) => a.runOrder - b.runOrder);
+  }
+  
+  return {
+    plan,
+    factors,
+    designType: `2^${k} Full Factorial${centerPoints > 0 ? ` with ${centerPoints} center points` : ''}`,
+  };
+}
+
+/**
+ * Generate a fractional factorial design (2^(k-p))
+ * 
+ * @param factors Array of factor definitions
+ * @param resolution Design resolution (III, IV, or V)
+ * @param centerPoints Number of center points to add (default 0)
+ * @param randomize Whether to randomize run order (default true)
+ * @returns Fractional factorial design plan
+ */
+export function generateFractionalFactorialPlan(
+  factors: DOEFactor[],
+  resolution: number = 4,
+  centerPoints: number = 0,
+  randomize: boolean = true
+): FractionalFactorialPlan {
+  const k = factors.length;
+  
+  // Determine the fraction based on number of factors and resolution
+  let p = 0; // Number of generators
+  let generators: string[] = [];
+  let definingRelation = '';
+  
+  if (k === 4) {
+    // 2^(4-1) design, Resolution IV
+    p = 1;
+    generators = ['D=ABC'];
+    definingRelation = 'I = ABCD';
+  } else if (k === 5) {
+    // 2^(5-1) design, Resolution V
+    p = 1;
+    generators = ['E=ABCD'];
+    definingRelation = 'I = ABCDE';
+  } else if (k === 6) {
+    // 2^(6-2) design, Resolution IV
+    p = 2;
+    generators = ['E=ABC', 'F=BCD'];
+    definingRelation = 'I = ABCE = BCDF = ADEF';
+  } else if (k === 7) {
+    // 2^(7-3) design, Resolution IV
+    p = 3;
+    generators = ['E=ABC', 'F=BCD', 'G=ACD'];
+    definingRelation = 'I = ABCE = BCDF = ACDG';
+  } else {
+    // For other cases, generate full factorial
+    return {
+      ...generateFullFactorialPlan(factors, centerPoints, randomize),
+      definingRelation: 'Full Factorial',
+      resolution,
+    };
+  }
+  
+  const baseFactors = k - p;
+  const n = Math.pow(2, baseFactors); // Runs in fractional factorial
+  
+  const plan: DOEPlanRow[] = [];
+  
+  // Generate base factorial design for first (k-p) factors
+  for (let i = 0; i < n; i++) {
+    const row: DOEPlanRow = {
+      standardOrder: i + 1,
+      runOrder: i + 1,
+    };
+    
+    // Set base factors
+    for (let j = 0; j < baseFactors; j++) {
+      const factorName = factors[j].name;
+      const level = (i & (1 << j)) ? 1 : -1;
+      row[factorName] = level;
+    }
+    
+    // Generate additional factors using generators
+    for (let g = 0; g < p; g++) {
+      const generatedFactorIdx = baseFactors + g;
+      const generatedFactorName = factors[generatedFactorIdx].name;
+      const generator = generators[g];
+      
+      // Parse generator (e.g., "D=ABC" means D = A*B*C)
+      let product = 1;
+      for (let j = 0; j < baseFactors; j++) {
+        const baseFactorName = factors[j].name;
+        if (generator.includes(baseFactorName)) {
+          product *= row[baseFactorName] as number;
+        }
+      }
+      
+      row[generatedFactorName] = product;
+    }
+    
+    plan.push(row);
+  }
+  
+  // Add center points if requested
+  for (let i = 0; i < centerPoints; i++) {
+    const row: DOEPlanRow = {
+      standardOrder: n + i + 1,
+      runOrder: n + i + 1,
+    };
+    
+    for (const factor of factors) {
+      row[factor.name] = 0;
+    }
+    
+    plan.push(row);
+  }
+  
+  // Randomize run order if requested
+  if (randomize) {
+    const runOrders = plan.map((_, idx) => idx + 1);
+    for (let i = runOrders.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [runOrders[i], runOrders[j]] = [runOrders[j], runOrders[i]];
+    }
+    
+    plan.forEach((row, idx) => {
+      row.runOrder = runOrders[idx];
+    });
+    
+    plan.sort((a, b) => a.runOrder - b.runOrder);
+  }
+  
+  return {
+    plan,
+    factors,
+    designType: `2^${k}-${p} Fractional Factorial (Resolution ${toRoman(resolution)})`,
+    definingRelation,
+    resolution,
+  };
+}
+
+/**
+ * Convert number to Roman numeral (for resolution)
+ */
+function toRoman(num: number): string {
+  const romans = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
+  return romans[num] || num.toString();
+}
+
+/**
+ * Calculate main effects for each factor
+ * 
+ * @param data Experiment data (must include factor columns and response column)
+ * @param factors Factor names
+ * @param responseColumn Name of response column
+ * @returns Array of main effects
+ */
+export function calculateMainEffects(
+  data: any[],
+  factors: string[],
+  responseColumn: string
+): MainEffect[] {
+  const effects: MainEffect[] = [];
+  
+  for (const factor of factors) {
+    // Separate high and low level responses
+    const highResponses: number[] = [];
+    const lowResponses: number[] = [];
+    
+    for (const row of data) {
+      const factorValue = row[factor];
+      const response = row[responseColumn];
+      
+      if (response === null || response === undefined || isNaN(response)) {
+        continue;
+      }
+      
+      if (factorValue === 1 || factorValue === '1') {
+        highResponses.push(Number(response));
+      } else if (factorValue === -1 || factorValue === '-1') {
+        lowResponses.push(Number(response));
+      }
+      // Ignore center points (0) for main effect calculation
+    }
+    
+    if (highResponses.length === 0 || lowResponses.length === 0) {
+      effects.push({
+        factor,
+        effect: 0,
+        absoluteEffect: 0,
+      });
+      continue;
+    }
+    
+    // Calculate averages
+    const avgHigh = highResponses.reduce((sum, val) => sum + val, 0) / highResponses.length;
+    const avgLow = lowResponses.reduce((sum, val) => sum + val, 0) / lowResponses.length;
+    
+    // Main effect = average(high) - average(low)
+    const effect = avgHigh - avgLow;
+    
+    effects.push({
+      factor,
+      effect,
+      absoluteEffect: Math.abs(effect),
+    });
+  }
+  
+  return effects;
+}
+
+/**
+ * Calculate 2-way interaction effects for all factor pairs
+ * 
+ * @param data Experiment data
+ * @param factors Factor names
+ * @param responseColumn Name of response column
+ * @returns Array of interaction effects
+ */
+export function calculateInteractionEffects(
+  data: any[],
+  factors: string[],
+  responseColumn: string
+): InteractionEffect[] {
+  const interactions: InteractionEffect[] = [];
+  
+  // Generate all pairs of factors
+  for (let i = 0; i < factors.length; i++) {
+    for (let j = i + 1; j < factors.length; j++) {
+      const factorA = factors[i];
+      const factorB = factors[j];
+      
+      // Calculate interaction column (A*B)
+      const interactionData: { interaction: number; response: number }[] = [];
+      
+      for (const row of data) {
+        const valueA = row[factorA];
+        const valueB = row[factorB];
+        const response = row[responseColumn];
+        
+        if (
+          response === null || response === undefined || isNaN(response) ||
+          valueA === 0 || valueB === 0 // Skip center points
+        ) {
+          continue;
+        }
+        
+        const interactionValue = Number(valueA) * Number(valueB);
+        interactionData.push({
+          interaction: interactionValue,
+          response: Number(response),
+        });
+      }
+      
+      if (interactionData.length === 0) {
+        interactions.push({
+          factorA,
+          factorB,
+          interaction: `${factorA}*${factorB}`,
+          effect: 0,
+          absoluteEffect: 0,
+        });
+        continue;
+      }
+      
+      // Calculate effect: average(interaction=+1) - average(interaction=-1)
+      const highResponses = interactionData
+        .filter(d => d.interaction === 1)
+        .map(d => d.response);
+      const lowResponses = interactionData
+        .filter(d => d.interaction === -1)
+        .map(d => d.response);
+      
+      if (highResponses.length === 0 || lowResponses.length === 0) {
+        interactions.push({
+          factorA,
+          factorB,
+          interaction: `${factorA}*${factorB}`,
+          effect: 0,
+          absoluteEffect: 0,
+        });
+        continue;
+      }
+      
+      const avgHigh = highResponses.reduce((sum, val) => sum + val, 0) / highResponses.length;
+      const avgLow = lowResponses.reduce((sum, val) => sum + val, 0) / lowResponses.length;
+      
+      const effect = avgHigh - avgLow;
+      
+      interactions.push({
+        factorA,
+        factorB,
+        interaction: `${factorA}*${factorB}`,
+        effect,
+        absoluteEffect: Math.abs(effect),
+      });
+    }
+  }
+  
+  return interactions;
+}
+
+/**
+ * Perform ANOVA for DOE
+ * 
+ * @param data Experiment data
+ * @param factors Factor names
+ * @param responseColumn Name of response column
+ * @param significanceLevel Significance level (default 0.05)
+ * @returns ANOVA table
+ */
+export function performDOEANOVA(
+  data: any[],
+  factors: string[],
+  responseColumn: string,
+  significanceLevel: number = 0.05
+): DOEAnovaRow[] {
+  const anovaTable: DOEAnovaRow[] = [];
+  
+  // Extract valid responses
+  const responses: number[] = data
+    .map(row => row[responseColumn])
+    .filter(val => val !== null && val !== undefined && !isNaN(val))
+    .map(val => Number(val));
+  
+  if (responses.length === 0) {
+    return anovaTable;
+  }
+  
+  // Calculate total mean and total SS
+  const grandMean = responses.reduce((sum, val) => sum + val, 0) / responses.length;
+  const sst = responses.reduce((sum, val) => sum + Math.pow(val - grandMean, 2), 0);
+  
+  let ssModel = 0;
+  const n = responses.length;
+  
+  // Calculate main effects SS
+  for (const factor of factors) {
+    const highResponses: number[] = [];
+    const lowResponses: number[] = [];
+    
+    for (const row of data) {
+      const factorValue = row[factor];
+      const response = row[responseColumn];
+      
+      if (response === null || response === undefined || isNaN(response)) {
+        continue;
+      }
+      
+      if (factorValue === 1 || factorValue === '1') {
+        highResponses.push(Number(response));
+      } else if (factorValue === -1 || factorValue === '-1') {
+        lowResponses.push(Number(response));
+      }
+    }
+    
+    if (highResponses.length === 0 || lowResponses.length === 0) {
+      anovaTable.push({
+        source: factor,
+        df: 1,
+        ss: 0,
+        ms: 0,
+        fValue: null,
+        pValue: null,
+        significant: false,
+      });
+      continue;
+    }
+    
+    const avgHigh = highResponses.reduce((sum, val) => sum + val, 0) / highResponses.length;
+    const avgLow = lowResponses.reduce((sum, val) => sum + val, 0) / lowResponses.length;
+    const effect = avgHigh - avgLow;
+    
+    // SS for main effect = (effect^2 * n) / 4
+    // This formula works for balanced 2^k designs
+    const ss = Math.pow(effect, 2) * n / 4;
+    ssModel += ss;
+    
+    const ms = ss; // df = 1 for each main effect
+    const dfError = n - (factors.length + 1);
+    
+    anovaTable.push({
+      source: factor,
+      df: 1,
+      ss,
+      ms,
+      fValue: null, // Will calculate after getting MSE
+      pValue: null,
+      significant: false,
+    });
+  }
+  
+  // Calculate 2-way interaction effects SS
+  const interactionEffects = calculateInteractionEffects(data, factors, responseColumn);
+  
+  for (const interaction of interactionEffects) {
+    const effect = interaction.effect;
+    
+    // SS for interaction = (effect^2 * n) / 4
+    const ss = Math.pow(effect, 2) * n / 4;
+    ssModel += ss;
+    
+    const ms = ss;
+    
+    anovaTable.push({
+      source: interaction.interaction,
+      df: 1,
+      ss,
+      ms,
+      fValue: null,
+      pValue: null,
+      significant: false,
+    });
+  }
+  
+  // Calculate error (residual) SS
+  const dfModel = factors.length + interactionEffects.length;
+  const dfError = n - dfModel - 1;
+  const sse = Math.max(0, sst - ssModel); // Ensure non-negative
+  const mse = dfError > 0 ? sse / dfError : 0;
+  
+  // Now calculate F-values and p-values
+  for (const row of anovaTable) {
+    if (mse > 0 && dfError > 0) {
+      const fValue = row.ms / mse;
+      const pValue = 1 - jStat.centralF.cdf(fValue, row.df, dfError);
+      
+      row.fValue = fValue;
+      row.pValue = pValue;
+      row.significant = pValue < significanceLevel;
+    }
+  }
+  
+  // Add Model row
+  anovaTable.unshift({
+    source: 'Model',
+    df: dfModel,
+    ss: ssModel,
+    ms: dfModel > 0 ? ssModel / dfModel : 0,
+    fValue: mse > 0 && dfModel > 0 ? (ssModel / dfModel) / mse : null,
+    pValue: mse > 0 && dfModel > 0 && dfError > 0 
+      ? 1 - jStat.centralF.cdf((ssModel / dfModel) / mse, dfModel, dfError)
+      : null,
+    significant: false,
+  });
+  
+  if (anovaTable[0].pValue !== null) {
+    anovaTable[0].significant = anovaTable[0].pValue! < significanceLevel;
+  }
+  
+  // Add Error row
+  anovaTable.push({
+    source: 'Error',
+    df: dfError,
+    ss: sse,
+    ms: mse,
+    fValue: null,
+    pValue: null,
+    significant: false,
+  });
+  
+  // Add Total row
+  anovaTable.push({
+    source: 'Total',
+    df: n - 1,
+    ss: sst,
+    ms: n > 1 ? sst / (n - 1) : 0,
+    fValue: null,
+    pValue: null,
+    significant: false,
+  });
+  
+  return anovaTable;
+}
+
+/**
+ * Calculate R-squared for DOE model
+ * 
+ * @param data Experiment data
+ * @param factors Factor names
+ * @param responseColumn Name of response column
+ * @returns R-squared value (0 to 1)
+ */
+export function calculateRSquared(
+  data: any[],
+  factors: string[],
+  responseColumn: string
+): number {
+  const anovaTable = performDOEANOVA(data, factors, responseColumn);
+  
+  const modelRow = anovaTable.find(row => row.source === 'Model');
+  const totalRow = anovaTable.find(row => row.source === 'Total');
+  
+  if (!modelRow || !totalRow || totalRow.ss === 0) {
+    return 0;
+  }
+  
+  const rSquared = modelRow.ss / totalRow.ss;
+  return Math.max(0, Math.min(1, rSquared));
+}
+
+/**
+ * Get significant factors from ANOVA results
+ * 
+ * @param anovaResults ANOVA table
+ * @param significanceLevel Significance level (default 0.05)
+ * @returns Array of significant factor names
+ */
+export function getSignificantFactors(
+  anovaResults: DOEAnovaRow[],
+  significanceLevel: number = 0.05
+): string[] {
+  return anovaResults
+    .filter(row => 
+      row.source !== 'Model' && 
+      row.source !== 'Error' && 
+      row.source !== 'Total' &&
+      row.pValue !== null &&
+      row.pValue < significanceLevel
+    )
+    .map(row => row.source);
+}
+
+/**
+ * Decode a coded value (-1, 0, +1) to actual value
+ * 
+ * @param codedValue Coded value (-1, 0, or +1)
+ * @param factor DOE factor definition
+ * @returns Decoded actual value
+ */
+export function decodeValue(
+  codedValue: number,
+  factor: DOEFactor
+): number | string {
+  // Handle categorical factors
+  if (factor.type === 'categorical') {
+    const { levels } = factor;
+    if (codedValue === -1 && levels[0]) return levels[0];
+    if (codedValue === 1 && levels[1]) return levels[1];
+    return 'Center'; // Center for categorical
+  }
+  
+  // Handle continuous factors with linear interpolation
+  const { lowValue, highValue } = factor;
+  const center = (lowValue + highValue) / 2;
+  const halfRange = (highValue - lowValue) / 2;
+  
+  return center + codedValue * halfRange;
+}
+
+/**
+ * Encode an actual value to coded value (-1, 0, +1)
+ * 
+ * @param actualValue Actual value
+ * @param factor DOE factor definition
+ * @returns Coded value (-1, 0, or +1)
+ */
+export function encodeValue(
+  actualValue: number | string,
+  factor: DOEFactor
+): number {
+  // Handle categorical factors
+  if (factor.type === 'categorical') {
+    const { levels } = factor;
+    if (actualValue === levels[0]) return -1;
+    if (actualValue === levels[1]) return 1;
+    return 0; // Assume center if neither
+  }
+  
+  // Handle continuous factors
+  const { lowValue, highValue } = factor;
+  const center = (lowValue + highValue) / 2;
+  const halfRange = (highValue - lowValue) / 2;
+  
+  if (halfRange === 0) return 0;
+  
+  const coded = (Number(actualValue) - center) / halfRange;
+  
+  // Snap to nearest coded level
+  if (coded < -0.5) return -1;
+  if (coded > 0.5) return 1;
+  return 0;
+}
