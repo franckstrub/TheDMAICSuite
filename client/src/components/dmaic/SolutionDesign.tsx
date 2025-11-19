@@ -285,17 +285,16 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
     // Get current database values for fields we're NOT updating
     const existingTracking = tracking.find(t => t.solutionId === solutionId);
     
-    // Automatically set transferFunction to true when saving TF configuration
     const checkboxes = existingTracking ? {
       toBeProcessMap: existingTracking.toBeProcessMap || false,
       toBeProcessRaci: existingTracking.toBeProcessRaci || false,
-      transferFunction: true, // Always true when saving TF config
+      transferFunction: existingTracking.transferFunction || false,
       otherDesign: existingTracking.otherDesign || false,
       solutionNotPursued: existingTracking.solutionNotPursued || false,
     } : {
       toBeProcessMap: false,
       toBeProcessRaci: false,
-      transferFunction: true, // Always true when saving TF config
+      transferFunction: false,
       otherDesign: false,
       solutionNotPursued: false,
     };
@@ -313,21 +312,6 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
     
     const explanation = existingTracking?.otherDesignExplanation || "";
     const file = null; // Don't change file when saving transfer function
-    
-    // Update local checkbox state to reflect transferFunction = true
-    setCheckboxStates((prev) => ({
-      ...prev,
-      [solutionId]: {
-        ...(prev[solutionId] || {
-          toBeProcessMap: false,
-          toBeProcessRaci: false,
-          transferFunction: false,
-          otherDesign: false,
-          solutionNotPursued: false,
-        }),
-        transferFunction: true,
-      },
-    }));
     
     saveTransferFunctionMutation.mutate({ solutionId, checkboxes, tfConfig, explanation, file });
   };
