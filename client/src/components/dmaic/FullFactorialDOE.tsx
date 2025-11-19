@@ -34,7 +34,8 @@ import {
   transformGeneratedPlanForSaving, 
   reconstructGeneratedPlanFromPersisted,
   getDefaultFactor,
-  validateFactorCount
+  validateFactorCount,
+  parseFactorValue
 } from '@/lib/doeSharedUtils';
 
 interface FullFactorialDOEProps {
@@ -50,9 +51,8 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
   // State for Setup tab
   const [responseVariableName, setResponseVariableName] = useState("Y Response");
   const [factors, setFactors] = useState<DOEFactor[]>([
-    { name: "Factor A", type: "continuous", lowValue: -1, highValue: 1, units: "" },
-    { name: "Factor B", type: "continuous", lowValue: -1, highValue: 1, units: "" },
-    { name: "Factor C", type: "continuous", lowValue: -1, highValue: 1, units: "" },
+    { name: "Factor A", type: "continuous", lowValue: NaN, highValue: NaN, units: "" },
+    { name: "Factor B", type: "continuous", lowValue: NaN, highValue: NaN, units: "" },
   ]);
   const [numberOfReplicates, setNumberOfReplicates] = useState(1);
   const [randomizeRuns, setRandomizeRuns] = useState(true);
@@ -166,7 +166,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
     onError: (error: any) => {
       toast({
         title: "Error",
-        description: error.message || "Failed to save configuration",
+        description: error.message || "Failed to save Full Factorial DOE configuration",
         variant: "destructive",
       });
     },
@@ -176,7 +176,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
     if (!validateFactorCount(factors)) {
       toast({
         title: "Validation Error",
-        description: "Please add at least 2 factors for DOE.",
+        description: "Please add at least 2 factors for Full Factorial DOE.",
         variant: "destructive",
       });
       return;
@@ -218,7 +218,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
     if (factors.length <= 2) {
       toast({
         title: "Cannot Delete",
-        description: "You must have at least 2 factors for DOE.",
+        description: "You must have at least 2 factors for Full Factorial DOE.",
         variant: "destructive",
       });
       return;
@@ -235,8 +235,8 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
         newFactors[index] = {
           name: factor.name,
           type: 'continuous',
-          lowValue: -1,
-          highValue: 1,
+          lowValue: NaN,
+          highValue: NaN,
           units: '',
         };
       } else {
@@ -250,9 +250,9 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
       newFactors[index] = { ...factor, name: value };
     } else if (factor.type === 'continuous') {
       if (field === 'lowValue') {
-        newFactors[index] = { ...factor, lowValue: parseFloat(value) || 0 };
+        newFactors[index] = { ...factor, lowValue: parseFactorValue(value) };
       } else if (field === 'highValue') {
-        newFactors[index] = { ...factor, highValue: parseFloat(value) || 0 };
+        newFactors[index] = { ...factor, highValue: parseFactorValue(value) };
       } else if (field === 'units') {
         newFactors[index] = { ...factor, units: value };
       }
@@ -275,7 +275,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
     if (!validateFactorCount(factors)) {
       toast({
         title: "Cannot Generate Plan",
-        description: "Please add at least 2 factors before generating the DOE plan.",
+        description: "Please add at least 2 factors before generating the Full Factorial DOE plan.",
         variant: "destructive",
       });
       return;
@@ -310,7 +310,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
   return (
     <div className="space-y-6" data-testid="full-factorial-doe-container">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Full Factorial DOE (2^k)</h2>
+        <h2 className="text-2xl font-bold">Full Factorial DOE (2<sup>k</sup>)</h2>
       </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -325,7 +325,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
         <TabsContent value="setup" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Full Factorial DOE Configuration</CardTitle>
+              <CardTitle>Full Factorial 2<sup>k</sup> DOE Configuration</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               {configQuery.isLoading && (
@@ -374,10 +374,10 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                           <TableRow>
                             <TableHead className="w-[200px]">Factor Name</TableHead>
                             <TableHead className="w-[150px]">Type</TableHead>
-                            <TableHead className="w-[150px]">Low Value / Level 1</TableHead>
-                            <TableHead className="w-[150px]">High Value / Level 2</TableHead>
+                            <TableHead className="w-[160px]">Low Value / -1 (coded)</TableHead>
+                            <TableHead className="w-[160px]">High Value / +1 (coded)</TableHead>
                             <TableHead className="w-[120px]">Units</TableHead>
-                            <TableHead className="w-[80px]">Actions</TableHead>
+                            <TableHead className="w-[60px]">Actions</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -408,17 +408,17 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                               <TableCell>
                                 {factor.type === 'continuous' ? (
                                   <Input
-                                    type="number"
-                                    value={factor.lowValue}
+                                    type="text"
+                                    value={isNaN(factor.lowValue) ? '' : factor.lowValue}
                                     onChange={(e) => handleFactorChange(index, 'lowValue', e.target.value)}
-                                    placeholder="Low Value"
+                                    placeholder="Enter Value at low level (-1)"
                                     data-testid={`input-factor-low-${index}`}
                                   />
                                 ) : (
                                   <Input
                                     value={factor.levels[0] || ''}
                                     onChange={(e) => handleFactorChange(index, 'level0', e.target.value)}
-                                    placeholder="Level 1"
+                                    placeholder="Level -1"
                                     data-testid={`input-factor-level0-${index}`}
                                   />
                                 )}
@@ -426,17 +426,17 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                               <TableCell>
                                 {factor.type === 'continuous' ? (
                                   <Input
-                                    type="number"
-                                    value={factor.highValue}
+                                    type="text"
+                                    value={isNaN(factor.highValue) ? '' : factor.highValue}
                                     onChange={(e) => handleFactorChange(index, 'highValue', e.target.value)}
-                                    placeholder="High Value"
+                                    placeholder="Enter Value at high level (+1)"
                                     data-testid={`input-factor-high-${index}`}
                                   />
                                 ) : (
                                   <Input
                                     value={factor.levels[1] || ''}
                                     onChange={(e) => handleFactorChange(index, 'level1', e.target.value)}
-                                    placeholder="Level 2"
+                                    placeholder="Level +1"
                                     data-testid={`input-factor-level1-${index}`}
                                   />
                                 )}
@@ -487,7 +487,21 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                       
                       <div className="space-y-2">
                         <Label htmlFor="significance-level">Significance Level (α)</Label>
-                        <Input
+                        <Select
+                          value={significanceLevel.toString()}
+                          onValueChange={(value) => setSignificanceLevel(parseFloat(value))}
+                        >
+                          <SelectTrigger id="significanceLevel" data-testid="select-significance-level">
+                            <SelectValue placeholder="Select significance level" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="0.01" data-testid="option-significance-0.01">1%</SelectItem>
+                            <SelectItem value="0.05" data-testid="option-significance-0.05">5%</SelectItem>
+                            <SelectItem value="0.10" data-testid="option-significance-0.10">10%</SelectItem>
+                            <SelectItem value="0.20" data-testid="option-significance-0.20">20%</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {/*<Input
                           id="significance-level"
                           type="number"
                           step="0.01"
@@ -496,7 +510,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                           value={significanceLevel}
                           onChange={(e) => setSignificanceLevel(parseFloat(e.target.value) || 0.05)}
                           data-testid="input-significance-level"
-                        />
+                        /> */}
                       </div>
                     </div>
                     
@@ -556,7 +570,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                       ) : (
                         <>
                           <Save className="mr-2 h-4 w-4" />
-                          Save Setup
+                          Save DOE Setup
                         </>
                       )}
                     </Button>
@@ -576,7 +590,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
             <CardContent className="space-y-4">
               {factors.length < 2 ? (
                 <div className="flex items-center justify-center py-12 text-muted-foreground">
-                  <p>Please configure at least 2 factors in the Setup tab before generating the DOE plan.</p>
+                  <p>Please configure at least 2 factors in the Setup tab before generating the Full Factorial DOE plan.</p>
                 </div>
               ) : (
                 <>
@@ -683,7 +697,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                           ) : (
                             <>
                               <Save className="mr-2 h-4 w-4" />
-                              Save Data
+                              Save DOE Data
                             </>
                           )}
                         </Button>
