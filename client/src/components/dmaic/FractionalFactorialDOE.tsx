@@ -113,10 +113,21 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
       }
       
       if (config.factors && Array.isArray(config.factors) && config.factors.length > 0) {
-        setFactors(config.factors);
+        // Convert null values to NaN (null comes from database when field was empty)
+        const factorsWithNaN = config.factors.map((f: any) => {
+          if (f.type === 'continuous') {
+            return {
+              ...f,
+              lowValue: f.lowValue === null ? NaN : f.lowValue,
+              highValue: f.highValue === null ? NaN : f.highValue,
+            };
+          }
+          return f;
+        });
+        setFactors(factorsWithNaN);
         // Initialize factorInputs from loaded numeric values
         const inputs: Record<string, string> = {};
-        config.factors.forEach((f: DOEFactor, i: number) => {
+        factorsWithNaN.forEach((f: DOEFactor, i: number) => {
           if (f.type === 'continuous') {
             if (!isNaN(f.lowValue)) inputs[`${i}-lowValue`] = String(f.lowValue);
             if (!isNaN(f.highValue)) inputs[`${i}-highValue`] = String(f.highValue);
