@@ -56,6 +56,13 @@ export function getDefaultFactor(index: number): DOEFactor {
   };
 }
 
+// Helper to convert UI string input to number, handling French decimal format
+export function parseFactorValue(value: string): number {
+  if (value.trim() === '') return NaN;
+  const normalized = value.replace(',', '.');
+  return parseFloat(normalized);
+}
+
 // Validate factor count
 export function validateFactorCount(factors: DOEFactor[], minFactors: number = 2): boolean {
   return factors.length >= minFactors;
