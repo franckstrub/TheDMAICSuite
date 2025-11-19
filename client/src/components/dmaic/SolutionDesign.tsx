@@ -16,7 +16,6 @@ import ProcessRaciMatrix from "@/components/dmaic/ProcessRaciMatrix";
 import { SimpleRegression } from "@/components/dmaic/SimpleRegression";
 import { ANOVATwoWay } from "@/components/dmaic/ANOVATwoWay";
 import { MultipleRegression } from "@/components/dmaic/MultipleRegression";
-import { DesignOfExperiments } from "@/components/dmaic/DesignOfExperiments";
 
 interface SolutionDesignProps {
   projectId: number;
@@ -35,6 +34,8 @@ interface TransferFunctionConfig {
   tfAnovaTwoWay: boolean;
   tfMultipleRegression: boolean;
   tfDoe: boolean;
+  tfDoeFullFactorial: boolean;
+  tfDoeFractionalFactorial: boolean;
   tfLogisticRegression: boolean;
 }
 
@@ -50,8 +51,13 @@ const transferFunctionLabels = [
   { key: "tfSimpleRegression", label: "Simple Regression" },
   { key: "tfAnovaTwoWay", label: "ANOVA Two-Way" },
   { key: "tfMultipleRegression", label: "Multiple Regression" },
-  { key: "tfDoe", label: "Design of Experiment (DOE)" },
+  { key: "tfDoe", label: "Design of Experiment (DOE)", hasSubOptions: true },
   { key: "tfLogisticRegression", label: "Logistic Regression" },
+] as const;
+
+const doeSubOptions = [
+  { key: "tfDoeFullFactorial", label: "Full Factorial (2^k)" },
+  { key: "tfDoeFractionalFactorial", label: "Fractional Factorial (2^(k-p))" },
 ] as const;
 
 export default function SolutionDesign({ projectId }: SolutionDesignProps) {
@@ -120,6 +126,8 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
           tfAnovaTwoWay: t.tfAnovaTwoWay || false,
           tfMultipleRegression: t.tfMultipleRegression || false,
           tfDoe: t.tfDoe || false,
+          tfDoeFullFactorial: t.tfDoeFullFactorial || false,
+          tfDoeFractionalFactorial: t.tfDoeFractionalFactorial || false,
           tfLogisticRegression: t.tfLogisticRegression || false,
         };
         explanations[t.solutionId] = t.otherDesignExplanation || "";
@@ -176,6 +184,8 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
         formData.append("tfAnovaTwoWay", String(data.tfConfig.tfAnovaTwoWay));
         formData.append("tfMultipleRegression", String(data.tfConfig.tfMultipleRegression));
         formData.append("tfDoe", String(data.tfConfig.tfDoe));
+        formData.append("tfDoeFullFactorial", String(data.tfConfig.tfDoeFullFactorial));
+        formData.append("tfDoeFractionalFactorial", String(data.tfConfig.tfDoeFractionalFactorial));
         formData.append("tfLogisticRegression", String(data.tfConfig.tfLogisticRegression));
         
         if (data.file) {
@@ -245,6 +255,8 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
           tfAnovaTwoWay: false,
           tfMultipleRegression: false,
           tfDoe: false,
+          tfDoeFullFactorial: false,
+          tfDoeFractionalFactorial: false,
           tfLogisticRegression: false,
         }),
         [key]: checked,
@@ -260,6 +272,8 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
         tfAnovaTwoWay: false,
         tfMultipleRegression: false,
         tfDoe: false,
+        tfDoeFullFactorial: false,
+        tfDoeFractionalFactorial: false,
         tfLogisticRegression: false,
       },
     }));
@@ -289,6 +303,8 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
       tfAnovaTwoWay: false,
       tfMultipleRegression: false,
       tfDoe: false,
+      tfDoeFullFactorial: false,
+      tfDoeFractionalFactorial: false,
       tfLogisticRegression: false,
     };
     
@@ -316,12 +332,16 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
       tfAnovaTwoWay: existingTracking.tfAnovaTwoWay || false,
       tfMultipleRegression: existingTracking.tfMultipleRegression || false,
       tfDoe: existingTracking.tfDoe || false,
+      tfDoeFullFactorial: existingTracking.tfDoeFullFactorial || false,
+      tfDoeFractionalFactorial: existingTracking.tfDoeFractionalFactorial || false,
       tfLogisticRegression: existingTracking.tfLogisticRegression || false,
     } : {
       tfSimpleRegression: false,
       tfAnovaTwoWay: false,
       tfMultipleRegression: false,
       tfDoe: false,
+      tfDoeFullFactorial: false,
+      tfDoeFractionalFactorial: false,
       tfLogisticRegression: false,
     };
     
@@ -368,12 +388,16 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
       tfAnovaTwoWay: existingTracking.tfAnovaTwoWay || false,
       tfMultipleRegression: existingTracking.tfMultipleRegression || false,
       tfDoe: existingTracking.tfDoe || false,
+      tfDoeFullFactorial: existingTracking.tfDoeFullFactorial || false,
+      tfDoeFractionalFactorial: existingTracking.tfDoeFractionalFactorial || false,
       tfLogisticRegression: existingTracking.tfLogisticRegression || false,
     } : {
       tfSimpleRegression: false,
       tfAnovaTwoWay: false,
       tfMultipleRegression: false,
       tfDoe: false,
+      tfDoeFullFactorial: false,
+      tfDoeFractionalFactorial: false,
       tfLogisticRegression: false,
     };
     
@@ -623,32 +647,62 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
                             Select the statistical methods you want to use for this solution:
                           </p>
                           
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {transferFunctionLabels.map(({ key, label }) => {
+                          <div className="space-y-4">
+                            {transferFunctionLabels.map((item) => {
+                              const { key, label } = item;
+                              const hasSubOptions = 'hasSubOptions' in item ? item.hasSubOptions : false;
                               const currentTfConfig = transferFunctionConfigs[solution.solutionId] || {
                                 tfSimpleRegression: false,
                                 tfAnovaTwoWay: false,
                                 tfMultipleRegression: false,
                                 tfDoe: false,
+                                tfDoeFullFactorial: false,
+                                tfDoeFractionalFactorial: false,
                                 tfLogisticRegression: false,
                               };
                               
                               return (
-                                <div key={key} className="flex items-center space-x-2">
-                                  <Checkbox
-                                    id={`${solution.solutionId}-${key}`}
-                                    checked={currentTfConfig[key as keyof TransferFunctionConfig]}
-                                    onCheckedChange={(checked) =>
-                                      handleTransferFunctionChange(solution.solutionId, key as keyof TransferFunctionConfig, checked as boolean)
-                                    }
-                                    data-testid={`checkbox-tf-${key}-${solution.solutionId}`}
-                                  />
-                                  <Label
-                                    htmlFor={`${solution.solutionId}-${key}`}
-                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                                  >
-                                    {label}
-                                  </Label>
+                                <div key={key}>
+                                  <div className="flex items-center space-x-2">
+                                    <Checkbox
+                                      id={`${solution.solutionId}-${key}`}
+                                      checked={currentTfConfig[key as keyof TransferFunctionConfig]}
+                                      onCheckedChange={(checked) =>
+                                        handleTransferFunctionChange(solution.solutionId, key as keyof TransferFunctionConfig, checked as boolean)
+                                      }
+                                      data-testid={`checkbox-tf-${key}-${solution.solutionId}`}
+                                    />
+                                    <Label
+                                      htmlFor={`${solution.solutionId}-${key}`}
+                                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                    >
+                                      {label}
+                                    </Label>
+                                  </div>
+                                  
+                                  {/* DOE Sub-options - Show only when tfDoe is checked */}
+                                  {hasSubOptions && currentTfConfig.tfDoe && (
+                                    <div className="ml-8 mt-2 space-y-2">
+                                      {doeSubOptions.map(({ key: subKey, label: subLabel }) => (
+                                        <div key={subKey} className="flex items-center space-x-2">
+                                          <Checkbox
+                                            id={`${solution.solutionId}-${subKey}`}
+                                            checked={currentTfConfig[subKey as keyof TransferFunctionConfig]}
+                                            onCheckedChange={(checked) =>
+                                              handleTransferFunctionChange(solution.solutionId, subKey as keyof TransferFunctionConfig, checked as boolean)
+                                            }
+                                            data-testid={`checkbox-tf-${subKey}-${solution.solutionId}`}
+                                          />
+                                          <Label
+                                            htmlFor={`${solution.solutionId}-${subKey}`}
+                                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                          >
+                                            {subLabel}
+                                          </Label>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
                                 </div>
                               );
                             })}
@@ -719,12 +773,6 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
                     </div>
                   )}
 
-                  {/* Design of Experiments (DOE) - Show when tfDoe is checked */}
-                  {currentState.transferFunction && transferFunctionConfigs[solution.solutionId]?.tfDoe && (
-                    <div className="mt-6">
-                      <DesignOfExperiments key={`${projectId}-${solution.solutionId}`} projectId={projectId} solutionId={solution.solutionId} />
-                    </div>
-                  )}
 
                   {/* Other Design Explanation - Show when checkbox is selected */}
                   {currentState.otherDesign && (
