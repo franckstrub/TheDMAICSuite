@@ -34,7 +34,8 @@ import {
   transformGeneratedPlanForSaving, 
   reconstructGeneratedPlanFromPersisted,
   getDefaultFactor,
-  validateFactorCount
+  validateFactorCount,
+  parseFactorValue
 } from '@/lib/doeSharedUtils';
 
 interface FractionalFactorialDOEProps {
@@ -51,10 +52,10 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
   const [fractionalResolution, setFractionalResolution] = useState(1);
   const [responseVariableName, setResponseVariableName] = useState("Y Response");
   const [factors, setFactors] = useState<DOEFactor[]>([
-    { name: "Factor A", type: "continuous", lowValue: -1, highValue: 1, units: "" },
-    { name: "Factor B", type: "continuous", lowValue: -1, highValue: 1, units: "" },
-    { name: "Factor C", type: "continuous", lowValue: -1, highValue: 1, units: "" },
-    { name: "Factor D", type: "continuous", lowValue: -1, highValue: 1, units: "" },
+    { name: "Factor A", type: "continuous", lowValue: NaN, highValue: NaN, units: "" },
+    { name: "Factor B", type: "continuous", lowValue: NaN, highValue: NaN, units: "" },
+    { name: "Factor C", type: "continuous", lowValue: NaN, highValue: NaN, units: "" },
+    { name: "Factor D", type: "continuous", lowValue: NaN, highValue: NaN, units: "" },
   ]);
   const [numberOfReplicates, setNumberOfReplicates] = useState(1);
   const [randomizeRuns, setRandomizeRuns] = useState(true);
@@ -243,8 +244,8 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
         newFactors[index] = {
           name: factor.name,
           type: 'continuous',
-          lowValue: -1,
-          highValue: 1,
+          lowValue: NaN,
+          highValue: NaN,
           units: '',
         };
       } else {
@@ -258,9 +259,9 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
       newFactors[index] = { ...factor, name: value };
     } else if (factor.type === 'continuous') {
       if (field === 'lowValue') {
-        newFactors[index] = { ...factor, lowValue: parseFloat(value) || 0 };
+        newFactors[index] = { ...factor, lowValue: parseFactorValue(value) };
       } else if (field === 'highValue') {
-        newFactors[index] = { ...factor, highValue: parseFloat(value) || 0 };
+        newFactors[index] = { ...factor, highValue: parseFactorValue(value) };
       } else if (field === 'units') {
         newFactors[index] = { ...factor, units: value };
       }
@@ -455,8 +456,8 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                               <TableCell>
                                 {factor.type === 'continuous' ? (
                                   <Input
-                                    type="number"
-                                    value={factor.lowValue}
+                                    type="text"
+                                    value={isNaN(factor.lowValue) ? '' : factor.lowValue}
                                     onChange={(e) => handleFactorChange(index, 'lowValue', e.target.value)}
                                     placeholder="Low Value"
                                     data-testid={`input-factor-low-${index}`}
@@ -473,8 +474,8 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                               <TableCell>
                                 {factor.type === 'continuous' ? (
                                   <Input
-                                    type="number"
-                                    value={factor.highValue}
+                                    type="text"
+                                    value={isNaN(factor.highValue) ? '' : factor.highValue}
                                     onChange={(e) => handleFactorChange(index, 'highValue', e.target.value)}
                                     placeholder="High Value"
                                     data-testid={`input-factor-high-${index}`}
