@@ -2227,6 +2227,8 @@ export const solutionDesignTracking = pgTable(
     tfAnovaTwoWay: boolean("tf_anova_two_way").default(false),
     tfMultipleRegression: boolean("tf_multiple_regression").default(false),
     tfDoe: boolean("tf_doe").default(false),
+    tfDoeFullFactorial: boolean("tf_doe_full_factorial").default(false),
+    tfDoeFractionalFactorial: boolean("tf_doe_fractional_factorial").default(false),
     tfLogisticRegression: boolean("tf_logistic_regression").default(false),
     
     lastUpdated: timestamp("last_updated").notNull().defaultNow(),
