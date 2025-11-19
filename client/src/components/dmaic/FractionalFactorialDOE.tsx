@@ -34,7 +34,7 @@ import {
   transformGeneratedPlanForSaving, 
   reconstructGeneratedPlanFromPersisted,
   getDefaultFactor,
-  validateFactorCount,
+  validateFractionalFactorCount,
   parseFactorValue
 } from '@/lib/doeSharedUtils';
 
@@ -55,7 +55,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
     { name: "Factor A", type: "continuous", lowValue: NaN, highValue: NaN, units: "" },
     { name: "Factor B", type: "continuous", lowValue: NaN, highValue: NaN, units: "" },
     { name: "Factor C", type: "continuous", lowValue: NaN, highValue: NaN, units: "" },
-    { name: "Factor D", type: "continuous", lowValue: NaN, highValue: NaN, units: "" },
+    //{ name: "Factor D", type: "continuous", lowValue: NaN, highValue: NaN, units: "" },
   ]);
   // UI state for raw string inputs (allows partial numbers like "-", "0.", "1,5")
   const [factorInputs, setFactorInputs] = useState<Record<string, string>>({});
@@ -184,17 +184,17 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
     onError: (error: any) => {
       toast({
         title: "Error",
-        description: error.message || "Failed to save configuration",
+        description: error.message || "Failed to save Fractional Factorial DOE configuration",
         variant: "destructive",
       });
     },
   });
   
   const handleSaveSetup = () => {
-    if (!validateFactorCount(factors)) {
+    if (!validateFractionalFactorCount(factors)) {
       toast({
         title: "Validation Error",
-        description: "Please add at least 2 factors for DOE.",
+        description: "Please add at least 3 factors for Fractional Factorial DOE.",
         variant: "destructive",
       });
       return;
@@ -235,10 +235,10 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
   };
   
   const handleDeleteFactor = (index: number) => {
-    if (factors.length <= 2) {
+    if (factors.length <= 3) {
       toast({
         title: "Cannot Delete",
-        description: "You must have at least 2 factors for DOE.",
+        description: "You must have at least 3 factors for Fractional Factorial DOE.",
         variant: "destructive",
       });
       return;
@@ -302,19 +302,19 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
   };
   
   const handleGeneratePlan = () => {
-    if (!validateFactorCount(factors)) {
+    if (!validateFractionalFactorCount(factors)) {
       toast({
         title: "Cannot Generate Plan",
-        description: "Please add at least 2 factors before generating the DOE plan.",
+        description: "Please add at least 3 factors before generating the Fractional Factorial DOE plan.",
         variant: "destructive",
       });
       return;
     }
     
-    if (factors.length < 4) {
+    if (factors.length < 3) {
       toast({
         title: "Cannot Generate Plan",
-        description: "Fractional factorial designs require at least 4 factors. Add more factors or use Full Factorial Design.",
+        description: "Fractional factorial designs require at least 3 factors. Add more factors or use Full Factorial Design.",
         variant: "destructive",
       });
       return;
@@ -349,7 +349,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
   return (
     <div className="space-y-6" data-testid="fractional-factorial-doe-container">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Fractional Factorial DOE (2^(k-p))</h2>
+        <h2 className="text-2xl font-bold">Fractional Factorial DOE (2<sup>(k-p)</sup>)</h2>
       </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -364,7 +364,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
         <TabsContent value="setup" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Fractional Factorial DOE Configuration</CardTitle>
+              <CardTitle>Fractional Factorial 2<sup>(k-p)</sup> DOE Configuration</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               {configQuery.isLoading && (
@@ -378,7 +378,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   {/* Fractional Factorial Resolution */}
                   <div className="space-y-2">
                     <Label htmlFor="fractional-resolution">Fractional Resolution</Label>
-                    {factors.length >= 4 ? (
+                    {factors.length >= 3 ? (
                       <>
                         <Select
                           value={fractionalResolution.toString()}
@@ -388,6 +388,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                             <SelectValue placeholder="Select resolution" />
                           </SelectTrigger>
                           <SelectContent>
+                            {factors.length === 3 && <SelectItem value="1">2^(3-1) - Resolution III (4 runs)</SelectItem>}
                             {factors.length === 4 && <SelectItem value="1">2^(4-1) - Resolution IV (8 runs)</SelectItem>}
                             {factors.length === 5 && <SelectItem value="1">2^(5-1) - Resolution V (16 runs)</SelectItem>}
                             {factors.length === 6 && <SelectItem value="2">2^(6-2) - Resolution IV (16 runs)</SelectItem>}
@@ -400,7 +401,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                       </>
                     ) : (
                       <div className="text-sm text-muted-foreground py-2 px-3 bg-muted rounded-md">
-                        Fractional factorial designs require at least 4 factors. Add more factors below.
+                        Fractional factorial designs require at least 3 factors. Add more factors below.
                       </div>
                     )}
                   </div>
@@ -431,9 +432,9 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                       </Button>
                     </div>
                     
-                    {factors.length < 4 && (
+                    {factors.length < 3 && (
                       <div className="text-sm text-destructive">
-                        At least 4 factors are required for Fractional Factorial DOE
+                        At least 3 factors are required for Fractional Factorial DOE
                       </div>
                     )}
                     
@@ -556,16 +557,20 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                       
                       <div className="space-y-2">
                         <Label htmlFor="significance-level">Significance Level (α)</Label>
-                        <Input
-                          id="significance-level"
-                          type="number"
-                          step="0.01"
-                          min="0.01"
-                          max="0.99"
-                          value={significanceLevel}
-                          onChange={(e) => setSignificanceLevel(parseFloat(e.target.value) || 0.05)}
-                          data-testid="input-significance-level"
-                        />
+                        <Select
+                          value={significanceLevel.toString()}
+                          onValueChange={(value) => setSignificanceLevel(parseFloat(value))}
+                        >
+                          <SelectTrigger id="significanceLevel" data-testid="select-significance-level">
+                            <SelectValue placeholder="Select significance level" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="0.01" data-testid="option-significance-0.01">1%</SelectItem>
+                            <SelectItem value="0.05" data-testid="option-significance-0.05">5%</SelectItem>
+                            <SelectItem value="0.10" data-testid="option-significance-0.10">10%</SelectItem>
+                            <SelectItem value="0.20" data-testid="option-significance-0.20">20%</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
                     
@@ -643,9 +648,9 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
               <CardTitle>Experimental Data</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {factors.length < 4 ? (
+              {factors.length < 3 ? (
                 <div className="flex items-center justify-center py-12 text-muted-foreground">
-                  <p>Please configure at least 4 factors in the Setup tab before generating the Fractional Factorial DOE plan.</p>
+                  <p>Please configure at least 3 factors in the Setup tab before generating the Fractional Factorial DOE plan.</p>
                 </div>
               ) : (
                 <>

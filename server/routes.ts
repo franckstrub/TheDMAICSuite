@@ -7332,16 +7332,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           tfDoeFractionalFactorial: req.body.tfDoeFractionalFactorial === "true",
         };
 
-        console.log("=== DEBUG SOLUTION DESIGN TRACKING ===");
+        {/*console.log("=== DEBUG SOLUTION DESIGN TRACKING ===");
         console.log("req.body.tfDoeFullFactorial:", req.body.tfDoeFullFactorial);
         console.log("req.body.tfDoeFractionalFactorial:", req.body.tfDoeFractionalFactorial);
         console.log("trackingData.tfDoeFullFactorial:", trackingData.tfDoeFullFactorial);
-        console.log("trackingData.tfDoeFractionalFactorial:", trackingData.tfDoeFractionalFactorial);
+        console.log("trackingData.tfDoeFractionalFactorial:", trackingData.tfDoeFractionalFactorial);*/}
 
         const validatedData = insertSolutionDesignTrackingSchema.parse(trackingData);
         
-        console.log("validatedData.tfDoeFullFactorial:", validatedData.tfDoeFullFactorial);
-        console.log("validatedData.tfDoeFractionalFactorial:", validatedData.tfDoeFractionalFactorial);
+        {/*console.log("validatedData.tfDoeFullFactorial:", validatedData.tfDoeFullFactorial);
+        console.log("validatedData.tfDoeFractionalFactorial:", validatedData.tfDoeFractionalFactorial);*/}
 
         if (existingRecord) {
           // Update existing tracking

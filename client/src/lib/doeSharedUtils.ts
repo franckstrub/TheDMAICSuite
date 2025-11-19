@@ -67,3 +67,8 @@ export function parseFactorValue(value: string): number {
 export function validateFactorCount(factors: DOEFactor[], minFactors: number = 2): boolean {
   return factors.length >= minFactors;
 }
+
+// Validate factor count for Fractional
+export function validateFractionalFactorCount(factors: DOEFactor[], minFactors: number = 3): boolean {
+  return factors.length >= minFactors;
+}
