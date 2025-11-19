@@ -54,6 +54,8 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
     { name: "Factor A", type: "continuous", lowValue: NaN, highValue: NaN, units: "" },
     { name: "Factor B", type: "continuous", lowValue: NaN, highValue: NaN, units: "" },
   ]);
+  // UI state for raw string inputs (allows partial numbers like "-", "0.", "1,5")
+  const [factorInputs, setFactorInputs] = useState<Record<string, string>>({});
   const [numberOfReplicates, setNumberOfReplicates] = useState(1);
   const [randomizeRuns, setRandomizeRuns] = useState(true);
   const [includeCenterPoints, setIncludeCenterPoints] = useState(false);
@@ -105,6 +107,15 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
       
       if (config.factors && Array.isArray(config.factors) && config.factors.length > 0) {
         setFactors(config.factors);
+        // Initialize factorInputs from loaded numeric values
+        const inputs: Record<string, string> = {};
+        config.factors.forEach((f: DOEFactor, i: number) => {
+          if (f.type === 'continuous') {
+            if (!isNaN(f.lowValue)) inputs[`${i}-lowValue`] = String(f.lowValue);
+            if (!isNaN(f.highValue)) inputs[`${i}-highValue`] = String(f.highValue);
+          }
+        });
+        setFactorInputs(inputs);
       }
       
       if (config.numberOfReplicates !== undefined) {
@@ -239,6 +250,11 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
           highValue: NaN,
           units: '',
         };
+        // Clear input strings when switching type
+        const newInputs = { ...factorInputs };
+        delete newInputs[`${index}-lowValue`];
+        delete newInputs[`${index}-highValue`];
+        setFactorInputs(newInputs);
       } else {
         newFactors[index] = {
           name: factor.name,
@@ -249,10 +265,15 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
     } else if (field === 'name') {
       newFactors[index] = { ...factor, name: value };
     } else if (factor.type === 'continuous') {
-      if (field === 'lowValue') {
-        newFactors[index] = { ...factor, lowValue: parseFactorValue(value) };
-      } else if (field === 'highValue') {
-        newFactors[index] = { ...factor, highValue: parseFactorValue(value) };
+      if (field === 'lowValue' || field === 'highValue') {
+        // Store raw string input
+        setFactorInputs({
+          ...factorInputs,
+          [`${index}-${field}`]: value,
+        });
+        // Parse and update factor value
+        const parsed = parseFactorValue(value);
+        newFactors[index] = { ...factor, [field]: parsed };
       } else if (field === 'units') {
         newFactors[index] = { ...factor, units: value };
       }
@@ -409,7 +430,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                 {factor.type === 'continuous' ? (
                                   <Input
                                     type="text"
-                                    value={isNaN(factor.lowValue) ? '' : factor.lowValue}
+                                    value={factorInputs[`${index}-lowValue`] ?? (isNaN(factor.lowValue) ? '' : String(factor.lowValue))}
                                     onChange={(e) => handleFactorChange(index, 'lowValue', e.target.value)}
                                     placeholder="Enter Value at low level (-1)"
                                     data-testid={`input-factor-low-${index}`}
@@ -427,7 +448,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                 {factor.type === 'continuous' ? (
                                   <Input
                                     type="text"
-                                    value={isNaN(factor.highValue) ? '' : factor.highValue}
+                                    value={factorInputs[`${index}-highValue`] ?? (isNaN(factor.highValue) ? '' : String(factor.highValue))}
                                     onChange={(e) => handleFactorChange(index, 'highValue', e.target.value)}
                                     placeholder="Enter Value at high level (+1)"
                                     data-testid={`input-factor-high-${index}`}
