@@ -7328,6 +7328,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           tfMultipleRegression: req.body.tfMultipleRegression === "true",
           tfDoe: req.body.tfDoe === "true",
           tfLogisticRegression: req.body.tfLogisticRegression === "true",
+          tfDoeFullFactorial: req.body.tfDoeFullFactorial === "true",
+          tfDoeFractionalFactorial: req.body.tfDoeFractionalFactorial === "true",
         };
 
         const validatedData = insertSolutionDesignTrackingSchema.parse(trackingData);
