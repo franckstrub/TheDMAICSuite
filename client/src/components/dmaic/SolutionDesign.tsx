@@ -16,6 +16,8 @@ import ProcessRaciMatrix from "@/components/dmaic/ProcessRaciMatrix";
 import { SimpleRegression } from "@/components/dmaic/SimpleRegression";
 import { ANOVATwoWay } from "@/components/dmaic/ANOVATwoWay";
 import { MultipleRegression } from "@/components/dmaic/MultipleRegression";
+import { FullFactorialDOE } from "@/components/dmaic/FullFactorialDOE";
+import { FractionalFactorialDOE } from "@/components/dmaic/FractionalFactorialDOE";
 
 interface SolutionDesignProps {
   projectId: number;
@@ -773,6 +775,19 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
                     </div>
                   )}
 
+                  {/* Full Factorial DOE - Show when tfDoeFullFactorial is checked */}
+                  {currentState.transferFunction && transferFunctionConfigs[solution.solutionId]?.tfDoeFullFactorial && (
+                    <div className="mt-6">
+                      <FullFactorialDOE key={`${projectId}-${solution.solutionId}`} projectId={projectId} solutionId={solution.solutionId} />
+                    </div>
+                  )}
+
+                  {/* Fractional Factorial DOE - Show when tfDoeFractionalFactorial is checked */}
+                  {currentState.transferFunction && transferFunctionConfigs[solution.solutionId]?.tfDoeFractionalFactorial && (
+                    <div className="mt-6">
+                      <FractionalFactorialDOE key={`${projectId}-${solution.solutionId}`} projectId={projectId} solutionId={solution.solutionId} />
+                    </div>
+                  )}
 
                   {/* Other Design Explanation - Show when checkbox is selected */}
                   {currentState.otherDesign && (
