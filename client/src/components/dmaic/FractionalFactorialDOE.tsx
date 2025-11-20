@@ -997,16 +997,191 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
         
         {/* Chart Tab */}
         <TabsContent value="chart" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Visualizations</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-center py-12 text-muted-foreground">
-                <p>Charts and visualizations will be implemented in the next phase</p>
+          {!generatedPlan || runData.length === 0 ? (
+            <Card>
+              <CardContent className="p-8 text-center text-muted-foreground">
+                <p>Generate a plan and enter data to view charts</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              {/* Toggle for Coded/Uncoded Values */}
+              <div className="flex items-center space-x-2">
+                <Label htmlFor="chart-uncoded-toggle">Coded</Label>
+                <Switch
+                  id="chart-uncoded-toggle"
+                  checked={showUncoded}
+                  onCheckedChange={setShowUncoded}
+                  disabled={!allFactorsHaveValidLevels()}
+                  data-testid="switch-chart-uncoded-toggle"
+                />
+                <Label htmlFor="chart-uncoded-toggle">Uncoded</Label>
               </div>
-            </CardContent>
-          </Card>
+
+              {/* Main Effect Plots */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {factors.map((factor, factorIndex) => {
+                  const factorData = runData.map((rd, idx) => ({
+                    ...rd,
+                    [factor.name]: generatedPlan.plan[idx]?.[factor.name] || 0,
+                  }));
+                  
+                  const codedLevels = [-1, 0, 1];
+                  const mainEffectData = codedLevels.map(level => {
+                    const levelResponses = factorData
+                      .filter((d: any) => d[factor.name] === level && d.response !== null)
+                      .map((d: any) => d.response);
+                    return levelResponses.length > 0 
+                      ? levelResponses.reduce((a: number, b: number) => a + b, 0) / levelResponses.length 
+                      : 0;
+                  });
+                  
+                  const xLabels = showUncoded && allFactorsHaveValidLevels()
+                    ? codedLevels.map(level => {
+                        const decoded = decodeValue(level, factor);
+                        return factor.type === 'continuous'
+                          ? `${(decoded as number).toFixed(2)}${factor.units ? ' ' + factor.units : ''}`
+                          : String(decoded);
+                      })
+                    : ['Low (-1)', 'Center (0)', 'High (+1)'];
+
+                  return (
+                    <Card key={factorIndex}>
+                      <CardHeader>
+                        <CardTitle>Main Effect Plot: {factor.name}</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <Plot
+                          data={[
+                            {
+                              x: xLabels,
+                              y: mainEffectData,
+                              type: 'scatter',
+                              mode: 'lines+markers',
+                              line: { width: 3, color: '#3b82f6' },
+                              marker: { size: 10, color: '#3b82f6' },
+                            },
+                          ]}
+                          layout={{
+                            title: { text: `<b>Main Effect: ${factor.name}</b>` },
+                            xaxis: { title: { text: 'Factor Level' }, type: 'category' },
+                            yaxis: { title: { text: responseVariableName || 'Y Response' } },
+                            showlegend: false,
+                            hovermode: 'closest',
+                            margin: { l: 60, r: 40, t: 60, b: 60 },
+                          }}
+                          config={{
+                            responsive: true,
+                            displayModeBar: true,
+                            displaylogo: false,
+                            toImageButtonOptions: {
+                              format: 'png',
+                              filename: `DOE_Main_Effect_${factor.name}`,
+                              height: 400,
+                              width: 600,
+                              scale: 1
+                            }
+                          }}
+                          className="w-full"
+                          style={{ height: '400px' }}
+                        />
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+
+              {/* Interaction Plots */}
+              {factors.length >= 2 && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Interaction Plots</h3>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {factors.slice(0, -1).map((factorA, idxA) =>
+                      factors.slice(idxA + 1).map((factorB, idxB) => {
+                        const interactionTraces = [-1, 1].map(levelA => {
+                          const centerLevels = [-1, 0, 1];
+                          const interactionData = centerLevels.map(levelB => {
+                            const matches = runData.filter((_, idx) => {
+                              const row = generatedPlan.plan[idx];
+                              return row?.[factorA.name] === levelA && row?.[factorB.name] === levelB;
+                            });
+                            const responses = matches
+                              .map(m => m.response)
+                              .filter((r: any) => r !== null) as number[];
+                            return responses.length > 0 
+                              ? (responses.reduce((a: number, b: number) => a + b, 0) / responses.length)
+                              : 0;
+                          });
+                          
+                          const levelALabel = showUncoded && allFactorsHaveValidLevels()
+                            ? (() => {
+                                const decoded = decodeValue(levelA, factorA);
+                                return factorA.type === 'continuous'
+                                  ? `${(decoded as number).toFixed(2)}${factorA.units ? ' ' + factorA.units : ''}`
+                                  : String(decoded);
+                              })()
+                            : (levelA === -1 ? 'Low' : 'High');
+
+                          return {
+                            x: showUncoded && allFactorsHaveValidLevels()
+                              ? centerLevels.map(level => {
+                                  const decoded = decodeValue(level, factorB);
+                                  return factorB.type === 'continuous'
+                                    ? `${(decoded as number).toFixed(2)}${factorB.units ? ' ' + factorB.units : ''}`
+                                    : String(decoded);
+                                })
+                              : ['Low (-1)', 'Center (0)', 'High (+1)'],
+                            y: interactionData,
+                            type: 'scatter',
+                            mode: 'lines+markers',
+                            name: `${factorA.name} = ${levelALabel}`,
+                            line: { width: 2 },
+                            marker: { size: 8 },
+                          };
+                        });
+
+                        return (
+                          <Card key={`${idxA}-${idxB}`}>
+                            <CardHeader>
+                              <CardTitle>Interaction: {factorA.name} × {factorB.name}</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <Plot
+                                data={interactionTraces as any}
+                                layout={{
+                                  title: { text: `<b>${factorA.name} × ${factorB.name}</b>` },
+                                  xaxis: { title: { text: factorB.name }, type: 'category' },
+                                  yaxis: { title: { text: responseVariableName || 'Y Response' } },
+                                  showlegend: true,
+                                  legend: { title: { text: factorA.name } },
+                                  hovermode: 'closest',
+                                  margin: { l: 60, r: 160, t: 60, b: 60 },
+                                }}
+                                config={{
+                                  responsive: true,
+                                  displayModeBar: true,
+                                  displaylogo: false,
+                                  toImageButtonOptions: {
+                                    format: 'png',
+                                    filename: `DOE_Interaction_${factorA.name}_x_${factorB.name}`,
+                                    height: 400,
+                                    width: 650,
+                                    scale: 1
+                                  }
+                                }}
+                                className="w-full"
+                                style={{ height: '400px' }}
+                              />
+                            </CardContent>
+                          </Card>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </TabsContent>
         
         {/* Analysis Tab */}
