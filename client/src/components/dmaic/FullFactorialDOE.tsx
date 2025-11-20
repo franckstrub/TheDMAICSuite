@@ -79,6 +79,11 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
   const [responseInputs, setResponseInputs] = useState<Record<number, string>>({});
   const [showUncoded, setShowUncoded] = useState(false); // false = coded, true = uncoded
   
+  // Solver state for Analysis tab
+  const [solveFactorIdx, setSolveFactorIdx] = useState(0);
+  const [targetY, setTargetY] = useState(100);
+  const [solverResult, setSolverResult] = useState<number | null>(null);
+  
   // Tab persistence
   const [activeTab, setActiveTab] = useState<string>(() => {
     const stored = localStorage.getItem(`doe-full-active-tab-${projectId}-${solutionId}`);
@@ -1246,23 +1251,9 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                 const adj_R_sq = 1 - (1 - R_sq) * (n - 1) / (n - p);
                 const rmse = Math.sqrt(SS_res / (n - p));
                 
-                const [solveFactorIdx, setSolveFactorIdx] = useState(0);
-                const [targetY, setTargetY] = useState(mean_y);
-                const [factorConstraints, setFactorConstraints] = useState<Record<number, [number, number]>>(
-                  factors.reduce((acc, _, i) => {
-                    if (i !== solveFactorIdx) acc[i] = [-1, 1];
-                    return acc;
-                  }, {})
-                );
-                const [solverResult, setSolverResult] = useState<number | null>(null);
-
                 const handleSolve = () => {
-                  if (p < 2) return;
-                  let low = -10, high = 10;
+                  if (p < 2 || beta[solveFactorIdx + 1] === 0) return;
                   let result = (targetY - beta[0]) / beta[solveFactorIdx + 1];
-                  if (factorConstraints[solveFactorIdx]) {
-                    result = Math.max(low, Math.min(high, result));
-                  }
                   setSolverResult(result);
                 };
 
@@ -1278,7 +1269,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                           <p>Y = {beta[0]?.toFixed(4)}</p>
                           {factors.map((factor, i) => (
                             <p key={i}>
-                              &nbsp;&nbsp;&nbsp;&nbsp;{beta[i + 1] >= 0 ? '+' : ''} {beta[i + 1]?.toFixed(4)} × {factor.name}
+                              &nbsp;&nbsp;&nbsp;&nbsp;{beta[i + 1] >= 0 ? '+' : ''} {beta[i + 1]?.toFixed(4)} × {factor.name}{factor.type === 'continuous' && factor.units ? ` (${factor.units})` : ''}
                             </p>
                           ))}
                         </div>
@@ -1429,7 +1420,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                             <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded border border-green-200 dark:border-green-800">
                               <p className="text-sm text-muted-foreground">Result:</p>
                               <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                                {factors[solveFactorIdx].name} = {solverResult.toFixed(4)}
+                                {factors[solveFactorIdx].name} = {solverResult.toFixed(4)} {factors[solveFactorIdx].type === 'continuous' && factors[solveFactorIdx].units ? `${factors[solveFactorIdx].units}` : ''}
                               </p>
                             </div>
                           )}
