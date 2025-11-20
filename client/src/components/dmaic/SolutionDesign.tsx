@@ -58,8 +58,8 @@ const transferFunctionLabels = [
 ] as const;
 
 const doeSubOptions = [
-  { key: "tfDoeFullFactorial", label: "Full Factorial (2^k)" },
-  { key: "tfDoeFractionalFactorial", label: "Fractional Factorial (2^(k-p))" },
+  { key: "tfDoeFullFactorial", label: "Full Factorial (2", label2: "k" },
+  { key: "tfDoeFractionalFactorial", label: "Fractional Factorial (2", label2: "(k-p)" },
 ] as const;
 
 export default function SolutionDesign({ projectId }: SolutionDesignProps) {
@@ -685,7 +685,7 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
                                   {/* DOE Sub-options - Show only when tfDoe is checked */}
                                   {hasSubOptions && currentTfConfig.tfDoe && (
                                     <div className="ml-8 mt-2 space-y-2">
-                                      {doeSubOptions.map(({ key: subKey, label: subLabel }) => (
+                                      {doeSubOptions.map(({ key: subKey, label: subLabel, label2: subLabel2 }) => (
                                         <div key={subKey} className="flex items-center space-x-2">
                                           <Checkbox
                                             id={`${solution.solutionId}-${subKey}`}
@@ -699,7 +699,7 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
                                             htmlFor={`${solution.solutionId}-${subKey}`}
                                             className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                                           >
-                                            {subLabel}
+                                            {subLabel}<sup>{subLabel2}</sup>)
                                           </Label>
                                         </div>
                                       ))}
