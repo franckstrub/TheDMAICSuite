@@ -189,6 +189,10 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
         setSignificanceLevel(config.significanceLevel);
       }
       
+      if (config.showUncoded !== undefined) {
+        setShowUncoded(config.showUncoded);
+      }
+      
       if (config.runData && Array.isArray(config.runData)) {
         setRunData(config.runData);
         // Initialize responseInputs from loaded response values
@@ -261,6 +265,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
       includeCenterPoints,
       numberOfCenterPoints,
       significanceLevel,
+      showUncoded,
       generatedPlan: transformGeneratedPlanForSaving(generatedPlan, factors),
     });
   };
@@ -275,6 +280,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
       includeCenterPoints,
       numberOfCenterPoints,
       significanceLevel,
+      showUncoded,
       runData,
       generatedPlan: transformGeneratedPlanForSaving(generatedPlan, factors),
     });
