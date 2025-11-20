@@ -87,7 +87,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
   useEffect(() => {
     if (activeTab === 'data' && validateFactorCount(factors)) {
       const centerPoints = includeCenterPoints ? numberOfCenterPoints : 0;
-      const plan = generateFullFactorialPlan(factors, centerPoints, randomizeRuns);
+      const plan = generateFullFactorialPlan(factors, centerPoints, randomizeRuns, numberOfReplicates);
       
       setGeneratedPlan(plan);
       
@@ -102,7 +102,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
       
       setRunData(newRunData);
     }
-  }, [activeTab, factors, includeCenterPoints, numberOfCenterPoints, randomizeRuns]);
+  }, [activeTab, factors, includeCenterPoints, numberOfCenterPoints, randomizeRuns, numberOfReplicates]);
   
   // Load config from API
   const configQuery = useQuery({
@@ -340,7 +340,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
     }
     
     const centerPoints = includeCenterPoints ? numberOfCenterPoints : 0;
-    const plan = generateFullFactorialPlan(factors, centerPoints, randomizeRuns);
+    const plan = generateFullFactorialPlan(factors, centerPoints, randomizeRuns, numberOfReplicates);
     
     setGeneratedPlan(plan);
     
