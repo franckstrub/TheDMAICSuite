@@ -749,7 +749,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                         data-testid="checkbox-randomize-runs"
                       />
                       <Label htmlFor="randomize-runs">
-                        Randomize Run Order
+                        Randomize Runs
                       </Label>
                     </div>
                     
