@@ -83,6 +83,11 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
   const [responseInputs, setResponseInputs] = useState<Record<number, string>>({});
   const [showUncoded, setShowUncoded] = useState(false); // false = coded, true = uncoded
   
+  // Solver state for Analysis tab
+  const [solveFactorIdx, setSolveFactorIdx] = useState(0);
+  const [targetY, setTargetY] = useState(100);
+  const [solverResult, setSolverResult] = useState<number | null>(null);
+  
   // Tab persistence
   const [activeTab, setActiveTab] = useState<string>(() => {
     const stored = localStorage.getItem(`doe-fractional-active-tab-${projectId}-${solutionId}`);
