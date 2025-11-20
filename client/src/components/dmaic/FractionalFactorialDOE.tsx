@@ -85,6 +85,27 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
     localStorage.setItem(`doe-fractional-active-tab-${projectId}-${solutionId}`, activeTab);
   }, [activeTab, projectId, solutionId]);
   
+  // Auto-generate plan when switching to Data tab
+  useEffect(() => {
+    if (activeTab === 'data' && validateFractionalFactorCount(factors) && factors.length >= 3) {
+      const centerPoints = includeCenterPoints ? numberOfCenterPoints : 0;
+      const plan = generateFractionalFactorialPlan(factors, fractionalResolution, centerPoints, randomizeRuns);
+      
+      setGeneratedPlan(plan);
+      
+      // Preserve existing response values where possible (match by run order)
+      const existingResponseMap = new Map(runData.map(rd => [rd.run, rd.response]));
+      
+      const newRunData = plan.plan.map((row: any, index: number) => ({
+        run: row.runOrder,
+        factors: factors.map(f => row[f.name] as number),
+        response: existingResponseMap.get(row.runOrder) ?? null,
+      }));
+      
+      setRunData(newRunData);
+    }
+  }, [activeTab, factors, fractionalResolution, includeCenterPoints, numberOfCenterPoints, randomizeRuns]);
+  
   // Load config from API
   const configQuery = useQuery({
     queryKey: [`/api/projects/${projectId}/solutions/${solutionId}/doe-fractional`],
