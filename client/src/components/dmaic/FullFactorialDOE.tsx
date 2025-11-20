@@ -925,9 +925,9 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                             });
                             const responses = matches
                               .map(m => m.response)
-                              .filter((r: any) => r !== null);
+                              .filter((r: any) => r !== null) as number[];
                             return responses.length > 0 
-                              ? responses.reduce((a: number, b: number) => a + b, 0) / responses.length 
+                              ? (responses.reduce((a: number, b: number) => a + b, 0) / responses.length)
                               : 0;
                           });
                           
@@ -949,7 +949,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                             </CardHeader>
                             <CardContent>
                               <Plot
-                                data={interactionTraces}
+                                data={interactionTraces as any}
                                 layout={{
                                   title: { text: `<b>${factorA.name} × ${factorB.name}</b>` },
                                   xaxis: { title: { text: factorB.name }, type: 'category' },
