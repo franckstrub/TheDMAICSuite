@@ -2668,6 +2668,9 @@ export const doeFractionalFactorialConfig = pgTable(
     // Analysis options
     significanceLevel: real("significance_level").default(0.05),
     
+    // Display options
+    showUncoded: boolean("show_uncoded").default(false),
+    
     // Follow-up full factorial flag
     generateFollowUpFullFactorial: boolean("generate_follow_up_full_factorial").default(false),
     significantFactors: jsonb("significant_factors").$type<number[]>().default([]), // Indices of significant factors
@@ -2739,6 +2742,9 @@ export const doeFullFactorialConfig = pgTable(
     
     // Analysis options
     significanceLevel: real("significance_level").default(0.05),
+    
+    // Display options
+    showUncoded: boolean("show_uncoded").default(false),
     
     lastUpdated: timestamp("last_updated").notNull().defaultNow(),
   },
