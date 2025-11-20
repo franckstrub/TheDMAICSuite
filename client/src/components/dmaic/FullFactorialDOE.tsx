@@ -697,7 +697,10 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                         </TableCell>
                                       );
                                     } else {
-                                      const displayValue = typeof decodedValue === 'number' && !isNaN(decodedValue) 
+                                      // Only show decoded value if factor has valid low/high values
+                                      const hasValidLevels = factor.lowValue !== null && !isNaN(factor.lowValue) && 
+                                                            factor.highValue !== null && !isNaN(factor.highValue);
+                                      const displayValue = hasValidLevels && typeof decodedValue === 'number' && !isNaN(decodedValue) 
                                         ? decodedValue.toFixed(2) 
                                         : '';
                                       return (
