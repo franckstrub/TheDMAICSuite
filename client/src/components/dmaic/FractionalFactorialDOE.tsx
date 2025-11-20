@@ -159,8 +159,8 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
         const inputs: Record<string, string> = {};
         factorsWithDefaults.forEach((f: DOEFactor, i: number) => {
           if (f.type === 'continuous') {
-            if (!isNaN(f.lowValue)) inputs[`${i}-lowValue`] = String(f.lowValue);
-            if (!isNaN(f.highValue)) inputs[`${i}-highValue`] = String(f.highValue);
+            if (f.lowValue !== null && !isNaN(f.lowValue)) inputs[`${i}-lowValue`] = String(f.lowValue);
+            if (f.highValue !== null && !isNaN(f.highValue)) inputs[`${i}-highValue`] = String(f.highValue);
           }
         });
         setFactorInputs(inputs);
