@@ -35,6 +35,7 @@ import {
   calculateInteractionEffects
 } from '@/lib/doeUtils';
 import { parseNumericValue } from '@/lib/excelPasteUtils';
+import jStat from 'jstat';
 import { 
   transformGeneratedPlanForSaving, 
   reconstructGeneratedPlanFromPersisted,
@@ -1186,16 +1187,177 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
         
         {/* Analysis Tab */}
         <TabsContent value="analysis" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Statistical Analysis</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-center py-12 text-muted-foreground">
-                <p>Statistical analysis will be implemented in the next phase</p>
+          {!generatedPlan || runData.length === 0 ? (
+            <Card>
+              <CardContent className="p-8 text-center text-muted-foreground">
+                <p>Generate a plan and enter data to view analysis</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              {/* Toggle for Coded/Uncoded Analysis */}
+              <div className="flex items-center space-x-2">
+                <Label htmlFor="analysis-uncoded-toggle">Coded</Label>
+                <Switch
+                  id="analysis-uncoded-toggle"
+                  checked={showUncoded}
+                  onCheckedChange={setShowUncoded}
+                  disabled={!allFactorsHaveValidLevels()}
+                  data-testid="switch-analysis-uncoded-toggle"
+                />
+                <Label htmlFor="analysis-uncoded-toggle">Uncoded</Label>
               </div>
-            </CardContent>
-          </Card>
+
+              {/* ANOVA Table */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>ANOVA Analysis</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Source</TableHead>
+                          <TableHead className="text-right">DF</TableHead>
+                          <TableHead className="text-right">Sum of Squares</TableHead>
+                          <TableHead className="text-right">Mean Square</TableHead>
+                          <TableHead className="text-right">F-Ratio</TableHead>
+                          <TableHead className="text-right">P-Value</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {(() => {
+                          const responses = runData
+                            .map(r => r.response)
+                            .filter((r): r is number => r !== null && !isNaN(r));
+                          
+                          if (responses.length === 0) {
+                            return <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground">No valid data</TableCell></TableRow>;
+                          }
+
+                          const n = responses.length;
+                          const grandMean = responses.reduce((a, b) => a + b, 0) / n;
+                          const totalSS = responses.reduce((sum, val) => sum + Math.pow(val - grandMean, 2), 0);
+                          const totalDF = n - 1;
+
+                          let rows: React.ReactNode[] = [];
+                          let sumSS = 0;
+                          let sumDF = 0;
+
+                          factors.forEach((factor, idx) => {
+                            const factorGroups: Record<number, number[]> = {};
+                            runData.forEach((row, rowIdx) => {
+                              const level = generatedPlan.plan[rowIdx]?.[factor.name] ?? 0;
+                              if (row.response !== null && !isNaN(row.response)) {
+                                if (!factorGroups[level]) factorGroups[level] = [];
+                                factorGroups[level].push(row.response);
+                              }
+                            });
+
+                            const groupMeans = Object.entries(factorGroups).map(([_, vals]) => vals.reduce((a, b) => a + b, 0) / vals.length);
+                            const levelCounts = Object.entries(factorGroups).map(([_, vals]) => vals.length);
+                            const factorSS = levelCounts.reduce((sum, count, i) => sum + count * Math.pow(groupMeans[i] - grandMean, 2), 0);
+                            const factorDF = Object.keys(factorGroups).length - 1;
+                            const factorMS = factorDF > 0 ? factorSS / factorDF : 0;
+                            const errorMS = (totalSS - sumSS - factorSS) / (totalDF - sumDF - factorDF) || 0;
+                            const fRatio = errorMS > 0 ? factorMS / errorMS : 0;
+                            const pValue = fRatio > 0 ? 1 - jStat.f.cdf(fRatio, factorDF, totalDF - sumDF - factorDF) : 1;
+
+                            const factorLabel = showUncoded && allFactorsHaveValidLevels()
+                              ? `${factor.name} (${factor.units || ''})`
+                              : factor.name;
+
+                            rows.push(
+                              <TableRow key={`factor-${idx}`}>
+                                <TableCell className="font-medium">{factorLabel}</TableCell>
+                                <TableCell className="text-right">{factorDF}</TableCell>
+                                <TableCell className="text-right">{factorSS.toFixed(4)}</TableCell>
+                                <TableCell className="text-right">{factorMS.toFixed(4)}</TableCell>
+                                <TableCell className="text-right">{fRatio.toFixed(4)}</TableCell>
+                                <TableCell className="text-right">
+                                  <span className={pValue < 0.05 ? "text-green-600 font-semibold" : ""}>
+                                    {pValue.toFixed(4)}
+                                  </span>
+                                </TableCell>
+                              </TableRow>
+                            );
+
+                            sumSS += factorSS;
+                            sumDF += factorDF;
+                          });
+
+                          const errorDF = totalDF - sumDF;
+                          const errorSS = totalSS - sumSS;
+                          const errorMS = errorDF > 0 ? errorSS / errorDF : 0;
+
+                          rows.push(
+                            <TableRow key="error">
+                              <TableCell className="font-medium">Error</TableCell>
+                              <TableCell className="text-right">{errorDF}</TableCell>
+                              <TableCell className="text-right">{errorSS.toFixed(4)}</TableCell>
+                              <TableCell className="text-right">{errorMS.toFixed(4)}</TableCell>
+                              <TableCell className="text-right">-</TableCell>
+                              <TableCell className="text-right">-</TableCell>
+                            </TableRow>
+                          );
+
+                          rows.push(
+                            <TableRow key="total">
+                              <TableCell className="font-medium">Total</TableCell>
+                              <TableCell className="text-right">{totalDF}</TableCell>
+                              <TableCell className="text-right">{totalSS.toFixed(4)}</TableCell>
+                              <TableCell className="text-right">-</TableCell>
+                              <TableCell className="text-right">-</TableCell>
+                              <TableCell className="text-right">-</TableCell>
+                            </TableRow>
+                          );
+
+                          return rows;
+                        })()}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Effects Summary */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Main Effects Summary</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {factors.map((factor, idx) => {
+                      const levels = [-1, 0, 1];
+                      const levelMeans = levels.map(level => {
+                        const matches = runData.filter((_, rowIdx) => generatedPlan.plan[rowIdx]?.[factor.name] === level);
+                        const vals = matches
+                          .map(m => m.response)
+                          .filter((r): r is number => r !== null && !isNaN(r));
+                        return vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+                      });
+
+                      return (
+                        <div key={idx} className="border rounded p-4">
+                          <p className="font-semibold">{factor.name}</p>
+                          <div className="mt-2 text-sm space-y-1">
+                            {['Low (-1)', 'Center (0)', 'High (+1)'].map((label, i) => (
+                              <p key={i}>
+                                {showUncoded && allFactorsHaveValidLevels()
+                                  ? `${decodeValue(levels[i], factor)}: ${levelMeans[i].toFixed(4)}`
+                                  : `${label}: ${levelMeans[i].toFixed(4)}`}
+                              </p>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          )}
         </TabsContent>
       </Tabs>
     </div>
