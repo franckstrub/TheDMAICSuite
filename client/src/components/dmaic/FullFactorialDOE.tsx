@@ -70,6 +70,8 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
     response: number | null;
   }>>([]);
   const [generatedPlan, setGeneratedPlan] = useState<any>(null);
+  // UI state for raw string inputs for responses (allows partial numbers like "-", "0.", "1,5")
+  const [responseInputs, setResponseInputs] = useState<Record<number, string>>({});
   
   // Tab persistence
   const [activeTab, setActiveTab] = useState<string>(() => {
@@ -173,6 +175,14 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
       
       if (config.runData && Array.isArray(config.runData)) {
         setRunData(config.runData);
+        // Initialize responseInputs from loaded response values
+        const inputs: Record<number, string> = {};
+        config.runData.forEach((rd: any) => {
+          if (rd.response !== null && rd.response !== undefined) {
+            inputs[rd.run] = String(rd.response);
+          }
+        });
+        setResponseInputs(inputs);
       }
       
       // Load generatedPlan from persisted format
@@ -355,6 +365,15 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
   };
   
   const handleResponseChange = (runIndex: number, value: string) => {
+    const runOrderKey = runData[runIndex]?.run;
+    
+    // Store raw string in UI state
+    setResponseInputs(prev => ({
+      ...prev,
+      [runOrderKey]: value
+    }));
+    
+    // Parse and store numeric value in runData
     const newRunData = [...runData];
     const parsedValue = parseNumericValue(value);
     newRunData[runIndex].response = isNaN(parsedValue) ? null : parsedValue;
@@ -716,7 +735,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                   <TableCell>
                                     <Input
                                       type="text"
-                                      value={runDataRow?.response ?? ''}
+                                      value={responseInputs[planRow.runOrder] ?? (runDataRow?.response !== null && runDataRow?.response !== undefined ? String(runDataRow.response) : '')}
                                       onChange={(e) => handleResponseChange(rowIndex, e.target.value)}
                                       placeholder="Enter response"
                                       className="w-full"
