@@ -26,10 +26,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import Plot from 'react-plotly.js';
 import { 
   type DOEFactor, 
   generateFractionalFactorialPlan,
-  decodeValue
+  decodeValue,
+  calculateMainEffects,
+  calculateInteractionEffects
 } from '@/lib/doeUtils';
 import { parseNumericValue } from '@/lib/excelPasteUtils';
 import { 
