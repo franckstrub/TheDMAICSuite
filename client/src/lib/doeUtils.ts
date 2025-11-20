@@ -109,18 +109,52 @@ export function generateFullFactorialPlan(
   }
   
   // Add center points if requested
-  for (let i = 0; i < centerPoints; i++) {
-    const row: DOEPlanRow = {
-      standardOrder: n + i + 1,
-      runOrder: n + i + 1,
-    };
-    
-    // All factors at center level (0)
-    for (const factor of factors) {
-      row[factor.name] = 0;
+  // For categorical factors, center points must be doubled (one at each level)
+  const categoricalFactors = factors.filter(f => f.type === 'categorical');
+  const continuousFactors = factors.filter(f => f.type === 'continuous');
+  
+  if (centerPoints > 0) {
+    if (categoricalFactors.length === 0) {
+      // All continuous: standard center points
+      for (let i = 0; i < centerPoints; i++) {
+        const row: DOEPlanRow = {
+          standardOrder: n + i + 1,
+          runOrder: n + i + 1,
+        };
+        
+        // All factors at center level (0)
+        for (const factor of factors) {
+          row[factor.name] = 0;
+        }
+        
+        plan.push(row);
+      }
+    } else {
+      // Has categorical factors: create center points for each combination of categorical levels
+      const numCategoricalCombinations = Math.pow(2, categoricalFactors.length);
+      
+      for (let i = 0; i < centerPoints; i++) {
+        for (let combo = 0; combo < numCategoricalCombinations; combo++) {
+          const row: DOEPlanRow = {
+            standardOrder: n + (i * numCategoricalCombinations) + combo + 1,
+            runOrder: n + (i * numCategoricalCombinations) + combo + 1,
+          };
+          
+          // Continuous factors at center level (0)
+          for (const factor of continuousFactors) {
+            row[factor.name] = 0;
+          }
+          
+          // Categorical factors at low (-1) or high (+1) based on combination
+          for (let j = 0; j < categoricalFactors.length; j++) {
+            const level = (combo & (1 << j)) ? 1 : -1;
+            row[categoricalFactors[j].name] = level;
+          }
+          
+          plan.push(row);
+        }
+      }
     }
-    
-    plan.push(row);
   }
   
   // Randomize run order if requested
@@ -140,10 +174,15 @@ export function generateFullFactorialPlan(
     plan.sort((a, b) => a.runOrder - b.runOrder);
   }
   
+  // Calculate actual number of center point runs (doubled for each categorical factor)
+  const actualCenterPointRuns = centerPoints > 0 && categoricalFactors.length > 0
+    ? centerPoints * Math.pow(2, categoricalFactors.length)
+    : centerPoints;
+  
   return {
     plan,
     factors,
-    designType: `2^${k} Full Factorial${centerPoints > 0 ? ` with ${centerPoints} center points` : ''}`,
+    designType: `2^${k} Full Factorial${actualCenterPointRuns > 0 ? ` with ${actualCenterPointRuns} center point runs` : ''}`,
   };
 }
 
@@ -240,17 +279,52 @@ export function generateFractionalFactorialPlan(
   }
   
   // Add center points if requested
-  for (let i = 0; i < centerPoints; i++) {
-    const row: DOEPlanRow = {
-      standardOrder: n + i + 1,
-      runOrder: n + i + 1,
-    };
-    
-    for (const factor of factors) {
-      row[factor.name] = 0;
+  // For categorical factors, center points must be doubled (one at each level)
+  const categoricalFactors = factors.filter(f => f.type === 'categorical');
+  const continuousFactors = factors.filter(f => f.type === 'continuous');
+  
+  if (centerPoints > 0) {
+    if (categoricalFactors.length === 0) {
+      // All continuous: standard center points
+      for (let i = 0; i < centerPoints; i++) {
+        const row: DOEPlanRow = {
+          standardOrder: n + i + 1,
+          runOrder: n + i + 1,
+        };
+        
+        // All factors at center level (0)
+        for (const factor of factors) {
+          row[factor.name] = 0;
+        }
+        
+        plan.push(row);
+      }
+    } else {
+      // Has categorical factors: create center points for each combination of categorical levels
+      const numCategoricalCombinations = Math.pow(2, categoricalFactors.length);
+      
+      for (let i = 0; i < centerPoints; i++) {
+        for (let combo = 0; combo < numCategoricalCombinations; combo++) {
+          const row: DOEPlanRow = {
+            standardOrder: n + (i * numCategoricalCombinations) + combo + 1,
+            runOrder: n + (i * numCategoricalCombinations) + combo + 1,
+          };
+          
+          // Continuous factors at center level (0)
+          for (const factor of continuousFactors) {
+            row[factor.name] = 0;
+          }
+          
+          // Categorical factors at low (-1) or high (+1) based on combination
+          for (let j = 0; j < categoricalFactors.length; j++) {
+            const level = (combo & (1 << j)) ? 1 : -1;
+            row[categoricalFactors[j].name] = level;
+          }
+          
+          plan.push(row);
+        }
+      }
     }
-    
-    plan.push(row);
   }
   
   // Randomize run order if requested
@@ -268,10 +342,15 @@ export function generateFractionalFactorialPlan(
     plan.sort((a, b) => a.runOrder - b.runOrder);
   }
   
+  // Calculate actual number of center point runs (doubled for each categorical factor)
+  const actualCenterPointRuns = centerPoints > 0 && categoricalFactors.length > 0
+    ? centerPoints * Math.pow(2, categoricalFactors.length)
+    : centerPoints;
+  
   return {
     plan,
     factors,
-    designType: `2^${k}-${p} Fractional Factorial (Resolution ${toRoman(resolution)})`,
+    designType: `2^${k}-${p} Fractional Factorial (Resolution ${toRoman(resolution)})${actualCenterPointRuns > 0 ? ` with ${actualCenterPointRuns} center point runs` : ''}`,
     definingRelation,
     resolution,
   };
