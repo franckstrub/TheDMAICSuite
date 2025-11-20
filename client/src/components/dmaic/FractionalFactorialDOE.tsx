@@ -91,7 +91,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
   useEffect(() => {
     if (activeTab === 'data' && validateFractionalFactorCount(factors) && factors.length >= 3) {
       const centerPoints = includeCenterPoints ? numberOfCenterPoints : 0;
-      const plan = generateFractionalFactorialPlan(factors, fractionalResolution, centerPoints, randomizeRuns);
+      const plan = generateFractionalFactorialPlan(factors, fractionalResolution, centerPoints, randomizeRuns, numberOfReplicates);
       
       setGeneratedPlan(plan);
       
@@ -106,7 +106,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
       
       setRunData(newRunData);
     }
-  }, [activeTab, factors, fractionalResolution, includeCenterPoints, numberOfCenterPoints, randomizeRuns]);
+  }, [activeTab, factors, fractionalResolution, includeCenterPoints, numberOfCenterPoints, randomizeRuns, numberOfReplicates]);
   
   // Load config from API
   const configQuery = useQuery({
@@ -377,7 +377,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
     }
     
     const centerPoints = includeCenterPoints ? numberOfCenterPoints : 0;
-    const plan = generateFractionalFactorialPlan(factors, fractionalResolution, centerPoints, randomizeRuns);
+    const plan = generateFractionalFactorialPlan(factors, fractionalResolution, centerPoints, randomizeRuns, numberOfReplicates);
     
     setGeneratedPlan(plan);
     
