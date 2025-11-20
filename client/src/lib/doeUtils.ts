@@ -75,12 +75,14 @@ export interface FractionalFactorialPlan {
  * @param factors Array of factor definitions
  * @param centerPoints Number of center points to add (default 0)
  * @param randomize Whether to randomize run order (default true)
+ * @param replicates Number of replicates (default 1)
  * @returns Full factorial design plan
  */
 export function generateFullFactorialPlan(
   factors: DOEFactor[],
   centerPoints: number = 0,
-  randomize: boolean = true
+  randomize: boolean = true,
+  replicates: number = 1
 ): FullFactorialPlan {
   const k = factors.length;
   const n = Math.pow(2, k); // Total runs in full factorial
@@ -157,6 +159,28 @@ export function generateFullFactorialPlan(
     }
   }
   
+  // Replicate the plan if requested
+  if (replicates > 1) {
+    const basePlan = [...plan];
+    const baseRunCount = basePlan.length;
+    
+    for (let rep = 1; rep < replicates; rep++) {
+      basePlan.forEach((row, idx) => {
+        const replicatedRow: DOEPlanRow = {
+          standardOrder: baseRunCount * rep + idx + 1,
+          runOrder: baseRunCount * rep + idx + 1,
+        };
+        
+        // Copy all factor levels
+        for (const factor of factors) {
+          replicatedRow[factor.name] = row[factor.name];
+        }
+        
+        plan.push(replicatedRow);
+      });
+    }
+  }
+  
   // Randomize run order if requested
   if (randomize) {
     const runOrders = plan.map((_, idx) => idx + 1);
@@ -193,13 +217,15 @@ export function generateFullFactorialPlan(
  * @param resolution Design resolution (III, IV, or V)
  * @param centerPoints Number of center points to add (default 0)
  * @param randomize Whether to randomize run order (default true)
+ * @param replicates Number of replicates (default 1)
  * @returns Fractional factorial design plan
  */
 export function generateFractionalFactorialPlan(
   factors: DOEFactor[],
   resolution: number = 4,
   centerPoints: number = 0,
-  randomize: boolean = true
+  randomize: boolean = true,
+  replicates: number = 1
 ): FractionalFactorialPlan {
   const k = factors.length;
   
@@ -324,6 +350,28 @@ export function generateFractionalFactorialPlan(
           plan.push(row);
         }
       }
+    }
+  }
+  
+  // Replicate the plan if requested
+  if (replicates > 1) {
+    const basePlan = [...plan];
+    const baseRunCount = basePlan.length;
+    
+    for (let rep = 1; rep < replicates; rep++) {
+      basePlan.forEach((row, idx) => {
+        const replicatedRow: DOEPlanRow = {
+          standardOrder: baseRunCount * rep + idx + 1,
+          runOrder: baseRunCount * rep + idx + 1,
+        };
+        
+        // Copy all factor levels
+        for (const factor of factors) {
+          replicatedRow[factor.name] = row[factor.name];
+        }
+        
+        plan.push(replicatedRow);
+      });
     }
   }
   
