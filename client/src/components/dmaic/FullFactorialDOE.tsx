@@ -659,7 +659,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                   {getFactorDisplayName(factor, index)}
                                 </TableHead>
                               ))}
-                              <TableHead className="w-[150px]">{responseVariableName}</TableHead>
+                              <TableHead className="w-[150px]">{responseVariableName.trim() || "Y Response"}</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
