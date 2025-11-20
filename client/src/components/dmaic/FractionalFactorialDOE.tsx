@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Save, Plus, Trash2 } from "lucide-react";
 import { useQuery, useMutation } from '@tanstack/react-query';
@@ -76,6 +77,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
   const [generatedPlan, setGeneratedPlan] = useState<any>(null);
   // UI state for raw string inputs for responses (allows partial numbers like "-", "0.", "1,5")
   const [responseInputs, setResponseInputs] = useState<Record<number, string>>({});
+  const [showUncoded, setShowUncoded] = useState(false); // false = coded, true = uncoded
   
   // Tab persistence
   const [activeTab, setActiveTab] = useState<string>(() => {
@@ -356,6 +358,18 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
     }
     
     setFactors(newFactors);
+  };
+  
+  // Check if all factors have valid levels defined
+  const allFactorsHaveValidLevels = () => {
+    return factors.every(factor => {
+      if (factor.type === 'categorical') {
+        return factor.levels && factor.levels.length >= 2;
+      } else {
+        return !isNaN(factor.lowValue) && !isNaN(factor.highValue) && 
+               factor.lowValue !== null && factor.highValue !== null;
+      }
+    });
   };
   
   const handleGeneratePlan = () => {
@@ -859,6 +873,19 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                         </div>
                       </div>
                       
+                      {/* Toggle for Coded/Uncoded Values */}
+                      <div className="flex items-center space-x-2">
+                        <Label htmlFor="uncoded-toggle">Coded</Label>
+                        <Switch
+                          id="uncoded-toggle"
+                          checked={showUncoded}
+                          onCheckedChange={setShowUncoded}
+                          disabled={!allFactorsHaveValidLevels()}
+                          data-testid="switch-uncoded-toggle"
+                        />
+                        <Label htmlFor="uncoded-toggle">Uncoded</Label>
+                      </div>
+                      
                       <div className="border rounded-lg overflow-x-auto">
                         <Table>
                           <TableHeader>
@@ -885,27 +912,25 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                     const decodedValue = decodeValue(codedValue, factor);
                                     
                                     if (factor.type === 'categorical') {
+                                      // For categorical: show coded value or actual level based on toggle
+                                      const codedDisplay = codedValue === 0 ? '0' : codedValue === 1 ? '+1' : '-1';
                                       return (
                                         <TableCell key={factorIndex}>
-                                          {decodedValue}
+                                          {showUncoded ? decodedValue : codedDisplay}
                                         </TableCell>
                                       );
                                     } else {
-                                      const displayValue = typeof decodedValue === 'number' && !isNaN(decodedValue) 
-                                        ? decodedValue.toFixed(2) 
-                                        : '';
+                                      // For continuous: show coded or uncoded based on toggle
+                                      const hasValidLevels = factor.lowValue !== null && !isNaN(factor.lowValue) && 
+                                                            factor.highValue !== null && !isNaN(factor.highValue);
+                                      const codedDisplay = codedValue === 0 ? '0' : codedValue === 1 ? '+1' : '-1';
+                                      const uncodedDisplay = hasValidLevels && typeof decodedValue === 'number' && !isNaN(decodedValue) 
+                                        ? `${decodedValue.toFixed(2)}${factor.units ? ' ' + factor.units : ''}` 
+                                        : codedDisplay;
+                                      
                                       return (
                                         <TableCell key={factorIndex}>
-                                          {codedValue === 0 ? '0' : codedValue === 1 ? '+1' : '-1'}
-                                          {displayValue && (
-                                            <>
-                                              {' '}
-                                              <span className="text-muted-foreground text-sm">
-                                                ({displayValue}
-                                                {factor.units && ` ${factor.units}`})
-                                              </span>
-                                            </>
-                                          )}
+                                          {showUncoded ? uncodedDisplay : codedDisplay}
                                         </TableCell>
                                       );
                                     }
