@@ -234,7 +234,13 @@ export function generateFractionalFactorialPlan(
   let generators: string[] = [];
   let definingRelation = '';
   
-  if (k === 4) {
+  if (k === 3) {
+    // 2^(3-1) design, Resolution III
+    p = 1;
+    generators = ['C=AB'];
+    definingRelation = 'I = ABC';
+    resolution = 3;
+  } else if (k === 4) {
     // 2^(4-1) design, Resolution IV
     p = 1;
     generators = ['D=ABC'];
@@ -398,7 +404,7 @@ export function generateFractionalFactorialPlan(
   return {
     plan,
     factors,
-    designType: `2^${k}-${p} Fractional Factorial (Resolution ${toRoman(resolution)})${actualCenterPointRuns > 0 ? ` with ${actualCenterPointRuns} center point runs` : ''}`,
+    designType: `2^(${k}-${p}) Fractional Factorial (Resolution ${toRoman(resolution)})${actualCenterPointRuns > 0 ? ` with ${actualCenterPointRuns} center point runs` : ''}`,
     definingRelation,
     resolution,
   };
