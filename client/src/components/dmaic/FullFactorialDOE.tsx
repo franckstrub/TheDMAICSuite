@@ -26,10 +26,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import Plot from 'react-plotly.js';
 import { 
   type DOEFactor, 
   generateFullFactorialPlan, 
-  decodeValue
+  decodeValue,
+  calculateMainEffects,
+  calculateInteractionEffects
 } from '@/lib/doeUtils';
 import { parseNumericValue } from '@/lib/excelPasteUtils';
 import { 
@@ -834,16 +837,153 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
         
         {/* Chart Tab */}
         <TabsContent value="chart" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Visualizations</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-center py-12 text-muted-foreground">
-                <p>Charts and visualizations will be implemented in the next phase</p>
+          {!generatedPlan || runData.length === 0 ? (
+            <Card>
+              <CardContent className="p-8 text-center text-muted-foreground">
+                <p>Generate a plan and enter data to view charts</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              {/* Main Effect Plots */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {factors.map((factor, factorIndex) => {
+                  const factorData = runData.map((rd, idx) => ({
+                    ...rd,
+                    [factor.name]: generatedPlan.plan[idx]?.[factor.name] || 0,
+                  }));
+                  
+                  const codedLevels = [-1, 0, 1];
+                  const mainEffectData = codedLevels.map(level => {
+                    const levelResponses = factorData
+                      .filter((d: any) => d[factor.name] === level && d.response !== null)
+                      .map((d: any) => d.response);
+                    return levelResponses.length > 0 
+                      ? levelResponses.reduce((a: number, b: number) => a + b, 0) / levelResponses.length 
+                      : 0;
+                  });
+
+                  return (
+                    <Card key={factorIndex}>
+                      <CardHeader>
+                        <CardTitle>Main Effect Plot: {factor.name}</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <Plot
+                          data={[
+                            {
+                              x: ['Low (-1)', 'Center (0)', 'High (+1)'],
+                              y: mainEffectData,
+                              type: 'scatter',
+                              mode: 'lines+markers',
+                              line: { width: 3, color: '#3b82f6' },
+                              marker: { size: 10, color: '#3b82f6' },
+                            },
+                          ]}
+                          layout={{
+                            title: { text: `<b>Main Effect: ${factor.name}</b>` },
+                            xaxis: { title: { text: 'Factor Level' }, type: 'category' },
+                            yaxis: { title: { text: responseVariableName || 'Y Response' } },
+                            showlegend: false,
+                            hovermode: 'closest',
+                            margin: { l: 60, r: 40, t: 60, b: 60 },
+                          }}
+                          config={{
+                            responsive: true,
+                            displayModeBar: true,
+                            displaylogo: false,
+                            toImageButtonOptions: {
+                              format: 'png',
+                              filename: `DOE_Main_Effect_${factor.name}`,
+                              height: 400,
+                              width: 600,
+                              scale: 1
+                            }
+                          }}
+                          className="w-full"
+                          style={{ height: '400px' }}
+                        />
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
-            </CardContent>
-          </Card>
+
+              {/* Interaction Plots */}
+              {factors.length >= 2 && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Interaction Plots</h3>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {factors.slice(0, -1).map((factorA, idxA) =>
+                      factors.slice(idxA + 1).map((factorB, idxB) => {
+                        const interactionTraces = [-1, 1].map(levelA => {
+                          const centerLevels = [-1, 0, 1];
+                          const interactionData = centerLevels.map(levelB => {
+                            const matches = runData.filter((_, idx) => {
+                              const row = generatedPlan.plan[idx];
+                              return row?.[factorA.name] === levelA && row?.[factorB.name] === levelB;
+                            });
+                            const responses = matches
+                              .map(m => m.response)
+                              .filter((r: any) => r !== null);
+                            return responses.length > 0 
+                              ? responses.reduce((a: number, b: number) => a + b, 0) / responses.length 
+                              : 0;
+                          });
+                          
+                          return {
+                            x: ['Low (-1)', 'Center (0)', 'High (+1)'],
+                            y: interactionData,
+                            type: 'scatter',
+                            mode: 'lines+markers',
+                            name: `${factorA.name} = ${levelA === -1 ? 'Low' : 'High'}`,
+                            line: { width: 2 },
+                            marker: { size: 8 },
+                          };
+                        });
+
+                        return (
+                          <Card key={`${idxA}-${idxB}`}>
+                            <CardHeader>
+                              <CardTitle>Interaction: {factorA.name} × {factorB.name}</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <Plot
+                                data={interactionTraces}
+                                layout={{
+                                  title: { text: `<b>${factorA.name} × ${factorB.name}</b>` },
+                                  xaxis: { title: { text: factorB.name }, type: 'category' },
+                                  yaxis: { title: { text: responseVariableName || 'Y Response' } },
+                                  showlegend: true,
+                                  legend: { title: { text: factorA.name } },
+                                  hovermode: 'closest',
+                                  margin: { l: 60, r: 160, t: 60, b: 60 },
+                                }}
+                                config={{
+                                  responsive: true,
+                                  displayModeBar: true,
+                                  displaylogo: false,
+                                  toImageButtonOptions: {
+                                    format: 'png',
+                                    filename: `DOE_Interaction_${factorA.name}_x_${factorB.name}`,
+                                    height: 400,
+                                    width: 650,
+                                    scale: 1
+                                  }
+                                }}
+                                className="w-full"
+                                style={{ height: '400px' }}
+                              />
+                            </CardContent>
+                          </Card>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </TabsContent>
         
         {/* Analysis Tab */}
