@@ -69,6 +69,8 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
     response: number | null;
   }>>([]);
   const [generatedPlan, setGeneratedPlan] = useState<any>(null);
+  // UI state for raw string inputs for responses (allows partial numbers like "-", "0.", "1,5")
+  const [responseInputs, setResponseInputs] = useState<Record<number, string>>({});
   
   // Tab persistence
   const [activeTab, setActiveTab] = useState<string>(() => {
@@ -146,6 +148,14 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
       
       if (config.runData && Array.isArray(config.runData)) {
         setRunData(config.runData);
+        // Initialize responseInputs from loaded response values
+        const inputs: Record<number, string> = {};
+        config.runData.forEach((rd: any) => {
+          if (rd.response !== null && rd.response !== undefined) {
+            inputs[rd.run] = String(rd.response);
+          }
+        });
+        setResponseInputs(inputs);
       }
       
       // Load generatedPlan from persisted format
@@ -328,10 +338,33 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
   };
   
   const handleResponseChange = (runIndex: number, value: string) => {
+    const runNumber = runData[runIndex].run;
+    setResponseInputs({
+      ...responseInputs,
+      [runNumber]: value,
+    });
+  };
+  
+  const handleResponseBlur = (runIndex: number) => {
+    const runNumber = runData[runIndex].run;
+    const rawValue = responseInputs[runNumber] || '';
+    const parsedValue = parseNumericValue(rawValue);
+    
     const newRunData = [...runData];
-    const parsedValue = parseNumericValue(value);
     newRunData[runIndex].response = isNaN(parsedValue) ? null : parsedValue;
     setRunData(newRunData);
+    
+    // Update responseInputs with the parsed value (or remove if empty/invalid)
+    if (rawValue.trim() === '' || isNaN(parsedValue)) {
+      const newInputs = { ...responseInputs };
+      delete newInputs[runNumber];
+      setResponseInputs(newInputs);
+    } else {
+      setResponseInputs({
+        ...responseInputs,
+        [runNumber]: String(parsedValue),
+      });
+    }
   };
   
   return (
@@ -686,8 +719,9 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                   <TableCell>
                                     <Input
                                       type="text"
-                                      value={runDataRow?.response ?? ''}
+                                      value={responseInputs[planRow.runOrder] ?? (runDataRow?.response !== null && runDataRow?.response !== undefined ? String(runDataRow.response) : '')}
                                       onChange={(e) => handleResponseChange(rowIndex, e.target.value)}
+                                      onBlur={() => handleResponseBlur(rowIndex)}
                                       placeholder="Enter response"
                                       className="w-full"
                                       data-testid={`input-response-${rowIndex}`}
