@@ -87,7 +87,19 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
   useEffect(() => {
     if (activeTab === 'data' && validateFactorCount(factors)) {
       const centerPoints = includeCenterPoints ? numberOfCenterPoints : 0;
+      console.log('[Full Factorial DOE] Auto-generating plan:', {
+        activeTab,
+        includeCenterPoints,
+        numberOfCenterPoints,
+        centerPoints,
+        randomizeRuns,
+        factorsLength: factors.length
+      });
       const plan = generateFullFactorialPlan(factors, centerPoints, randomizeRuns);
+      console.log('[Full Factorial DOE] Generated plan:', {
+        totalRuns: plan.plan.length,
+        designType: plan.designType
+      });
       
       setGeneratedPlan(plan);
       
@@ -100,6 +112,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
         response: existingResponseMap.get(row.runOrder) ?? null,
       }));
       
+      console.log('[Full Factorial DOE] Setting runData with', newRunData.length, 'runs');
       setRunData(newRunData);
     }
   }, [activeTab, factors, includeCenterPoints, numberOfCenterPoints, randomizeRuns]);
