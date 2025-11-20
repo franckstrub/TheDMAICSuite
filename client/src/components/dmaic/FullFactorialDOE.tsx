@@ -845,6 +845,19 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
             </Card>
           ) : (
             <>
+              {/* Toggle for Coded/Uncoded Values */}
+              <div className="flex items-center space-x-2">
+                <Label htmlFor="chart-uncoded-toggle">Coded</Label>
+                <Switch
+                  id="chart-uncoded-toggle"
+                  checked={showUncoded}
+                  onCheckedChange={setShowUncoded}
+                  disabled={!allFactorsHaveValidLevels()}
+                  data-testid="switch-chart-uncoded-toggle"
+                />
+                <Label htmlFor="chart-uncoded-toggle">Uncoded</Label>
+              </div>
+
               {/* Main Effect Plots */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {factors.map((factor, factorIndex) => {
@@ -863,6 +876,15 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                       : 0;
                   });
 
+                  const xLabels = showUncoded && allFactorsHaveValidLevels()
+                    ? codedLevels.map(level => {
+                        const decoded = decodeValue(level, factor);
+                        return factor.type === 'continuous'
+                          ? `${(decoded as number).toFixed(2)}${factor.units ? ' ' + factor.units : ''}`
+                          : String(decoded);
+                      })
+                    : ['Low (-1)', 'Center (0)', 'High (+1)'];
+
                   return (
                     <Card key={factorIndex}>
                       <CardHeader>
@@ -872,7 +894,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                         <Plot
                           data={[
                             {
-                              x: ['Low (-1)', 'Center (0)', 'High (+1)'],
+                              x: xLabels,
                               y: mainEffectData,
                               type: 'scatter',
                               mode: 'lines+markers',
@@ -931,12 +953,28 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                               : 0;
                           });
                           
+                          const levelALabel = showUncoded && allFactorsHaveValidLevels()
+                            ? (() => {
+                                const decoded = decodeValue(levelA, factorA);
+                                return factorA.type === 'continuous'
+                                  ? `${(decoded as number).toFixed(2)}${factorA.units ? ' ' + factorA.units : ''}`
+                                  : String(decoded);
+                              })()
+                            : (levelA === -1 ? 'Low' : 'High');
+
                           return {
-                            x: ['Low (-1)', 'Center (0)', 'High (+1)'],
+                            x: showUncoded && allFactorsHaveValidLevels()
+                              ? centerLevels.map(level => {
+                                  const decoded = decodeValue(level, factorB);
+                                  return factorB.type === 'continuous'
+                                    ? `${(decoded as number).toFixed(2)}${factorB.units ? ' ' + factorB.units : ''}`
+                                    : String(decoded);
+                                })
+                              : ['Low (-1)', 'Center (0)', 'High (+1)'],
                             y: interactionData,
                             type: 'scatter',
                             mode: 'lines+markers',
-                            name: `${factorA.name} = ${levelA === -1 ? 'Low' : 'High'}`,
+                            name: `${factorA.name} = ${levelALabel}`,
                             line: { width: 2 },
                             marker: { size: 8 },
                           };
