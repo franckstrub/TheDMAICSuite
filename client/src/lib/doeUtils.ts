@@ -87,7 +87,8 @@ export function generateFullFactorialPlan(
   
   const plan: DOEPlanRow[] = [];
   
-  // Generate all combinations of -1 and +1
+  // Generate all combinations of -1 and +1 following Yates standard order
+  // In Yates order, the last factor changes fastest
   for (let i = 0; i < n; i++) {
     const row: DOEPlanRow = {
       standardOrder: i + 1,
@@ -95,10 +96,12 @@ export function generateFullFactorialPlan(
     };
     
     // For each factor, determine if it's at low (-1) or high (+1) level
+    // Use reversed bit positions so the last factor changes fastest (Yates order)
     for (let j = 0; j < k; j++) {
       const factorName = factors[j].name;
-      // Use bit manipulation to determine level
-      const level = (i & (1 << j)) ? 1 : -1;
+      // Factor j uses bit position (k-1-j) for Yates standard order
+      const bitPosition = k - 1 - j;
+      const level = (i & (1 << bitPosition)) ? 1 : -1;
       row[factorName] = level;
     }
     
@@ -200,17 +203,18 @@ export function generateFractionalFactorialPlan(
   
   const plan: DOEPlanRow[] = [];
   
-  // Generate base factorial design for first (k-p) factors
+  // Generate base factorial design for first (k-p) factors following Yates standard order
   for (let i = 0; i < n; i++) {
     const row: DOEPlanRow = {
       standardOrder: i + 1,
       runOrder: i + 1,
     };
     
-    // Set base factors
+    // Set base factors using Yates order (last factor changes fastest)
     for (let j = 0; j < baseFactors; j++) {
       const factorName = factors[j].name;
-      const level = (i & (1 << j)) ? 1 : -1;
+      const bitPosition = baseFactors - 1 - j;
+      const level = (i & (1 << bitPosition)) ? 1 : -1;
       row[factorName] = level;
     }
     
