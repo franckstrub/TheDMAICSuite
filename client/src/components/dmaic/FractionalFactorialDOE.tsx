@@ -563,7 +563,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                 {factor.type === 'continuous' ? (
                                   <Input
                                     type="text"
-                                    value={factorInputs[`${index}-lowValue`] ?? (isNaN(factor.lowValue) ? '' : String(factor.lowValue))}
+                                    value={factorInputs[`${index}-lowValue`] ?? (factor.lowValue !== null && !isNaN(factor.lowValue) ? String(factor.lowValue) : '')}
                                     onChange={(e) => handleFactorChange(index, 'lowValue', e.target.value)}
                                     placeholder="Low Value"
                                     data-testid={`input-factor-low-${index}`}
@@ -581,7 +581,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                 {factor.type === 'continuous' ? (
                                   <Input
                                     type="text"
-                                    value={factorInputs[`${index}-highValue`] ?? (isNaN(factor.highValue) ? '' : String(factor.highValue))}
+                                    value={factorInputs[`${index}-highValue`] ?? (factor.highValue !== null && !isNaN(factor.highValue) ? String(factor.highValue) : '')}
                                     onChange={(e) => handleFactorChange(index, 'highValue', e.target.value)}
                                     placeholder="High Value"
                                     data-testid={`input-factor-high-${index}`}
