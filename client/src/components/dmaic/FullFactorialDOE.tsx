@@ -84,6 +84,11 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
   const [targetY, setTargetY] = useState(100);
   const [solverResult, setSolverResult] = useState<number | null>(null);
   
+  // Model reduction - track which factors to include (all enabled by default)
+  const [selectedFactorsForModel, setSelectedFactorsForModel] = useState<Record<number, boolean>>(
+    {}
+  );
+  
   // Tab persistence
   const [activeTab, setActiveTab] = useState<string>(() => {
     const stored = localStorage.getItem(`doe-full-active-tab-${projectId}-${solutionId}`);
@@ -1303,27 +1308,41 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                       </CardContent>
                     </Card>
 
-                    {/* Coefficients Table */}
+                    {/* Coefficients Table with Model Selection */}
                     <Card>
                       <CardHeader>
-                        <CardTitle>Regression Coefficients</CardTitle>
+                        <CardTitle>Regression Coefficients (uncheck to exclude from model)</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="overflow-x-auto">
                           <Table>
                             <TableHeader>
                               <TableRow>
+                                <TableHead>Include</TableHead>
                                 <TableHead>Term</TableHead>
                                 <TableHead className="text-right">Coefficient</TableHead>
                               </TableRow>
                             </TableHeader>
                             <TableBody>
                               <TableRow>
+                                <TableCell><Checkbox disabled checked /></TableCell>
                                 <TableCell className="font-medium">Intercept</TableCell>
                                 <TableCell className="text-right">{beta[0]?.toFixed(6)}</TableCell>
                               </TableRow>
                               {factors.map((factor, i) => (
                                 <TableRow key={i}>
+                                  <TableCell>
+                                    <Checkbox
+                                      checked={selectedFactorsForModel[i] ?? true}
+                                      onCheckedChange={(checked) => {
+                                        setSelectedFactorsForModel(prev => ({
+                                          ...prev,
+                                          [i]: !!checked
+                                        }));
+                                      }}
+                                      data-testid={`checkbox-factor-${i}`}
+                                    />
+                                  </TableCell>
                                   <TableCell className="font-medium">{factor.name}</TableCell>
                                   <TableCell className="text-right">{beta[i + 1]?.toFixed(6)}</TableCell>
                                 </TableRow>
