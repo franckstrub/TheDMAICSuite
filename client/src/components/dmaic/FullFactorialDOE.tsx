@@ -82,6 +82,27 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
     localStorage.setItem(`doe-full-active-tab-${projectId}-${solutionId}`, activeTab);
   }, [activeTab, projectId, solutionId]);
   
+  // Auto-generate plan when switching to Data tab
+  useEffect(() => {
+    if (activeTab === 'data' && validateFactorCount(factors)) {
+      const centerPoints = includeCenterPoints ? numberOfCenterPoints : 0;
+      const plan = generateFullFactorialPlan(factors, centerPoints, randomizeRuns);
+      
+      setGeneratedPlan(plan);
+      
+      // Preserve existing response values where possible (match by run order)
+      const existingResponseMap = new Map(runData.map(rd => [rd.run, rd.response]));
+      
+      const newRunData = plan.plan.map((row: any, index: number) => ({
+        run: row.runOrder,
+        factors: factors.map(f => row[f.name] as number),
+        response: existingResponseMap.get(row.runOrder) ?? null,
+      }));
+      
+      setRunData(newRunData);
+    }
+  }, [activeTab, factors, includeCenterPoints, numberOfCenterPoints, randomizeRuns]);
+  
   // Load config from API
   const configQuery = useQuery({
     queryKey: [`/api/projects/${projectId}/solutions/${solutionId}/doe-full`],
