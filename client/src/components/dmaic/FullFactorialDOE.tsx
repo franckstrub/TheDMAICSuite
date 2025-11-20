@@ -34,6 +34,7 @@ import {
   transformGeneratedPlanForSaving, 
   reconstructGeneratedPlanFromPersisted,
   getDefaultFactor,
+  getFactorDisplayName,
   validateFactorCount,
   parseFactorValue
 } from '@/lib/doeSharedUtils';
@@ -655,7 +656,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                               <TableHead className="w-[100px]">Run Order</TableHead>
                               {factors.map((factor, index) => (
                                 <TableHead key={index} className="w-[150px]">
-                                  {factor.name}
+                                  {getFactorDisplayName(factor, index)}
                                 </TableHead>
                               ))}
                               <TableHead className="w-[150px]">{responseVariableName}</TableHead>

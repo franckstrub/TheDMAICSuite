@@ -50,10 +50,18 @@ export function getDefaultFactor(index: number): DOEFactor {
   return {
     name: `Factor ${String.fromCharCode(64 + index)}`,
     type: "continuous",
-    lowValue: -1,
-    highValue: 1,
+    lowValue: NaN,
+    highValue: NaN,
     units: "",
   };
+}
+
+// Helper to get factor display name (shows default if name is empty)
+export function getFactorDisplayName(factor: DOEFactor, index: number): string {
+  if (factor.name && factor.name.trim() !== '') {
+    return factor.name;
+  }
+  return `Factor ${String.fromCharCode(65 + index)}`; // A=65, B=66, C=67, etc.
 }
 
 // Helper to convert UI string input to number, handling French decimal format
