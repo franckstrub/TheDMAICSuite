@@ -664,14 +664,21 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                         </TableCell>
                                       );
                                     } else {
+                                      const displayValue = typeof decodedValue === 'number' && !isNaN(decodedValue) 
+                                        ? decodedValue.toFixed(2) 
+                                        : '';
                                       return (
                                         <TableCell key={factorIndex}>
                                           {codedValue === 0 ? '0' : codedValue === 1 ? '+1' : '-1'}
-                                          {' '}
-                                          <span className="text-muted-foreground text-sm">
-                                            ({typeof decodedValue === 'number' ? decodedValue.toFixed(2) : decodedValue}
-                                            {factor.units && ` ${factor.units}`})
-                                          </span>
+                                          {displayValue && (
+                                            <>
+                                              {' '}
+                                              <span className="text-muted-foreground text-sm">
+                                                ({displayValue}
+                                                {factor.units && ` ${factor.units}`})
+                                              </span>
+                                            </>
+                                          )}
                                         </TableCell>
                                       );
                                     }
