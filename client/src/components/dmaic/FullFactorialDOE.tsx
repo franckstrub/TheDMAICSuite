@@ -34,7 +34,6 @@ import {
   transformGeneratedPlanForSaving, 
   reconstructGeneratedPlanFromPersisted,
   getDefaultFactor,
-  getFactorDisplayName,
   validateFactorCount,
   parseFactorValue
 } from '@/lib/doeSharedUtils';
@@ -70,8 +69,6 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
     response: number | null;
   }>>([]);
   const [generatedPlan, setGeneratedPlan] = useState<any>(null);
-  // UI state for raw string inputs for responses (allows partial numbers like "-", "0.", "1,5")
-  const [responseInputs, setResponseInputs] = useState<Record<number, string>>({});
   
   // Tab persistence
   const [activeTab, setActiveTab] = useState<string>(() => {
@@ -83,27 +80,6 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
   useEffect(() => {
     localStorage.setItem(`doe-full-active-tab-${projectId}-${solutionId}`, activeTab);
   }, [activeTab, projectId, solutionId]);
-  
-  // Auto-generate plan when switching to Data tab
-  useEffect(() => {
-    if (activeTab === 'data' && validateFactorCount(factors)) {
-      const centerPoints = includeCenterPoints ? numberOfCenterPoints : 0;
-      const plan = generateFullFactorialPlan(factors, centerPoints, randomizeRuns);
-      
-      setGeneratedPlan(plan);
-      
-      // Preserve existing response values where possible (match by run order)
-      const existingResponseMap = new Map(runData.map(rd => [rd.run, rd.response]));
-      
-      const newRunData = plan.plan.map((row: any, index: number) => ({
-        run: row.runOrder,
-        factors: factors.map(f => row[f.name] as number),
-        response: existingResponseMap.get(row.runOrder) ?? null,
-      }));
-      
-      setRunData(newRunData);
-    }
-  }, [activeTab, factors, includeCenterPoints, numberOfCenterPoints, randomizeRuns]);
   
   // Load config from API
   const configQuery = useQuery({
@@ -130,21 +106,16 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
       }
       
       if (config.factors && Array.isArray(config.factors) && config.factors.length > 0) {
-        // Convert null values to NaN (null comes from database when field was empty)
-        const factorsWithNaN = config.factors.map((f: any) => {
-          if (f.type === 'continuous') {
-            return {
-              ...f,
-              lowValue: f.lowValue === null ? NaN : f.lowValue,
-              highValue: f.highValue === null ? NaN : f.highValue,
-            };
-          }
-          return f;
-        });
-        setFactors(factorsWithNaN);
+        // Populate empty factor names with defaults (Factor A, B, C, etc.)
+        const factorsWithDefaults = config.factors.map((f: any, i: number) => ({
+          ...f,
+          name: f.name && f.name.trim() !== '' ? f.name : `Factor ${String.fromCharCode(65 + i)}`,
+        }));
+        
+        setFactors(factorsWithDefaults);
         // Initialize factorInputs from loaded numeric values
         const inputs: Record<string, string> = {};
-        factorsWithNaN.forEach((f: DOEFactor, i: number) => {
+        factorsWithDefaults.forEach((f: DOEFactor, i: number) => {
           if (f.type === 'continuous') {
             if (!isNaN(f.lowValue)) inputs[`${i}-lowValue`] = String(f.lowValue);
             if (!isNaN(f.highValue)) inputs[`${i}-highValue`] = String(f.highValue);
@@ -175,14 +146,6 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
       
       if (config.runData && Array.isArray(config.runData)) {
         setRunData(config.runData);
-        // Initialize responseInputs from loaded response values
-        const inputs: Record<number, string> = {};
-        config.runData.forEach((rd: any) => {
-          if (rd.response !== null && rd.response !== undefined) {
-            inputs[rd.run] = String(rd.response);
-          }
-        });
-        setResponseInputs(inputs);
       }
       
       // Load generatedPlan from persisted format
@@ -365,15 +328,6 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
   };
   
   const handleResponseChange = (runIndex: number, value: string) => {
-    const runOrderKey = runData[runIndex]?.run;
-    
-    // Store raw string in UI state
-    setResponseInputs(prev => ({
-      ...prev,
-      [runOrderKey]: value
-    }));
-    
-    // Parse and store numeric value in runData
     const newRunData = [...runData];
     const parsedValue = parseNumericValue(value);
     newRunData[runIndex].response = isNaN(parsedValue) ? null : parsedValue;
@@ -574,16 +528,6 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                             <SelectItem value="0.20" data-testid="option-significance-0.20">20%</SelectItem>
                           </SelectContent>
                         </Select>
-                        {/*<Input
-                          id="significance-level"
-                          type="number"
-                          step="0.01"
-                          min="0.01"
-                          max="0.99"
-                          value={significanceLevel}
-                          onChange={(e) => setSignificanceLevel(parseFloat(e.target.value) || 0.05)}
-                          data-testid="input-significance-level"
-                        /> */}
                       </div>
                     </div>
                     
@@ -595,7 +539,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                         data-testid="checkbox-randomize-runs"
                       />
                       <Label htmlFor="randomize-runs">
-                        Randomize Run Order
+                        Randomize Standard Order
                       </Label>
                     </div>
                     
@@ -696,10 +640,10 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                               <TableHead className="w-[100px]">Run Order</TableHead>
                               {factors.map((factor, index) => (
                                 <TableHead key={index} className="w-[150px]">
-                                  {getFactorDisplayName(factor, index)}
+                                  {factor.name}
                                 </TableHead>
                               ))}
-                              <TableHead className="w-[150px]">{responseVariableName.trim() || "Y Response"}</TableHead>
+                              <TableHead className="w-[150px]">{responseVariableName}</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -735,7 +679,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                   <TableCell>
                                     <Input
                                       type="text"
-                                      value={responseInputs[planRow.runOrder] ?? (runDataRow?.response !== null && runDataRow?.response !== undefined ? String(runDataRow.response) : '')}
+                                      value={runDataRow?.response ?? ''}
                                       onChange={(e) => handleResponseChange(rowIndex, e.target.value)}
                                       placeholder="Enter response"
                                       className="w-full"

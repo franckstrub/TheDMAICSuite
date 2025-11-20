@@ -137,21 +137,27 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
       }
       
       if (config.factors && Array.isArray(config.factors) && config.factors.length > 0) {
-        // Convert null values to NaN (null comes from database when field was empty)
-        const factorsWithNaN = config.factors.map((f: any) => {
+        // Convert null values to NaN and populate empty factor names with defaults
+        const factorsWithDefaults = config.factors.map((f: any, i: number) => {
+          const factor = {
+            ...f,
+            // Populate empty factor names with default (Factor A, B, C, etc.)
+            name: f.name && f.name.trim() !== '' ? f.name : `Factor ${String.fromCharCode(65 + i)}`,
+          };
+          
           if (f.type === 'continuous') {
             return {
-              ...f,
+              ...factor,
               lowValue: f.lowValue === null ? NaN : f.lowValue,
               highValue: f.highValue === null ? NaN : f.highValue,
             };
           }
-          return f;
+          return factor;
         });
-        setFactors(factorsWithNaN);
+        setFactors(factorsWithDefaults);
         // Initialize factorInputs from loaded numeric values
         const inputs: Record<string, string> = {};
-        factorsWithNaN.forEach((f: DOEFactor, i: number) => {
+        factorsWithDefaults.forEach((f: DOEFactor, i: number) => {
           if (f.type === 'continuous') {
             if (!isNaN(f.lowValue)) inputs[`${i}-lowValue`] = String(f.lowValue);
             if (!isNaN(f.highValue)) inputs[`${i}-highValue`] = String(f.highValue);
@@ -420,7 +426,6 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
 
       items.push({
         p,
-        //label: `2` + <sup> + `(${k}-${p})` + </sup> + ` – Resolution ${resolutionRoman} (${runs} runs)`
         label: (
           <>
             2<sup>({k}-{p})</sup> Resolution {resolutionRoman} ({runs} runs)
