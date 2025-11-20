@@ -1161,41 +1161,284 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                 </CardContent>
               </Card>
 
-              {/* Effects Summary */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Main Effects Summary</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {factors.map((factor, idx) => {
-                      const levels = [-1, 0, 1];
-                      const levelMeans = levels.map(level => {
-                        const matches = runData.filter((_, rowIdx) => generatedPlan.plan[rowIdx]?.[factor.name] === level);
-                        const vals = matches
-                          .map(m => m.response)
-                          .filter((r): r is number => r !== null && !isNaN(r));
-                        return vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
-                      });
+              {(() => {
+                // Regression Analysis
+                const responses = runData
+                  .map(r => r.response)
+                  .filter((r): r is number => r !== null && !isNaN(r));
+                
+                if (responses.length < 2) {
+                  return (
+                    <Card>
+                      <CardContent className="p-8 text-center text-muted-foreground">
+                        <p>Insufficient data for regression analysis</p>
+                      </CardContent>
+                    </Card>
+                  );
+                }
 
-                      return (
-                        <div key={idx} className="border rounded p-4">
-                          <p className="font-semibold">{factor.name}</p>
-                          <div className="mt-2 text-sm space-y-1">
-                            {['Low (-1)', 'Center (0)', 'High (+1)'].map((label, i) => (
-                              <p key={i}>
-                                {showUncoded && allFactorsHaveValidLevels()
-                                  ? `${decodeValue(levels[i], factor)}: ${levelMeans[i].toFixed(4)}`
-                                  : `${label}: ${levelMeans[i].toFixed(4)}`}
-                              </p>
-                            ))}
+                const X: number[][] = [];
+                const y: number[] = [];
+                
+                runData.forEach((row, idx) => {
+                  if (row.response !== null && !isNaN(row.response)) {
+                    const row_vals = [1]; // intercept
+                    factors.forEach(factor => {
+                      row_vals.push(generatedPlan.plan[idx]?.[factor.name] ?? 0);
+                    });
+                    X.push(row_vals);
+                    y.push(row.response);
+                  }
+                });
+
+                const n = y.length;
+                const p = X[0].length;
+                const mean_y = y.reduce((a, b) => a + b, 0) / n;
+                const SS_tot = y.reduce((sum, val) => sum + Math.pow(val - mean_y, 2), 0);
+
+                // Calculate X'X and X'y
+                let XtX: number[][] = Array(p).fill(null).map(() => Array(p).fill(0));
+                let Xty: number[] = Array(p).fill(0);
+
+                for (let i = 0; i < n; i++) {
+                  for (let j = 0; j < p; j++) {
+                    Xty[j] += X[i][j] * y[i];
+                    for (let k = 0; k < p; k++) {
+                      XtX[j][k] += X[i][j] * X[i][k];
+                    }
+                  }
+                }
+
+                // Simple matrix inversion for small matrices
+                const det = XtX[0][0] * (XtX[1][1] * XtX[2][2] - XtX[1][2] * XtX[2][1]) -
+                           XtX[0][1] * (XtX[1][0] * XtX[2][2] - XtX[1][2] * XtX[2][0]) +
+                           XtX[0][2] * (XtX[1][0] * XtX[2][1] - XtX[1][1] * XtX[2][0]);
+
+                let beta: number[] = [];
+                if (Math.abs(det) > 1e-10 && p === 3) {
+                  // 3x3 matrix inversion
+                  const inv: number[][] = [
+                    [(XtX[1][1] * XtX[2][2] - XtX[1][2] * XtX[2][1]) / det,
+                     (XtX[0][2] * XtX[2][1] - XtX[0][1] * XtX[2][2]) / det,
+                     (XtX[0][1] * XtX[1][2] - XtX[0][2] * XtX[1][1]) / det],
+                    [(XtX[1][2] * XtX[2][0] - XtX[1][0] * XtX[2][2]) / det,
+                     (XtX[0][0] * XtX[2][2] - XtX[0][2] * XtX[2][0]) / det,
+                     (XtX[0][2] * XtX[1][0] - XtX[0][0] * XtX[1][2]) / det],
+                    [(XtX[1][0] * XtX[2][1] - XtX[1][1] * XtX[2][0]) / det,
+                     (XtX[0][1] * XtX[2][0] - XtX[0][0] * XtX[2][1]) / det,
+                     (XtX[0][0] * XtX[1][1] - XtX[0][1] * XtX[1][0]) / det]
+                  ];
+
+                  for (let i = 0; i < p; i++) {
+                    beta[i] = 0;
+                    for (let j = 0; j < p; j++) {
+                      beta[i] += inv[i][j] * Xty[j];
+                    }
+                  }
+                } else {
+                  beta = Xty.map(v => v / (XtX[0][0] || 1));
+                }
+
+                const predictions = X.map(row => row.reduce((sum, val, i) => sum + val * beta[i], 0));
+                const residuals = y.map((val, i) => val - predictions[i]);
+                const SS_res = residuals.reduce((sum, val) => sum + Math.pow(val, 2), 0);
+                const R_sq = 1 - SS_res / SS_tot;
+                const adj_R_sq = 1 - (1 - R_sq) * (n - 1) / (n - p);
+                const rmse = Math.sqrt(SS_res / (n - p));
+                
+                const [solveFactorIdx, setSolveFactorIdx] = useState(0);
+                const [targetY, setTargetY] = useState(mean_y);
+                const [factorConstraints, setFactorConstraints] = useState<Record<number, [number, number]>>(
+                  factors.reduce((acc, _, i) => {
+                    if (i !== solveFactorIdx) acc[i] = [-1, 1];
+                    return acc;
+                  }, {})
+                );
+                const [solverResult, setSolverResult] = useState<number | null>(null);
+
+                const handleSolve = () => {
+                  if (p < 2) return;
+                  let low = -10, high = 10;
+                  let result = (targetY - beta[0]) / beta[solveFactorIdx + 1];
+                  if (factorConstraints[solveFactorIdx]) {
+                    result = Math.max(low, Math.min(high, result));
+                  }
+                  setSolverResult(result);
+                };
+
+                return (
+                  <>
+                    {/* Regression Equation */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Regression Model</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded font-mono text-sm">
+                          <p>Y = {beta[0]?.toFixed(4)}</p>
+                          {factors.map((factor, i) => (
+                            <p key={i}>
+                              &nbsp;&nbsp;&nbsp;&nbsp;{beta[i + 1] >= 0 ? '+' : ''} {beta[i + 1]?.toFixed(4)} × {factor.name}
+                            </p>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Goodness of Fit */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Goodness of Fit</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-sm text-muted-foreground">R²</p>
+                            <p className="text-2xl font-bold">{(R_sq * 100).toFixed(2)}%</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground">Adjusted R²</p>
+                            <p className="text-2xl font-bold">{(adj_R_sq * 100).toFixed(2)}%</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground">RMSE</p>
+                            <p className="text-2xl font-bold">{rmse.toFixed(4)}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground">N Observations</p>
+                            <p className="text-2xl font-bold">{n}</p>
                           </div>
                         </div>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
+                      </CardContent>
+                    </Card>
+
+                    {/* Coefficients Table */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Regression Coefficients</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="overflow-x-auto">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Term</TableHead>
+                                <TableHead className="text-right">Coefficient</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              <TableRow>
+                                <TableCell className="font-medium">Intercept</TableCell>
+                                <TableCell className="text-right">{beta[0]?.toFixed(6)}</TableCell>
+                              </TableRow>
+                              {factors.map((factor, i) => (
+                                <TableRow key={i}>
+                                  <TableCell className="font-medium">{factor.name}</TableCell>
+                                  <TableCell className="text-right">{beta[i + 1]?.toFixed(6)}</TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Residual Analysis */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Residual Analysis</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <div className="grid grid-cols-3 gap-4">
+                            <div>
+                              <p className="text-sm text-muted-foreground">Mean Residual</p>
+                              <p className="text-lg font-bold">{(residuals.reduce((a, b) => a + b, 0) / residuals.length).toFixed(6)}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-muted-foreground">Std Dev Residuals</p>
+                              <p className="text-lg font-bold">{Math.sqrt(residuals.reduce((sum, r) => sum + r * r, 0) / residuals.length).toFixed(4)}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-muted-foreground">Max Residual</p>
+                              <p className="text-lg font-bold">{Math.max(...residuals.map(Math.abs)).toFixed(4)}</p>
+                            </div>
+                          </div>
+                          <div className="border-t pt-4">
+                            <p className="text-sm font-semibold mb-2">Residual Table (Sample)</p>
+                            <div className="overflow-x-auto">
+                              <Table>
+                                <TableHeader>
+                                  <TableRow>
+                                    <TableHead>Obs</TableHead>
+                                    <TableHead className="text-right">Actual</TableHead>
+                                    <TableHead className="text-right">Predicted</TableHead>
+                                    <TableHead className="text-right">Residual</TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {y.slice(0, 5).map((val, i) => (
+                                    <TableRow key={i}>
+                                      <TableCell>{i + 1}</TableCell>
+                                      <TableCell className="text-right">{val.toFixed(4)}</TableCell>
+                                      <TableCell className="text-right">{predictions[i].toFixed(4)}</TableCell>
+                                      <TableCell className="text-right">{residuals[i].toFixed(4)}</TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Solver */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Solve for Target Response</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <div>
+                            <Label>Target Y Value</Label>
+                            <Input
+                              type="number"
+                              value={targetY}
+                              onChange={(e) => setTargetY(parseFloat(e.target.value) || mean_y)}
+                              data-testid="input-solver-target-y"
+                            />
+                          </div>
+                          <div>
+                            <Label>Solve for Factor</Label>
+                            <Select value={String(solveFactorIdx)} onValueChange={(v) => setSolveFactorIdx(parseInt(v))}>
+                              <SelectTrigger data-testid="select-solver-factor">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {factors.map((f, i) => (
+                                  <SelectItem key={i} value={String(i)}>{f.name}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <Button onClick={handleSolve} data-testid="button-solve">
+                            Solve
+                          </Button>
+                          {solverResult !== null && (
+                            <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded border border-green-200 dark:border-green-800">
+                              <p className="text-sm text-muted-foreground">Result:</p>
+                              <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                                {factors[solveFactorIdx].name} = {solverResult.toFixed(4)}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </>
+                );
+              })()}
             </>
           )}
         </TabsContent>
