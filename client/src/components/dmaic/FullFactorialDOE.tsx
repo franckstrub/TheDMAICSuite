@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Save, Plus, Trash2 } from "lucide-react";
 import { useQuery, useMutation } from '@tanstack/react-query';
@@ -684,6 +685,17 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                         <p className="text-sm text-muted-foreground">
                           Total Runs: {runData.length}
                         </p>
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800" data-testid="badge-replicates">
+                            Replicates: {numberOfReplicates}
+                          </Badge>
+                          <Badge variant="outline" className={randomizeRuns ? "bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800" : "bg-gray-50 dark:bg-gray-950 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-800"} data-testid="badge-randomization">
+                            Randomization: {randomizeRuns ? "ON" : "OFF"}
+                          </Badge>
+                          <Badge variant="outline" className="bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800" data-testid="badge-center-points">
+                            Center Points: {includeCenterPoints ? numberOfCenterPoints : 0}
+                          </Badge>
+                        </div>
                       </div>
                       
                       <div className="border rounded-lg overflow-x-auto">
