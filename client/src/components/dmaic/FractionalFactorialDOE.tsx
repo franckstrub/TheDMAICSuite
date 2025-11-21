@@ -1266,10 +1266,23 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                               const factorAHasOneLevel = factorAUniqueLevels.size === 1;
                               const factorBHasOneLevel = factorBUniqueLevels.size === 1;
                               
-                              // Check if interaction is confounded due to resolution
-                              // In fractional designs, if runs <= 1 + number of factors, interactions are confounded
-                              const totalRuns = generatedPlan.plan.length;
-                              const isInteractionConfounded = totalRuns <= (1 + factors.length);
+                              // Check if interaction is confounded: interaction with generated factors are confounded
+                              // In 2^(k-p) designs, the first (k-p) factors are base, the rest are generated
+                              // Interactions involving generated factors are confounded
+                              const k = factors.length;
+                              let numBaseFactors = k; // default to full factorial
+                              
+                              // Parse design type to get k and p from "2^(k-p)" format
+                              const designMatch = generatedPlan.designType.match(/2\^\((\d+)-(\d+)\)/);
+                              if (designMatch) {
+                                const k_design = parseInt(designMatch[1]);
+                                const p_design = parseInt(designMatch[2]);
+                                numBaseFactors = k_design - p_design;
+                              }
+                              
+                              const factorAIdx = factors.indexOf(factorA);
+                              const factorBIdx = factors.indexOf(factorB);
+                              const isInteractionConfounded = factorAIdx >= numBaseFactors || factorBIdx >= numBaseFactors;
                               
                               // For lines/markers logic: if either factor has only one level, show markers only
                               const showLinesInInteraction = !factorAHasOneLevel && !factorBHasOneLevel;
