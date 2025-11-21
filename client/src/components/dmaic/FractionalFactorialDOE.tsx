@@ -1220,7 +1220,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
               </div>
 
               {(() => {
-                // Regression Analysis
+                // Regression Analysis with Interactions
                 const responses = runData
                   .map(r => r.response)
                   .filter((r): r is number => r !== null && !isNaN(r));
@@ -1235,14 +1235,29 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   );
                 }
 
+                // Build interaction terms
+                const interactionPairs: Array<{i: number, j: number, name: string}> = [];
+                for (let i = 0; i < factors.length; i++) {
+                  for (let j = i + 1; j < factors.length; j++) {
+                    interactionPairs.push({i, j, name: `${factors[i].name}×${factors[j].name}`});
+                  }
+                }
+
                 const X: number[][] = [];
                 const y: number[] = [];
                 
                 runData.forEach((row, idx) => {
                   if (row.response !== null && !isNaN(row.response)) {
                     const row_vals = [1]; // intercept
+                    const factorValues: number[] = [];
                     factors.forEach(factor => {
-                      row_vals.push(generatedPlan.plan[idx]?.[factor.name] ?? 0);
+                      const val = generatedPlan.plan[idx]?.[factor.name] ?? 0;
+                      factorValues.push(val);
+                      row_vals.push(val);
+                    });
+                    // Add interaction terms
+                    interactionPairs.forEach(pair => {
+                      row_vals.push(factorValues[pair.i] * factorValues[pair.j]);
                     });
                     X.push(row_vals);
                     y.push(row.response);
@@ -1267,31 +1282,43 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   }
                 }
 
-                // Simple matrix inversion for small matrices
-                const det = XtX[0][0] * (XtX[1][1] * XtX[2][2] - XtX[1][2] * XtX[2][1]) -
-                           XtX[0][1] * (XtX[1][0] * XtX[2][2] - XtX[1][2] * XtX[2][0]) +
-                           XtX[0][2] * (XtX[1][0] * XtX[2][1] - XtX[1][1] * XtX[2][0]);
+                // Gaussian elimination for solving normal equations
+                const solveNormalEquations = (A: number[][], b: number[]): number[] => {
+                  const n = A.length;
+                  const aug = A.map((row, i) => [...row, b[i]]);
+                  
+                  for (let i = 0; i < n; i++) {
+                    let maxRow = i;
+                    for (let k = i + 1; k < n; k++) {
+                      if (Math.abs(aug[k][i]) > Math.abs(aug[maxRow][i])) maxRow = k;
+                    }
+                    [aug[i], aug[maxRow]] = [aug[maxRow], aug[i]];
+                    
+                    for (let k = i + 1; k < n; k++) {
+                      const factor = aug[k][i] / aug[i][i];
+                      for (let j = i; j <= n; j++) {
+                        aug[k][j] -= factor * aug[i][j];
+                      }
+                    }
+                  }
+                  
+                  const x: number[] = Array(n).fill(0);
+                  for (let i = n - 1; i >= 0; i--) {
+                    x[i] = aug[i][n];
+                    for (let j = i + 1; j < n; j++) {
+                      x[i] -= aug[i][j] * x[j];
+                    }
+                    x[i] /= aug[i][i];
+                  }
+                  return x;
+                };
 
                 let beta: number[] = [];
-                if (Math.abs(det) > 1e-10 && p === 3) {
-                  // 3x3 matrix inversion
-                  const inv: number[][] = [
-                    [(XtX[1][1] * XtX[2][2] - XtX[1][2] * XtX[2][1]) / det,
-                     (XtX[0][2] * XtX[2][1] - XtX[0][1] * XtX[2][2]) / det,
-                     (XtX[0][1] * XtX[1][2] - XtX[0][2] * XtX[1][1]) / det],
-                    [(XtX[1][2] * XtX[2][0] - XtX[1][0] * XtX[2][2]) / det,
-                     (XtX[0][0] * XtX[2][2] - XtX[0][2] * XtX[2][0]) / det,
-                     (XtX[0][2] * XtX[1][0] - XtX[0][0] * XtX[1][2]) / det],
-                    [(XtX[1][0] * XtX[2][1] - XtX[1][1] * XtX[2][0]) / det,
-                     (XtX[0][1] * XtX[2][0] - XtX[0][0] * XtX[2][1]) / det,
-                     (XtX[0][0] * XtX[1][1] - XtX[0][1] * XtX[1][0]) / det]
-                  ];
-
-                  for (let i = 0; i < p; i++) {
-                    beta[i] = 0;
-                    for (let j = 0; j < p; j++) {
-                      beta[i] += inv[i][j] * Xty[j];
-                    }
+                if (Math.abs(XtX[0][0]) > 1e-10) {
+                  try {
+                    beta = solveNormalEquations(XtX, Xty);
+                  } catch (e) {
+                    beta = Xty.map(v => v / (XtX[0][0] || 1));
                   }
                 } else {
                   beta = Xty.map(v => v / (XtX[0][0] || 1));
@@ -1327,7 +1354,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     {/* Regression Equation */}
                     <Card>
                       <CardHeader>
-                        <CardTitle>Regression Model</CardTitle>
+                        <CardTitle>Regression Model (with Interactions)</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded font-mono text-sm">
@@ -1335,6 +1362,11 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                           {factors.map((factor, i) => (
                             <p key={i}>
                               &nbsp;&nbsp;&nbsp;&nbsp;{beta[i + 1] >= 0 ? '+' : ''} {beta[i + 1]?.toFixed(4)} × {factor.name}{factor.type === 'continuous' && factor.units ? ` (${factor.units})` : ''}
+                            </p>
+                          ))}
+                          {interactionPairs.map((pair, i) => (
+                            <p key={`int-${i}`}>
+                              &nbsp;&nbsp;&nbsp;&nbsp;{beta[factors.length + 1 + i] >= 0 ? '+' : ''} {beta[factors.length + 1 + i]?.toFixed(4)} × {pair.name}
                             </p>
                           ))}
                         </div>
@@ -1405,6 +1437,24 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                   </TableCell>
                                   <TableCell className="font-medium">{factor.name}</TableCell>
                                   <TableCell className="text-right">{beta[i + 1]?.toFixed(6)}</TableCell>
+                                </TableRow>
+                              ))}
+                              {interactionPairs.map((pair, i) => (
+                                <TableRow key={`int-${i}`}>
+                                  <TableCell>
+                                    <Checkbox
+                                      checked={selectedFactorsForModel[`int-${i}`] ?? true}
+                                      onCheckedChange={(checked) => {
+                                        setSelectedFactorsForModel(prev => ({
+                                          ...prev,
+                                          [`int-${i}`]: !!checked
+                                        }));
+                                      }}
+                                      data-testid={`checkbox-interaction-${i}`}
+                                    />
+                                  </TableCell>
+                                  <TableCell className="font-medium">{pair.name}</TableCell>
+                                  <TableCell className="text-right">{beta[factors.length + 1 + i]?.toFixed(6)}</TableCell>
                                 </TableRow>
                               ))}
                             </TableBody>
