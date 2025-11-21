@@ -1030,55 +1030,57 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 <Label htmlFor="chart-uncoded-toggle">Uncoded</Label>
               </div>
 
-              {/* Main Effect Plots */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {(() => {
-                  // Calculate min/max across ALL data (main effects + interactions)
-                  const allValues: number[] = [];
-                  const centerLevels = includeCenterPoints ? [-1, 0, 1] : [-1, 1];
-                  
-                  // Collect main effect values
-                  factors.forEach((factor) => {
-                    centerLevels.forEach(level => {
-                      const levelResponses = runData
-                        .filter((_, idx) => generatedPlan.plan[idx]?.[factor.name] === level && runData[idx].response !== null)
-                        .map((rd) => rd.response as number);
-                      if (levelResponses.length > 0) {
-                        const avg = levelResponses.reduce((a, b) => a + b, 0) / levelResponses.length;
-                        allValues.push(avg);
-                      }
-                    });
+              {(() => {
+                // Calculate min/max across ALL data (main effects + interactions)
+                const allValues: number[] = [];
+                const centerLevels = includeCenterPoints ? [-1, 0, 1] : [-1, 1];
+                
+                // Collect main effect values
+                factors.forEach((factor) => {
+                  centerLevels.forEach(level => {
+                    const levelResponses = runData
+                      .filter((_, idx) => generatedPlan.plan[idx]?.[factor.name] === level && runData[idx].response !== null)
+                      .map((rd) => rd.response as number);
+                    if (levelResponses.length > 0) {
+                      const avg = levelResponses.reduce((a, b) => a + b, 0) / levelResponses.length;
+                      allValues.push(avg);
+                    }
                   });
-                  
-                  // Collect interaction values
-                  factors.slice(0, -1).forEach((factorA) => {
-                    factors.slice(factors.indexOf(factorA) + 1).forEach((factorB) => {
-                      [-1, 1].forEach(levelA => {
-                        centerLevels.forEach(levelB => {
-                          const matches = runData.filter((_, idx) => {
-                            const row = generatedPlan.plan[idx];
-                            return row?.[factorA.name] === levelA && row?.[factorB.name] === levelB;
-                          });
-                          const responses = matches
-                            .map(m => m.response)
-                            .filter((r: any) => r !== null) as number[];
-                          if (responses.length > 0) {
-                            const avg = responses.reduce((a, b) => a + b, 0) / responses.length;
-                            allValues.push(avg);
-                          }
+                });
+                
+                // Collect interaction values
+                factors.slice(0, -1).forEach((factorA) => {
+                  factors.slice(factors.indexOf(factorA) + 1).forEach((factorB) => {
+                    [-1, 1].forEach(levelA => {
+                      centerLevels.forEach(levelB => {
+                        const matches = runData.filter((_, idx) => {
+                          const row = generatedPlan.plan[idx];
+                          return row?.[factorA.name] === levelA && row?.[factorB.name] === levelB;
                         });
+                        const responses = matches
+                          .map(m => m.response)
+                          .filter((r: any) => r !== null) as number[];
+                        if (responses.length > 0) {
+                          const avg = responses.reduce((a, b) => a + b, 0) / responses.length;
+                          allValues.push(avg);
+                        }
                       });
                     });
                   });
-                  
-                  const yMin = allValues.length > 0 ? Math.min(...allValues) : 0;
-                  const yMax = allValues.length > 0 ? Math.max(...allValues) : 100;
-                  const range = yMax - yMin;
-                  const padding = range > 0 ? range * 0.1 : 10;
-                  const yAxisRangeMin = yMin - padding;
-                  const yAxisRangeMax = yMax + padding;
+                });
+                
+                const yMin = allValues.length > 0 ? Math.min(...allValues) : 0;
+                const yMax = allValues.length > 0 ? Math.max(...allValues) : 100;
+                const range = yMax - yMin;
+                const padding = range > 0 ? range * 0.1 : 10;
+                const yAxisRangeMin = yMin - padding;
+                const yAxisRangeMax = yMax + padding;
 
-                  return factors.map((factor, factorIndex) => {
+                return (
+                  <>
+                    {/* Main Effect Plots */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                      {factors.map((factor, factorIndex) => {
                     const factorData = runData.map((rd, idx) => ({
                       ...rd,
                       [factor.name]: generatedPlan.plan[idx]?.[factor.name] || 0,
@@ -1145,21 +1147,19 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                           />
                         </CardContent>
                       </Card>
-                    );
-                  });
-                })()}
-              </div>
+                      );
+                      })}
+                    </div>
 
-              {/* Interaction Plots */}
-              {factors.length >= 2 && (
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Interaction Plots</h3>
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    {factors.slice(0, -1).map((factorA, idxA) =>
-                      factors.slice(idxA + 1).map((factorB, idxB) => {
-                        const centerLevels = includeCenterPoints ? [-1, 0, 1] : [-1, 1];
-                        const interactionTraces = [-1, 1].map(levelA => {
-                          const interactionData = centerLevels.map(levelB => {
+                    {/* Interaction Plots */}
+                    {factors.length >= 2 && (
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-semibold">Interaction Plots</h3>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                          {factors.slice(0, -1).map((factorA, idxA) =>
+                            factors.slice(idxA + 1).map((factorB, idxB) => {
+                              const interactionTraces = [-1, 1].map(levelA => {
+                                const interactionData = (includeCenterPoints ? [-1, 0, 1] : [-1, 1]).map(levelB => {
                             const matches = runData.filter((_, idx) => {
                               const row = generatedPlan.plan[idx];
                               return row?.[factorA.name] === levelA && row?.[factorB.name] === levelB;
@@ -1181,64 +1181,67 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                               })()
                             : (levelA === -1 ? 'Low' : 'High');
 
-                          return {
-                            x: showUncoded && allFactorsHaveValidLevels()
-                              ? centerLevels.map(level => {
-                                  const decoded = decodeValue(level, factorB);
-                                  return factorB.type === 'continuous'
-                                    ? `${(decoded as number).toFixed(2)}${factorB.units ? ' ' + factorB.units : ''}`
-                                    : String(decoded);
-                                })
-                              : (includeCenterPoints ? ['Low (-1)', 'Center (0)', 'High (+1)'] : ['Low (-1)', 'High (+1)']),
-                            y: interactionData,
-                            type: 'scatter',
-                            mode: 'lines+markers',
-                            name: `${factorA.name} = ${levelALabel}`,
-                            line: { width: 2 },
-                            marker: { size: 8 },
-                          };
-                        });
+                                return {
+                                  x: showUncoded && allFactorsHaveValidLevels()
+                                    ? (includeCenterPoints ? [-1, 0, 1] : [-1, 1]).map(level => {
+                                        const decoded = decodeValue(level, factorB);
+                                        return factorB.type === 'continuous'
+                                          ? `${(decoded as number).toFixed(2)}${factorB.units ? ' ' + factorB.units : ''}`
+                                          : String(decoded);
+                                      })
+                                    : (includeCenterPoints ? ['Low (-1)', 'Center (0)', 'High (+1)'] : ['Low (-1)', 'High (+1)']),
+                                  y: interactionData,
+                                  type: 'scatter',
+                                  mode: 'lines+markers',
+                                  name: `${factorA.name} = ${levelALabel}`,
+                                  line: { width: 2 },
+                                  marker: { size: 8 },
+                                };
+                              });
 
-                        return (
-                          <Card key={`${idxA}-${idxB}`}>
-                            <CardHeader>
-                              <CardTitle>Interaction: {factorA.name} × {factorB.name}</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                              <Plot
-                                data={interactionTraces as any}
-                                layout={{
-                                  title: { text: `<b>${factorA.name} × ${factorB.name}</b>` },
-                                  xaxis: { title: { text: factorB.name }, type: 'category' },
-                                  yaxis: { title: { text: responseVariableName || 'Y Response' }, range: [yAxisRangeMin, yAxisRangeMax] },
-                                    showlegend: true,
-                                    legend: { title: { text: factorA.name } },
-                                    hovermode: 'closest',
-                                    margin: { l: 60, r: 160, t: 60, b: 60 },
-                                  }}
-                                  config={{
-                                    responsive: true,
-                                    displayModeBar: true,
-                                    displaylogo: false,
-                                    toImageButtonOptions: {
-                                      format: 'png',
-                                      filename: `DOE_Interaction_${factorA.name}_x_${factorB.name}`,
-                                      height: 400,
-                                      width: 650,
-                                      scale: 1
-                                    }
-                                  }}
-                                  className="w-full"
-                                  style={{ height: '400px' }}
-                                />
-                              </CardContent>
-                            </Card>
-                          );
-                        })
-                      )}
-                  </div>
-                </div>
-              )}
+                              return (
+                                <Card key={`${idxA}-${idxB}`}>
+                                  <CardHeader>
+                                    <CardTitle>Interaction: {factorA.name} × {factorB.name}</CardTitle>
+                                  </CardHeader>
+                                  <CardContent>
+                                    <Plot
+                                      data={interactionTraces as any}
+                                      layout={{
+                                        title: { text: `<b>${factorA.name} × ${factorB.name}</b>` },
+                                        xaxis: { title: { text: factorB.name }, type: 'category' },
+                                        yaxis: { title: { text: responseVariableName || 'Y Response' }, range: [yAxisRangeMin, yAxisRangeMax] },
+                                        showlegend: true,
+                                        legend: { title: { text: factorA.name } },
+                                        hovermode: 'closest',
+                                        margin: { l: 60, r: 160, t: 60, b: 60 },
+                                      }}
+                                      config={{
+                                        responsive: true,
+                                        displayModeBar: true,
+                                        displaylogo: false,
+                                        toImageButtonOptions: {
+                                          format: 'png',
+                                          filename: `DOE_Interaction_${factorA.name}_x_${factorB.name}`,
+                                          height: 400,
+                                          width: 650,
+                                          scale: 1
+                                        }
+                                      }}
+                                      className="w-full"
+                                      style={{ height: '400px' }}
+                                    />
+                                  </CardContent>
+                                </Card>
+                              );
+                            })
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </>
           )}
         </TabsContent>
