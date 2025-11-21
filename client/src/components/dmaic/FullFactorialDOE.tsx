@@ -2074,158 +2074,230 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                               </TableRow>
                               {factors.map((factor, i) => {
                                 const isIncluded = selectedFactorsForModel[i] !== false;
-                                if (!isIncluded) return null;
                                 
-                                const origColIdx = i + 1;
-                                const reducedColIdx = colMapReverse[origColIdx];
-                                
-                                if (reducedColIdx === undefined) return null;
-                                
-                                const vif = (() => {
-                                  try {
-                                    return calculateDOEVIF(reducedModel.XtX, reducedColIdx);
-                                  } catch {
-                                    return null;
-                                  }
-                                })();
-                                const isHighVIF = vif !== null && vif > 5;
-                                const isModerateVIF = vif !== null && vif > 1 && vif <= 5;
-                                
-                                return (
-                                <TableRow key={i}>
-                                  <TableCell className="font-medium">{factor.name}</TableCell>
-                                  <TableCell className="text-right">{beta_display[reducedColIdx]?.toFixed(6)}</TableCell>
-                                  <TableCell className="text-right">{coeffStats[reducedColIdx]?.stdError.toFixed(4)}</TableCell>
-                                  <TableCell className="text-right">{coeffStats[reducedColIdx]?.tValue.toFixed(4)}</TableCell>
-                                  <TableCell className={`text-right ${(coeffStats[reducedColIdx]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{coeffStats[reducedColIdx]?.pValue.toFixed(4)}</TableCell>
-                                  <TableCell className={`text-right ${isHighVIF ? 'text-red-600 font-semibold' : isModerateVIF ? 'text-yellow-400 font-semibold' : ''}`}>{vif !== null ? vif.toFixed(2) : '-'}</TableCell>
-                                  <TableCell className="text-center">
-                                    <Checkbox
-                                      checked={true}
-                                      onCheckedChange={(checked) => {
-                                        setSelectedFactorsForModel(prev => ({
-                                          ...prev,
-                                          [i]: !!checked
-                                        }));
-                                      }}
-                                      data-testid={`checkbox-factor-${i}`}
-                                    />
-                                  </TableCell>
-                                </TableRow>
-                                );
+                                if (isIncluded) {
+                                  const origColIdx = i + 1;
+                                  const reducedColIdx = colMapReverse[origColIdx];
+                                  
+                                  if (reducedColIdx === undefined) return null;
+                                  
+                                  const vif = (() => {
+                                    try {
+                                      return calculateDOEVIF(reducedModel.XtX, reducedColIdx);
+                                    } catch {
+                                      return null;
+                                    }
+                                  })();
+                                  const isHighVIF = vif !== null && vif > 5;
+                                  const isModerateVIF = vif !== null && vif > 1 && vif <= 5;
+                                  
+                                  return (
+                                  <TableRow key={i}>
+                                    <TableCell className="font-medium">{factor.name}</TableCell>
+                                    <TableCell className="text-right">{beta_display[reducedColIdx]?.toFixed(6)}</TableCell>
+                                    <TableCell className="text-right">{coeffStats[reducedColIdx]?.stdError.toFixed(4)}</TableCell>
+                                    <TableCell className="text-right">{coeffStats[reducedColIdx]?.tValue.toFixed(4)}</TableCell>
+                                    <TableCell className={`text-right ${(coeffStats[reducedColIdx]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{coeffStats[reducedColIdx]?.pValue.toFixed(4)}</TableCell>
+                                    <TableCell className={`text-right ${isHighVIF ? 'text-red-600 font-semibold' : isModerateVIF ? 'text-yellow-400 font-semibold' : ''}`}>{vif !== null ? vif.toFixed(2) : '-'}</TableCell>
+                                    <TableCell className="text-center">
+                                      <Checkbox
+                                        checked={true}
+                                        onCheckedChange={(checked) => {
+                                          setSelectedFactorsForModel(prev => ({
+                                            ...prev,
+                                            [i]: !!checked
+                                          }));
+                                        }}
+                                        data-testid={`checkbox-factor-${i}`}
+                                      />
+                                    </TableCell>
+                                  </TableRow>
+                                  );
+                                } else {
+                                  return (
+                                  <TableRow key={i} className="opacity-60">
+                                    <TableCell className="font-medium text-muted-foreground">{factor.name} (not included in model)</TableCell>
+                                    <TableCell className="text-right">-</TableCell>
+                                    <TableCell className="text-right">-</TableCell>
+                                    <TableCell className="text-right">-</TableCell>
+                                    <TableCell className="text-right">-</TableCell>
+                                    <TableCell className="text-right">-</TableCell>
+                                    <TableCell className="text-center">
+                                      <Checkbox
+                                        checked={false}
+                                        onCheckedChange={(checked) => {
+                                          setSelectedFactorsForModel(prev => ({
+                                            ...prev,
+                                            [i]: !!checked
+                                          }));
+                                        }}
+                                        data-testid={`checkbox-factor-${i}`}
+                                      />
+                                    </TableCell>
+                                  </TableRow>
+                                  );
+                                }
                               })}
                               {interactionPairs.map((pair, i) => {
                                 const isIncluded = selectedFactorsForModel[`int-${i}`] !== false;
-                                if (!isIncluded) return null;
                                 
-                                const origColIdx = factors.length + 1 + i;
-                                const reducedColIdx = colMapReverse[origColIdx];
-                                
-                                if (reducedColIdx === undefined) return null;
-                                
-                                const vif = (() => {
-                                  try {
-                                    return calculateDOEVIF(reducedModel.XtX, reducedColIdx);
-                                  } catch {
-                                    return null;
-                                  }
-                                })();
-                                const isHighVIF = vif !== null && vif > 5;
-                                const isModerateVIF = vif !== null && vif > 1 && vif <= 5;
-                                
-                                return (
-                                <TableRow key={`int-${i}`}>
-                                  <TableCell className="font-medium">{pair.name}</TableCell>
-                                  <TableCell className="text-right">{beta_display[reducedColIdx]?.toFixed(6)}</TableCell>
-                                  <TableCell className="text-right">{coeffStats[reducedColIdx]?.stdError.toFixed(4)}</TableCell>
-                                  <TableCell className="text-right">{coeffStats[reducedColIdx]?.tValue.toFixed(4)}</TableCell>
-                                  <TableCell className={`text-right ${(coeffStats[reducedColIdx]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{coeffStats[reducedColIdx]?.pValue.toFixed(4)}</TableCell>
-                                  <TableCell className={`text-right ${isHighVIF ? 'text-red-600 font-semibold' : isModerateVIF ? 'text-yellow-400 font-semibold' : ''}`}>{vif !== null ? vif.toFixed(2) : '-'}</TableCell>
-                                  <TableCell className="text-center">
-                                    <Checkbox
-                                      checked={true}
-                                      onCheckedChange={(checked) => {
-                                        setSelectedFactorsForModel(prev => ({
-                                          ...prev,
-                                          [`int-${i}`]: !!checked
-                                        }));
-                                      }}
-                                      data-testid={`checkbox-interaction-${i}`}
-                                    />
-                                  </TableCell>
-                                </TableRow>
-                                );
+                                if (isIncluded) {
+                                  const origColIdx = factors.length + 1 + i;
+                                  const reducedColIdx = colMapReverse[origColIdx];
+                                  
+                                  if (reducedColIdx === undefined) return null;
+                                  
+                                  const vif = (() => {
+                                    try {
+                                      return calculateDOEVIF(reducedModel.XtX, reducedColIdx);
+                                    } catch {
+                                      return null;
+                                    }
+                                  })();
+                                  const isHighVIF = vif !== null && vif > 5;
+                                  const isModerateVIF = vif !== null && vif > 1 && vif <= 5;
+                                  
+                                  return (
+                                  <TableRow key={`int-${i}`}>
+                                    <TableCell className="font-medium">{pair.name}</TableCell>
+                                    <TableCell className="text-right">{beta_display[reducedColIdx]?.toFixed(6)}</TableCell>
+                                    <TableCell className="text-right">{coeffStats[reducedColIdx]?.stdError.toFixed(4)}</TableCell>
+                                    <TableCell className="text-right">{coeffStats[reducedColIdx]?.tValue.toFixed(4)}</TableCell>
+                                    <TableCell className={`text-right ${(coeffStats[reducedColIdx]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{coeffStats[reducedColIdx]?.pValue.toFixed(4)}</TableCell>
+                                    <TableCell className={`text-right ${isHighVIF ? 'text-red-600 font-semibold' : isModerateVIF ? 'text-yellow-400 font-semibold' : ''}`}>{vif !== null ? vif.toFixed(2) : '-'}</TableCell>
+                                    <TableCell className="text-center">
+                                      <Checkbox
+                                        checked={true}
+                                        onCheckedChange={(checked) => {
+                                          setSelectedFactorsForModel(prev => ({
+                                            ...prev,
+                                            [`int-${i}`]: !!checked
+                                          }));
+                                        }}
+                                        data-testid={`checkbox-interaction-${i}`}
+                                      />
+                                    </TableCell>
+                                  </TableRow>
+                                  );
+                                } else {
+                                  return (
+                                  <TableRow key={`int-${i}`} className="opacity-60">
+                                    <TableCell className="font-medium text-muted-foreground">{pair.name} (not included in model)</TableCell>
+                                    <TableCell className="text-right">-</TableCell>
+                                    <TableCell className="text-right">-</TableCell>
+                                    <TableCell className="text-right">-</TableCell>
+                                    <TableCell className="text-right">-</TableCell>
+                                    <TableCell className="text-right">-</TableCell>
+                                    <TableCell className="text-center">
+                                      <Checkbox
+                                        checked={false}
+                                        onCheckedChange={(checked) => {
+                                          setSelectedFactorsForModel(prev => ({
+                                            ...prev,
+                                            [`int-${i}`]: !!checked
+                                          }));
+                                        }}
+                                        data-testid={`checkbox-interaction-${i}`}
+                                      />
+                                    </TableCell>
+                                  </TableRow>
+                                  );
+                                }
                               })}
                               {includeCenterPoints && (() => {
                                 const isIncluded = selectedFactorsForModel['centerPoint'] !== false;
-                                if (!isIncluded) return null;
                                 
-                                // Separate center points from factorial points
-                                const centerPointIndices: number[] = [];
-                                const factorialPointIndices: number[] = [];
-                                
-                                runData.forEach((row, rowIdx) => {
-                                  if (row.response !== null && !isNaN(row.response)) {
-                                    const allFactorsZero = factors.every(factor => {
-                                      const level = generatedPlan.plan[rowIdx]?.[factor.name] ?? 0;
-                                      return Math.abs(level) < 0.01; // essentially 0
-                                    });
-                                    if (allFactorsZero) {
-                                      centerPointIndices.push(rowIdx);
-                                    } else {
-                                      factorialPointIndices.push(rowIdx);
+                                if (isIncluded) {
+                                  // Separate center points from factorial points
+                                  const centerPointIndices: number[] = [];
+                                  const factorialPointIndices: number[] = [];
+                                  
+                                  runData.forEach((row, rowIdx) => {
+                                    if (row.response !== null && !isNaN(row.response)) {
+                                      const allFactorsZero = factors.every(factor => {
+                                        const level = generatedPlan.plan[rowIdx]?.[factor.name] ?? 0;
+                                        return Math.abs(level) < 0.01; // essentially 0
+                                      });
+                                      if (allFactorsZero) {
+                                        centerPointIndices.push(rowIdx);
+                                      } else {
+                                        factorialPointIndices.push(rowIdx);
+                                      }
                                     }
-                                  }
-                                });
+                                  });
 
-                                const n_c = centerPointIndices.length;
-                                const n_f = factorialPointIndices.length;
-                                
-                                let curvatureCoeff = 0;
-                                let curvatureSE = 0;
-                                let curvatureTValue = 0;
-                                let curvaturePValue = 1;
-                                
-                                if (n_c > 0 && n_f > 0) {
-                                  // Average response at center points
-                                  const centerResponses = centerPointIndices.map(idx => runData[idx].response).filter((r): r is number => r !== null && !isNaN(r));
-                                  const y_c_avg = centerResponses.length > 0 ? centerResponses.reduce((a, b) => a + b, 0) / centerResponses.length : 0;
+                                  const n_c = centerPointIndices.length;
+                                  const n_f = factorialPointIndices.length;
                                   
-                                  // Predicted response at center from reduced model
-                                  const y_f_at_center = displayBeta[0];
+                                  let curvatureCoeff = 0;
+                                  let curvatureSE = 0;
+                                  let curvatureTValue = 0;
+                                  let curvaturePValue = 1;
                                   
-                                  // Curvature coefficient = difference
-                                  curvatureCoeff = y_c_avg - y_f_at_center;
+                                  if (n_c > 0 && n_f > 0) {
+                                    // Average response at center points
+                                    const centerResponses = centerPointIndices.map(idx => runData[idx].response).filter((r): r is number => r !== null && !isNaN(r));
+                                    const y_c_avg = centerResponses.length > 0 ? centerResponses.reduce((a, b) => a + b, 0) / centerResponses.length : 0;
+                                    
+                                    // Predicted response at center from reduced model
+                                    const y_f_at_center = displayBeta[0];
+                                    
+                                    // Curvature coefficient = difference
+                                    curvatureCoeff = y_c_avg - y_f_at_center;
+                                    
+                                    // Standard error of curvature using reduced model MSE
+                                    // SE_curv = sqrt(mse * (1/n_c + 1/n_f))
+                                    curvatureSE = Math.sqrt(mse_display * (1 / n_c + 1 / n_f));
+                                    curvatureTValue = curvatureSE > 0 ? curvatureCoeff / curvatureSE : 0;
+                                    curvaturePValue = curvatureSE > 0 ? 2 * (1 - jStat.studentt.cdf(Math.abs(curvatureTValue), n - reducedModel.p)) : 1;
+                                  }
                                   
-                                  // Standard error of curvature using reduced model MSE
-                                  // SE_curv = sqrt(mse * (1/n_c + 1/n_f))
-                                  curvatureSE = Math.sqrt(mse_display * (1 / n_c + 1 / n_f));
-                                  curvatureTValue = curvatureSE > 0 ? curvatureCoeff / curvatureSE : 0;
-                                  curvaturePValue = curvatureSE > 0 ? 2 * (1 - jStat.studentt.cdf(Math.abs(curvatureTValue), n - reducedModel.p)) : 1;
+                                  return (
+                                  <TableRow key="center-point">
+                                    <TableCell className="font-medium">Center Point (Curvature)</TableCell>
+                                    <TableCell className="text-right">{curvatureCoeff.toFixed(6)}</TableCell>
+                                    <TableCell className="text-right">{curvatureSE.toFixed(4)}</TableCell>
+                                    <TableCell className="text-right">{curvatureTValue.toFixed(4)}</TableCell>
+                                    <TableCell className={`text-right ${curvaturePValue < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{curvaturePValue.toFixed(4)}</TableCell>
+                                    <TableCell className="text-right">-</TableCell>
+                                    <TableCell className="text-center">
+                                      <Checkbox
+                                        checked={true}
+                                        onCheckedChange={(checked) => {
+                                          setSelectedFactorsForModel(prev => ({
+                                            ...prev,
+                                            ['centerPoint']: !!checked
+                                          }));
+                                        }}
+                                        data-testid="checkbox-center-point"
+                                      />
+                                    </TableCell>
+                                  </TableRow>
+                                  );
+                                } else {
+                                  return (
+                                  <TableRow key="center-point" className="opacity-60">
+                                    <TableCell className="font-medium text-muted-foreground">Center Point (Curvature) (not included in model)</TableCell>
+                                    <TableCell className="text-right">-</TableCell>
+                                    <TableCell className="text-right">-</TableCell>
+                                    <TableCell className="text-right">-</TableCell>
+                                    <TableCell className="text-right">-</TableCell>
+                                    <TableCell className="text-right">-</TableCell>
+                                    <TableCell className="text-center">
+                                      <Checkbox
+                                        checked={false}
+                                        onCheckedChange={(checked) => {
+                                          setSelectedFactorsForModel(prev => ({
+                                            ...prev,
+                                            ['centerPoint']: !!checked
+                                          }));
+                                        }}
+                                        data-testid="checkbox-center-point"
+                                      />
+                                    </TableCell>
+                                  </TableRow>
+                                  );
                                 }
-                                
-                                return (
-                                <TableRow key="center-point">
-                                  <TableCell className="font-medium">Center Point (Curvature)</TableCell>
-                                  <TableCell className="text-right">{curvatureCoeff.toFixed(6)}</TableCell>
-                                  <TableCell className="text-right">{curvatureSE.toFixed(4)}</TableCell>
-                                  <TableCell className="text-right">{curvatureTValue.toFixed(4)}</TableCell>
-                                  <TableCell className={`text-right ${curvaturePValue < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{curvaturePValue.toFixed(4)}</TableCell>
-                                  <TableCell className="text-right">-</TableCell>
-                                  <TableCell className="text-center">
-                                    <Checkbox
-                                      checked={true}
-                                      onCheckedChange={(checked) => {
-                                        setSelectedFactorsForModel(prev => ({
-                                          ...prev,
-                                          ['centerPoint']: !!checked
-                                        }));
-                                      }}
-                                      data-testid="checkbox-center-point"
-                                    />
-                                  </TableCell>
-                                </TableRow>
-                                );
                               })()}
                             </TableBody>
                           </Table>
