@@ -1259,13 +1259,15 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                               // Check if interaction is confounded FIRST - before building any traces
                               // Use k and p from plan if available, otherwise assume full factorial
                               let numBaseFactors = factors.length;
-                              if (generatedPlan.k !== undefined && generatedPlan.p !== undefined) {
+                              if (generatedPlan && generatedPlan.k !== undefined && generatedPlan.p !== undefined) {
                                 numBaseFactors = generatedPlan.k - generatedPlan.p;
                               }
                               
                               const factorAIdx = factors.indexOf(factorA);
                               const factorBIdx = factors.indexOf(factorB);
                               const isInteractionConfounded = factorAIdx >= numBaseFactors || factorBIdx >= numBaseFactors;
+                              
+                              console.log(`Interaction ${factorA.name}×${factorB.name}: generatedPlan=${!!generatedPlan}, k=${generatedPlan?.k}, p=${generatedPlan?.p}, numBaseFactors=${numBaseFactors}, idxA=${factorAIdx}, idxB=${factorBIdx}, confounded=${isInteractionConfounded}`);
                               
                               // Get unique levels for both factors
                               const factorAUniqueLevels = getFactorLevels(factorA.name);
