@@ -2229,7 +2229,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                     const centerResponses = centerPointIndices.map(idx => runData[idx].response).filter((r): r is number => r !== null && !isNaN(r));
                                     const y_c_avg = centerResponses.length > 0 ? centerResponses.reduce((a, b) => a + b, 0) / centerResponses.length : 0;
                                     
-                                    // Predicted response at center from reduced model
+                                    // Predicted response at center from reduced model (without center point term)
                                     const y_f_at_center = displayBeta[0];
                                     
                                     // Curvature coefficient = difference
@@ -2244,13 +2244,13 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                   
                                   return (
                                   <TableRow key="center-point">
-                                    <TableCell className="font-medium">Center Point (Curvature)</TableCell>
-                                    <TableCell className="text-right">{curvatureCoeff.toFixed(6)}</TableCell>
-                                    <TableCell className="text-right">{curvatureSE.toFixed(4)}</TableCell>
-                                    <TableCell className="text-right">{curvatureTValue.toFixed(4)}</TableCell>
-                                    <TableCell className={`text-right ${curvaturePValue < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{curvaturePValue.toFixed(4)}</TableCell>
-                                    <TableCell className="text-right">-</TableCell>
-                                    <TableCell className="text-center">
+                                    <TableCell className="font-medium w-48">Center Point (Curvature)</TableCell>
+                                    <TableCell className="text-right w-24">{curvatureCoeff.toFixed(6)}</TableCell>
+                                    <TableCell className="text-right w-24">{curvatureSE.toFixed(4)}</TableCell>
+                                    <TableCell className="text-right w-20">{curvatureTValue.toFixed(4)}</TableCell>
+                                    <TableCell className={`text-right w-20 ${curvaturePValue < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{curvaturePValue.toFixed(4)}</TableCell>
+                                    <TableCell className="text-right w-16">-</TableCell>
+                                    <TableCell className="text-center w-16">
                                       <Checkbox
                                         checked={true}
                                         onCheckedChange={(checked) => {
@@ -2266,14 +2266,9 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                   );
                                 } else {
                                   return (
-                                  <TableRow key="center-point" className="opacity-60">
-                                    <TableCell className="font-medium text-muted-foreground">Center Point (Curvature) (not included in model)</TableCell>
-                                    <TableCell className="text-right">-</TableCell>
-                                    <TableCell className="text-right">-</TableCell>
-                                    <TableCell className="text-right">-</TableCell>
-                                    <TableCell className="text-right">-</TableCell>
-                                    <TableCell className="text-right">-</TableCell>
-                                    <TableCell className="text-center">
+                                  <TableRow key="center-point" className="opacity-50">
+                                    <TableCell colSpan={6} className="font-medium text-muted-foreground py-4">Term not included in model</TableCell>
+                                    <TableCell className="text-center w-16">
                                       <Checkbox
                                         checked={false}
                                         onCheckedChange={(checked) => {
