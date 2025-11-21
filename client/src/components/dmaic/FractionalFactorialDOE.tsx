@@ -220,10 +220,27 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
           };
           setGeneratedPlan(finalPlan);
           
-          // Load responses from runResponses
-          if (config.runResponses) {
+          // Extract responses from generatedPlan.plan[].runResponse
+          if (reconstructedPlan.plan && Array.isArray(reconstructedPlan.plan)) {
+            const responsesMap: Record<string, number | null> = {};
+            const inputs: Record<number, string> = {};
+            reconstructedPlan.plan.forEach((row: any) => {
+              const runOrder = row.runOrder;
+              const response = row.runResponse;
+              if (runOrder !== undefined) {
+                responsesMap[runOrder.toString()] = response ?? null;
+                if (response !== null && response !== undefined) {
+                  inputs[runOrder] = String(response);
+                }
+              }
+            });
+            setResponses(responsesMap);
+            setResponseInputs(inputs);
+          }
+          
+          // Backward compatibility: Load from legacy runResponses if no runResponse in plan
+          if (config.runResponses && Object.keys(config.runResponses).length > 0) {
             setResponses(config.runResponses);
-            // Initialize responseInputs from loaded response values
             const inputs: Record<number, string> = {};
             Object.entries(config.runResponses).forEach(([runOrder, response]) => {
               if (response !== null && response !== undefined) {
@@ -288,7 +305,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
       return;
     }
     
-    const transformedPlan = transformGeneratedPlanForSaving(generatedPlan, factors);
+    const transformedPlan = transformGeneratedPlanForSaving(generatedPlan, factors, responses);
     
     console.log('handleSaveSetup - transformedPlan:', transformedPlan);
     console.log('handleSaveSetup - generatedPlan k:', generatedPlan?.k, 'p:', generatedPlan?.p);
@@ -316,7 +333,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
   };
   
   const handleSaveData = () => {
-    const transformedPlan = transformGeneratedPlanForSaving(generatedPlan, factors);
+    const transformedPlan = transformGeneratedPlanForSaving(generatedPlan, factors, responses);
     
     console.log('handleSaveData - transformedPlan:', transformedPlan);
     console.log('handleSaveData - generatedPlan k:', generatedPlan?.k, 'p:', generatedPlan?.p);
@@ -337,7 +354,6 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
       numberOfCenterPoints,
       significanceLevel,
       showUncoded,
-      runResponses: responses,
       generatedPlan: transformedPlan,
       k: validK,
       p: validP,
