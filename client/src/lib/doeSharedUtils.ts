@@ -5,27 +5,65 @@ import type { DOEFactor } from '@/lib/doeUtils';
 // Transform generatedPlan for saving to database
 export function transformGeneratedPlanForSaving(generatedPlan: any, factors: DOEFactor[]) {
   if (!generatedPlan || !generatedPlan.plan || !Array.isArray(generatedPlan.plan)) {
-    return [];
+    return {
+      plan: [],
+      designType: '',
+      definingRelation: '',
+      resolution: 0,
+      k: 0,
+      p: 0,
+    };
   }
   
-  return generatedPlan.plan.map((row: any) => ({
-    standardOrder: row.standardOrder,
-    runOrder: row.runOrder,
-    factors: factors.map(f => row[f.name] as number),
-  }));
+  return {
+    plan: generatedPlan.plan.map((row: any) => ({
+      standardOrder: row.standardOrder,
+      runOrder: row.runOrder,
+      factors: factors.map(f => row[f.name] as number),
+    })),
+    designType: generatedPlan.designType || '',
+    definingRelation: generatedPlan.definingRelation || '',
+    resolution: generatedPlan.resolution || 0,
+    k: generatedPlan.k || 0,
+    p: generatedPlan.p || 0,
+  };
 }
 
 // Reconstruct generatedPlan from persisted database format
 export function reconstructGeneratedPlanFromPersisted(
-  persistedPlan: any[],
-  factors: DOEFactor[],
-  designType: string
+  persistedData: any,
+  factors: DOEFactor[]
 ) {
-  if (!persistedPlan || !Array.isArray(persistedPlan) || persistedPlan.length === 0) {
+  if (!persistedData) {
     return null;
   }
   
-  const plan = persistedPlan.map((row: any) => {
+  // Handle both array format (legacy) and object format (new)
+  let planArray: any[] = [];
+  let metadata: any = {};
+  
+  if (Array.isArray(persistedData)) {
+    // Legacy array format - no metadata
+    planArray = persistedData;
+  } else if (persistedData.plan && Array.isArray(persistedData.plan)) {
+    // New object format with metadata
+    planArray = persistedData.plan;
+    metadata = {
+      designType: persistedData.designType || '',
+      definingRelation: persistedData.definingRelation || '',
+      resolution: persistedData.resolution || 0,
+      k: persistedData.k || 0,
+      p: persistedData.p || 0,
+    };
+  } else {
+    return null;
+  }
+  
+  if (planArray.length === 0) {
+    return null;
+  }
+  
+  const plan = planArray.map((row: any) => {
     const planRow: any = {
       standardOrder: row.standardOrder,
       runOrder: row.runOrder,
@@ -40,8 +78,8 @@ export function reconstructGeneratedPlanFromPersisted(
   });
   
   return {
-    designType,
     plan,
+    ...metadata,
   };
 }
 
