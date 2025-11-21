@@ -1225,13 +1225,15 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                   : ['Low (-1)', 'High (+1)'];
 
                                 interactionTraces.push({
-                                  x: lineXLabels,
+                                  x: [-1, 1],
                                   y: lineData,
                                   type: 'scatter',
                                   mode: 'lines+markers',
                                   name: `${factorA.name} = ${levelALabel}`,
                                   line: { width: 2 },
                                   marker: { size: 8 },
+                                  hovertemplate: '%{text}<br>' + (responseVariableName || 'Y Response') + ': %{y:.3f}<extra></extra>',
+                                  text: lineXLabels,
                                 });
                               });
 
@@ -1336,16 +1338,28 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                   const centerLabel = `Center: ${Object.entries(combo.labels).map(([f, l]) => `${f}=${l}`).join(', ')}`;
                                   
                                   interactionTraces.push({
-                                    x: [centerXLabel],
+                                    x: [0],
                                     y: [centerValue],
                                     type: 'scatter',
                                     mode: 'markers',
                                     name: centerLabel,
                                     marker: { size: 8, color: '#ef4444' },
                                     showlegend: true,
+                                    hovertemplate: centerXLabel + '<br>' + (responseVariableName || 'Y Response') + ': %{y:.3f}<extra></extra>',
                                   });
                                 });
                               }
+
+                              // Generate x-axis tick labels for center and edges
+                              const xTickVals = [-1, 0, 1];
+                              const xTickLabels = showUncoded && allFactorsHaveValidLevels()
+                                ? [-1, 0, 1].map(level => {
+                                    const decoded = decodeValue(level, factorB);
+                                    return factorB.type === 'continuous'
+                                      ? `${(decoded as number).toFixed(2)}${factorB.units ? ' ' + factorB.units : ''}`
+                                      : String(decoded);
+                                  })
+                                : ['Low (-1)', 'Center (0)', 'High (+1)'];
 
                               return (
                                 <Card key={`${idxA}-${idxB}`}>
@@ -1357,7 +1371,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                       data={interactionTraces}
                                       layout={{
                                         title: { text: `<b>${factorA.name} × ${factorB.name}</b>` },
-                                        xaxis: { title: { text: factorB.name }, type: 'category' },
+                                        xaxis: { title: { text: factorB.name }, type: 'linear', tickmode: 'array', tickvals: xTickVals, ticktext: xTickLabels },
                                         yaxis: { title: { text: responseVariableName || 'Y Response' }, range: [yAxisRangeMin, yAxisRangeMax] },
                                         showlegend: true,
                                         legend: { title: { text: factorA.name } },
