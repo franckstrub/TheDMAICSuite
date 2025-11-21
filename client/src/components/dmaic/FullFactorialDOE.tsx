@@ -2142,7 +2142,8 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                 } else {
                                   return (
                                   <TableRow key={i} className="opacity-50">
-                                    <TableCell colSpan={6} className="font-medium text-muted-foreground py-4">Term not included in model</TableCell>
+                                    <TableCell className="font-medium text-muted-foreground w-48">{factor.name}</TableCell>
+                                    <TableCell colSpan={5} className="text-muted-foreground w-auto">Term not included in model</TableCell>
                                     <TableCell className="text-center w-16">
                                       <Checkbox
                                         checked={false}
@@ -2203,7 +2204,8 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                 } else {
                                   return (
                                   <TableRow key={`int-${i}`} className="opacity-50">
-                                    <TableCell colSpan={6} className="font-medium text-muted-foreground py-4">Term not included in model</TableCell>
+                                    <TableCell className="font-medium text-muted-foreground w-48">{pair.name}</TableCell>
+                                    <TableCell colSpan={5} className="text-muted-foreground w-auto">Term not included in model</TableCell>
                                     <TableCell className="text-center w-16">
                                       <Checkbox
                                         checked={false}
@@ -2293,7 +2295,8 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                 } else {
                                   return (
                                   <TableRow key="center-point" className="opacity-50">
-                                    <TableCell colSpan={6} className="font-medium text-muted-foreground py-4">Term not included in model</TableCell>
+                                    <TableCell className="font-medium text-muted-foreground w-48">Center Point (Curvature)</TableCell>
+                                    <TableCell colSpan={5} className="text-muted-foreground w-auto">Term not included in model</TableCell>
                                     <TableCell className="text-center w-16">
                                       <Checkbox
                                         checked={false}
