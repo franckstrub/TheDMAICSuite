@@ -299,6 +299,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
       generatedPlan: transformedPlan,
       k: validK,
       p: validP,
+      resolution: transformedPlan.resolutionText,
     });
   };
   
@@ -323,6 +324,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
       generatedPlan: transformedPlan,
       k: validK,
       p: validP,
+      resolution: transformedPlan.resolutionText,
     });
   };
   
