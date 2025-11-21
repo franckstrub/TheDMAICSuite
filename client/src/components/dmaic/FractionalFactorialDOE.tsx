@@ -1287,7 +1287,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                   </CardHeader>
                                   <CardContent>
                                     <Plot
-                                      data={interactionTraces as any}
+                                      data={interactionTraces}
                                       layout={{
                                         title: { text: `<b>${factorA.name} × ${factorB.name}</b>` },
                                         xaxis: { title: { text: factorB.name }, type: 'category' },
