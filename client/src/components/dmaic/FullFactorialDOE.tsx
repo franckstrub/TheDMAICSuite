@@ -878,7 +878,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                     [factor.name]: generatedPlan.plan[idx]?.[factor.name] || 0,
                   }));
                   
-                  const codedLevels = [-1, 0, 1];
+                  const codedLevels = includeCenterPoints ? [-1, 0, 1] : [-1, 1];
                   const mainEffectData = codedLevels.map(level => {
                     const levelResponses = factorData
                       .filter((d: any) => d[factor.name] === level && d.response !== null)
@@ -895,7 +895,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                           ? `${(decoded as number).toFixed(2)}${factor.units ? ' ' + factor.units : ''}`
                           : String(decoded);
                       })
-                    : ['Low (-1)', 'Center (0)', 'High (+1)'];
+                    : (includeCenterPoints ? ['Low (-1)', 'Center (0)', 'High (+1)'] : ['Low (-1)', 'High (+1)']);
 
                   return (
                     <Card key={factorIndex}>
@@ -951,7 +951,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                     {factors.slice(0, -1).map((factorA, idxA) =>
                       factors.slice(idxA + 1).map((factorB, idxB) => {
                         const interactionTraces = [-1, 1].map(levelA => {
-                          const centerLevels = [-1, 0, 1];
+                          const centerLevels = includeCenterPoints ? [-1, 0, 1] : [-1, 1];
                           const interactionData = centerLevels.map(levelB => {
                             const matches = runData.filter((_, idx) => {
                               const row = generatedPlan.plan[idx];
@@ -982,7 +982,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                     ? `${(decoded as number).toFixed(2)}${factorB.units ? ' ' + factorB.units : ''}`
                                     : String(decoded);
                                 })
-                              : ['Low (-1)', 'Center (0)', 'High (+1)'],
+                              : (includeCenterPoints ? ['Low (-1)', 'Center (0)', 'High (+1)'] : ['Low (-1)', 'High (+1)']),
                             y: interactionData,
                             type: 'scatter',
                             mode: 'lines+markers',
