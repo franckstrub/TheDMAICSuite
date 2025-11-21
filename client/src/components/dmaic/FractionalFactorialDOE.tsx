@@ -39,6 +39,8 @@ import jStat from 'jstat';
 import { 
   transformGeneratedPlanForSaving, 
   reconstructGeneratedPlanFromPersisted,
+  buildRunResponsesFromRunData,
+  buildRunDataFromPlanAndResponses,
   getDefaultFactor,
   getFactorDisplayName,
   validateFractionalFactorCount,
@@ -204,18 +206,6 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
         setShowUncoded(config.showUncoded);
       }
       
-      if (config.runData && Array.isArray(config.runData)) {
-        setRunData(config.runData);
-        // Initialize responseInputs from loaded response values
-        const inputs: Record<number, string> = {};
-        config.runData.forEach((rd: any) => {
-          if (rd.response !== null && rd.response !== undefined) {
-            inputs[rd.run] = String(rd.response);
-          }
-        });
-        setResponseInputs(inputs);
-      }
-      
       // Load generatedPlan from persisted format
       if (config.generatedPlan) {
         const reconstructedPlan = reconstructGeneratedPlanFromPersisted(
@@ -233,7 +223,39 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
             p: dbP || reconstructedPlan.p || 0,
           };
           setGeneratedPlan(finalPlan);
+          
+          // Build runData from generatedPlan + runResponses
+          const builtRunData = buildRunDataFromPlanAndResponses(
+            finalPlan,
+            config.runResponses,
+            config.factors || factors
+          );
+          
+          if (builtRunData.length > 0) {
+            setRunData(builtRunData);
+            // Initialize responseInputs from loaded response values
+            const inputs: Record<number, string> = {};
+            builtRunData.forEach((rd: any) => {
+              if (rd.response !== null && rd.response !== undefined) {
+                inputs[rd.run] = String(rd.response);
+              }
+            });
+            setResponseInputs(inputs);
+          }
         }
+      }
+      
+      // Fallback: Load from legacy runData format if no generatedPlan
+      if (!config.generatedPlan && config.runData && Array.isArray(config.runData)) {
+        setRunData(config.runData);
+        // Initialize responseInputs from loaded response values
+        const inputs: Record<number, string> = {};
+        config.runData.forEach((rd: any) => {
+          if (rd.response !== null && rd.response !== undefined) {
+            inputs[rd.run] = String(rd.response);
+          }
+        });
+        setResponseInputs(inputs);
       }
     }
   }, [configQuery.data, projectId, solutionId]);
@@ -304,9 +326,11 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
   
   const handleSaveData = () => {
     const transformedPlan = transformGeneratedPlanForSaving(generatedPlan, factors);
+    const runResponses = buildRunResponsesFromRunData(runData);
     
     console.log('handleSaveData - transformedPlan:', transformedPlan);
     console.log('handleSaveData - generatedPlan k:', generatedPlan?.k, 'p:', generatedPlan?.p);
+    console.log('handleSaveData - runResponses:', runResponses);
     
     // Only save k and p if they're valid (> 0), otherwise use null to avoid corrupting future loads
     const validK = transformedPlan.k && transformedPlan.k > 0 ? transformedPlan.k : null;
@@ -323,7 +347,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
       numberOfCenterPoints,
       significanceLevel,
       showUncoded,
-      runData,
+      runResponses,
       generatedPlan: transformedPlan,
       k: validK,
       p: validP,
