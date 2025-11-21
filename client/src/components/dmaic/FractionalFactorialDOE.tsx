@@ -42,7 +42,8 @@ import {
   getDefaultFactor,
   getFactorDisplayName,
   validateFractionalFactorCount,
-  parseFactorValue
+  parseFactorValue,
+  calculateDOEVIF
 } from '@/lib/doeSharedUtils';
 
 interface FractionalFactorialDOEProps {
@@ -1628,7 +1629,6 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                               {factors.map((factor, i) => {
                                 const vif = (() => {
                                   try {
-                                    const { calculateDOEVIF } = require('@/lib/doeSharedUtils');
                                     return calculateDOEVIF(X, i);
                                   } catch {
                                     return null;
@@ -1662,7 +1662,6 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                               {interactionPairs.map((pair, i) => {
                                 const vif = (() => {
                                   try {
-                                    const { calculateDOEVIF } = require('@/lib/doeSharedUtils');
                                     return calculateDOEVIF(X, factors.length + i);
                                   } catch {
                                     return null;
