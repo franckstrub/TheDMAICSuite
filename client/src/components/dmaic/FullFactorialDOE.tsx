@@ -1931,7 +1931,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                   
                                   // Standard error of curvature
                                   // SE_curv = sqrt(mse * (1/n_c + 1/n_f))
-                                  const errorMS = residualSS / (n - p);
+                                  const errorMS = SS_res / (n - p);
                                   curvatureSE = Math.sqrt(errorMS * (1 / n_c + 1 / n_f));
                                   curvatureTValue = curvatureSE > 0 ? curvatureCoeff / curvatureSE : 0;
                                   curvaturePValue = curvatureSE > 0 ? 2 * (1 - jStat.studentt.cdf(Math.abs(curvatureTValue), n - p)) : 1;
