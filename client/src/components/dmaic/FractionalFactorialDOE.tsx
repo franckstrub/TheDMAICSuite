@@ -1237,11 +1237,84 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
 
                               // Add center point markers if included
                               if (includeCenterPoints) {
-                                [-1, 1].forEach(levelA => {
+                                // Determine center point levels based on factor types
+                                const otherFactors = factors.filter((f, idx) => idx !== factors.indexOf(factorA) && idx !== factors.indexOf(factorB));
+                                const categoricalOthers = otherFactors.filter(f => f.type === 'categorical');
+                                
+                                // Generate all center point combinations
+                                const centerPointCombinations: Array<{levels: Record<string, number>, labels: Record<string, string>}> = [];
+                                
+                                if (categoricalOthers.length === 0) {
+                                  // All other factors are continuous (or no other factors): 1 center point at all 0s
+                                  const levels: Record<string, number> = {};
+                                  const labels: Record<string, string> = {};
+                                  otherFactors.forEach(f => {
+                                    levels[f.name] = 0;
+                                    labels[f.name] = showUncoded && allFactorsHaveValidLevels()
+                                      ? (() => {
+                                          const decoded = decodeValue(0, f);
+                                          return f.type === 'continuous' ? `${(decoded as number).toFixed(2)}${f.units ? ' ' + f.units : ''}` : String(decoded);
+                                        })()
+                                      : 'Center (0)';
+                                  });
+                                  centerPointCombinations.push({ levels, labels });
+                                } else if (categoricalOthers.length === 1) {
+                                  // One categorical factor: 2 center points (-1 and +1 for categorical, 0 for continuous)
+                                  const catFactor = categoricalOthers[0];
+                                  [-1, 1].forEach(catLevel => {
+                                    const levels: Record<string, number> = {};
+                                    const labels: Record<string, string> = {};
+                                    otherFactors.forEach(f => {
+                                      if (f.name === catFactor.name) {
+                                        levels[f.name] = catLevel;
+                                        labels[f.name] = showUncoded && allFactorsHaveValidLevels()
+                                          ? (() => {
+                                              const decoded = decodeValue(catLevel, f);
+                                              return String(decoded);
+                                            })()
+                                          : (catLevel === -1 ? 'Low (-1)' : 'High (+1)');
+                                      } else {
+                                        levels[f.name] = 0;
+                                        labels[f.name] = showUncoded && allFactorsHaveValidLevels()
+                                          ? (() => {
+                                              const decoded = decodeValue(0, f);
+                                              return f.type === 'continuous' ? `${(decoded as number).toFixed(2)}${f.units ? ' ' + f.units : ''}` : String(decoded);
+                                            })()
+                                          : 'Center (0)';
+                                      }
+                                    });
+                                    centerPointCombinations.push({ levels, labels });
+                                  });
+                                } else if (categoricalOthers.length > 1) {
+                                  // All categorical: 2^k combinations
+                                  const generateCombinations = (cats: typeof categoricalOthers, idx: number, current: Record<string, number>, currentLabels: Record<string, string>): void => {
+                                    if (idx === cats.length) {
+                                      centerPointCombinations.push({ levels: { ...current }, labels: { ...currentLabels } });
+                                      return;
+                                    }
+                                    const cat = cats[idx];
+                                    [-1, 1].forEach(level => {
+                                      current[cat.name] = level;
+                                      currentLabels[cat.name] = level === -1 ? 'Low (-1)' : 'High (+1)';
+                                      generateCombinations(cats, idx + 1, current, currentLabels);
+                                    });
+                                  };
+                                  generateCombinations(categoricalOthers, 0, {}, {});
+                                }
+                                
+                                // Add center point markers for each combination
+                                centerPointCombinations.forEach((combo) => {
+                                  // For interaction plot, we need center points at factorA=0, factorB=0
+                                  const filterCondition: Record<string, number> = {
+                                    [factorA.name]: 0,
+                                    [factorB.name]: 0,
+                                    ...combo.levels
+                                  };
+                                  
                                   const centerValue = (() => {
                                     const matches = runData.filter((_, idx) => {
                                       const row = generatedPlan.plan[idx];
-                                      return row?.[factorA.name] === levelA && row?.[factorB.name] === 0;
+                                      return Object.entries(filterCondition).every(([fname, level]) => Math.abs(row?.[fname] - level) < 0.01);
                                     });
                                     const responses = matches
                                       .map(m => m.response)
@@ -1250,16 +1323,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                       ? (responses.reduce((a: number, b: number) => a + b, 0) / responses.length)
                                       : 0;
                                   })();
-
-                                  const levelALabel = showUncoded && allFactorsHaveValidLevels()
-                                    ? (() => {
-                                        const decoded = decodeValue(levelA, factorA);
-                                        return factorA.type === 'continuous'
-                                          ? `${(decoded as number).toFixed(2)}${factorA.units ? ' ' + factorA.units : ''}`
-                                          : String(decoded);
-                                      })()
-                                    : (levelA === -1 ? 'Low' : 'High');
-
+                                  
                                   const centerXLabel = showUncoded && allFactorsHaveValidLevels()
                                     ? (() => {
                                         const decoded = decodeValue(0, factorB);
@@ -1268,13 +1332,15 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                           : String(decoded);
                                       })()
                                     : 'Center (0)';
-
+                                  
+                                  const centerLabel = `Center: ${Object.entries(combo.labels).map(([f, l]) => `${f}=${l}`).join(', ')}`;
+                                  
                                   interactionTraces.push({
                                     x: [centerXLabel],
                                     y: [centerValue],
                                     type: 'scatter',
                                     mode: 'markers',
-                                    name: `${factorA.name} = ${levelALabel} (Center)`,
+                                    name: centerLabel,
                                     marker: { size: 8, color: '#ef4444' },
                                     showlegend: true,
                                   });
