@@ -67,6 +67,8 @@ export interface FractionalFactorialPlan {
   designType: string;
   definingRelation: string;
   resolution: number;
+  k?: number;
+  p?: number;
 }
 
 /**
@@ -407,6 +409,8 @@ export function generateFractionalFactorialPlan(
     designType: `2^(${k}-${p}) Fractional Factorial (Resolution ${toRoman(resolution)})${actualCenterPointRuns > 0 ? ` with ${actualCenterPointRuns} center point runs` : ''}`,
     definingRelation,
     resolution,
+    k,
+    p,
   };
 }
 
