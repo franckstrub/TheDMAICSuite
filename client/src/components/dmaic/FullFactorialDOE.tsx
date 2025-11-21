@@ -2085,6 +2085,11 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                   setSolverResult(result);
                 };
 
+                // Auto-solve when dependencies change
+                React.useEffect(() => {
+                  handleSolve();
+                }, [solveFactorIdx, targetY, constraintValues, selectedFactorsForModel]);
+
                 return (
                   <>
                     {/* Regression Equation */}
@@ -2707,9 +2712,6 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                             </div>
                           </div>
 
-                          <Button onClick={handleSolve} data-testid="button-solve">
-                            Solve
-                          </Button>
                           {solverResult !== null && (
                             <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded border border-green-200 dark:border-green-800">
                               <p className="text-sm text-muted-foreground">Result:</p>
