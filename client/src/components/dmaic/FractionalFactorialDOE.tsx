@@ -1837,6 +1837,143 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                       </CardContent>
                     </Card>
 
+                    {/* ANOVA Table */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>ANOVA Analysis</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="overflow-x-auto">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Source</TableHead>
+                                <TableHead className="text-right">DF</TableHead>
+                                <TableHead className="text-right">Sum of Squares</TableHead>
+                                <TableHead className="text-right">Mean Square</TableHead>
+                                <TableHead className="text-right">F-Ratio</TableHead>
+                                <TableHead className="text-right">P-Value</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {(() => {
+                                let rows: React.ReactNode[] = [];
+                                
+                                // Add factor rows
+                                factors.forEach((factor, idx) => {
+                                  const termIdx = idx + 1;
+                                  const termSS = Math.pow(beta[termIdx], 2) * XtX[termIdx][termIdx];
+                                  const termDF = 1;
+                                  const termMS = termSS / termDF;
+                                  const errorMS = SS_res / (n - p);
+                                  const fRatio = errorMS > 0 ? termMS / errorMS : 0;
+                                  const pValue = fRatio > 0 && (n - p) > 0 
+                                    ? 1 - jStat.centralF.cdf(fRatio, termDF, n - p) 
+                                    : 1;
+
+                                  rows.push(
+                                    <TableRow key={`factor-${idx}`}>
+                                      <TableCell className="font-medium">{factor.name}</TableCell>
+                                      <TableCell className="text-right">{termDF}</TableCell>
+                                      <TableCell className="text-right">{termSS.toFixed(4)}</TableCell>
+                                      <TableCell className="text-right">{termMS.toFixed(4)}</TableCell>
+                                      <TableCell className="text-right">{fRatio.toFixed(4)}</TableCell>
+                                      <TableCell className="text-right">
+                                        <span className={pValue < 0.05 ? "text-green-600 font-semibold" : ""}>
+                                          {pValue.toFixed(4)}
+                                        </span>
+                                      </TableCell>
+                                    </TableRow>
+                                  );
+                                });
+
+                                // Add interaction rows
+                                interactionPairs.forEach((pair, pairIdx) => {
+                                  const termIdx = factors.length + 1 + pairIdx;
+                                  const termSS = Math.pow(beta[termIdx], 2) * XtX[termIdx][termIdx];
+                                  const termDF = 1;
+                                  const termMS = termSS / termDF;
+                                  const errorMS = SS_res / (n - p);
+                                  const fRatio = errorMS > 0 ? termMS / errorMS : 0;
+                                  const pValue = fRatio > 0 && (n - p) > 0 
+                                    ? 1 - jStat.centralF.cdf(fRatio, termDF, n - p) 
+                                    : 1;
+
+                                  rows.push(
+                                    <TableRow key={`interaction-${pairIdx}`}>
+                                      <TableCell className="font-medium">{pair.name}</TableCell>
+                                      <TableCell className="text-right">{termDF}</TableCell>
+                                      <TableCell className="text-right">{termSS.toFixed(4)}</TableCell>
+                                      <TableCell className="text-right">{termMS.toFixed(4)}</TableCell>
+                                      <TableCell className="text-right">{fRatio.toFixed(4)}</TableCell>
+                                      <TableCell className="text-right">
+                                        <span className={pValue < 0.05 ? "text-green-600 font-semibold" : ""}>
+                                          {pValue.toFixed(4)}
+                                        </span>
+                                      </TableCell>
+                                    </TableRow>
+                                  );
+                                });
+
+                                // Add model row
+                                const modelDF = p - 1;
+                                const modelMS = (SS_tot - SS_res) / modelDF;
+                                const errorMS = SS_res / (n - p);
+                                const modelFRatio = errorMS > 0 ? modelMS / errorMS : 0;
+                                const modelPValue = modelFRatio > 0 && (n - p) > 0 
+                                  ? 1 - jStat.centralF.cdf(modelFRatio, modelDF, n - p) 
+                                  : 1;
+
+                                rows.push(
+                                  <TableRow key="model" className="font-semibold">
+                                    <TableCell>Model</TableCell>
+                                    <TableCell className="text-right">{modelDF}</TableCell>
+                                    <TableCell className="text-right">{(SS_tot - SS_res).toFixed(4)}</TableCell>
+                                    <TableCell className="text-right">{modelMS.toFixed(4)}</TableCell>
+                                    <TableCell className="text-right">{modelFRatio.toFixed(4)}</TableCell>
+                                    <TableCell className="text-right">
+                                      <span className={modelPValue < 0.05 ? "text-green-600 font-semibold" : ""}>
+                                        {modelPValue.toFixed(4)}
+                                      </span>
+                                    </TableCell>
+                                  </TableRow>
+                                );
+
+                                // Add error row
+                                const errorDF = n - p;
+                                const errorMSVal = SS_res / errorDF;
+
+                                rows.push(
+                                  <TableRow key="error">
+                                    <TableCell>Error</TableCell>
+                                    <TableCell className="text-right">{errorDF}</TableCell>
+                                    <TableCell className="text-right">{SS_res.toFixed(4)}</TableCell>
+                                    <TableCell className="text-right">{errorMSVal.toFixed(4)}</TableCell>
+                                    <TableCell className="text-right">-</TableCell>
+                                    <TableCell className="text-right">-</TableCell>
+                                  </TableRow>
+                                );
+
+                                // Add total row
+                                rows.push(
+                                  <TableRow key="total" className="font-semibold">
+                                    <TableCell>Total</TableCell>
+                                    <TableCell className="text-right">{n - 1}</TableCell>
+                                    <TableCell className="text-right">{SS_tot.toFixed(4)}</TableCell>
+                                    <TableCell className="text-right">-</TableCell>
+                                    <TableCell className="text-right">-</TableCell>
+                                    <TableCell className="text-right">-</TableCell>
+                                  </TableRow>
+                                );
+
+                                return rows;
+                              })()}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </CardContent>
+                    </Card>
+
                     {/* Coefficients Table with Model Selection */}
                     <Card>
                       <CardHeader>
