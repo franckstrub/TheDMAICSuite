@@ -1645,18 +1645,18 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 });
 
                 const n = y.length;
-                const p = X[0].length;
+                const numCoefficients = X[0].length;
                 const mean_y = y.reduce((a, b) => a + b, 0) / n;
                 const SS_tot = y.reduce((sum, val) => sum + Math.pow(val - mean_y, 2), 0);
 
                 // Calculate X'X and X'y
-                let XtX: number[][] = Array(p).fill(null).map(() => Array(p).fill(0));
-                let Xty: number[] = Array(p).fill(0);
+                let XtX: number[][] = Array(numCoefficients).fill(null).map(() => Array(numCoefficients).fill(0));
+                let Xty: number[] = Array(numCoefficients).fill(0);
 
                 for (let i = 0; i < n; i++) {
-                  for (let j = 0; j < p; j++) {
+                  for (let j = 0; j < numCoefficients; j++) {
                     Xty[j] += X[i][j] * y[i];
-                    for (let k = 0; k < p; k++) {
+                    for (let k = 0; k < numCoefficients; k++) {
                       XtX[j][k] += X[i][j] * X[i][k];
                     }
                   }
@@ -1706,7 +1706,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 
                 // Ensure beta contains valid numbers
                 if (!beta.every(b => Number.isFinite(b))) {
-                  beta = Array(p).fill(0);
+                  beta = Array(numCoefficients).fill(0);
                   beta[0] = mean_y;
                 }
 
@@ -1714,11 +1714,11 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 const residuals = y.map((val, i) => val - predictions[i]);
                 const SS_res = residuals.reduce((sum, val) => sum + Math.pow(val, 2), 0);
                 const R_sq = 1 - SS_res / SS_tot;
-                const adj_R_sq = 1 - (1 - R_sq) * (n - 1) / (n - p);
-                const rmse = Math.sqrt(SS_res / (n - p));
+                const adj_R_sq = 1 - (1 - R_sq) * (n - 1) / (n - numCoefficients);
+                const rmse = Math.sqrt(SS_res / (n - numCoefficients));
                 const residualMean = residuals.reduce((a, b) => a + b, 0) / residuals.length;
                 const residualStd = Math.sqrt(residuals.reduce((sum, r) => sum + Math.pow(r - residualMean, 2), 0) / (residuals.length - 1));
-                const mse = SS_res / (n - p);
+                const mse = SS_res / (n - numCoefficients);
                 
                 // Calculate standard errors and t-values for all coefficients
                 const coeffStats = beta.map((b, idx) => {
@@ -1733,7 +1733,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   }
                   const stdError = Math.sqrt(mse * Math.max(0, xxtInvDiag));
                   const tValue = stdError > 0 ? b / stdError : 0;
-                  const pValue = stdError > 0 ? 2 * (1 - jStat.studentt.cdf(Math.abs(tValue), n - p)) : 1;
+                  const pValue = stdError > 0 ? 2 * (1 - jStat.studentt.cdf(Math.abs(tValue), n - numCoefficients)) : 1;
                   return { stdError, tValue, pValue };
                 });
 
@@ -1795,7 +1795,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   })() : beta;
                 
                 const handleSolve = () => {
-                  if (p < 2 || displayBeta[solveFactorIdx + 1] === 0) return;
+                  if (baseFactorCount < 1 || displayBeta[solveFactorIdx + 1] === 0) return;
                   let constraintSum = 0;
                   for (let i = 0; i < factors.length; i++) {
                     if (i !== solveFactorIdx) {
