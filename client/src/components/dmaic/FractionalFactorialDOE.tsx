@@ -1738,8 +1738,10 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                           const center = (low + high) / 2;
                           const halfRange = (high - low) / 2;
                           
-                          transformed[i + 1] = beta[i + 1] / halfRange;
-                          interceptAdjustment += beta[i + 1] * center / halfRange;
+                          if (Number.isFinite(beta[i + 1])) {
+                            transformed[i + 1] = beta[i + 1] / halfRange;
+                            interceptAdjustment += beta[i + 1] * center / halfRange;
+                          }
                         }
                       }
                     }
@@ -1762,12 +1764,19 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                         if (!isNaN(low1) && !isNaN(high1) && !isNaN(low2) && !isNaN(high2)) {
                           const halfRange1 = (high1 - low1) / 2;
                           const halfRange2 = (high2 - low2) / 2;
-                          transformed[factors.length + 1 + i] = beta[factors.length + 1 + i] / (halfRange1 * halfRange2);
+                          if (Number.isFinite(beta[factors.length + 1 + i])) {
+                            transformed[factors.length + 1 + i] = beta[factors.length + 1 + i] / (halfRange1 * halfRange2);
+                          }
                         }
                       }
                     }
                     
                     transformed[0] = beta[0] - interceptAdjustment;
+                    
+                    // If transformation resulted in non-finite values, use coded instead
+                    if (!transformed.every(v => Number.isFinite(v))) {
+                      return beta;
+                    }
                     return transformed;
                   })() : beta;
                 
