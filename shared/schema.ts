@@ -2646,10 +2646,7 @@ export const doeFractionalFactorialConfig = pgTable(
     numberOfCenterPoints: integer("number_of_center_points").default(3),
     
     // Fractional factorial specifics
-    resolution: text("resolution"), // III, IV, V
     generatingRelations: jsonb("generating_relations").$type<string[]>().default([]),
-    k: integer("k"), // Total number of factors in 2^(k-p) design
-    p: integer("p"), // Reduction factor in 2^(k-p) design (where numBaseFactors = k - p)
     
     // Analysis options
     significanceLevel: real("significance_level").default(0.05),
