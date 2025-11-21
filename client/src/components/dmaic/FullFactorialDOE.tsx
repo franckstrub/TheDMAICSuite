@@ -1608,14 +1608,23 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                             }
                           }
 
-                          const errorDF = n - p;
-                          const errorMS = errorDF > 0 ? residualSS / errorDF : 0;
+                          // Adjust error SS and DF to account for curvature if center points exist
+                          let adjustedErrorSS = residualSS;
+                          let adjustedErrorDF = n - p;
+                          
+                          if (includeCenterPoints && curvatureDF > 0) {
+                            // When curvature is calculated, subtract it from error
+                            adjustedErrorSS = Math.max(0, residualSS - curvatureSS);
+                            adjustedErrorDF = (n - p) - curvatureDF;
+                          }
+                          
+                          const errorMS = adjustedErrorDF > 0 ? adjustedErrorSS / adjustedErrorDF : 0;
 
                           rows.push(
                             <TableRow key="error">
                               <TableCell className="font-medium">Error</TableCell>
-                              <TableCell className="text-right">{errorDF}</TableCell>
-                              <TableCell className="text-right">{Math.max(0, residualSS).toFixed(4)}</TableCell>
+                              <TableCell className="text-right">{adjustedErrorDF}</TableCell>
+                              <TableCell className="text-right">{adjustedErrorSS.toFixed(4)}</TableCell>
                               <TableCell className="text-right">{errorMS.toFixed(4)}</TableCell>
                               <TableCell className="text-right">-</TableCell>
                               <TableCell className="text-right">-</TableCell>
