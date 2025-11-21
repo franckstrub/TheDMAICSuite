@@ -2,6 +2,12 @@
 
 import type { DOEFactor } from '@/lib/doeUtils';
 
+// Helper to convert number to Roman numeral (for resolution)
+function toRoman(num: number): string {
+  const romans = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
+  return romans[num] || num.toString();
+}
+
 // Transform generatedPlan for saving to database
 export function transformGeneratedPlanForSaving(generatedPlan: any, factors: DOEFactor[]) {
   if (!generatedPlan || !generatedPlan.plan || !Array.isArray(generatedPlan.plan)) {
@@ -10,10 +16,13 @@ export function transformGeneratedPlanForSaving(generatedPlan: any, factors: DOE
       designType: '',
       definingRelation: '',
       resolution: 0,
+      resolutionText: null,
       k: 0,
       p: 0,
     };
   }
+  
+  const resolutionNum = generatedPlan.resolution || 0;
   
   return {
     plan: generatedPlan.plan.map((row: any) => ({
@@ -23,7 +32,8 @@ export function transformGeneratedPlanForSaving(generatedPlan: any, factors: DOE
     })),
     designType: generatedPlan.designType || '',
     definingRelation: generatedPlan.definingRelation || '',
-    resolution: generatedPlan.resolution || 0,
+    resolution: resolutionNum,
+    resolutionText: resolutionNum > 0 ? toRoman(resolutionNum) : null,
     k: generatedPlan.k || 0,
     p: generatedPlan.p || 0,
   };
