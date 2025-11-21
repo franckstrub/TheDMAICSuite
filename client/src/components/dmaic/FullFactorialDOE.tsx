@@ -39,6 +39,8 @@ import jStat from 'jstat';
 import { 
   transformGeneratedPlanForSaving, 
   reconstructGeneratedPlanFromPersisted,
+  buildRunResponsesFromRunData,
+  buildRunDataFromPlanAndResponses,
   getDefaultFactor,
   validateFactorCount,
   parseFactorValue,
@@ -190,7 +192,38 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
         setShowUncoded(config.showUncoded);
       }
       
-      if (config.runData && Array.isArray(config.runData)) {
+      // Load generatedPlan from persisted format
+      if (config.generatedPlan) {
+        const reconstructedPlan = reconstructGeneratedPlanFromPersisted(
+          config.generatedPlan,
+          config.factors || factors
+        );
+        if (reconstructedPlan) {
+          setGeneratedPlan(reconstructedPlan);
+          
+          // Build runData from generatedPlan + runResponses
+          const builtRunData = buildRunDataFromPlanAndResponses(
+            reconstructedPlan,
+            config.runResponses,
+            config.factors || factors
+          );
+          
+          if (builtRunData.length > 0) {
+            setRunData(builtRunData);
+            // Initialize responseInputs from loaded response values
+            const inputs: Record<number, string> = {};
+            builtRunData.forEach((rd: any) => {
+              if (rd.response !== null && rd.response !== undefined) {
+                inputs[rd.run] = String(rd.response);
+              }
+            });
+            setResponseInputs(inputs);
+          }
+        }
+      }
+      
+      // Fallback: Load from legacy runData format if no generatedPlan
+      if (!config.generatedPlan && config.runData && Array.isArray(config.runData)) {
         setRunData(config.runData);
         // Initialize responseInputs from loaded response values
         const inputs: Record<number, string> = {};
@@ -200,18 +233,6 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
           }
         });
         setResponseInputs(inputs);
-      }
-      
-      // Load generatedPlan from persisted format
-      if (config.generatedPlan && Array.isArray(config.generatedPlan)) {
-        const reconstructedPlan = reconstructGeneratedPlanFromPersisted(
-          config.generatedPlan,
-          config.factors || factors,
-          'Full Factorial'
-        );
-        if (reconstructedPlan) {
-          setGeneratedPlan(reconstructedPlan);
-        }
       }
     }
   }, [configQuery.data, projectId, solutionId]);
@@ -267,6 +288,8 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
   };
   
   const handleSaveData = () => {
+    const runResponses = buildRunResponsesFromRunData(runData);
+    
     saveConfigMutation.mutate({
       responseVariableName,
       factors,
@@ -276,7 +299,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
       numberOfCenterPoints,
       significanceLevel,
       showUncoded,
-      runData,
+      runResponses,
       generatedPlan: transformGeneratedPlanForSaving(generatedPlan, factors),
     });
   };
