@@ -1592,7 +1592,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
               </div>
 
               {(() => {
-                // Regression Analysis with Interactions
+                // Regression Analysis with Interactions - accounting for confounding
                 const responses = runData
                   .map(r => r.response)
                   .filter((r): r is number => r !== null && !isNaN(r));
@@ -1607,10 +1607,17 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   );
                 }
 
-                // Build interaction terms
+                // Get metadata from generatedPlan
+                const ffMetadata = generatedPlan.metadata;
+                const k = ffMetadata?.k || factors.length;
+                const p = ffMetadata?.p || 0;
+                const resolution = ffMetadata?.resolution || 5;
+                const baseFactorCount = k - p;
+
+                // Build interaction terms - only between base factors (unconfounded)
                 const interactionPairs: Array<{i: number, j: number, name: string}> = [];
-                for (let i = 0; i < factors.length; i++) {
-                  for (let j = i + 1; j < factors.length; j++) {
+                for (let i = 0; i < baseFactorCount; i++) {
+                  for (let j = i + 1; j < baseFactorCount; j++) {
                     interactionPairs.push({i, j, name: `${factors[i].name}×${factors[j].name}`});
                   }
                 }
@@ -1620,16 +1627,17 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 
                 runData.forEach((row, idx) => {
                   if (row.response !== null && !isNaN(row.response)) {
-                    const row_vals = [1]; // intercept
-                    const factorValues: number[] = [];
-                    factors.forEach(factor => {
-                      const val = generatedPlan.plan[idx]?.[factor.name] ?? 0;
-                      factorValues.push(val);
+                    const row_vals = [1]; // intercept = grand mean
+                    const baseFactorValues: number[] = [];
+                    // Only use base factors (first k-p factors)
+                    for (let i = 0; i < baseFactorCount; i++) {
+                      const val = generatedPlan.plan[idx]?.[factors[i].name] ?? 0;
+                      baseFactorValues.push(val);
                       row_vals.push(val);
-                    });
-                    // Add interaction terms
+                    }
+                    // Add interaction terms (only between base factors)
                     interactionPairs.forEach(pair => {
-                      row_vals.push(factorValues[pair.i] * factorValues[pair.j]);
+                      row_vals.push(baseFactorValues[pair.i] * baseFactorValues[pair.j]);
                     });
                     X.push(row_vals);
                     y.push(row.response);
@@ -1811,22 +1819,25 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                       <CardContent>
                         <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded font-mono text-sm">
                           <p>Y = {Number.isFinite(displayBeta[0]) ? displayBeta[0].toFixed(4) : 'N/A'}</p>
-                          {factors.map((factor, i) => (
+                          {Array.from({length: baseFactorCount}).map((_, i) => (
                             Number.isFinite(displayBeta[i + 1]) && (
                               <p key={i}>
-                                &nbsp;&nbsp;&nbsp;&nbsp;{displayBeta[i + 1] >= 0 ? '+' : ''} {displayBeta[i + 1].toFixed(4)} × {factor.name}{factor.type === 'continuous' && factor.units ? ` (${factor.units})` : ''}
+                                &nbsp;&nbsp;&nbsp;&nbsp;{displayBeta[i + 1] >= 0 ? '+' : ''} {displayBeta[i + 1].toFixed(4)} × {factors[i].name}{factors[i].type === 'continuous' && factors[i].units ? ` (${factors[i].units})` : ''}
                               </p>
                             )
                           ))}
                           {interactionPairs.map((pair, i) => (
-                            Number.isFinite(displayBeta[factors.length + 1 + i]) && (
+                            Number.isFinite(displayBeta[baseFactorCount + 1 + i]) && (
                               <p key={`int-${i}`}>
-                                &nbsp;&nbsp;&nbsp;&nbsp;{displayBeta[factors.length + 1 + i] >= 0 ? '+' : ''} {displayBeta[factors.length + 1 + i].toFixed(4)} × {pair.name}
+                                &nbsp;&nbsp;&nbsp;&nbsp;{displayBeta[baseFactorCount + 1 + i] >= 0 ? '+' : ''} {displayBeta[baseFactorCount + 1 + i].toFixed(4)} × {pair.name}
                               </p>
                             )
                           ))}
                           {displayBeta.every(v => !Number.isFinite(v)) && (
                             <p className="text-muted-foreground">Unable to compute regression equation. Check data validity.</p>
+                          )}
+                          {p > 0 && (
+                            <p className="text-xs text-muted-foreground mt-2">Note: Generated factors (last {p}) are confounded and not shown.</p>
                           )}
                         </div>
                       </CardContent>
@@ -1881,9 +1892,10 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                               {(() => {
                                 let rows: React.ReactNode[] = [];
                                 
-                                // Add factor rows
-                                factors.forEach((factor, idx) => {
-                                  const termIdx = idx + 1;
+                                // Add base factor rows only (not confounded)
+                                for (let i = 0; i < baseFactorCount; i++) {
+                                  const factor = factors[i];
+                                  const termIdx = i + 1;
                                   const termSS = Math.pow(beta[termIdx], 2) * XtX[termIdx][termIdx];
                                   const termDF = 1;
                                   const termMS = termSS / termDF;
@@ -1894,7 +1906,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                     : 1;
 
                                   rows.push(
-                                    <TableRow key={`factor-${idx}`}>
+                                    <TableRow key={`factor-${i}`}>
                                       <TableCell className="font-medium">{factor.name}</TableCell>
                                       <TableCell className="text-right">{termDF}</TableCell>
                                       <TableCell className="text-right">{termSS.toFixed(4)}</TableCell>
@@ -1907,11 +1919,11 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                       </TableCell>
                                     </TableRow>
                                   );
-                                });
+                                }
 
-                                // Add interaction rows
+                                // Add interaction rows (only between base factors)
                                 interactionPairs.forEach((pair, pairIdx) => {
-                                  const termIdx = factors.length + 1 + pairIdx;
+                                  const termIdx = baseFactorCount + 1 + pairIdx;
                                   const termSS = Math.pow(beta[termIdx], 2) * XtX[termIdx][termIdx];
                                   const termDF = 1;
                                   const termMS = termSS / termDF;
@@ -1937,13 +1949,67 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                   );
                                 });
 
+                                // Calculate curvature effect if center points exist
+                                if (includeCenterPoints) {
+                                  const centerPointIndices: number[] = [];
+                                  const factorialPointIndices: number[] = [];
+                                  
+                                  runData.forEach((row, rowIdx) => {
+                                    if (row.response !== null && !isNaN(row.response)) {
+                                      const allBaseFactorsZero = Array.from({length: baseFactorCount}).every((_,i) => {
+                                        const level = generatedPlan.plan[rowIdx]?.[factors[i].name] ?? 0;
+                                        return Math.abs(level) < 0.01;
+                                      });
+                                      if (allBaseFactorsZero) {
+                                        centerPointIndices.push(rowIdx);
+                                      } else {
+                                        factorialPointIndices.push(rowIdx);
+                                      }
+                                    }
+                                  });
+
+                                  const n_c = centerPointIndices.length;
+                                  const n_f = factorialPointIndices.length;
+                                  
+                                  if (n_c > 0 && n_f > 0) {
+                                    const centerResponses = centerPointIndices.map(idx => runData[idx].response).filter((r): r is number => r !== null && !isNaN(r));
+                                    const y_c_avg = centerResponses.length > 0 ? centerResponses.reduce((a, b) => a + b, 0) / centerResponses.length : 0;
+                                    const y_f_at_center = beta[0];
+                                    const curveEffect = y_c_avg - y_f_at_center;
+                                    const curveSS = (n_c * n_f / (n_c + n_f)) * Math.pow(curveEffect, 2);
+                                    const curveDF = 1;
+                                    const curveMS = curveSS / curveDF;
+                                    const errorMS = SS_res / (n - p);
+                                    const curveFRatio = errorMS > 0 ? curveMS / errorMS : 0;
+                                    const curvePValue = curveFRatio > 0 && (n - p) > 0 
+                                      ? 1 - jStat.centralF.cdf(curveFRatio, curveDF, n - p) 
+                                      : 1;
+
+                                    rows.push(
+                                      <TableRow key="curvature">
+                                        <TableCell className="font-medium">Curvature</TableCell>
+                                        <TableCell className="text-right">{curveDF}</TableCell>
+                                        <TableCell className="text-right">{curveSS.toFixed(4)}</TableCell>
+                                        <TableCell className="text-right">{curveMS.toFixed(4)}</TableCell>
+                                        <TableCell className="text-right">{curveFRatio.toFixed(4)}</TableCell>
+                                        <TableCell className="text-right">
+                                          <span className={curvePValue < 0.05 ? "text-green-600 font-semibold" : ""}>
+                                            {curvePValue.toFixed(4)}
+                                          </span>
+                                        </TableCell>
+                                      </TableRow>
+                                    );
+                                  }
+                                }
+
                                 // Add model row
-                                const modelDF = p - 1;
+                                const numTerms = 1 + baseFactorCount + interactionPairs.length;
+                                const modelDF = numTerms - 1;
                                 const modelMS = (SS_tot - SS_res) / modelDF;
-                                const errorMS = SS_res / (n - p);
+                                const errorMS = SS_res / (n - numTerms);
                                 const modelFRatio = errorMS > 0 ? modelMS / errorMS : 0;
-                                const modelPValue = modelFRatio > 0 && (n - p) > 0 
-                                  ? 1 - jStat.centralF.cdf(modelFRatio, modelDF, n - p) 
+                                const modelPValue = modelFRatio > 0 && (n - numTerms) > 0 
+                                  ? 1 - jStat.centralF.cdf(modelFRatio, modelDF, n - numTerms) 
                                   : 1;
 
                                 rows.push(
@@ -1962,7 +2028,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                 );
 
                                 // Add error row
-                                const errorDF = n - p;
+                                const errorDF = n - numTerms;
                                 const errorMSVal = SS_res / errorDF;
 
                                 rows.push(
