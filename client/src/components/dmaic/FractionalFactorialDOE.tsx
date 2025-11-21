@@ -87,6 +87,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
   const [solveFactorIdx, setSolveFactorIdx] = useState(0);
   const [targetY, setTargetY] = useState(100);
   const [solverResult, setSolverResult] = useState<number | null>(null);
+  const [constraintValues, setConstraintValues] = useState<Record<number, number | null>>({});
   
   // Model reduction - track which factors to include (all enabled by default)
   const [selectedFactorsForModel, setSelectedFactorsForModel] = useState<Record<number, boolean>>(
@@ -1305,7 +1306,19 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 
                 const handleSolve = () => {
                   if (p < 2 || beta[solveFactorIdx + 1] === 0) return;
-                  let result = (targetY - beta[0]) / beta[solveFactorIdx + 1];
+                  // Calculate constraint contribution: sum of (coefficient * constraint_value) for all non-target factors
+                  let constraintSum = 0;
+                  for (let i = 0; i < factors.length; i++) {
+                    if (i !== solveFactorIdx) {
+                      const constraintVal = constraintValues[i];
+                      if (constraintVal !== null && constraintVal !== undefined && Number.isFinite(constraintVal)) {
+                        constraintSum += beta[i + 1] * constraintVal;
+                      }
+                    }
+                  }
+                  // Solve: targetY = β0 + Σ_{j≠i} βj * constraint_j + βi * Xi
+                  // Therefore: Xi = (targetY - β0 - constraintSum) / βi
+                  let result = (targetY - beta[0] - constraintSum) / beta[solveFactorIdx + 1];
                   setSolverResult(result);
                 };
 
@@ -1479,6 +1492,41 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                               </SelectContent>
                             </Select>
                           </div>
+                          
+                          {/* Set Constraint Values for Other Factors */}
+                          <div className="space-y-3">
+                            <Label>Set Constraint Values for Other Factors</Label>
+                            <div className="grid grid-cols-2 gap-3">
+                              {factors.map((factor, idx) => {
+                                if (idx !== solveFactorIdx) {
+                                  return (
+                                    <div key={idx} className="space-y-1">
+                                      <Label htmlFor={`constraint-${idx}`} className="text-sm">
+                                        {factor.name}
+                                      </Label>
+                                      <Input
+                                        id={`constraint-${idx}`}
+                                        type="number"
+                                        step="any"
+                                        value={constraintValues[idx] ?? ''}
+                                        onChange={(e) => {
+                                          const value = e.target.value === '' ? null : parseFloat(e.target.value);
+                                          setConstraintValues({
+                                            ...constraintValues,
+                                            [idx]: value
+                                          });
+                                        }}
+                                        placeholder={`Enter ${factor.name} value`}
+                                        data-testid={`input-constraint-${idx}`}
+                                      />
+                                    </div>
+                                  );
+                                }
+                                return null;
+                              })}
+                            </div>
+                          </div>
+
                           <Button onClick={handleSolve} data-testid="button-solve">
                             Solve
                           </Button>
