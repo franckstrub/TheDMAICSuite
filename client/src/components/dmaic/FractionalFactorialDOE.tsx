@@ -307,15 +307,6 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
     
     const transformedPlan = transformGeneratedPlanForSaving(generatedPlan, factors, responses);
     
-    console.log('handleSaveSetup - transformedPlan:', transformedPlan);
-    console.log('handleSaveSetup - generatedPlan k:', generatedPlan?.k, 'p:', generatedPlan?.p);
-    
-    // Only save k and p if they're valid (> 0), otherwise use null to avoid corrupting future loads
-    const validK = transformedPlan.k && transformedPlan.k > 0 ? transformedPlan.k : null;
-    const validP = transformedPlan.p && transformedPlan.p > 0 ? transformedPlan.p : null;
-    
-    console.log('handleSaveSetup - Saving k:', validK, 'p:', validP, 'resolution:', transformedPlan.resolutionText);
-    
     saveConfigMutation.mutate({
       responseVariableName,
       factors,
@@ -326,25 +317,12 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
       significanceLevel,
       showUncoded,
       generatedPlan: transformedPlan,
-      k: validK,
-      p: validP,
-      resolution: transformedPlan.resolutionText,
     });
   };
   
   const handleSaveData = () => {
     const transformedPlan = transformGeneratedPlanForSaving(generatedPlan, factors, responses);
     
-    console.log('handleSaveData - transformedPlan:', transformedPlan);
-    console.log('handleSaveData - generatedPlan k:', generatedPlan?.k, 'p:', generatedPlan?.p);
-    console.log('handleSaveData - responses:', responses);
-    
-    // Only save k and p if they're valid (> 0), otherwise use null to avoid corrupting future loads
-    const validK = transformedPlan.k && transformedPlan.k > 0 ? transformedPlan.k : null;
-    const validP = transformedPlan.p && transformedPlan.p > 0 ? transformedPlan.p : null;
-    
-    console.log('handleSaveData - Saving k:', validK, 'p:', validP, 'resolution:', transformedPlan.resolutionText);
-    
     saveConfigMutation.mutate({
       responseVariableName,
       factors,
@@ -355,9 +333,6 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
       significanceLevel,
       showUncoded,
       generatedPlan: transformedPlan,
-      k: validK,
-      p: validP,
-      resolution: transformedPlan.resolutionText,
     });
   };
   
