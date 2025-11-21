@@ -2093,13 +2093,13 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                   
                                   return (
                                   <TableRow key={i}>
-                                    <TableCell className="font-medium">{factor.name}</TableCell>
-                                    <TableCell className="text-right">{beta_display[reducedColIdx]?.toFixed(6)}</TableCell>
-                                    <TableCell className="text-right">{coeffStats[reducedColIdx]?.stdError.toFixed(4)}</TableCell>
-                                    <TableCell className="text-right">{coeffStats[reducedColIdx]?.tValue.toFixed(4)}</TableCell>
-                                    <TableCell className={`text-right ${(coeffStats[reducedColIdx]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{coeffStats[reducedColIdx]?.pValue.toFixed(4)}</TableCell>
-                                    <TableCell className={`text-right ${isHighVIF ? 'text-red-600 font-semibold' : isModerateVIF ? 'text-yellow-400 font-semibold' : ''}`}>{vif !== null ? vif.toFixed(2) : '-'}</TableCell>
-                                    <TableCell className="text-center">
+                                    <TableCell className="font-medium w-48">{factor.name}</TableCell>
+                                    <TableCell className="text-right w-24">{beta_display[reducedColIdx]?.toFixed(6)}</TableCell>
+                                    <TableCell className="text-right w-24">{coeffStats[reducedColIdx]?.stdError.toFixed(4)}</TableCell>
+                                    <TableCell className="text-right w-20">{coeffStats[reducedColIdx]?.tValue.toFixed(4)}</TableCell>
+                                    <TableCell className={`text-right w-20 ${(coeffStats[reducedColIdx]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{coeffStats[reducedColIdx]?.pValue.toFixed(4)}</TableCell>
+                                    <TableCell className={`text-right w-16 ${isHighVIF ? 'text-red-600 font-semibold' : isModerateVIF ? 'text-yellow-400 font-semibold' : ''}`}>{vif !== null ? vif.toFixed(2) : '-'}</TableCell>
+                                    <TableCell className="text-center w-16">
                                       <Checkbox
                                         checked={true}
                                         onCheckedChange={(checked) => {
@@ -2115,14 +2115,9 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                   );
                                 } else {
                                   return (
-                                  <TableRow key={i} className="opacity-60">
-                                    <TableCell className="font-medium text-muted-foreground">{factor.name} (not included in model)</TableCell>
-                                    <TableCell className="text-right">-</TableCell>
-                                    <TableCell className="text-right">-</TableCell>
-                                    <TableCell className="text-right">-</TableCell>
-                                    <TableCell className="text-right">-</TableCell>
-                                    <TableCell className="text-right">-</TableCell>
-                                    <TableCell className="text-center">
+                                  <TableRow key={i} className="opacity-50">
+                                    <TableCell colSpan={6} className="font-medium text-muted-foreground py-4">Term not included in model</TableCell>
+                                    <TableCell className="text-center w-16">
                                       <Checkbox
                                         checked={false}
                                         onCheckedChange={(checked) => {
@@ -2159,13 +2154,13 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                   
                                   return (
                                   <TableRow key={`int-${i}`}>
-                                    <TableCell className="font-medium">{pair.name}</TableCell>
-                                    <TableCell className="text-right">{beta_display[reducedColIdx]?.toFixed(6)}</TableCell>
-                                    <TableCell className="text-right">{coeffStats[reducedColIdx]?.stdError.toFixed(4)}</TableCell>
-                                    <TableCell className="text-right">{coeffStats[reducedColIdx]?.tValue.toFixed(4)}</TableCell>
-                                    <TableCell className={`text-right ${(coeffStats[reducedColIdx]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{coeffStats[reducedColIdx]?.pValue.toFixed(4)}</TableCell>
-                                    <TableCell className={`text-right ${isHighVIF ? 'text-red-600 font-semibold' : isModerateVIF ? 'text-yellow-400 font-semibold' : ''}`}>{vif !== null ? vif.toFixed(2) : '-'}</TableCell>
-                                    <TableCell className="text-center">
+                                    <TableCell className="font-medium w-48">{pair.name}</TableCell>
+                                    <TableCell className="text-right w-24">{beta_display[reducedColIdx]?.toFixed(6)}</TableCell>
+                                    <TableCell className="text-right w-24">{coeffStats[reducedColIdx]?.stdError.toFixed(4)}</TableCell>
+                                    <TableCell className="text-right w-20">{coeffStats[reducedColIdx]?.tValue.toFixed(4)}</TableCell>
+                                    <TableCell className={`text-right w-20 ${(coeffStats[reducedColIdx]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{coeffStats[reducedColIdx]?.pValue.toFixed(4)}</TableCell>
+                                    <TableCell className={`text-right w-16 ${isHighVIF ? 'text-red-600 font-semibold' : isModerateVIF ? 'text-yellow-400 font-semibold' : ''}`}>{vif !== null ? vif.toFixed(2) : '-'}</TableCell>
+                                    <TableCell className="text-center w-16">
                                       <Checkbox
                                         checked={true}
                                         onCheckedChange={(checked) => {
@@ -2181,14 +2176,9 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                   );
                                 } else {
                                   return (
-                                  <TableRow key={`int-${i}`} className="opacity-60">
-                                    <TableCell className="font-medium text-muted-foreground">{pair.name} (not included in model)</TableCell>
-                                    <TableCell className="text-right">-</TableCell>
-                                    <TableCell className="text-right">-</TableCell>
-                                    <TableCell className="text-right">-</TableCell>
-                                    <TableCell className="text-right">-</TableCell>
-                                    <TableCell className="text-right">-</TableCell>
-                                    <TableCell className="text-center">
+                                  <TableRow key={`int-${i}`} className="opacity-50">
+                                    <TableCell colSpan={6} className="font-medium text-muted-foreground py-4">Term not included in model</TableCell>
+                                    <TableCell className="text-center w-16">
                                       <Checkbox
                                         checked={false}
                                         onCheckedChange={(checked) => {
