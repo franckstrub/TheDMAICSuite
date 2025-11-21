@@ -2073,26 +2073,35 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                 <TableCell className="text-center"><Checkbox disabled checked /></TableCell>
                               </TableRow>
                               {factors.map((factor, i) => {
+                                const isIncluded = selectedFactorsForModel[i] !== false;
+                                if (!isIncluded) return null;
+                                
+                                const origColIdx = i + 1;
+                                const reducedColIdx = colMapReverse[origColIdx];
+                                
+                                if (reducedColIdx === undefined) return null;
+                                
                                 const vif = (() => {
                                   try {
-                                    return calculateDOEVIF(X, i);
+                                    return calculateDOEVIF(reducedModel.XtX, reducedColIdx);
                                   } catch {
                                     return null;
                                   }
                                 })();
                                 const isHighVIF = vif !== null && vif > 5;
                                 const isModerateVIF = vif !== null && vif > 1 && vif <= 5;
+                                
                                 return (
                                 <TableRow key={i}>
                                   <TableCell className="font-medium">{factor.name}</TableCell>
-                                  <TableCell className="text-right">{displayBeta[i + 1]?.toFixed(6)}</TableCell>
-                                  <TableCell className="text-right">{coeffStats[i + 1]?.stdError.toFixed(4)}</TableCell>
-                                  <TableCell className="text-right">{coeffStats[i + 1]?.tValue.toFixed(4)}</TableCell>
-                                  <TableCell className={`text-right ${(coeffStats[i + 1]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{coeffStats[i + 1]?.pValue.toFixed(4)}</TableCell>
+                                  <TableCell className="text-right">{beta_display[reducedColIdx]?.toFixed(6)}</TableCell>
+                                  <TableCell className="text-right">{coeffStats[reducedColIdx]?.stdError.toFixed(4)}</TableCell>
+                                  <TableCell className="text-right">{coeffStats[reducedColIdx]?.tValue.toFixed(4)}</TableCell>
+                                  <TableCell className={`text-right ${(coeffStats[reducedColIdx]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{coeffStats[reducedColIdx]?.pValue.toFixed(4)}</TableCell>
                                   <TableCell className={`text-right ${isHighVIF ? 'text-red-600 font-semibold' : isModerateVIF ? 'text-yellow-400 font-semibold' : ''}`}>{vif !== null ? vif.toFixed(2) : '-'}</TableCell>
                                   <TableCell className="text-center">
                                     <Checkbox
-                                      checked={selectedFactorsForModel[i] ?? true}
+                                      checked={true}
                                       onCheckedChange={(checked) => {
                                         setSelectedFactorsForModel(prev => ({
                                           ...prev,
@@ -2106,26 +2115,35 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                 );
                               })}
                               {interactionPairs.map((pair, i) => {
+                                const isIncluded = selectedFactorsForModel[`int-${i}`] !== false;
+                                if (!isIncluded) return null;
+                                
+                                const origColIdx = factors.length + 1 + i;
+                                const reducedColIdx = colMapReverse[origColIdx];
+                                
+                                if (reducedColIdx === undefined) return null;
+                                
                                 const vif = (() => {
                                   try {
-                                    return calculateDOEVIF(X, factors.length + i);
+                                    return calculateDOEVIF(reducedModel.XtX, reducedColIdx);
                                   } catch {
                                     return null;
                                   }
                                 })();
                                 const isHighVIF = vif !== null && vif > 5;
                                 const isModerateVIF = vif !== null && vif > 1 && vif <= 5;
+                                
                                 return (
                                 <TableRow key={`int-${i}`}>
                                   <TableCell className="font-medium">{pair.name}</TableCell>
-                                  <TableCell className="text-right">{displayBeta[factors.length + 1 + i]?.toFixed(6)}</TableCell>
-                                  <TableCell className="text-right">{coeffStats[factors.length + 1 + i]?.stdError.toFixed(4)}</TableCell>
-                                  <TableCell className="text-right">{coeffStats[factors.length + 1 + i]?.tValue.toFixed(4)}</TableCell>
-                                  <TableCell className={`text-right ${(coeffStats[factors.length + 1 + i]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{coeffStats[factors.length + 1 + i]?.pValue.toFixed(4)}</TableCell>
+                                  <TableCell className="text-right">{beta_display[reducedColIdx]?.toFixed(6)}</TableCell>
+                                  <TableCell className="text-right">{coeffStats[reducedColIdx]?.stdError.toFixed(4)}</TableCell>
+                                  <TableCell className="text-right">{coeffStats[reducedColIdx]?.tValue.toFixed(4)}</TableCell>
+                                  <TableCell className={`text-right ${(coeffStats[reducedColIdx]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{coeffStats[reducedColIdx]?.pValue.toFixed(4)}</TableCell>
                                   <TableCell className={`text-right ${isHighVIF ? 'text-red-600 font-semibold' : isModerateVIF ? 'text-yellow-400 font-semibold' : ''}`}>{vif !== null ? vif.toFixed(2) : '-'}</TableCell>
                                   <TableCell className="text-center">
                                     <Checkbox
-                                      checked={selectedFactorsForModel[`int-${i}`] ?? true}
+                                      checked={true}
                                       onCheckedChange={(checked) => {
                                         setSelectedFactorsForModel(prev => ({
                                           ...prev,
@@ -2139,6 +2157,9 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                 );
                               })}
                               {includeCenterPoints && (() => {
+                                const isIncluded = selectedFactorsForModel['centerPoint'] !== false;
+                                if (!isIncluded) return null;
+                                
                                 // Separate center points from factorial points
                                 const centerPointIndices: number[] = [];
                                 const factorialPointIndices: number[] = [];
@@ -2170,18 +2191,17 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                   const centerResponses = centerPointIndices.map(idx => runData[idx].response).filter((r): r is number => r !== null && !isNaN(r));
                                   const y_c_avg = centerResponses.length > 0 ? centerResponses.reduce((a, b) => a + b, 0) / centerResponses.length : 0;
                                   
-                                  // Predicted response at center from factorial model
+                                  // Predicted response at center from reduced model
                                   const y_f_at_center = displayBeta[0];
                                   
                                   // Curvature coefficient = difference
                                   curvatureCoeff = y_c_avg - y_f_at_center;
                                   
-                                  // Standard error of curvature
+                                  // Standard error of curvature using reduced model MSE
                                   // SE_curv = sqrt(mse * (1/n_c + 1/n_f))
-                                  const errorMS = SS_res / (n - p);
-                                  curvatureSE = Math.sqrt(errorMS * (1 / n_c + 1 / n_f));
+                                  curvatureSE = Math.sqrt(mse_display * (1 / n_c + 1 / n_f));
                                   curvatureTValue = curvatureSE > 0 ? curvatureCoeff / curvatureSE : 0;
-                                  curvaturePValue = curvatureSE > 0 ? 2 * (1 - jStat.studentt.cdf(Math.abs(curvatureTValue), n - p)) : 1;
+                                  curvaturePValue = curvatureSE > 0 ? 2 * (1 - jStat.studentt.cdf(Math.abs(curvatureTValue), n - reducedModel.p)) : 1;
                                 }
                                 
                                 return (
@@ -2194,7 +2214,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                   <TableCell className="text-right">-</TableCell>
                                   <TableCell className="text-center">
                                     <Checkbox
-                                      checked={selectedFactorsForModel['centerPoint'] ?? true}
+                                      checked={true}
                                       onCheckedChange={(checked) => {
                                         setSelectedFactorsForModel(prev => ({
                                           ...prev,
