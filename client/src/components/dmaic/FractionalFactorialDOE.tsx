@@ -228,11 +228,14 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
           config.factors || factors
         );
         if (reconstructedPlan) {
-          // Override k and p with database column values (authoritative source)
+          // Use database k and p values only if they're valid (> 0), otherwise use reconstructed values
+          const dbK = config.k && config.k > 0 ? config.k : null;
+          const dbP = config.p && config.p > 0 ? config.p : null;
+          
           const finalPlan = {
             ...reconstructedPlan,
-            k: config.k !== null && config.k !== undefined ? config.k : reconstructedPlan.k,
-            p: config.p !== null && config.p !== undefined ? config.p : reconstructedPlan.p,
+            k: dbK || reconstructedPlan.k || 0,
+            p: dbP || reconstructedPlan.p || 0,
           };
           setGeneratedPlan(finalPlan);
         }
@@ -279,6 +282,10 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
     
     const transformedPlan = transformGeneratedPlanForSaving(generatedPlan, factors);
     
+    // Only save k and p if they're valid (> 0), otherwise use null to avoid corrupting future loads
+    const validK = transformedPlan.k && transformedPlan.k > 0 ? transformedPlan.k : null;
+    const validP = transformedPlan.p && transformedPlan.p > 0 ? transformedPlan.p : null;
+    
     saveConfigMutation.mutate({
       fractionalResolution,
       responseVariableName,
@@ -290,13 +297,17 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
       significanceLevel,
       showUncoded,
       generatedPlan: transformedPlan,
-      k: transformedPlan.k || null,
-      p: transformedPlan.p || null,
+      k: validK,
+      p: validP,
     });
   };
   
   const handleSaveData = () => {
     const transformedPlan = transformGeneratedPlanForSaving(generatedPlan, factors);
+    
+    // Only save k and p if they're valid (> 0), otherwise use null to avoid corrupting future loads
+    const validK = transformedPlan.k && transformedPlan.k > 0 ? transformedPlan.k : null;
+    const validP = transformedPlan.p && transformedPlan.p > 0 ? transformedPlan.p : null;
     
     saveConfigMutation.mutate({
       fractionalResolution,
@@ -310,8 +321,8 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
       showUncoded,
       runData,
       generatedPlan: transformedPlan,
-      k: transformedPlan.k || null,
-      p: transformedPlan.p || null,
+      k: validK,
+      p: validP,
     });
   };
   
