@@ -1356,7 +1356,12 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
               {/* ANOVA Table */}
               <Card>
                 <CardHeader>
-                  <CardTitle>ANOVA Analysis</CardTitle>
+                  <CardTitle>
+                    ANOVA Analysis
+                    {Object.values(selectedFactorsForModel).some(v => v === false) && (
+                      <span className="p-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-xl ml-24 text-sm font-normal justify-right">Reduced Model</span>
+                    )}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="overflow-x-auto">
@@ -2028,7 +2033,12 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                     {/* Regression Equation */}
                     <Card>
                       <CardHeader>
-                        <CardTitle>Regression Model {showUncoded && allFactorsHaveValidLevels() ? '(Uncoded)' : '(Coded)'}</CardTitle>
+                        <CardTitle>
+                          Regression Model {showUncoded && allFactorsHaveValidLevels() ? '(Uncoded)' : '(Coded)'}
+                          {Object.values(selectedFactorsForModel).some(v => v === false) && (
+                            <span className="p-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-xl ml-24 text-sm font-normal justify-right">Reduced Model</span>
+                          )}
+                        </CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded font-mono text-sm">
