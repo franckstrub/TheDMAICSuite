@@ -1695,6 +1695,12 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 } else {
                   beta = Xty.map(v => v / (XtX[0][0] || 1));
                 }
+                
+                // Ensure beta contains valid numbers
+                if (!beta.every(b => Number.isFinite(b))) {
+                  beta = Array(p).fill(0);
+                  beta[0] = mean_y;
+                }
 
                 const predictions = X.map(row => row.reduce((sum, val, i) => sum + val * beta[i], 0));
                 const residuals = y.map((val, i) => val - predictions[i]);
