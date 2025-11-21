@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -39,8 +39,6 @@ import jStat from 'jstat';
 import { 
   transformGeneratedPlanForSaving, 
   reconstructGeneratedPlanFromPersisted,
-  buildRunResponsesFromRunData,
-  buildRunDataFromPlanAndResponses,
   getDefaultFactor,
   validateFactorCount,
   parseFactorValue,
@@ -72,15 +70,21 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
   const [significanceLevel, setSignificanceLevel] = useState(0.05);
   
   // State for Data tab
-  const [runData, setRunData] = useState<Array<{
-    run: number;
-    factors: number[];
-    response: number | null;
-  }>>([]);
   const [generatedPlan, setGeneratedPlan] = useState<any>(null);
+  const [responses, setResponses] = useState<Record<string, number | null>>({});
   // UI state for raw string inputs for responses (allows partial numbers like "-", "0.", "1,5")
   const [responseInputs, setResponseInputs] = useState<Record<number, string>>({});
   const [showUncoded, setShowUncoded] = useState(false); // false = coded, true = uncoded
+  
+  // Computed runData from generatedPlan + responses (for backward compatibility with existing UI code)
+  const runData = useMemo(() => {
+    if (!generatedPlan || !generatedPlan.plan) return [];
+    return generatedPlan.plan.map((row: any) => ({
+      run: row.runOrder,
+      factors: factors.map(f => row[f.name] as number),
+      response: responses[row.runOrder.toString()] ?? null,
+    }));
+  }, [generatedPlan, responses, factors]);
   
   // Solver state for Analysis tab
   const [solveFactorIdx, setSolveFactorIdx] = useState(0);
@@ -201,20 +205,15 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
         if (reconstructedPlan) {
           setGeneratedPlan(reconstructedPlan);
           
-          // Build runData from generatedPlan + runResponses
-          const builtRunData = buildRunDataFromPlanAndResponses(
-            reconstructedPlan,
-            config.runResponses,
-            config.factors || factors
-          );
-          
-          if (builtRunData.length > 0) {
-            setRunData(builtRunData);
+          // Load responses from runResponses
+          if (config.runResponses && typeof config.runResponses === 'object') {
+            setResponses(config.runResponses);
+            
             // Initialize responseInputs from loaded response values
             const inputs: Record<number, string> = {};
-            builtRunData.forEach((rd: any) => {
-              if (rd.response !== null && rd.response !== undefined) {
-                inputs[rd.run] = String(rd.response);
+            Object.entries(config.runResponses).forEach(([runOrder, response]: [string, any]) => {
+              if (response !== null && response !== undefined) {
+                inputs[parseInt(runOrder)] = String(response);
               }
             });
             setResponseInputs(inputs);
@@ -224,7 +223,13 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
       
       // Fallback: Load from legacy runData format if no generatedPlan
       if (!config.generatedPlan && config.runData && Array.isArray(config.runData)) {
-        setRunData(config.runData);
+        // Convert legacy runData to responses map
+        const responsesMap: Record<string, number | null> = {};
+        config.runData.forEach((rd: any) => {
+          responsesMap[rd.run.toString()] = rd.response;
+        });
+        setResponses(responsesMap);
+        
         // Initialize responseInputs from loaded response values
         const inputs: Record<number, string> = {};
         config.runData.forEach((rd: any) => {
@@ -288,8 +293,6 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
   };
   
   const handleSaveData = () => {
-    const runResponses = buildRunResponsesFromRunData(runData);
-    
     saveConfigMutation.mutate({
       responseVariableName,
       factors,
@@ -299,7 +302,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
       numberOfCenterPoints,
       significanceLevel,
       showUncoded,
-      runResponses,
+      runResponses: responses,
       generatedPlan: transformGeneratedPlanForSaving(generatedPlan, factors),
     });
   };
@@ -404,13 +407,9 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
     
     setGeneratedPlan(plan);
     
-    const newRunData = plan.plan.map((row: any, index: number) => ({
-      run: row.runOrder,
-      factors: factors.map(f => row[f.name] as number),
-      response: null,
-    }));
-    
-    setRunData(newRunData);
+    // Clear responses for new plan (responses state persists by run order)
+    setResponses({});
+    setResponseInputs({});
     
     toast({
       title: "Full Factorial DOE Plan Generated",
@@ -419,7 +418,11 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
   };
   
   const handleResponseChange = (runIndex: number, value: string) => {
-    const runNumber = runData[runIndex].run;
+    if (!generatedPlan || !generatedPlan.plan) return;
+    
+    const runNumber = generatedPlan.plan[runIndex]?.runOrder;
+    if (runNumber === undefined) return;
+    
     setResponseInputs({
       ...responseInputs,
       [runNumber]: value,
@@ -427,13 +430,19 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
   };
   
   const handleResponseBlur = (runIndex: number) => {
-    const runNumber = runData[runIndex].run;
+    if (!generatedPlan || !generatedPlan.plan) return;
+    
+    const runNumber = generatedPlan.plan[runIndex]?.runOrder;
+    if (runNumber === undefined) return;
+    
     const rawValue = responseInputs[runNumber] || '';
     const parsedValue = parseNumericValue(rawValue);
     
-    const newRunData = [...runData];
-    newRunData[runIndex].response = isNaN(parsedValue) ? null : parsedValue;
-    setRunData(newRunData);
+    // Update responses state
+    setResponses(prev => ({
+      ...prev,
+      [runNumber.toString()]: isNaN(parsedValue) ? null : parsedValue
+    }));
     
     // Update responseInputs with the parsed value (or remove if empty/invalid)
     if (rawValue.trim() === '' || isNaN(parsedValue)) {
