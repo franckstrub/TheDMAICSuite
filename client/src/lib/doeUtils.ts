@@ -56,6 +56,7 @@ export interface FullFactorialPlan {
   plan: DOEPlanRow[];
   factors: DOEFactor[];
   designType: string;
+  k: number; // Total number of factors in 2^k design
 }
 
 /**
@@ -209,6 +210,7 @@ export function generateFullFactorialPlan(
     plan,
     factors,
     designType: `2^${k} Full Factorial${actualCenterPointRuns > 0 ? ` with ${actualCenterPointRuns} center point runs` : ''}`,
+    k,
   };
 }
 
