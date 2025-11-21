@@ -1273,6 +1273,8 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                               const factorBIdx = factors.indexOf(factorB);
                               const isInteractionConfounded = factorAIdx >= numBaseFactors || factorBIdx >= numBaseFactors;
                               
+                              console.log(`Interaction ${factorA.name}×${factorB.name}: designType="${generatedPlan.designType}", match=${!!designMatch}, numBaseFactors=${numBaseFactors}, factorAIdx=${factorAIdx}, factorBIdx=${factorBIdx}, confounded=${isInteractionConfounded}`);
+                              
                               // Get unique levels for both factors
                               const factorAUniqueLevels = getFactorLevels(factorA.name);
                               const factorBUniqueLevels = getFactorLevels(factorB.name);
@@ -1284,7 +1286,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                               if (factorAHasOneLevel || factorBHasOneLevel || isInteractionConfounded) {
                                 let message = '';
                                 if (isInteractionConfounded) {
-                                  message = `This fractional factorial design does not have enough degrees of freedom to estimate ${factorA.name}${factorB.name} interaction independently. It is confounded with other effects.`;
+                                  message = `This fractional factorial design does not have enough degrees of freedom to estimate ${factorA.name}×${factorB.name} interaction independently. It is confounded with other effects.`;
                                 } else {
                                   const confoundedFactor = factorAHasOneLevel ? factorA.name : factorB.name;
                                   message = `Factor ${confoundedFactor} has only one level in this fraction, so the interaction between ${factorA.name} and ${factorB.name} cannot be estimated.`;
