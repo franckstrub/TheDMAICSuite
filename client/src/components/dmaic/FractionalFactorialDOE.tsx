@@ -222,11 +222,10 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
       }
       
       // Load generatedPlan from persisted format
-      if (config.generatedPlan && Array.isArray(config.generatedPlan)) {
+      if (config.generatedPlan) {
         const reconstructedPlan = reconstructGeneratedPlanFromPersisted(
           config.generatedPlan,
-          config.factors || factors,
-          'Fractional Factorial'
+          config.factors || factors
         );
         if (reconstructedPlan) {
           setGeneratedPlan(reconstructedPlan);
