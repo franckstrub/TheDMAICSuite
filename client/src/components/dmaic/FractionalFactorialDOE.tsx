@@ -1473,32 +1473,6 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                 });
                               }
 
-                              // If either factor has only one level OR interaction is confounded, show message
-                              if (factorAHasOneLevel || factorBHasOneLevel || isInteractionConfounded) {
-                                let message = '';
-                                if (isInteractionConfounded) {
-                                  message = `This fractional factorial design does not have enough degrees of freedom to estimate ${factorA.name}${factorB.name} interaction independently. It is confounded with other effects.`;
-                                } else {
-                                  const confoundedFactor = factorAHasOneLevel ? factorA.name : factorB.name;
-                                  message = `Factor ${confoundedFactor} has only one level in this fraction, so the interaction between ${factorA.name} and ${factorB.name} cannot be estimated.`;
-                                }
-                                return (
-                                  <Card key={`${idxA}-${idxB}`}>
-                                    <CardHeader>
-                                      <CardTitle>Interaction: {factorA.name} × {factorB.name}</CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="p-8 text-center text-muted-foreground">
-                                      <p className="text-sm">
-                                        This interaction is <strong>confounded</strong> due to the fractional design.
-                                      </p>
-                                      <p className="text-sm mt-2">
-                                        {message}
-                                      </p>
-                                    </CardContent>
-                                  </Card>
-                                );
-                              }
-
                               // Generate x-axis tick labels: show center point only if included
                               const xTickVals = includeCenterPoints ? [-1, 0, 1] : [-1, 1];
                               const xTickLabels = includeCenterPoints
