@@ -1,7 +1,7 @@
 import {
   users, projects, projectCharters, sipocDiagrams, customerRequirements, businessRequirements,
-  dataCollectionPlans, configs, activityLogs, processData, raciMatrix,
-  processRaciMatrix, ganttTasks, 
+  datasets, dataCollectionPlans, storageConfigs, activityLogs, processData, projectRaciMatrix,
+  processRaciMatrix, gateReviewDeliverables, gateReviewValidators, ganttTasks, 
   multipleSampleHypothesisConfig, userSettings,
   type InsertUser,
   type Project, type InsertProject,
@@ -9,12 +9,15 @@ import {
   type SipocDiagram, type InsertSipoc,
   type CustomerRequirement, type InsertRequirement,
   type BusinessRequirement, type InsertBusinessRequirement,
+  type Dataset, type InsertDataset,
   type DataCollectionPlan, type InsertPlan,
-  type InsertConfig,
+  type StorageConfig, type InsertConfig,
   type ActivityLog, type InsertLog,
   type ProcessData, type InsertProcessData,
-  type InsertRaciMatrix,
-  type ProcessRaciMatrix, type InsertProcessRaciMatrix,
+  type ProjectRaciMatrix, type InsertRaciMatrix, type RaciMatrixData,
+  type ProcessRaciMatrix, type InsertProcessRaciMatrix, type ProcessRaciMatrixData,
+  type GateReviewDeliverable, type InsertGateReviewDeliverable,
+  type GateReviewValidator, type InsertGateReviewValidator,
   type GanttTask, type InsertGanttTask,
   type MultipleSampleHypothesisConfig, type InsertMultipleSampleHypothesisConfig,
   type UserSettings, type InsertUserSettings
@@ -75,6 +78,13 @@ export interface IStorage {
   updateBusinessRequirement(id: number, requirement: Partial<BusinessRequirement>): Promise<BusinessRequirement | undefined>;
   deleteBusinessRequirement(id: number): Promise<boolean>;
 
+  // Dataset operations
+  getDatasets(): Promise<Dataset[]>;
+  getDataset(id: number): Promise<Dataset | undefined>;
+  createDataset(dataset: InsertDataset): Promise<Dataset>;
+  updateDataset(id: number, dataset: Partial<Dataset>): Promise<Dataset | undefined>;
+  deleteDataset(id: number): Promise<boolean>;
+
   // Data Collection Plan operations
   getDataCollectionPlans(projectId: number): Promise<DataCollectionPlan[]>;
   createDataCollectionPlan(plan: InsertPlan): Promise<DataCollectionPlan>;
@@ -82,10 +92,10 @@ export interface IStorage {
   deleteDataCollectionPlan(id: number): Promise<boolean>;
 
   // Storage Config operations
-  getStorageConfig(userId: number): Promise<any | undefined>;
-  getStorageConfigs(userId: number): Promise<any[]>;
-  createStorageConfig(config: InsertConfig): Promise<any>;
-  updateStorageConfig(id: number, config: Partial<any>): Promise<any | undefined>;
+  getStorageConfig(userId: number): Promise<StorageConfig | undefined>;
+  getStorageConfigs(userId: number): Promise<StorageConfig[]>;
+  createStorageConfig(config: InsertConfig): Promise<StorageConfig>;
+  updateStorageConfig(id: number, config: Partial<StorageConfig>): Promise<StorageConfig | undefined>;
 
   // Activity Log operations
   getActivityLogs(userId?: number, projectId?: number): Promise<ActivityLog[]>;
@@ -96,14 +106,26 @@ export interface IStorage {
   createProcessData(data: InsertProcessData): Promise<ProcessData>;
 
   // RACI Matrix operations
-  getRaciMatrix(projectId: number): Promise<any | undefined>;
-  createRaciMatrix(matrix: InsertRaciMatrix): Promise<any>;
-  updateRaciMatrix(id: number, matrix: Partial<any>): Promise<any | undefined>;
+  getRaciMatrix(projectId: number): Promise<ProjectRaciMatrix | undefined>;
+  createRaciMatrix(matrix: InsertRaciMatrix): Promise<ProjectRaciMatrix>;
+  updateRaciMatrix(id: number, matrix: Partial<ProjectRaciMatrix>): Promise<ProjectRaciMatrix | undefined>;
 
   // Process RACI Matrix operations (for Improve Phase TO BE Process)
   getProcessRaciMatrix(projectId: number): Promise<ProcessRaciMatrix | undefined>;
   createProcessRaciMatrix(matrix: InsertProcessRaciMatrix): Promise<ProcessRaciMatrix>;
   updateProcessRaciMatrix(id: number, matrix: Partial<ProcessRaciMatrix>): Promise<ProcessRaciMatrix | undefined>;
+
+  // Gate Review operations
+  getGateReviewDeliverables(projectId: number, phase?: string): Promise<GateReviewDeliverable[]>;
+  createGateReviewDeliverable(deliverable: InsertGateReviewDeliverable): Promise<GateReviewDeliverable>;
+  updateGateReviewDeliverable(id: number, deliverable: Partial<GateReviewDeliverable>): Promise<GateReviewDeliverable | undefined>;
+  deleteGateReviewDeliverable(id: number): Promise<boolean>;
+
+  getGateReviewValidators(projectId: number, phase?: string): Promise<GateReviewValidator[]>;
+  getGateReviewValidator(id: number): Promise<GateReviewValidator | undefined>;
+  createGateReviewValidator(validator: InsertGateReviewValidator): Promise<GateReviewValidator>;
+  updateGateReviewValidator(id: number, validator: Partial<GateReviewValidator>): Promise<GateReviewValidator | undefined>;
+  deleteGateReviewValidator(id: number): Promise<boolean>;
 
   // Gantt Task operations
   getGanttTasks(projectId: number): Promise<GanttTask[]>;
@@ -413,28 +435,28 @@ export class DatabaseStorage implements IStorage {
     return result.rowCount > 0;
   }
 
-  async getStorageConfig(userId: number): Promise<any | undefined> {
-    const [config] = await db.select().from(configs).where(eq(configs.organizationId, userId)).limit(1);
+  async getStorageConfig(userId: number): Promise<StorageConfig | undefined> {
+    const [config] = await db.select().from(storageConfigs).where(eq(storageConfigs.userId, userId)).limit(1);
     return config || undefined;
   }
 
-  async getStorageConfigs(userId: number): Promise<any[]> {
-    return await db.select().from(configs).where(eq(configs.organizationId, userId));
+  async getStorageConfigs(userId: number): Promise<StorageConfig[]> {
+    return await db.select().from(storageConfigs).where(eq(storageConfigs.userId, userId));
   }
 
-  async createStorageConfig(config: InsertConfig): Promise<any> {
+  async createStorageConfig(config: InsertConfig): Promise<StorageConfig> {
     const [newConfig] = await db
-      .insert(configs)
+      .insert(storageConfigs)
       .values(config)
       .returning();
     return newConfig;
   }
 
-  async updateStorageConfig(id: number, config: Partial<any>): Promise<any | undefined> {
+  async updateStorageConfig(id: number, config: Partial<StorageConfig>): Promise<StorageConfig | undefined> {
     const [updatedConfig] = await db
-      .update(configs)
-      .set(config)
-      .where(eq(configs.id, id))
+      .update(storageConfigs)
+      .set({ ...config, lastUpdated: new Date() })
+      .where(eq(storageConfigs.id, id))
       .returning();
     return updatedConfig || undefined;
   }
@@ -475,24 +497,24 @@ export class DatabaseStorage implements IStorage {
     return newData;
   }
 
-  async getRaciMatrix(projectId: number): Promise<any | undefined> {
-    const [matrix] = await db.select().from(raciMatrix).where(eq(raciMatrix.projectId, projectId));
+  async getRaciMatrix(projectId: number): Promise<ProjectRaciMatrix | undefined> {
+    const [matrix] = await db.select().from(projectRaciMatrix).where(eq(projectRaciMatrix.projectId, projectId));
     return matrix || undefined;
   }
 
-  async createRaciMatrix(matrix: InsertRaciMatrix): Promise<any> {
+  async createRaciMatrix(matrix: InsertRaciMatrix): Promise<ProjectRaciMatrix> {
     const [newMatrix] = await db
-      .insert(raciMatrix)
+      .insert(projectRaciMatrix)
       .values(matrix)
       .returning();
     return newMatrix;
   }
 
-  async updateRaciMatrix(id: number, matrix: Partial<any>): Promise<any | undefined> {
+  async updateRaciMatrix(id: number, matrix: Partial<ProjectRaciMatrix>): Promise<ProjectRaciMatrix | undefined> {
     const [updatedMatrix] = await db
-      .update(raciMatrix)
+      .update(projectRaciMatrix)
       .set({ ...matrix, lastUpdated: new Date() })
-      .where(eq(raciMatrix.id, id))
+      .where(eq(projectRaciMatrix.id, id))
       .returning();
     return updatedMatrix || undefined;
   }
@@ -517,6 +539,84 @@ export class DatabaseStorage implements IStorage {
       .where(eq(processRaciMatrix.id, id))
       .returning();
     return updatedMatrix || undefined;
+  }
+
+  async getGateReviewDeliverables(projectId: number, phase?: string): Promise<GateReviewDeliverable[]> {
+    let whereConditions = [eq(gateReviewDeliverables.projectId, projectId)];
+    
+    if (phase) {
+      whereConditions.push(eq(gateReviewDeliverables.phase, phase));
+    }
+    
+    return await db
+      .select()
+      .from(gateReviewDeliverables)
+      .where(and(...whereConditions))
+      .orderBy(asc(gateReviewDeliverables.id));
+  }
+
+  async getGateReviewDeliverable(id: number): Promise<GateReviewDeliverable | undefined> {
+    const [deliverable] = await db.select().from(gateReviewDeliverables).where(eq(gateReviewDeliverables.id, id));
+    return deliverable || undefined;
+  }
+
+  async createGateReviewDeliverable(deliverable: InsertGateReviewDeliverable): Promise<GateReviewDeliverable> {
+    const [newDeliverable] = await db
+      .insert(gateReviewDeliverables)
+      .values(deliverable)
+      .returning();
+    return newDeliverable;
+  }
+
+  async updateGateReviewDeliverable(id: number, deliverable: Partial<GateReviewDeliverable>): Promise<GateReviewDeliverable | undefined> {
+    const [updatedDeliverable] = await db
+      .update(gateReviewDeliverables)
+      .set({ ...deliverable, lastUpdated: new Date() })
+      .where(eq(gateReviewDeliverables.id, id))
+      .returning();
+    return updatedDeliverable || undefined;
+  }
+
+  async deleteGateReviewDeliverable(id: number): Promise<boolean> {
+    const result = await db.delete(gateReviewDeliverables).where(eq(gateReviewDeliverables.id, id));
+    return result.rowCount > 0;
+  }
+
+  async getGateReviewValidators(projectId: number, phase?: string): Promise<GateReviewValidator[]> {
+    let query = db.select().from(gateReviewValidators).where(eq(gateReviewValidators.projectId, projectId));
+    
+    if (phase) {
+      query = query.where(and(eq(gateReviewValidators.projectId, projectId), eq(gateReviewValidators.phase, phase)));
+    }
+    
+    return await query;
+  }
+
+  async getGateReviewValidator(id: number): Promise<GateReviewValidator | undefined> {
+    const [validator] = await db.select().from(gateReviewValidators).where(eq(gateReviewValidators.id, id));
+    return validator || undefined;
+  }
+
+  async createGateReviewValidator(validator: InsertGateReviewValidator): Promise<GateReviewValidator> {
+    const [newValidator] = await db
+      .insert(gateReviewValidators)
+      .values(validator)
+      .returning();
+    return newValidator;
+  }
+
+  async updateGateReviewValidator(id: number, validator: Partial<GateReviewValidator>): Promise<GateReviewValidator | undefined> {
+    const [updatedValidator] = await db
+      .update(gateReviewValidators)
+      .set({ ...validator, lastUpdated: new Date() })
+      .where(eq(gateReviewValidators.id, id))
+      .returning();
+    return updatedValidator || undefined;
+  }
+
+  async deleteGateReviewValidator(id: number): Promise<boolean> {
+    const result = await db.delete(gateReviewValidators).where(eq(gateReviewValidators.id, id));
+    return result.rowCount > 0;
   }
 
   async getGanttTasks(projectId: number): Promise<GanttTask[]> {
