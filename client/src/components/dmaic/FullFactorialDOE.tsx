@@ -937,7 +937,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                         : 0;
                     });
 
-                    const lineXLabels = showUncoded && allFactorsHaveValidLevels()
+                    const lineLevelLabels = showUncoded && allFactorsHaveValidLevels()
                       ? lineLevels.map(level => {
                           const decoded = decodeValue(level, factor);
                           return factor.type === 'continuous'
@@ -946,14 +946,28 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                         })
                       : ['Low (-1)', 'High (+1)'];
 
+                    const xTickVals = includeCenterPoints ? [-1, 0, 1] : [-1, 1];
+                    const xTickText = includeCenterPoints
+                      ? [lineLevelLabels[0], showUncoded && allFactorsHaveValidLevels()
+                          ? (() => {
+                              const decoded = decodeValue(0, factor);
+                              return factor.type === 'continuous'
+                                ? `${(decoded as number).toFixed(2)}${factor.units ? ' ' + factor.units : ''}`
+                                : String(decoded);
+                            })()
+                          : 'Center (0)', lineLevelLabels[1]]
+                      : lineLevelLabels;
+
                     const plotData = [
                       {
-                        x: lineXLabels,
+                        x: lineLevels,
                         y: lineData,
                         type: 'scatter',
                         mode: 'lines+markers',
                         line: { width: 3, color: '#3b82f6' },
                         marker: { size: 10, color: '#3b82f6' },
+                        hovertemplate: '%{text}<br>' + (responseVariableName || 'Y Response') + ': %{y:.3f}<extra></extra>',
+                        text: lineLevelLabels,
                       },
                     ];
 
@@ -966,7 +980,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                         ? centerResponses.reduce((a: number, b: number) => a + b, 0) / centerResponses.length 
                         : 0;
 
-                      const centerXLabel = showUncoded && allFactorsHaveValidLevels()
+                      const centerLabel = showUncoded && allFactorsHaveValidLevels()
                         ? (() => {
                             const decoded = decodeValue(0, factor);
                             return factor.type === 'continuous'
@@ -976,12 +990,13 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                         : 'Center (0)';
 
                       plotData.push({
-                        x: [centerXLabel],
+                        x: [0],
                         y: [centerValue],
                         type: 'scatter',
                         mode: 'markers',
                         marker: { size: 10, color: '#ef4444' },
                         showlegend: false,
+                        hovertemplate: centerLabel + '<br>' + (responseVariableName || 'Y Response') + ': %{y:.3f}<extra></extra>',
                       } as any);
                     }
 
@@ -995,7 +1010,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                             data={plotData as any}
                             layout={{
                               title: { text: `<b>Main Effect: ${factor.name}</b>` },
-                              xaxis: { title: { text: 'Factor Level' }, type: 'category' },
+                              xaxis: { title: { text: 'Factor Level' }, type: 'linear', tickmode: 'array', tickvals: xTickVals, ticktext: xTickText },
                               yaxis: { title: { text: responseVariableName || 'Y Response' }, range: [yAxisRangeMin, yAxisRangeMax] },
                               showlegend: false,
                               hovermode: 'closest',
@@ -1055,7 +1070,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                 })()
                               : (levelA === -1 ? 'Low' : 'High');
 
-                            const lineXLabels = showUncoded && allFactorsHaveValidLevels()
+                            const lineLevelLabels = showUncoded && allFactorsHaveValidLevels()
                               ? [-1, 1].map(level => {
                                   const decoded = decodeValue(level, factorB);
                                   return factorB.type === 'continuous'
@@ -1065,13 +1080,15 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                               : ['Low (-1)', 'High (+1)'];
 
                             interactionTraces.push({
-                              x: lineXLabels,
+                              x: [-1, 1],
                               y: lineData,
                               type: 'scatter',
                               mode: 'lines+markers',
                               name: `${factorA.name} = ${levelALabel}`,
                               line: { width: 2 },
                               marker: { size: 8 },
+                              hovertemplate: '%{text}<br>' + (responseVariableName || 'Y Response') + ': %{y:.3f}<extra></extra>',
+                              text: lineLevelLabels,
                             });
                           });
 
@@ -1100,7 +1117,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                   })()
                                 : (levelA === -1 ? 'Low' : 'High');
 
-                              const centerXLabel = showUncoded && allFactorsHaveValidLevels()
+                              const centerLabel = showUncoded && allFactorsHaveValidLevels()
                                 ? (() => {
                                     const decoded = decodeValue(0, factorB);
                                     return factorB.type === 'continuous'
@@ -1110,13 +1127,14 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                 : 'Center (0)';
 
                               interactionTraces.push({
-                                x: [centerXLabel],
+                                x: [0],
                                 y: [centerValue],
                                 type: 'scatter',
                                 mode: 'markers',
                                 name: `${factorA.name} = ${levelALabel} (Center)`,
                                 marker: { size: 8, color: '#ef4444' },
                                 showlegend: true,
+                                hovertemplate: centerLabel + '<br>' + (responseVariableName || 'Y Response') + ': %{y:.3f}<extra></extra>',
                               });
                             });
                           }
@@ -1131,7 +1149,53 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                 data={interactionTraces}
                                 layout={{
                                   title: { text: `<b>${factorA.name} × ${factorB.name}</b>` },
-                                  xaxis: { title: { text: factorB.name }, type: 'category' },
+                                  xaxis: { 
+                                    title: { text: factorB.name }, 
+                                    type: 'linear', 
+                                    tickmode: 'array', 
+                                    tickvals: includeCenterPoints ? [-1, 0, 1] : [-1, 1],
+                                    ticktext: includeCenterPoints
+                                      ? [showUncoded && allFactorsHaveValidLevels()
+                                          ? (() => {
+                                              const decoded = decodeValue(-1, factorB);
+                                              return factorB.type === 'continuous'
+                                                ? `${(decoded as number).toFixed(2)}${factorB.units ? ' ' + factorB.units : ''}`
+                                                : String(decoded);
+                                            })()
+                                          : 'Low (-1)',
+                                        showUncoded && allFactorsHaveValidLevels()
+                                          ? (() => {
+                                              const decoded = decodeValue(0, factorB);
+                                              return factorB.type === 'continuous'
+                                                ? `${(decoded as number).toFixed(2)}${factorB.units ? ' ' + factorB.units : ''}`
+                                                : String(decoded);
+                                            })()
+                                          : 'Center (0)',
+                                        showUncoded && allFactorsHaveValidLevels()
+                                          ? (() => {
+                                              const decoded = decodeValue(1, factorB);
+                                              return factorB.type === 'continuous'
+                                                ? `${(decoded as number).toFixed(2)}${factorB.units ? ' ' + factorB.units : ''}`
+                                                : String(decoded);
+                                            })()
+                                          : 'High (+1)']
+                                      : [showUncoded && allFactorsHaveValidLevels()
+                                          ? (() => {
+                                              const decoded = decodeValue(-1, factorB);
+                                              return factorB.type === 'continuous'
+                                                ? `${(decoded as number).toFixed(2)}${factorB.units ? ' ' + factorB.units : ''}`
+                                                : String(decoded);
+                                            })()
+                                          : 'Low (-1)',
+                                        showUncoded && allFactorsHaveValidLevels()
+                                          ? (() => {
+                                              const decoded = decodeValue(1, factorB);
+                                              return factorB.type === 'continuous'
+                                                ? `${(decoded as number).toFixed(2)}${factorB.units ? ' ' + factorB.units : ''}`
+                                                : String(decoded);
+                                            })()
+                                          : 'High (+1)']
+                                  },
                                   yaxis: { title: { text: responseVariableName || 'Y Response' }, range: [yAxisRangeMin, yAxisRangeMax] },
                                     showlegend: true,
                                     legend: { title: { text: factorA.name } },
