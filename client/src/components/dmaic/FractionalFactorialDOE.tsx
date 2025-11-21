@@ -1032,13 +1032,28 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
               </div>
 
               {(() => {
+                // Helper: Get unique levels for a factor
+                const getFactorLevels = (factorName: string): Set<number> => {
+                  const levels = new Set<number>();
+                  generatedPlan.plan.forEach((row: any) => {
+                    const level = row?.[factorName];
+                    if (level !== undefined && level !== null) {
+                      levels.add(level);
+                    }
+                  });
+                  return levels;
+                };
+
                 // Calculate min/max across ALL data (main effects + interactions)
                 const allValues: number[] = [];
                 const centerLevels = includeCenterPoints ? [-1, 0, 1] : [-1, 1];
                 
                 // Collect main effect values
                 factors.forEach((factor) => {
-                  centerLevels.forEach(level => {
+                  const factorLevels = getFactorLevels(factor.name);
+                  const levelsToCheck = Array.from(factorLevels).filter(level => centerLevels.includes(level));
+                  
+                  levelsToCheck.forEach(level => {
                     const levelResponses = runData
                       .filter((_, idx) => generatedPlan.plan[idx]?.[factor.name] === level && runData[idx].response !== null)
                       .map((rd) => rd.response as number);
@@ -1052,8 +1067,13 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 // Collect interaction values
                 factors.slice(0, -1).forEach((factorA) => {
                   factors.slice(factors.indexOf(factorA) + 1).forEach((factorB) => {
-                    [-1, 1].forEach(levelA => {
-                      centerLevels.forEach(levelB => {
+                    const factorALevels = getFactorLevels(factorA.name);
+                    const factorBLevels = getFactorLevels(factorB.name);
+                    const levelsAToCheck = Array.from(factorALevels).filter(level => [-1, 1].includes(level));
+                    const levelsBToCheck = Array.from(factorBLevels).filter(level => centerLevels.includes(level));
+                    
+                    levelsAToCheck.forEach(levelA => {
+                      levelsBToCheck.forEach(levelB => {
                         const matches = runData.filter((_, idx) => {
                           const row = generatedPlan.plan[idx];
                           return row?.[factorA.name] === levelA && row?.[factorB.name] === levelB;
@@ -1087,7 +1107,12 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                       [factor.name]: generatedPlan.plan[idx]?.[factor.name] || 0,
                     }));
                     
-                    const lineLevels = [-1, 1];
+                    // Get unique levels for this factor
+                    const factorUniqueLevels = getFactorLevels(factor.name);
+                    const factorLevelsArray = Array.from(factorUniqueLevels).filter(level => [-1, 0, 1].includes(level)).sort();
+                    const hasOnlyOneLevel = factorLevelsArray.length === 1;
+
+                    const lineLevels = hasOnlyOneLevel ? [factorLevelsArray[0]] : [-1, 1].filter(l => factorUniqueLevels.has(l));
                     const lineData = lineLevels.map(level => {
                       const levelResponses = factorData
                         .filter((d: any) => d[factor.name] === level && d.response !== null)
@@ -1104,27 +1129,55 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                             ? `${(decoded as number).toFixed(2)}${factor.units ? ' ' + factor.units : ''}`
                             : String(decoded);
                         })
-                      : ['Low (-1)', 'High (+1)'];
+                      : lineLevels.map(level => level === -1 ? 'Low (-1)' : level === 1 ? 'High (+1)' : 'Center (0)');
 
                     const xTickVals = includeCenterPoints ? [-1, 0, 1] : [-1, 1];
                     const xTickText = includeCenterPoints
-                      ? [lineLevelLabels[0], showUncoded && allFactorsHaveValidLevels()
+                      ? [showUncoded && allFactorsHaveValidLevels()
+                          ? (() => {
+                              const decoded = decodeValue(-1, factor);
+                              return factor.type === 'continuous'
+                                ? `${(decoded as number).toFixed(2)}${factor.units ? ' ' + factor.units : ''}`
+                                : String(decoded);
+                            })()
+                          : 'Low (-1)', showUncoded && allFactorsHaveValidLevels()
                           ? (() => {
                               const decoded = decodeValue(0, factor);
                               return factor.type === 'continuous'
                                 ? `${(decoded as number).toFixed(2)}${factor.units ? ' ' + factor.units : ''}`
                                 : String(decoded);
                             })()
-                          : 'Center (0)', lineLevelLabels[1]]
-                      : lineLevelLabels;
+                          : 'Center (0)', showUncoded && allFactorsHaveValidLevels()
+                          ? (() => {
+                              const decoded = decodeValue(1, factor);
+                              return factor.type === 'continuous'
+                                ? `${(decoded as number).toFixed(2)}${factor.units ? ' ' + factor.units : ''}`
+                                : String(decoded);
+                            })()
+                          : 'High (+1)']
+                      : [showUncoded && allFactorsHaveValidLevels()
+                          ? (() => {
+                              const decoded = decodeValue(-1, factor);
+                              return factor.type === 'continuous'
+                                ? `${(decoded as number).toFixed(2)}${factor.units ? ' ' + factor.units : ''}`
+                                : String(decoded);
+                            })()
+                          : 'Low (-1)', showUncoded && allFactorsHaveValidLevels()
+                          ? (() => {
+                              const decoded = decodeValue(1, factor);
+                              return factor.type === 'continuous'
+                                ? `${(decoded as number).toFixed(2)}${factor.units ? ' ' + factor.units : ''}`
+                                : String(decoded);
+                            })()
+                          : 'High (+1)'];
 
                     const plotData = [
                       {
                         x: lineLevels,
                         y: lineData,
                         type: 'scatter',
-                        mode: 'lines+markers',
-                        line: { width: 3, color: '#3b82f6' },
+                        mode: hasOnlyOneLevel ? 'markers' : 'lines+markers',
+                        line: hasOnlyOneLevel ? {} : { width: 3, color: '#3b82f6' },
                         marker: { size: 10, color: '#3b82f6' },
                         hovertemplate: '%{text}<br>' + (responseVariableName || 'Y Response') + ': %{y:.3f}<extra></extra>',
                         text: lineLevelLabels,
@@ -1205,10 +1258,22 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                           {factors.slice(0, -1).map((factorA, idxA) =>
                             factors.slice(idxA + 1).map((factorB, idxB) => {
                               const interactionTraces: any[] = [];
+                              
+                              // Get unique levels for both factors
+                              const factorAUniqueLevels = getFactorLevels(factorA.name);
+                              const factorBUniqueLevels = getFactorLevels(factorB.name);
+                              
+                              const factorAHasOneLevel = factorAUniqueLevels.size === 1;
+                              const factorBHasOneLevel = factorBUniqueLevels.size === 1;
+                              
+                              // For lines/markers logic: if either factor has only one level, show markers only
+                              const showLinesInInteraction = !factorAHasOneLevel && !factorBHasOneLevel;
 
-                              // Add line traces for -1 and +1 levels of factorB
-                              [-1, 1].forEach(levelA => {
-                                const lineData = [-1, 1].map(levelB => {
+                              // Add line/marker traces 
+                              const levelsA = Array.from(factorAUniqueLevels).filter(level => [-1, 1].includes(level)).sort();
+                              levelsA.forEach(levelA => {
+                                const levelsB = Array.from(factorBUniqueLevels).filter(level => [-1, 0, 1].includes(level)).sort();
+                                const lineData = levelsB.map(levelB => {
                                   const matches = runData.filter((_, idx) => {
                                     const row = generatedPlan.plan[idx];
                                     return row?.[factorA.name] === levelA && row?.[factorB.name] === levelB;
@@ -1231,21 +1296,21 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                   : (levelA === -1 ? 'Low' : 'High');
 
                                 const lineXLabels = showUncoded && allFactorsHaveValidLevels()
-                                  ? [-1, 1].map(level => {
+                                  ? levelsB.map(level => {
                                       const decoded = decodeValue(level, factorB);
                                       return factorB.type === 'continuous'
                                         ? `${(decoded as number).toFixed(2)}${factorB.units ? ' ' + factorB.units : ''}`
                                         : String(decoded);
                                     })
-                                  : ['Low (-1)', 'High (+1)'];
+                                  : levelsB.map(level => level === -1 ? 'Low (-1)' : level === 1 ? 'High (+1)' : 'Center (0)');
 
                                 interactionTraces.push({
-                                  x: [-1, 1],
+                                  x: levelsB,
                                   y: lineData,
                                   type: 'scatter',
-                                  mode: 'lines+markers',
+                                  mode: showLinesInInteraction ? 'lines+markers' : 'markers',
                                   name: `${factorA.name} = ${levelALabel}`,
-                                  line: { width: 2 },
+                                  line: showLinesInInteraction ? { width: 2 } : {},
                                   marker: { size: 8 },
                                   hovertemplate: '%{text}<br>' + (responseVariableName || 'Y Response') + ': %{y:.3f}<extra></extra>',
                                   text: lineXLabels,
