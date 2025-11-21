@@ -1033,27 +1033,50 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
               {/* Main Effect Plots */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {(() => {
-                  // Calculate min/max across ALL main effect data
-                  const allMainEffectValues: number[] = [];
+                  // Calculate min/max across ALL data (main effects + interactions)
+                  const allValues: number[] = [];
+                  const centerLevels = includeCenterPoints ? [-1, 0, 1] : [-1, 1];
+                  
+                  // Collect main effect values
                   factors.forEach((factor) => {
-                    const codedLevels = includeCenterPoints ? [-1, 0, 1] : [-1, 1];
-                    codedLevels.forEach(level => {
+                    centerLevels.forEach(level => {
                       const levelResponses = runData
                         .filter((_, idx) => generatedPlan.plan[idx]?.[factor.name] === level && runData[idx].response !== null)
                         .map((rd) => rd.response as number);
                       if (levelResponses.length > 0) {
                         const avg = levelResponses.reduce((a, b) => a + b, 0) / levelResponses.length;
-                        allMainEffectValues.push(avg);
+                        allValues.push(avg);
                       }
                     });
                   });
                   
-                  const mainEffectMin = allMainEffectValues.length > 0 ? Math.min(...allMainEffectValues) : 0;
-                  const mainEffectMax = allMainEffectValues.length > 0 ? Math.max(...allMainEffectValues) : 100;
-                  const mainEffectRange = mainEffectMax - mainEffectMin;
-                  const mainEffectPadding = mainEffectRange > 0 ? mainEffectRange * 0.1 : 10;
-                  const yMinMain = mainEffectMin - mainEffectPadding;
-                  const yMaxMain = mainEffectMax + mainEffectPadding;
+                  // Collect interaction values
+                  factors.slice(0, -1).forEach((factorA) => {
+                    factors.slice(factors.indexOf(factorA) + 1).forEach((factorB) => {
+                      [-1, 1].forEach(levelA => {
+                        centerLevels.forEach(levelB => {
+                          const matches = runData.filter((_, idx) => {
+                            const row = generatedPlan.plan[idx];
+                            return row?.[factorA.name] === levelA && row?.[factorB.name] === levelB;
+                          });
+                          const responses = matches
+                            .map(m => m.response)
+                            .filter((r: any) => r !== null) as number[];
+                          if (responses.length > 0) {
+                            const avg = responses.reduce((a, b) => a + b, 0) / responses.length;
+                            allValues.push(avg);
+                          }
+                        });
+                      });
+                    });
+                  });
+                  
+                  const yMin = allValues.length > 0 ? Math.min(...allValues) : 0;
+                  const yMax = allValues.length > 0 ? Math.max(...allValues) : 100;
+                  const range = yMax - yMin;
+                  const padding = range > 0 ? range * 0.1 : 10;
+                  const yAxisRangeMin = yMin - padding;
+                  const yAxisRangeMax = yMax + padding;
 
                   return factors.map((factor, factorIndex) => {
                     const factorData = runData.map((rd, idx) => ({
@@ -1100,7 +1123,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                             layout={{
                               title: { text: `<b>Main Effect: ${factor.name}</b>` },
                               xaxis: { title: { text: 'Factor Level' }, type: 'category' },
-                              yaxis: { title: { text: responseVariableName || 'Y Response' }, range: [yMinMain, yMaxMain] },
+                              yaxis: { title: { text: responseVariableName || 'Y Response' }, range: [yAxisRangeMin, yAxisRangeMax] },
                               showlegend: false,
                               hovermode: 'closest',
                               margin: { l: 60, r: 40, t: 60, b: 60 },
@@ -1132,93 +1155,62 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Interaction Plots</h3>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    {(() => {
-                      // Calculate min/max across ALL interaction data
-                      const allInteractionValues: number[] = [];
-                      const centerLevels = includeCenterPoints ? [-1, 0, 1] : [-1, 1];
-                      
-                      factors.slice(0, -1).forEach((factorA) => {
-                        factors.slice(factors.indexOf(factorA) + 1).forEach((factorB) => {
-                          [-1, 1].forEach(levelA => {
-                            centerLevels.forEach(levelB => {
-                              const matches = runData.filter((_, idx) => {
-                                const row = generatedPlan.plan[idx];
-                                return row?.[factorA.name] === levelA && row?.[factorB.name] === levelB;
-                              });
-                              const responses = matches
-                                .map(m => m.response)
-                                .filter((r: any) => r !== null) as number[];
-                              if (responses.length > 0) {
-                                const avg = responses.reduce((a, b) => a + b, 0) / responses.length;
-                                allInteractionValues.push(avg);
-                              }
+                    {factors.slice(0, -1).map((factorA, idxA) =>
+                      factors.slice(idxA + 1).map((factorB, idxB) => {
+                        const centerLevels = includeCenterPoints ? [-1, 0, 1] : [-1, 1];
+                        const interactionTraces = [-1, 1].map(levelA => {
+                          const interactionData = centerLevels.map(levelB => {
+                            const matches = runData.filter((_, idx) => {
+                              const row = generatedPlan.plan[idx];
+                              return row?.[factorA.name] === levelA && row?.[factorB.name] === levelB;
                             });
+                            const responses = matches
+                              .map(m => m.response)
+                              .filter((r: any) => r !== null) as number[];
+                            return responses.length > 0 
+                              ? (responses.reduce((a: number, b: number) => a + b, 0) / responses.length)
+                              : 0;
                           });
-                        });
-                      });
+                          
+                          const levelALabel = showUncoded && allFactorsHaveValidLevels()
+                            ? (() => {
+                                const decoded = decodeValue(levelA, factorA);
+                                return factorA.type === 'continuous'
+                                  ? `${(decoded as number).toFixed(2)}${factorA.units ? ' ' + factorA.units : ''}`
+                                  : String(decoded);
+                              })()
+                            : (levelA === -1 ? 'Low' : 'High');
 
-                      const interactionMin = allInteractionValues.length > 0 ? Math.min(...allInteractionValues) : 0;
-                      const interactionMax = allInteractionValues.length > 0 ? Math.max(...allInteractionValues) : 100;
-                      const interactionRange = interactionMax - interactionMin;
-                      const interactionPadding = interactionRange > 0 ? interactionRange * 0.1 : 10;
-                      const yMinInt = interactionMin - interactionPadding;
-                      const yMaxInt = interactionMax + interactionPadding;
-
-                      return factors.slice(0, -1).map((factorA, idxA) =>
-                        factors.slice(idxA + 1).map((factorB, idxB) => {
-                          const interactionTraces = [-1, 1].map(levelA => {
-                            const interactionData = centerLevels.map(levelB => {
-                              const matches = runData.filter((_, idx) => {
-                                const row = generatedPlan.plan[idx];
-                                return row?.[factorA.name] === levelA && row?.[factorB.name] === levelB;
-                              });
-                              const responses = matches
-                                .map(m => m.response)
-                                .filter((r: any) => r !== null) as number[];
-                              return responses.length > 0 
-                                ? (responses.reduce((a: number, b: number) => a + b, 0) / responses.length)
-                                : 0;
-                            });
-                            
-                            const levelALabel = showUncoded && allFactorsHaveValidLevels()
-                              ? (() => {
-                                  const decoded = decodeValue(levelA, factorA);
-                                  return factorA.type === 'continuous'
-                                    ? `${(decoded as number).toFixed(2)}${factorA.units ? ' ' + factorA.units : ''}`
+                          return {
+                            x: showUncoded && allFactorsHaveValidLevels()
+                              ? centerLevels.map(level => {
+                                  const decoded = decodeValue(level, factorB);
+                                  return factorB.type === 'continuous'
+                                    ? `${(decoded as number).toFixed(2)}${factorB.units ? ' ' + factorB.units : ''}`
                                     : String(decoded);
-                                })()
-                              : (levelA === -1 ? 'Low' : 'High');
+                                })
+                              : (includeCenterPoints ? ['Low (-1)', 'Center (0)', 'High (+1)'] : ['Low (-1)', 'High (+1)']),
+                            y: interactionData,
+                            type: 'scatter',
+                            mode: 'lines+markers',
+                            name: `${factorA.name} = ${levelALabel}`,
+                            line: { width: 2 },
+                            marker: { size: 8 },
+                          };
+                        });
 
-                            return {
-                              x: showUncoded && allFactorsHaveValidLevels()
-                                ? centerLevels.map(level => {
-                                    const decoded = decodeValue(level, factorB);
-                                    return factorB.type === 'continuous'
-                                      ? `${(decoded as number).toFixed(2)}${factorB.units ? ' ' + factorB.units : ''}`
-                                      : String(decoded);
-                                  })
-                                : (includeCenterPoints ? ['Low (-1)', 'Center (0)', 'High (+1)'] : ['Low (-1)', 'High (+1)']),
-                              y: interactionData,
-                              type: 'scatter',
-                              mode: 'lines+markers',
-                              name: `${factorA.name} = ${levelALabel}`,
-                              line: { width: 2 },
-                              marker: { size: 8 },
-                            };
-                          });
-
-                          return (
-                            <Card key={`${idxA}-${idxB}`}>
-                              <CardHeader>
-                                <CardTitle>Interaction: {factorA.name} × {factorB.name}</CardTitle>
-                              </CardHeader>
-                              <CardContent>
-                                <Plot
-                                  data={interactionTraces as any}
-                                  layout={{
-                                    title: { text: `<b>${factorA.name} × ${factorB.name}</b>` },
-                                    xaxis: { title: { text: factorB.name }, type: 'category' },
-                                    yaxis: { title: { text: responseVariableName || 'Y Response' }, range: [yMinInt, yMaxInt] },
+                        return (
+                          <Card key={`${idxA}-${idxB}`}>
+                            <CardHeader>
+                              <CardTitle>Interaction: {factorA.name} × {factorB.name}</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <Plot
+                                data={interactionTraces as any}
+                                layout={{
+                                  title: { text: `<b>${factorA.name} × ${factorB.name}</b>` },
+                                  xaxis: { title: { text: factorB.name }, type: 'category' },
+                                  yaxis: { title: { text: responseVariableName || 'Y Response' }, range: [yAxisRangeMin, yAxisRangeMax] },
                                     showlegend: true,
                                     legend: { title: { text: factorA.name } },
                                     hovermode: 'closest',
@@ -1243,8 +1235,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                             </Card>
                           );
                         })
-                      );
-                    })()}
+                      )}
                   </div>
                 </div>
               )}
