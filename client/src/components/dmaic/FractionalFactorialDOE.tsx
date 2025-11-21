@@ -228,7 +228,13 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
           config.factors || factors
         );
         if (reconstructedPlan) {
-          setGeneratedPlan(reconstructedPlan);
+          // Override k and p with database column values (authoritative source)
+          const finalPlan = {
+            ...reconstructedPlan,
+            k: config.k !== null && config.k !== undefined ? config.k : reconstructedPlan.k,
+            p: config.p !== null && config.p !== undefined ? config.p : reconstructedPlan.p,
+          };
+          setGeneratedPlan(finalPlan);
         }
       }
     }
@@ -271,6 +277,8 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
       return;
     }
     
+    const transformedPlan = transformGeneratedPlanForSaving(generatedPlan, factors);
+    
     saveConfigMutation.mutate({
       fractionalResolution,
       responseVariableName,
@@ -281,11 +289,15 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
       numberOfCenterPoints,
       significanceLevel,
       showUncoded,
-      generatedPlan: transformGeneratedPlanForSaving(generatedPlan, factors),
+      generatedPlan: transformedPlan,
+      k: transformedPlan.k || null,
+      p: transformedPlan.p || null,
     });
   };
   
   const handleSaveData = () => {
+    const transformedPlan = transformGeneratedPlanForSaving(generatedPlan, factors);
+    
     saveConfigMutation.mutate({
       fractionalResolution,
       responseVariableName,
@@ -297,7 +309,9 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
       significanceLevel,
       showUncoded,
       runData,
-      generatedPlan: transformGeneratedPlanForSaving(generatedPlan, factors),
+      generatedPlan: transformedPlan,
+      k: transformedPlan.k || null,
+      p: transformedPlan.p || null,
     });
   };
   

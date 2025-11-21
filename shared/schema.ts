@@ -2664,6 +2664,8 @@ export const doeFractionalFactorialConfig = pgTable(
     fractionalResolution: integer("fractional_resolution").default(1), // p value in 2^(k-p)
     resolution: text("resolution"), // III, IV, V
     generatingRelations: jsonb("generating_relations").$type<string[]>().default([]),
+    k: integer("k"), // Total number of factors in 2^(k-p) design
+    p: integer("p"), // Reduction factor in 2^(k-p) design (where numBaseFactors = k - p)
     
     // Analysis options
     significanceLevel: real("significance_level").default(0.05),
