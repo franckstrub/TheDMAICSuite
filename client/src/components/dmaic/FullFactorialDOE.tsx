@@ -1537,10 +1537,11 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
 
                           <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                             {(() => {
-                              const minResidual = Math.min(...residuals);
-                              const maxResidual = Math.max(...residuals);
-                              const range = Math.abs(maxResidual - minResidual);
-                              const padding = range * 0.1;
+                              const validResiduals = residuals.filter(r => typeof r === 'number' && isFinite(r));
+                              const minResidual = Math.min(...validResiduals);
+                              const maxResidual = Math.max(...validResiduals);
+                              const range = maxResidual - minResidual;
+                              const padding = range > 0 ? range * 0.1 : 1;
                               const yMin = minResidual - padding;
                               const yMax = maxResidual + padding;
                               
