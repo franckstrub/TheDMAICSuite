@@ -1766,8 +1766,9 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                 const mse = SS_res / (n - p);
                 
                 // Calculate center point coefficient if center points exist
-                let centerPointCoeff = 0;
-                if (includeCenterPoints) {
+                const getCenterPointCoeff = (interceptValue: number): number => {
+                  if (!includeCenterPoints) return 0;
+                  
                   const centerPointIndices: number[] = [];
                   const factorialPointIndices: number[] = [];
                   
@@ -1791,10 +1792,12 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                   if (n_c > 0 && n_f > 0) {
                     const centerResponses = centerPointIndices.map(idx => runData[idx].response).filter((r): r is number => r !== null && !isNaN(r));
                     const y_c_avg = centerResponses.length > 0 ? centerResponses.reduce((a, b) => a + b, 0) / centerResponses.length : 0;
-                    const y_f_at_center = beta[0];
-                    centerPointCoeff = y_c_avg - y_f_at_center;
+                    return y_c_avg - interceptValue;
                   }
-                }
+                  return 0;
+                };
+                
+                const centerPointCoeff = getCenterPointCoeff(beta[0]);
                 
                 // Calculate standard errors and t-values for all coefficients
                 const coeffStats = beta.map((b, idx) => {
@@ -1902,11 +1905,14 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                               &nbsp;&nbsp;&nbsp;&nbsp;{displayBeta[factors.length + 1 + i] >= 0 ? '+' : ''} {displayBeta[factors.length + 1 + i]?.toFixed(4)} × {pair.name}
                             </p>
                           ))}
-                          {includeCenterPoints && centerPointCoeff !== 0 && (
-                            <p key="center-point">
-                              &nbsp;&nbsp;&nbsp;&nbsp;{centerPointCoeff >= 0 ? '+' : ''} {centerPointCoeff?.toFixed(4)} × Center Point
-                            </p>
-                          )}
+                          {includeCenterPoints && (() => {
+                            const displayedCenterCoeff = getCenterPointCoeff(displayBeta[0]);
+                            return displayedCenterCoeff !== 0 ? (
+                              <p key="center-point">
+                                &nbsp;&nbsp;&nbsp;&nbsp;{displayedCenterCoeff >= 0 ? '+' : ''} {displayedCenterCoeff?.toFixed(4)} × Center Point
+                              </p>
+                            ) : null;
+                          })()}
                         </div>
                       </CardContent>
                     </Card>
