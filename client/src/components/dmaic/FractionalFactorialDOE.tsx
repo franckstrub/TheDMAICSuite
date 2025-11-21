@@ -1689,11 +1689,21 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 if (Math.abs(XtX[0][0]) > 1e-10) {
                   try {
                     beta = solveNormalEquations(XtX, Xty);
+                    // Validate beta - check for NaN or Infinity
+                    if (!beta.every(b => Number.isFinite(b))) {
+                      // Fallback to simple estimate if solver fails
+                      beta = Array(p).fill(0);
+                      beta[0] = mean_y;
+                    }
                   } catch (e) {
-                    beta = Xty.map(v => v / (XtX[0][0] || 1));
+                    // Fallback on solver error
+                    beta = Array(p).fill(0);
+                    beta[0] = mean_y;
                   }
                 } else {
-                  beta = Xty.map(v => v / (XtX[0][0] || 1));
+                  // Fallback when XtX is singular
+                  beta = Array(p).fill(0);
+                  beta[0] = mean_y;
                 }
 
                 const predictions = X.map(row => row.reduce((sum, val, i) => sum + val * beta[i], 0));
@@ -1795,17 +1805,24 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                       </CardHeader>
                       <CardContent>
                         <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded font-mono text-sm">
-                          <p>Y = {displayBeta[0]?.toFixed(4)}</p>
+                          <p>Y = {Number.isFinite(displayBeta[0]) ? displayBeta[0].toFixed(4) : 'N/A'}</p>
                           {factors.map((factor, i) => (
-                            <p key={i}>
-                              &nbsp;&nbsp;&nbsp;&nbsp;{displayBeta[i + 1] >= 0 ? '+' : ''} {displayBeta[i + 1]?.toFixed(4)} × {factor.name}{factor.type === 'continuous' && factor.units ? ` (${factor.units})` : ''}
-                            </p>
+                            Number.isFinite(displayBeta[i + 1]) && (
+                              <p key={i}>
+                                &nbsp;&nbsp;&nbsp;&nbsp;{displayBeta[i + 1] >= 0 ? '+' : ''} {displayBeta[i + 1].toFixed(4)} × {factor.name}{factor.type === 'continuous' && factor.units ? ` (${factor.units})` : ''}
+                              </p>
+                            )
                           ))}
                           {interactionPairs.map((pair, i) => (
-                            <p key={`int-${i}`}>
-                              &nbsp;&nbsp;&nbsp;&nbsp;{displayBeta[factors.length + 1 + i] >= 0 ? '+' : ''} {displayBeta[factors.length + 1 + i]?.toFixed(4)} × {pair.name}
-                            </p>
+                            Number.isFinite(displayBeta[factors.length + 1 + i]) && (
+                              <p key={`int-${i}`}>
+                                &nbsp;&nbsp;&nbsp;&nbsp;{displayBeta[factors.length + 1 + i] >= 0 ? '+' : ''} {displayBeta[factors.length + 1 + i].toFixed(4)} × {pair.name}
+                              </p>
+                            )
                           ))}
+                          {displayBeta.every(v => !Number.isFinite(v)) && (
+                            <p className="text-muted-foreground">Unable to compute regression equation. Check data validity.</p>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
