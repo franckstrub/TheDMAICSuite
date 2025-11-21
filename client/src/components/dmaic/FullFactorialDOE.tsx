@@ -2071,7 +2071,12 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                     {/* Goodness of Fit */}
                     <Card>
                       <CardHeader>
-                        <CardTitle>Goodness of Fit</CardTitle>
+                        <CardTitle>
+                          Goodness of Fit
+                          {Object.values(selectedFactorsForModel).some(v => v === false) && (
+                            <span className="p-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-xl ml-24 text-sm font-normal justify-right">Reduced Model</span>
+                          )}
+                        </CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="grid grid-cols-2 gap-4">
@@ -2098,7 +2103,12 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                     {/* Coefficients Table with Model Selection */}
                     <Card>
                       <CardHeader>
-                        <CardTitle>Regression Coefficients (uncheck to exclude from model)</CardTitle>
+                        <CardTitle>
+                          Regression Coefficients (uncheck to exclude from model)
+                          {Object.values(selectedFactorsForModel).some(v => v === false) && (
+                            <span className="p-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-xl ml-24 text-sm font-normal justify-right">Reduced Model</span>
+                          )}
+                        </CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="overflow-x-auto">
@@ -2353,7 +2363,12 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                     {/* Residual Analysis */}
                     <Card>
                       <CardHeader>
-                        <CardTitle>Residual Analysis</CardTitle>
+                        <CardTitle>
+                          Residual Analysis
+                          {Object.values(selectedFactorsForModel).some(v => v === false) && (
+                            <span className="p-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-xl ml-24 text-sm font-normal justify-right">Reduced Model</span>
+                          )}
+                        </CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-4">
@@ -2559,7 +2574,12 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                     {/* Solver */}
                     <Card>
                       <CardHeader>
-                        <CardTitle>Solve for Target Response</CardTitle>
+                        <CardTitle>
+                          Solve for Target Response
+                          {Object.values(selectedFactorsForModel).some(v => v === false) && (
+                            <span className="p-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-xl ml-24 text-sm font-normal justify-right">Reduced Model</span>
+                          )}
+                        </CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-4">
