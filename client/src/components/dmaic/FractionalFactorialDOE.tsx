@@ -1611,6 +1611,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                 <TableHead className="text-right">Std. Error</TableHead>
                                 <TableHead className="text-right">T-value</TableHead>
                                 <TableHead className="text-right">p-value</TableHead>
+                                <TableHead className="text-right">VIF</TableHead>
                                 <TableHead className="text-center">Include</TableHead>
                               </TableRow>
                             </TableHeader>
@@ -1621,15 +1622,28 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                 <TableCell className="text-right">{coeffStats[0]?.stdError.toFixed(4)}</TableCell>
                                 <TableCell className="text-right">{coeffStats[0]?.tValue.toFixed(4)}</TableCell>
                                 <TableCell className={`text-right ${(coeffStats[0]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{coeffStats[0]?.pValue.toFixed(4)}</TableCell>
+                                <TableCell className="text-right">-</TableCell>
                                 <TableCell className="text-center"><Checkbox disabled checked /></TableCell>
                               </TableRow>
-                              {factors.map((factor, i) => (
+                              {factors.map((factor, i) => {
+                                const vif = (() => {
+                                  try {
+                                    const { calculateDOEVIF } = require('@/lib/doeSharedUtils');
+                                    return calculateDOEVIF(X, i);
+                                  } catch {
+                                    return null;
+                                  }
+                                })();
+                                const isHighVIF = vif !== null && vif > 5;
+                                const isModerateVIF = vif !== null && vif > 1 && vif <= 5;
+                                return (
                                 <TableRow key={i}>
                                   <TableCell className="font-medium">{factor.name}</TableCell>
                                   <TableCell className="text-right">{displayBeta[i + 1]?.toFixed(6)}</TableCell>
                                   <TableCell className="text-right">{coeffStats[i + 1]?.stdError.toFixed(4)}</TableCell>
                                   <TableCell className="text-right">{coeffStats[i + 1]?.tValue.toFixed(4)}</TableCell>
                                   <TableCell className={`text-right ${(coeffStats[i + 1]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{coeffStats[i + 1]?.pValue.toFixed(4)}</TableCell>
+                                  <TableCell className={`text-right ${isHighVIF ? 'text-red-600 font-semibold' : isModerateVIF ? 'text-yellow-400 font-semibold' : ''}`}>{vif !== null ? vif.toFixed(2) : '-'}</TableCell>
                                   <TableCell className="text-center">
                                     <Checkbox
                                       checked={selectedFactorsForModel[i] ?? true}
@@ -1643,14 +1657,27 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                     />
                                   </TableCell>
                                 </TableRow>
-                              ))}
-                              {interactionPairs.map((pair, i) => (
+                                );
+                              })}
+                              {interactionPairs.map((pair, i) => {
+                                const vif = (() => {
+                                  try {
+                                    const { calculateDOEVIF } = require('@/lib/doeSharedUtils');
+                                    return calculateDOEVIF(X, factors.length + i);
+                                  } catch {
+                                    return null;
+                                  }
+                                })();
+                                const isHighVIF = vif !== null && vif > 5;
+                                const isModerateVIF = vif !== null && vif > 1 && vif <= 5;
+                                return (
                                 <TableRow key={`int-${i}`}>
                                   <TableCell className="font-medium">{pair.name}</TableCell>
                                   <TableCell className="text-right">{displayBeta[factors.length + 1 + i]?.toFixed(6)}</TableCell>
                                   <TableCell className="text-right">{coeffStats[factors.length + 1 + i]?.stdError.toFixed(4)}</TableCell>
                                   <TableCell className="text-right">{coeffStats[factors.length + 1 + i]?.tValue.toFixed(4)}</TableCell>
                                   <TableCell className={`text-right ${(coeffStats[factors.length + 1 + i]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{coeffStats[factors.length + 1 + i]?.pValue.toFixed(4)}</TableCell>
+                                  <TableCell className={`text-right ${isHighVIF ? 'text-red-600 font-semibold' : isModerateVIF ? 'text-yellow-400 font-semibold' : ''}`}>{vif !== null ? vif.toFixed(2) : '-'}</TableCell>
                                   <TableCell className="text-center">
                                     <Checkbox
                                       checked={selectedFactorsForModel[`int-${i}`] ?? true}
@@ -1664,9 +1691,15 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                     />
                                   </TableCell>
                                 </TableRow>
-                              ))}
+                                );
+                              })}
                             </TableBody>
                           </Table>
+                        </div>
+                        <div className="mt-2 text-sm text-muted-foreground">
+                          VIF &gt; 5 indicates problematic multicollinearity (high correlation between terms - shown in red)<br></br>
+                          &gt; 1 VIF &le; 5 indicates moderate multicollinearity (correlation between terms - shown in yellow)<br></br>
+                          VIF &le; 1 indicates no multicollinearity (no correlation between terms - shown in black)
                         </div>
                       </CardContent>
                     </Card>
