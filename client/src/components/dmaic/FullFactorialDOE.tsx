@@ -1485,16 +1485,64 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
 
                           let rows: React.ReactNode[] = [];
                           
-                          // Add factor rows
+                          // Build reduced design matrix with only selected terms
+                          const selectedColumns: number[] = [0]; // Always include intercept
+                          factors.forEach((_, idx) => {
+                            if (selectedFactorsForModel[idx] !== false) {
+                              selectedColumns.push(idx + 1);
+                            }
+                          });
+                          interactionPairs.forEach((_, pairIdx) => {
+                            if (selectedFactorsForModel[`int-${pairIdx}`] !== false) {
+                              selectedColumns.push(factors.length + 1 + pairIdx);
+                            }
+                          });
+                          
+                          // Build reduced X matrix
+                          const X_reduced = X.map(row => selectedColumns.map(col => row[col]));
+                          const p_reduced = X_reduced[0].length;
+                          
+                          // Calculate X'X and X'y for reduced model
+                          let XtX_red: number[][] = Array(p_reduced).fill(null).map(() => Array(p_reduced).fill(0));
+                          let Xty_red: number[] = Array(p_reduced).fill(0);
+                          
+                          for (let i = 0; i < n; i++) {
+                            for (let j = 0; j < p_reduced; j++) {
+                              Xty_red[j] += X_reduced[i][j] * y[i];
+                              for (let k = 0; k < p_reduced; k++) {
+                                XtX_red[j][k] += X_reduced[i][j] * X_reduced[i][k];
+                              }
+                            }
+                          }
+                          
+                          // Solve reduced model
+                          let beta_red: number[] = [];
+                          try {
+                            beta_red = solveNormalEquations(XtX_red, Xty_red);
+                          } catch {
+                            beta_red = Xty_red.map(v => v / (XtX_red[0][0] || 1));
+                          }
+                          
+                          // Calculate predictions and residuals for reduced model
+                          const predictions_red = X_reduced.map(row => row.reduce((sum, val, i) => sum + val * beta_red[i], 0));
+                          const residuals_red = y.map((val, i) => val - predictions_red[i]);
+                          const residualSS_red = residuals_red.reduce((sum, res) => sum + Math.pow(res, 2), 0);
+                          const errorDF_red = n - p_reduced;
+                          
+                          // Add factor rows (only if selected)
                           factors.forEach((factor, idx) => {
-                            const termIdx = idx + 1;
-                            const termSS = Math.pow(beta[termIdx], 2) * XtX[termIdx][termIdx];
+                            if (selectedFactorsForModel[idx] === false) return;
+                            
+                            const colIdx = selectedColumns.indexOf(idx + 1);
+                            if (colIdx === -1) return;
+                            
+                            const termSS = Math.pow(beta_red[colIdx], 2) * XtX_red[colIdx][colIdx];
                             const termDF = 1;
                             const termMS = termSS / termDF;
-                            const errorMS = residualSS / (n - p);
+                            const errorMS = residualSS_red / errorDF_red;
                             const fRatio = errorMS > 0 ? termMS / errorMS : 0;
-                            const pValue = fRatio > 0 && (n - p) > 0 
-                              ? 1 - jStat.centralF.cdf(fRatio, termDF, n - p) 
+                            const pValue = fRatio > 0 && errorDF_red > 0 
+                              ? 1 - jStat.centralF.cdf(fRatio, termDF, errorDF_red) 
                               : 1;
 
                             const factorLabel = showUncoded && allFactorsHaveValidLevels()
@@ -1517,16 +1565,20 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                             );
                           });
 
-                          // Add interaction rows
+                          // Add interaction rows (only if selected)
                           interactionPairs.forEach((pair, pairIdx) => {
-                            const termIdx = factors.length + 1 + pairIdx;
-                            const termSS = Math.pow(beta[termIdx], 2) * XtX[termIdx][termIdx];
+                            if (selectedFactorsForModel[`int-${pairIdx}`] === false) return;
+                            
+                            const colIdx = selectedColumns.indexOf(factors.length + 1 + pairIdx);
+                            if (colIdx === -1) return;
+                            
+                            const termSS = Math.pow(beta_red[colIdx], 2) * XtX_red[colIdx][colIdx];
                             const termDF = 1;
                             const termMS = termSS / termDF;
-                            const errorMS = residualSS / (n - p);
+                            const errorMS = residualSS_red / errorDF_red;
                             const fRatio = errorMS > 0 ? termMS / errorMS : 0;
-                            const pValue = fRatio > 0 && (n - p) > 0 
-                              ? 1 - jStat.centralF.cdf(fRatio, termDF, n - p) 
+                            const pValue = fRatio > 0 && errorDF_red > 0 
+                              ? 1 - jStat.centralF.cdf(fRatio, termDF, errorDF_red) 
                               : 1;
 
                             rows.push(
@@ -1614,13 +1666,13 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                           }
 
                           // Adjust error SS and DF to account for curvature if center points exist
-                          let adjustedErrorSS = residualSS;
-                          let adjustedErrorDF = n - p;
+                          let adjustedErrorSS = residualSS_red;
+                          let adjustedErrorDF = errorDF_red;
                           
                           if (includeCenterPoints && curvatureDF > 0) {
                             // When curvature is calculated, subtract it from error
-                            adjustedErrorSS = Math.max(0, residualSS - curvatureSS);
-                            adjustedErrorDF = (n - p) - curvatureDF;
+                            adjustedErrorSS = Math.max(0, residualSS_red - curvatureSS);
+                            adjustedErrorDF = errorDF_red - curvatureDF;
                           }
                           
                           const errorMS = adjustedErrorDF > 0 ? adjustedErrorSS / adjustedErrorDF : 0;
