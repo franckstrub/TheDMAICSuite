@@ -905,11 +905,16 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     <>
                       <div className="space-y-2">
                         <h3 className="text-lg font-semibold">{generatedPlan.designType}</h3>
-                        {generatedPlan.definingRelation && (
-                          <p className="text-sm text-muted-foreground">
-                            Defining Relation: {generatedPlan.definingRelation}
-                          </p>
-                        )}
+                        <p className="text-sm text-muted-foreground">
+                          {generatedPlan.definingRelation && (
+                            <>
+                              Defining Relation: {generatedPlan.definingRelation}
+                              {generatedPlan.generators && generatedPlan.generators.length > 0 && (
+                                <> • Generators: {generatedPlan.generators.join(', ')}</>
+                              )}
+                            </>
+                          )}
+                        </p>
                         <p className="text-sm text-muted-foreground">
                           Total Runs: {generatedPlan.plan.length}
                         </p>
