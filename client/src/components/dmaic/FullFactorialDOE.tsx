@@ -1757,6 +1757,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                 <TableCell className="text-right">-</TableCell>
                                 <TableCell className="text-center"><Checkbox disabled checked /></TableCell>
                               </TableRow>
+                              {includeCenterPoints && (
                               <TableRow>
                                 <TableCell className="font-medium">Center Point</TableCell>
                                 <TableCell className="text-right">-</TableCell>
@@ -1766,6 +1767,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                 <TableCell className="text-right">-</TableCell>
                                 <TableCell className="text-center"><Checkbox disabled /></TableCell>
                               </TableRow>
+                              )}
                               {factors.map((factor, i) => {
                                 const vif = (() => {
                                   try {
