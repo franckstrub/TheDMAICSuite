@@ -2673,10 +2673,6 @@ export const doeFractionalFactorialConfig = pgTable(
     // Display options
     showUncoded: boolean("show_uncoded").default(false),
     
-    // Follow-up full factorial flag
-    generateFollowUpFullFactorial: boolean("generate_follow_up_full_factorial").default(false),
-    significantFactors: jsonb("significant_factors").$type<number[]>().default([]), // Indices of significant factors
-    
     lastUpdated: timestamp("last_updated").notNull().defaultNow(),
   },
   (table) => ({
