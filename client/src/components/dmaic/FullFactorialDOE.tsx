@@ -302,7 +302,6 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
       significanceLevel,
       showUncoded,
       generatedPlan: transformGeneratedPlanForSaving(generatedPlan, factors, responses),
-      k: generatedPlan?.k || factors.length,
     });
   };
   
@@ -317,7 +316,6 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
       significanceLevel,
       showUncoded,
       generatedPlan: transformGeneratedPlanForSaving(generatedPlan, factors, responses),
-      k: generatedPlan?.k || factors.length,
     });
   };
   
