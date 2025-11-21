@@ -1272,7 +1272,8 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                               // Add line/marker traces 
                               const levelsA = Array.from(factorAUniqueLevels).filter(level => [-1, 1].includes(level)).sort();
                               levelsA.forEach(levelA => {
-                                const levelsB = Array.from(factorBUniqueLevels).filter(level => [-1, 0, 1].includes(level)).sort();
+                                // For lines, only use -1 and +1 (not center points)
+                                const levelsB = [-1, 1];
                                 const lineData = levelsB.map(levelB => {
                                   const matches = runData.filter((_, idx) => {
                                     const row = generatedPlan.plan[idx];
@@ -1450,16 +1451,25 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                 );
                               }
 
-                              // Generate x-axis tick labels for center and edges
-                              const xTickVals = [-1, 0, 1];
-                              const xTickLabels = showUncoded && allFactorsHaveValidLevels()
-                                ? [-1, 0, 1].map(level => {
-                                    const decoded = decodeValue(level, factorB);
-                                    return factorB.type === 'continuous'
-                                      ? `${(decoded as number).toFixed(2)}${factorB.units ? ' ' + factorB.units : ''}`
-                                      : String(decoded);
-                                  })
-                                : ['Low (-1)', 'Center (0)', 'High (+1)'];
+                              // Generate x-axis tick labels: show center point only if included
+                              const xTickVals = includeCenterPoints ? [-1, 0, 1] : [-1, 1];
+                              const xTickLabels = includeCenterPoints
+                                ? (showUncoded && allFactorsHaveValidLevels()
+                                    ? [-1, 0, 1].map(level => {
+                                        const decoded = decodeValue(level, factorB);
+                                        return factorB.type === 'continuous'
+                                          ? `${(decoded as number).toFixed(2)}${factorB.units ? ' ' + factorB.units : ''}`
+                                          : String(decoded);
+                                      })
+                                    : ['Low (-1)', 'Center (0)', 'High (+1)'])
+                                : (showUncoded && allFactorsHaveValidLevels()
+                                    ? [-1, 1].map(level => {
+                                        const decoded = decodeValue(level, factorB);
+                                        return factorB.type === 'continuous'
+                                          ? `${(decoded as number).toFixed(2)}${factorB.units ? ' ' + factorB.units : ''}`
+                                          : String(decoded);
+                                      })
+                                    : ['Low (-1)', 'High (+1)']);
 
                               return (
                                 <Card key={`${idxA}-${idxB}`}>
