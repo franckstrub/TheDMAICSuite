@@ -2711,6 +2711,9 @@ export const doeFullFactorialConfig = pgTable(
     includeCenterPoints: boolean("include_center_points").default(false),
     numberOfCenterPoints: integer("number_of_center_points").default(3),
     
+    // Full factorial specifics
+    k: integer("k"), // Total number of factors in 2^k design
+    
     // Analysis options
     significanceLevel: real("significance_level").default(0.05),
     
