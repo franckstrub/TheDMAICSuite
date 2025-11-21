@@ -1689,21 +1689,11 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 if (Math.abs(XtX[0][0]) > 1e-10) {
                   try {
                     beta = solveNormalEquations(XtX, Xty);
-                    // Validate beta - check for NaN or Infinity
-                    if (!beta.every(b => Number.isFinite(b))) {
-                      // Fallback to simple estimate if solver fails
-                      beta = Array(p).fill(0);
-                      beta[0] = mean_y;
-                    }
                   } catch (e) {
-                    // Fallback on solver error
-                    beta = Array(p).fill(0);
-                    beta[0] = mean_y;
+                    beta = Xty.map(v => v / (XtX[0][0] || 1));
                   }
                 } else {
-                  // Fallback when XtX is singular
-                  beta = Array(p).fill(0);
-                  beta[0] = mean_y;
+                  beta = Xty.map(v => v / (XtX[0][0] || 1));
                 }
 
                 const predictions = X.map(row => row.reduce((sum, val, i) => sum + val * beta[i], 0));
