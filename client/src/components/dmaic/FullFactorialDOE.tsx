@@ -2020,17 +2020,30 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                       <CardContent>
                         <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded font-mono text-sm">
                           <p>Y = {displayBeta[0]?.toFixed(4)}</p>
-                          {factors.map((factor, i) => (
-                            <p key={i}>
-                              &nbsp;&nbsp;&nbsp;&nbsp;{displayBeta[i + 1] >= 0 ? '+' : ''} {displayBeta[i + 1]?.toFixed(4)} × {factor.name}{factor.type === 'continuous' && factor.units ? ` (${factor.units})` : ''}
-                            </p>
-                          ))}
-                          {interactionPairs.map((pair, i) => (
-                            <p key={`int-${i}`}>
-                              &nbsp;&nbsp;&nbsp;&nbsp;{displayBeta[factors.length + 1 + i] >= 0 ? '+' : ''} {displayBeta[factors.length + 1 + i]?.toFixed(4)} × {pair.name}
-                            </p>
-                          ))}
+                          {factors.map((factor, i) => {
+                            if (selectedFactorsForModel[i] === false) return null;
+                            const origColIdx = i + 1;
+                            const reducedColIdx = colMapReverse[origColIdx];
+                            if (reducedColIdx === undefined) return null;
+                            return (
+                              <p key={i}>
+                                &nbsp;&nbsp;&nbsp;&nbsp;{beta_display[reducedColIdx] >= 0 ? '+' : ''} {beta_display[reducedColIdx]?.toFixed(4)} × {factor.name}{factor.type === 'continuous' && factor.units ? ` (${factor.units})` : ''}
+                              </p>
+                            );
+                          })}
+                          {interactionPairs.map((pair, i) => {
+                            if (selectedFactorsForModel[`int-${i}`] === false) return null;
+                            const origColIdx = factors.length + 1 + i;
+                            const reducedColIdx = colMapReverse[origColIdx];
+                            if (reducedColIdx === undefined) return null;
+                            return (
+                              <p key={`int-${i}`}>
+                                &nbsp;&nbsp;&nbsp;&nbsp;{beta_display[reducedColIdx] >= 0 ? '+' : ''} {beta_display[reducedColIdx]?.toFixed(4)} × {pair.name}
+                              </p>
+                            );
+                          })}
                           {includeCenterPoints && (() => {
+                            if (selectedFactorsForModel['centerPoint'] === false) return null;
                             const displayedCenterCoeff = getCenterPointCoeff(displayBeta[0]);
                             return displayedCenterCoeff !== 0 ? (
                               <p key="center-point">
