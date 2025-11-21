@@ -1257,18 +1257,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                           {factors.slice(0, -1).map((factorA, idxA) =>
                             factors.slice(idxA + 1).map((factorB, idxB) => {
-                              const interactionTraces: any[] = [];
-                              
-                              // Get unique levels for both factors
-                              const factorAUniqueLevels = getFactorLevels(factorA.name);
-                              const factorBUniqueLevels = getFactorLevels(factorB.name);
-                              
-                              const factorAHasOneLevel = factorAUniqueLevels.size === 1;
-                              const factorBHasOneLevel = factorBUniqueLevels.size === 1;
-                              
-                              // Check if interaction is confounded: interaction with generated factors are confounded
-                              // In 2^(k-p) designs, the first (k-p) factors are base, the rest are generated
-                              // Interactions involving generated factors are confounded
+                              // Check if interaction is confounded FIRST - before building any traces
                               const k = factors.length;
                               let numBaseFactors = k; // default to full factorial
                               
@@ -1283,6 +1272,41 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                               const factorAIdx = factors.indexOf(factorA);
                               const factorBIdx = factors.indexOf(factorB);
                               const isInteractionConfounded = factorAIdx >= numBaseFactors || factorBIdx >= numBaseFactors;
+                              
+                              // Get unique levels for both factors
+                              const factorAUniqueLevels = getFactorLevels(factorA.name);
+                              const factorBUniqueLevels = getFactorLevels(factorB.name);
+                              
+                              const factorAHasOneLevel = factorAUniqueLevels.size === 1;
+                              const factorBHasOneLevel = factorBUniqueLevels.size === 1;
+                              
+                              // If either factor has only one level OR interaction is confounded, show message EARLY
+                              if (factorAHasOneLevel || factorBHasOneLevel || isInteractionConfounded) {
+                                let message = '';
+                                if (isInteractionConfounded) {
+                                  message = `This fractional factorial design does not have enough degrees of freedom to estimate ${factorA.name}${factorB.name} interaction independently. It is confounded with other effects.`;
+                                } else {
+                                  const confoundedFactor = factorAHasOneLevel ? factorA.name : factorB.name;
+                                  message = `Factor ${confoundedFactor} has only one level in this fraction, so the interaction between ${factorA.name} and ${factorB.name} cannot be estimated.`;
+                                }
+                                return (
+                                  <Card key={`${idxA}-${idxB}`}>
+                                    <CardHeader>
+                                      <CardTitle>Interaction: {factorA.name} × {factorB.name}</CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="p-8 text-center text-muted-foreground">
+                                      <p className="text-sm">
+                                        This interaction is <strong>confounded</strong> due to the fractional design.
+                                      </p>
+                                      <p className="text-sm mt-2">
+                                        {message}
+                                      </p>
+                                    </CardContent>
+                                  </Card>
+                                );
+                              }
+                              
+                              const interactionTraces: any[] = [];
                               
                               // For lines/markers logic: if either factor has only one level, show markers only
                               const showLinesInInteraction = !factorAHasOneLevel && !factorBHasOneLevel;
