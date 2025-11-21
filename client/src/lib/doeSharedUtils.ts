@@ -9,7 +9,8 @@ function toRoman(num: number): string {
 }
 
 // Transform generatedPlan for saving to database
-export function transformGeneratedPlanForSaving(generatedPlan: any, factors: DOEFactor[]) {
+// Now includes runResponse field in each plan row
+export function transformGeneratedPlanForSaving(generatedPlan: any, factors: DOEFactor[], responses?: Record<string, number | null>) {
   if (!generatedPlan || !generatedPlan.plan || !Array.isArray(generatedPlan.plan)) {
     return {
       plan: [],
@@ -23,12 +24,14 @@ export function transformGeneratedPlanForSaving(generatedPlan: any, factors: DOE
   }
   
   const resolutionNum = generatedPlan.resolution || 0;
+  const responsesMap = responses || {};
   
   return {
     plan: generatedPlan.plan.map((row: any) => ({
       standardOrder: row.standardOrder,
       runOrder: row.runOrder,
       factors: factors.map(f => row[f.name] as number),
+      runResponse: responsesMap[row.runOrder.toString()] ?? null,
     })),
     designType: generatedPlan.designType || '',
     definingRelation: generatedPlan.definingRelation || '',
@@ -77,6 +80,7 @@ export function reconstructGeneratedPlanFromPersisted(
     const planRow: any = {
       standardOrder: row.standardOrder,
       runOrder: row.runOrder,
+      runResponse: row.runResponse ?? null, // Extract response from plan row
     };
     
     // Map factor values back to factor names
