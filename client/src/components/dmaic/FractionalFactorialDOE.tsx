@@ -1347,7 +1347,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   }
                   const stdError = Math.sqrt(mse * Math.max(0, xxtInvDiag));
                   const tValue = stdError > 0 ? b / stdError : 0;
-                  const pValue = stdError > 0 ? (1 - jStat.centralT.cdf(Math.abs(tValue), n - p)) * 2 : 1;
+                  const pValue = stdError > 0 ? (1 - jStat.t.cdf(Math.abs(tValue), n - p)) * 2 : 1;
                   return { stdError, tValue, pValue };
                 });
 
@@ -1359,9 +1359,9 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     
                     for (let i = 0; i < factors.length; i++) {
                       const factor = factors[i];
-                      if (factor.type === 'continuous' && factor.lowLevel !== undefined && factor.highLevel !== undefined) {
-                        const low = parseFloat(String(factor.lowLevel));
-                        const high = parseFloat(String(factor.highLevel));
+                      if (factor.type === 'continuous' && factor.lowValue !== undefined && factor.highValue !== undefined) {
+                        const low = parseFloat(String(factor.lowValue));
+                        const high = parseFloat(String(factor.highValue));
                         if (!isNaN(low) && !isNaN(high)) {
                           const center = (low + high) / 2;
                           const halfRange = (high - low) / 2;
@@ -1374,17 +1374,18 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     
                     for (let i = 0; i < interactionPairs.length; i++) {
                       const pair = interactionPairs[i];
-                      const [idx1, idx2] = pair.indices;
+                      const idx1 = pair.i;
+                      const idx2 = pair.j;
                       const factor1 = factors[idx1];
                       const factor2 = factors[idx2];
                       
                       if (factor1.type === 'continuous' && factor2.type === 'continuous' &&
-                          factor1.lowLevel !== undefined && factor1.highLevel !== undefined &&
-                          factor2.lowLevel !== undefined && factor2.highLevel !== undefined) {
-                        const low1 = parseFloat(String(factor1.lowLevel));
-                        const high1 = parseFloat(String(factor1.highLevel));
-                        const low2 = parseFloat(String(factor2.lowLevel));
-                        const high2 = parseFloat(String(factor2.highLevel));
+                          factor1.lowValue !== undefined && factor1.highValue !== undefined &&
+                          factor2.lowValue !== undefined && factor2.highValue !== undefined) {
+                        const low1 = parseFloat(String(factor1.lowValue));
+                        const high1 = parseFloat(String(factor1.highValue));
+                        const low2 = parseFloat(String(factor2.lowValue));
+                        const high2 = parseFloat(String(factor2.highValue));
                         
                         if (!isNaN(low1) && !isNaN(high1) && !isNaN(low2) && !isNaN(high2)) {
                           const halfRange1 = (high1 - low1) / 2;
