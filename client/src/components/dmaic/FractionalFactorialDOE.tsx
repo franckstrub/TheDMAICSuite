@@ -58,7 +58,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
   
   // State for Setup tab
   const [responseVariableName, setResponseVariableName] = useState("Y Response");
-  const [designChoice, setDesignChoice] = useState<string>("auto"); // "auto" or specific p value
+  const [designChoice, setDesignChoice] = useState<string>("1"); // "auto" or specific p value
   const [factors, setFactors] = useState<DOEFactor[]>([
     { name: "Factor A", type: "continuous", lowValue: NaN, highValue: NaN, units: "" },
     { name: "Factor B", type: "continuous", lowValue: NaN, highValue: NaN, units: "" },
@@ -331,7 +331,13 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
   
   const handleAddFactor = () => {
     const newFactorIndex = factors.length + 1;
-    const newFactor = getDefaultFactor(newFactorIndex);
+  if (newFactorIndex >= 12) {
+    setDesignChoice(5 + (newFactorIndex - 12));
+  }
+  else if (newFactorIndex >= 9) {
+    setDesignChoice(newFactorIndex - 7);
+  }
+        const newFactor = getDefaultFactor(newFactorIndex);
     setFactors([...factors, newFactor]);
   };
   
@@ -692,12 +698,12 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     const choices = getDesignChoices(k);
                     return (
                       <div className="space-y-2">
-                        <Label htmlFor="design-choice">Design Selection</Label>
+                        <Label htmlFor="design-choice" className="text-lg font-semibold">Design Selection</Label>
                         <Select value={designChoice} onValueChange={setDesignChoice}>
                           <SelectTrigger id="design-choice" data-testid="select-design-choice">
                             <SelectValue placeholder="Select design type" />
                           </SelectTrigger>
-                          <SelectContent>
+                          {/*<SelectContent>
                             <SelectItem value="auto" data-testid="option-design-auto">Auto-detect based on factors</SelectItem>
                             {k >= 3 && k <= 7 && choices.length > 0 && (
                               <>
@@ -712,6 +718,56 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                 ))}
                               </>
                             )}
+                          </SelectContent> */}
+                          <SelectContent>
+                            {k === 3 && <SelectItem value="1">2<sup>(3-1)</sup> Resolution III (4 runs)</SelectItem>}
+                            {k === 4 && <SelectItem value="1">2<sup>(4-1)</sup> Resolution IV (8 runs)</SelectItem>}
+                            {k === 5 && <SelectItem value="1">2<sup>(5-1)</sup> Resolution V (16 runs)</SelectItem>}
+                            {k === 5 && <SelectItem value="2">2<sup>(5-2)</sup> Resolution III (8 runs)</SelectItem>}
+                            {k === 6 && <SelectItem value="1">2<sup>(6-1)</sup> Resolution VI (32 runs)</SelectItem>}
+                            {k === 6 && <SelectItem value="2">2<sup>(6-2)</sup> Resolution IV (16 runs)</SelectItem>}
+                            {k === 6 && <SelectItem value="3">2<sup>(6-3)</sup> Resolution III (8 runs)</SelectItem>}
+                            {k === 7 && <SelectItem value="1">2<sup>(7-1)</sup> Resolution VII (64 runs)</SelectItem>}
+                            {k === 7 && <SelectItem value="2">2<sup>(7-2)</sup> Resolution IV (32 runs)</SelectItem>}
+                            {k === 7 && <SelectItem value="3">2<sup>(7-3)</sup> Resolution IV (16 runs)</SelectItem>}
+                            {k === 7 && <SelectItem value="4">2<sup>(7-4)</sup> Resolution III (8 runs)</SelectItem>}
+                            {k === 8 && <SelectItem value="1">2<sup>(8-1)</sup> Resolution VIII (128 runs)</SelectItem>}
+                            {k === 8 && <SelectItem value="2">2<sup>(8-2)</sup> Resolution V (64 runs)</SelectItem>}
+                            {k === 8 && <SelectItem value="3">2<sup>(8-3)</sup> Resolution IV (32 runs)</SelectItem>}
+                            {k === 8 && <SelectItem value="4">2<sup>(8-4)</sup> Resolution IV (16 runs)</SelectItem>}
+                            {k === 9 && <SelectItem value="2">2<sup>(9-2)</sup> Resolution VI (128 runs)</SelectItem>}
+                            {k === 9 && <SelectItem value="3">2<sup>(9-3)</sup> Resolution IV (64 runs)</SelectItem>}
+                            {k === 9 && <SelectItem value="4">2<sup>(9-4)</sup> Resolution IV (32 runs)</SelectItem>}
+                            {k === 9 && <SelectItem value="5">2<sup>(9-5)</sup> Resolution III (16 runs)</SelectItem>}
+                            {k === 10 && <SelectItem value="3">2<sup>(10-3)</sup> Resolution V (128 runs)</SelectItem>}
+                            {k === 10 && <SelectItem value="4">2<sup>(10-4)</sup> Resolution IV (64 runs)</SelectItem>}
+                            {k === 10 && <SelectItem value="5">2<sup>(10-5)</sup> Resolution IV (32 runs)</SelectItem>}
+                            {k === 10 && <SelectItem value="6">2<sup>(10-6)</sup> Resolution III (16 runs)</SelectItem>}
+                            {k === 11 && <SelectItem value="4">2<sup>(11-4)</sup> Resolution V (128 runs)</SelectItem>}
+                            {k === 11 && <SelectItem value="5">2<sup>(11-5)</sup> Resolution IV (64 runs)</SelectItem>}
+                            {k === 11 && <SelectItem value="6">2<sup>(11-6)</sup> Resolution IV (32 runs)</SelectItem>}
+                            {k === 11 && <SelectItem value="7">2<sup>(11-7)</sup> Resolution III (16 runs)</SelectItem>}
+                            {k === 12 && <SelectItem value="5">2<sup>(12-5)</sup> Resolution V (128 runs)</SelectItem>}
+                            {k === 12 && <SelectItem value="6">2<sup>(12-6)</sup> Resolution IV (64 runs)</SelectItem>}
+                            {k === 12 && <SelectItem value="7">2<sup>(12-7)</sup> Resolution IV (32 runs)</SelectItem>}
+                            {k === 12 && <SelectItem value="8">2<sup>(12-8)</sup> Resolution IV (16 runs)</SelectItem>}
+                            {/*{k === 13 && <SelectItem value="6">2<sup>(13-6)</sup> Resolution V (128 runs)</SelectItem>}
+                            {k === 13 && <SelectItem value="7">2<sup>(13-7)</sup> Resolution IV (64 runs)</SelectItem>}
+                            {k === 13 && <SelectItem value="8">2<sup>(13-8)</sup> Resolution IV (32 runs)</SelectItem>}
+                            {k === 13 && <SelectItem value="9">2<sup>(13-9)</sup> Resolution IV (16 runs)</SelectItem>}
+                            {k === 14 && <SelectItem value="7">2<sup>(14-7)</sup> Resolution V (128 runs)</SelectItem>}
+                            {k === 14 && <SelectItem value="8">2<sup>(14-8)</sup> Resolution IV (64 runs)</SelectItem>}
+                            {k === 14 && <SelectItem value="9">2<sup>(14-9)</sup> Resolution IV (32 runs)</SelectItem>}
+                            {k === 14 && <SelectItem value="10">2<sup>(14-10)</sup> Resolution IV (16 runs)</SelectItem>}
+                            {k === 15 && <SelectItem value="8">2<sup>(15-8)</sup> Resolution V (128 runs)</SelectItem>}
+                            {k === 15 && <SelectItem value="9">2<sup>(15-9)</sup> Resolution IV (64 runs)</SelectItem>}
+                            {k === 15 && <SelectItem value="10">2<sup>(15-10)</sup> Resolution IV (32 runs)</SelectItem>}
+                            {k === 15 && <SelectItem value="11">2<sup>(15-11)</sup> Resolution IV (16 runs)</SelectItem>} */}
+                            {k > 12 && getDesignChoices(k).map((opt) => (
+                              <SelectItem key={opt.p} value={opt.p.toString()}>
+                                {opt.label}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>
