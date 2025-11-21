@@ -1443,6 +1443,74 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                             );
                           });
 
+                          // Calculate curvature if center points exist
+                          let curvatureSS = 0;
+                          let curvatureDF = 0;
+                          let curvatureMS = 0;
+                          let curvatureFRatio = 0;
+                          let curvaturePValue = 1;
+                          let curveEffect = 0;
+                          
+                          if (includeCenterPoints) {
+                            // Separate center points from factorial points
+                            const centerPointIndices: number[] = [];
+                            const factorialPointIndices: number[] = [];
+                            
+                            runData.forEach((row, rowIdx) => {
+                              if (row.response !== null && !isNaN(row.response)) {
+                                const allFactorsZero = factors.every(factor => {
+                                  const level = generatedPlan.plan[rowIdx]?.[factor.name] ?? 0;
+                                  return Math.abs(level) < 0.01; // essentially 0
+                                });
+                                if (allFactorsZero) {
+                                  centerPointIndices.push(rowIdx);
+                                } else {
+                                  factorialPointIndices.push(rowIdx);
+                                }
+                              }
+                            });
+
+                            const n_c = centerPointIndices.length;
+                            const n_f = factorialPointIndices.length;
+                            
+                            if (n_c > 0 && n_f > 0) {
+                              // Average response at center points
+                              const centerResponses = centerPointIndices.map(idx => runData[idx].response).filter((r): r is number => r !== null && !isNaN(r));
+                              const y_c_avg = centerResponses.length > 0 ? centerResponses.reduce((a, b) => a + b, 0) / centerResponses.length : 0;
+                              
+                              // Predicted response at center from factorial model (= intercept in coded)
+                              const y_f_at_center = beta[0];
+                              
+                              // Curvature effect
+                              curveEffect = y_c_avg - y_f_at_center;
+                              
+                              // Curvature SS = (n_f * n_c) / (n_f + n_c) * (curvature_effect)^2
+                              curvatureSS = (n_f * n_c) / (n_f + n_c) * Math.pow(curveEffect, 2);
+                              curvatureDF = 1;
+                              curvatureMS = curvatureSS / curvatureDF;
+                              const errorMS = residualSS / (n - p);
+                              curvatureFRatio = errorMS > 0 ? curvatureMS / errorMS : 0;
+                              curvaturePValue = curvatureFRatio > 0 && (n - p) > 0
+                                ? 1 - jStat.centralF.cdf(curvatureFRatio, curvatureDF, n - p)
+                                : 1;
+
+                              rows.push(
+                                <TableRow key="curvature">
+                                  <TableCell className="font-medium">Curvature</TableCell>
+                                  <TableCell className="text-right">{curvatureDF}</TableCell>
+                                  <TableCell className="text-right">{curvatureSS.toFixed(4)}</TableCell>
+                                  <TableCell className="text-right">{curvatureMS.toFixed(4)}</TableCell>
+                                  <TableCell className="text-right">{curvatureFRatio.toFixed(4)}</TableCell>
+                                  <TableCell className="text-right">
+                                    <span className={curvaturePValue < 0.05 ? "text-green-600 font-semibold" : ""}>
+                                      {curvaturePValue.toFixed(4)}
+                                    </span>
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            }
+                          }
+
                           const errorDF = n - p;
                           const errorMS = errorDF > 0 ? residualSS / errorDF : 0;
 
@@ -1824,26 +1892,58 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                 );
                               })}
                               {includeCenterPoints && (() => {
-                                // Center point is at (0, 0, ..., 0) in coded units
-                                // Predicted value = beta[0] (intercept)
-                                const centerPrediction = displayBeta[0];
+                                // Separate center points from factorial points
+                                const centerPointIndices: number[] = [];
+                                const factorialPointIndices: number[] = [];
                                 
-                                // Standard error of prediction at center point
-                                // SE_pred = sqrt(mse * (1 + x'(X'X)^-1 x))
-                                // For center point: x = [1, 0, 0, ..., 0]
-                                // So: SE_pred = sqrt(mse * (1 + 1/XtX[0][0]))
-                                const xxtInvDiag = 1 / XtX[0][0];
-                                const centerSE = Math.sqrt(mse * (1 + xxtInvDiag));
-                                const centerTValue = centerSE > 0 ? centerPrediction / centerSE : 0;
-                                const centerPValue = centerSE > 0 ? 2 * (1 - jStat.studentt.cdf(Math.abs(centerTValue), n - p)) : 1;
+                                runData.forEach((row, rowIdx) => {
+                                  if (row.response !== null && !isNaN(row.response)) {
+                                    const allFactorsZero = factors.every(factor => {
+                                      const level = generatedPlan.plan[rowIdx]?.[factor.name] ?? 0;
+                                      return Math.abs(level) < 0.01; // essentially 0
+                                    });
+                                    if (allFactorsZero) {
+                                      centerPointIndices.push(rowIdx);
+                                    } else {
+                                      factorialPointIndices.push(rowIdx);
+                                    }
+                                  }
+                                });
+
+                                const n_c = centerPointIndices.length;
+                                const n_f = factorialPointIndices.length;
+                                
+                                let curvatureCoeff = 0;
+                                let curvatureSE = 0;
+                                let curvatureTValue = 0;
+                                let curvaturePValue = 1;
+                                
+                                if (n_c > 0 && n_f > 0) {
+                                  // Average response at center points
+                                  const centerResponses = centerPointIndices.map(idx => runData[idx].response).filter((r): r is number => r !== null && !isNaN(r));
+                                  const y_c_avg = centerResponses.length > 0 ? centerResponses.reduce((a, b) => a + b, 0) / centerResponses.length : 0;
+                                  
+                                  // Predicted response at center from factorial model
+                                  const y_f_at_center = displayBeta[0];
+                                  
+                                  // Curvature coefficient = difference
+                                  curvatureCoeff = y_c_avg - y_f_at_center;
+                                  
+                                  // Standard error of curvature
+                                  // SE_curv = sqrt(mse * (1/n_c + 1/n_f))
+                                  const errorMS = residualSS / (n - p);
+                                  curvatureSE = Math.sqrt(errorMS * (1 / n_c + 1 / n_f));
+                                  curvatureTValue = curvatureSE > 0 ? curvatureCoeff / curvatureSE : 0;
+                                  curvaturePValue = curvatureSE > 0 ? 2 * (1 - jStat.studentt.cdf(Math.abs(curvatureTValue), n - p)) : 1;
+                                }
                                 
                                 return (
                                 <TableRow key="center-point">
-                                  <TableCell className="font-medium">Center Point</TableCell>
-                                  <TableCell className="text-right">{centerPrediction?.toFixed(6)}</TableCell>
-                                  <TableCell className="text-right">{centerSE.toFixed(4)}</TableCell>
-                                  <TableCell className="text-right">{centerTValue.toFixed(4)}</TableCell>
-                                  <TableCell className={`text-right ${centerPValue < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{centerPValue.toFixed(4)}</TableCell>
+                                  <TableCell className="font-medium">Center Point (Curvature)</TableCell>
+                                  <TableCell className="text-right">{curvatureCoeff.toFixed(6)}</TableCell>
+                                  <TableCell className="text-right">{curvatureSE.toFixed(4)}</TableCell>
+                                  <TableCell className="text-right">{curvatureTValue.toFixed(4)}</TableCell>
+                                  <TableCell className={`text-right ${curvaturePValue < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{curvaturePValue.toFixed(4)}</TableCell>
                                   <TableCell className="text-right">-</TableCell>
                                   <TableCell className="text-center">
                                     <Checkbox
