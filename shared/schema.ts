@@ -2645,9 +2645,6 @@ export const doeFractionalFactorialConfig = pgTable(
     includeCenterPoints: boolean("include_center_points").default(false),
     numberOfCenterPoints: integer("number_of_center_points").default(3),
     
-    // Fractional factorial specifics
-    generatingRelations: jsonb("generating_relations").$type<string[]>().default([]),
-    
     // Analysis options
     significanceLevel: real("significance_level").default(0.05),
     
