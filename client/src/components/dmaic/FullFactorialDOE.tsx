@@ -1765,6 +1765,37 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                 const residualStd = Math.sqrt(residuals.reduce((sum, r) => sum + Math.pow(r - residualMean, 2), 0) / (residuals.length - 1));
                 const mse = SS_res / (n - p);
                 
+                // Calculate center point coefficient if center points exist
+                let centerPointCoeff = 0;
+                if (includeCenterPoints) {
+                  const centerPointIndices: number[] = [];
+                  const factorialPointIndices: number[] = [];
+                  
+                  runData.forEach((row, rowIdx) => {
+                    if (row.response !== null && !isNaN(row.response)) {
+                      const allFactorsZero = factors.every(factor => {
+                        const level = generatedPlan.plan[rowIdx]?.[factor.name] ?? 0;
+                        return Math.abs(level) < 0.01; // essentially 0
+                      });
+                      if (allFactorsZero) {
+                        centerPointIndices.push(rowIdx);
+                      } else {
+                        factorialPointIndices.push(rowIdx);
+                      }
+                    }
+                  });
+                  
+                  const n_c = centerPointIndices.length;
+                  const n_f = factorialPointIndices.length;
+                  
+                  if (n_c > 0 && n_f > 0) {
+                    const centerResponses = centerPointIndices.map(idx => runData[idx].response).filter((r): r is number => r !== null && !isNaN(r));
+                    const y_c_avg = centerResponses.length > 0 ? centerResponses.reduce((a, b) => a + b, 0) / centerResponses.length : 0;
+                    const y_f_at_center = beta[0];
+                    centerPointCoeff = y_c_avg - y_f_at_center;
+                  }
+                }
+                
                 // Calculate standard errors and t-values for all coefficients
                 const coeffStats = beta.map((b, idx) => {
                   // Get the diagonal element of (X'X)^-1
@@ -1871,6 +1902,11 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                               &nbsp;&nbsp;&nbsp;&nbsp;{displayBeta[factors.length + 1 + i] >= 0 ? '+' : ''} {displayBeta[factors.length + 1 + i]?.toFixed(4)} × {pair.name}
                             </p>
                           ))}
+                          {includeCenterPoints && centerPointCoeff !== 0 && (
+                            <p key="center-point">
+                              &nbsp;&nbsp;&nbsp;&nbsp;{centerPointCoeff >= 0 ? '+' : ''} {centerPointCoeff?.toFixed(4)} × Center Point
+                            </p>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
