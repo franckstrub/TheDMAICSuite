@@ -1757,17 +1757,6 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                 <TableCell className="text-right">-</TableCell>
                                 <TableCell className="text-center"><Checkbox disabled checked /></TableCell>
                               </TableRow>
-                              {includeCenterPoints && (
-                              <TableRow>
-                                <TableCell className="font-medium">Center Point</TableCell>
-                                <TableCell className="text-right">-</TableCell>
-                                <TableCell className="text-right">-</TableCell>
-                                <TableCell className="text-right">-</TableCell>
-                                <TableCell className="text-right">-</TableCell>
-                                <TableCell className="text-right">-</TableCell>
-                                <TableCell className="text-center"><Checkbox disabled /></TableCell>
-                              </TableRow>
-                              )}
                               {factors.map((factor, i) => {
                                 const vif = (() => {
                                   try {
@@ -1834,6 +1823,28 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                 </TableRow>
                                 );
                               })}
+                              {includeCenterPoints && (
+                              <TableRow>
+                                <TableCell className="font-medium">Center Point</TableCell>
+                                <TableCell className="text-right">-</TableCell>
+                                <TableCell className="text-right">-</TableCell>
+                                <TableCell className="text-right">-</TableCell>
+                                <TableCell className="text-right">-</TableCell>
+                                <TableCell className="text-right">-</TableCell>
+                                <TableCell className="text-center">
+                                  <Checkbox
+                                    checked={selectedFactorsForModel['centerPoint'] ?? true}
+                                    onCheckedChange={(checked) => {
+                                      setSelectedFactorsForModel(prev => ({
+                                        ...prev,
+                                        ['centerPoint']: !!checked
+                                      }));
+                                    }}
+                                    data-testid="checkbox-center-point"
+                                  />
+                                </TableCell>
+                              </TableRow>
+                              )}
                             </TableBody>
                           </Table>
                         </div>
