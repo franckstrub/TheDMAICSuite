@@ -1108,14 +1108,27 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
 
                     const plotData = [
                       {
-                        x: lineXLabels,
+                        x: [-1, 1],
                         y: lineData,
                         type: 'scatter',
                         mode: 'lines+markers',
                         line: { width: 3, color: '#3b82f6' },
                         marker: { size: 10, color: '#3b82f6' },
+                        hovertemplate: '%{text}<br>' + (responseVariableName || 'Y Response') + ': %{y:.3f}<extra></extra>',
+                        text: lineXLabels,
                       },
                     ];
+
+                    // Generate x-axis tick labels
+                    const xTickVals = [-1, 0, 1];
+                    const xTickLabels = showUncoded && allFactorsHaveValidLevels()
+                      ? [-1, 0, 1].map(level => {
+                          const decoded = decodeValue(level, factor);
+                          return factor.type === 'continuous'
+                            ? `${(decoded as number).toFixed(2)}${factor.units ? ' ' + factor.units : ''}`
+                            : String(decoded);
+                        })
+                      : ['Low (-1)', 'Center (0)', 'High (+1)'];
 
                     // Add center point if included
                     if (includeCenterPoints) {
@@ -1136,12 +1149,13 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                         : 'Center (0)';
 
                       plotData.push({
-                        x: [centerXLabel],
+                        x: [0],
                         y: [centerValue],
                         type: 'scatter',
                         mode: 'markers',
                         marker: { size: 10, color: '#ef4444' },
                         showlegend: false,
+                        hovertemplate: centerXLabel + '<br>' + (responseVariableName || 'Y Response') + ': %{y:.3f}<extra></extra>',
                       } as any);
                     }
 
@@ -1155,7 +1169,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                             data={plotData as any}
                             layout={{
                               title: { text: `<b>Main Effect: ${factor.name}</b>` },
-                              xaxis: { title: { text: 'Factor Level' }, type: 'category' },
+                              xaxis: { title: { text: 'Factor Level' }, type: 'linear', tickmode: 'array', tickvals: xTickVals, ticktext: xTickLabels },
                               yaxis: { title: { text: responseVariableName || 'Y Response' }, range: [yAxisRangeMin, yAxisRangeMax] },
                               showlegend: false,
                               hovermode: 'closest',
