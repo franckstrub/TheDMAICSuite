@@ -1337,6 +1337,56 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                             sumDF += factorDF;
                           });
 
+                          // Add interaction rows
+                          const interactionPairs: Array<{i: number, j: number, name: string}> = [];
+                          for (let i = 0; i < factors.length; i++) {
+                            for (let j = i + 1; j < factors.length; j++) {
+                              interactionPairs.push({i, j, name: `${factors[i].name}×${factors[j].name}`});
+                            }
+                          }
+
+                          interactionPairs.forEach((pair, pairIdx) => {
+                            const interactionGroups: Record<number, number[]> = {};
+                            runData.forEach((row, rowIdx) => {
+                              const level1 = generatedPlan.plan[rowIdx]?.[factors[pair.i].name] ?? 0;
+                              const level2 = generatedPlan.plan[rowIdx]?.[factors[pair.j].name] ?? 0;
+                              const interactionLevel = level1 * level2; // -1, 0, or 1
+                              if (row.response !== null && !isNaN(row.response)) {
+                                if (!interactionGroups[interactionLevel]) interactionGroups[interactionLevel] = [];
+                                interactionGroups[interactionLevel].push(row.response);
+                              }
+                            });
+
+                            const groupMeans = Object.entries(interactionGroups).map(([_, vals]) => vals.reduce((a, b) => a + b, 0) / vals.length);
+                            const levelCounts = Object.entries(interactionGroups).map(([_, vals]) => vals.length);
+                            const interactionSS = levelCounts.reduce((sum, count, i) => sum + count * Math.pow(groupMeans[i] - grandMean, 2), 0);
+                            const interactionDF = Object.keys(interactionGroups).length - 1;
+                            const interactionMS = interactionDF > 0 ? interactionSS / interactionDF : 0;
+                            const errorMS = (totalSS - sumSS - interactionSS) / (totalDF - sumDF - interactionDF) || 0;
+                            const fRatio = errorMS > 0 ? interactionMS / errorMS : 0;
+                            const pValue = fRatio > 0 && interactionDF > 0 && (totalDF - sumDF - interactionDF) > 0 
+                              ? 1 - jStat.centralF.cdf(fRatio, interactionDF, totalDF - sumDF - interactionDF) 
+                              : 1;
+
+                            rows.push(
+                              <TableRow key={`interaction-${pairIdx}`}>
+                                <TableCell className="font-medium">{pair.name}</TableCell>
+                                <TableCell className="text-right">{interactionDF}</TableCell>
+                                <TableCell className="text-right">{interactionSS.toFixed(4)}</TableCell>
+                                <TableCell className="text-right">{interactionMS.toFixed(4)}</TableCell>
+                                <TableCell className="text-right">{fRatio.toFixed(4)}</TableCell>
+                                <TableCell className="text-right">
+                                  <span className={pValue < 0.05 ? "text-green-600 font-semibold" : ""}>
+                                    {pValue.toFixed(4)}
+                                  </span>
+                                </TableCell>
+                              </TableRow>
+                            );
+
+                            sumSS += interactionSS;
+                            sumDF += interactionDF;
+                          });
+
                           const errorDF = totalDF - sumDF;
                           const errorSS = totalSS - sumSS;
                           const errorMS = errorDF > 0 ? errorSS / errorDF : 0;
