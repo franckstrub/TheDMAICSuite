@@ -1575,74 +1575,87 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                           </div>
 
                           <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {/* Residuals vs Fitted Values */}
-                            <Plot
-                              data={[
-                                {
-                                  type: 'scatter',
-                                  mode: 'markers',
-                                  x: predictions,
-                                  y: residuals,
-                                  marker: { color: 'rgb(59, 130, 246)', size: 6 },
-                                } as any,
-                                {
-                                  type: 'scatter',
-                                  mode: 'lines',
-                                  x: predictions,
-                                  y: Array(predictions.length).fill(0),
-                                  line: { color: 'red', dash: 'dash' },
-                                } as any,
-                              ]}
-                              layout={{
-                                title: { text: '<b>Residuals vs Fitted Values</b>' },
-                                xaxis: { title: { text: '<b>Fitted Values</b>' } },
-                                yaxis: { title: { text: '<b>Residuals</b>' } },
-                                showlegend: false,
-                                margin: { l: 60, r: 80, t: 50, b: 60 },
-                              }}
-                              style={{ width: '100%', height: '400px' }}
-                              useResizeHandler
-                              config={{
-                                responsive: true,
-                                displayModeBar: true,
-                                displaylogo: false,
-                              }}
-                            />
-                            
-                            {/* Residuals vs Order */}
-                            <Plot
-                              data={[
-                                {
-                                  type: 'scatter',
-                                  mode: 'lines+markers',
-                                  x: Array.from({ length: residuals.length }, (_, i) => i + 1),
-                                  y: residuals,
-                                  marker: { color: 'rgb(59, 130, 246)', size: 6 },
-                                  line: { color: 'rgb(59, 130, 246)' },
-                                } as any,
-                                {
-                                  type: 'scatter',
-                                  mode: 'lines',
-                                  x: [1, residuals.length],
-                                  y: [0, 0],
-                                  line: { color: 'red', dash: 'dash' },
-                                } as any,
-                              ]}
-                              layout={{
-                                title: { text: '<b>Residuals vs Observation Order</b>' },
-                                xaxis: { title: { text: '<b>Observation Order</b>' } },
-                                yaxis: { title: { text: '<b>Residuals</b>' } },
-                                showlegend: false,
-                                margin: { l: 60, r: 80, t: 50, b: 60 },
-                              }}
-                              style={{ width: '100%', height: '400px' }}
-                              useResizeHandler
-                              config={{
-                                responsive: true,
-                                displayModeBar: true,
-                                displaylogo: false,
-                              }}
-                            />
+                            {(() => {
+                              const minResidual = Math.min(...residuals);
+                              const maxResidual = Math.max(...residuals);
+                              const range = Math.abs(maxResidual - minResidual);
+                              const padding = range * 0.1;
+                              const yMin = minResidual - padding;
+                              const yMax = maxResidual + padding;
+                              
+                              return (
+                                <>
+                                  {/* Residuals vs Fitted Values */}
+                                  <Plot
+                                    data={[
+                                      {
+                                        type: 'scatter',
+                                        mode: 'markers',
+                                        x: predictions,
+                                        y: residuals,
+                                        marker: { color: 'rgb(59, 130, 246)', size: 6 },
+                                      } as any,
+                                      {
+                                        type: 'scatter',
+                                        mode: 'lines',
+                                        x: predictions,
+                                        y: Array(predictions.length).fill(0),
+                                        line: { color: 'red', dash: 'dash' },
+                                      } as any,
+                                    ]}
+                                    layout={{
+                                      title: { text: '<b>Residuals vs Fitted Values</b>' },
+                                      xaxis: { title: { text: '<b>Fitted Values</b>' } },
+                                      yaxis: { title: { text: '<b>Residuals</b>' }, range: [yMin, yMax] },
+                                      showlegend: false,
+                                      margin: { l: 60, r: 80, t: 50, b: 60 },
+                                    }}
+                                    style={{ width: '100%', height: '400px' }}
+                                    useResizeHandler
+                                    config={{
+                                      responsive: true,
+                                      displayModeBar: true,
+                                      displaylogo: false,
+                                    }}
+                                  />
+                                  
+                                  {/* Residuals vs Order */}
+                                  <Plot
+                                    data={[
+                                      {
+                                        type: 'scatter',
+                                        mode: 'lines+markers',
+                                        x: Array.from({ length: residuals.length }, (_, i) => i + 1),
+                                        y: residuals,
+                                        marker: { color: 'rgb(59, 130, 246)', size: 6 },
+                                        line: { color: 'rgb(59, 130, 246)' },
+                                      } as any,
+                                      {
+                                        type: 'scatter',
+                                        mode: 'lines',
+                                        x: [1, residuals.length],
+                                        y: [0, 0],
+                                        line: { color: 'red', dash: 'dash' },
+                                      } as any,
+                                    ]}
+                                    layout={{
+                                      title: { text: '<b>Residuals vs Observation Order</b>' },
+                                      xaxis: { title: { text: '<b>Observation Order</b>' } },
+                                      yaxis: { title: { text: '<b>Residuals</b>' }, range: [yMin, yMax] },
+                                      showlegend: false,
+                                      margin: { l: 60, r: 80, t: 50, b: 60 },
+                                    }}
+                                    style={{ width: '100%', height: '400px' }}
+                                    useResizeHandler
+                                    config={{
+                                      responsive: true,
+                                      displayModeBar: true,
+                                      displaylogo: false,
+                                    }}
+                                  />
+                                </>
+                              );
+                            })()}
 
                             {/* Normal Probability Plot */}
                             {(() => {
