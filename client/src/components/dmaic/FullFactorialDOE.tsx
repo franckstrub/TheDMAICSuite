@@ -1993,20 +1993,33 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                   })() : beta;
                 
                 const handleSolve = () => {
-                  if (p < 2 || displayBeta[solveFactorIdx + 1] === 0) return;
-                  // Calculate constraint contribution: sum of (coefficient * constraint_value) for all non-target factors
+                  // Check if solve factor is included in the model
+                  if (selectedFactorsForModel[solveFactorIdx] === false) {
+                    setSolverResult(null);
+                    return;
+                  }
+                  
+                  const origColIdx = solveFactorIdx + 1;
+                  const reducedColIdx = colMapReverse[origColIdx];
+                  if (reducedColIdx === undefined || beta_display[reducedColIdx] === 0) return;
+                  
+                  // Calculate constraint contribution: sum of (coefficient * constraint_value) for all non-target factors that are included
                   let constraintSum = 0;
                   for (let i = 0; i < factors.length; i++) {
-                    if (i !== solveFactorIdx) {
+                    if (i !== solveFactorIdx && selectedFactorsForModel[i] !== false) {
                       const constraintVal = constraintValues[i];
                       if (constraintVal !== null && constraintVal !== undefined && Number.isFinite(constraintVal)) {
-                        constraintSum += displayBeta[i + 1] * constraintVal;
+                        const origCol = i + 1;
+                        const redCol = colMapReverse[origCol];
+                        if (redCol !== undefined) {
+                          constraintSum += beta_display[redCol] * constraintVal;
+                        }
                       }
                     }
                   }
                   // Solve: targetY = β0 + Σ_{j≠i} βj * constraint_j + βi * Xi
                   // Therefore: Xi = (targetY - β0 - constraintSum) / βi
-                  let result = (targetY - displayBeta[0] - constraintSum) / displayBeta[solveFactorIdx + 1];
+                  let result = (targetY - displayBeta[0] - constraintSum) / beta_display[reducedColIdx];
                   setSolverResult(result);
                 };
 
@@ -2373,13 +2386,18 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
 
                           <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                             {(() => {
-                              const validResiduals = residuals.filter(r => typeof r === 'number' && isFinite(r));
+                              const residualsToUse = reducedModel.residuals;
+                              const predictionsToUse = reducedModel.predictions;
+                              const validResiduals = residualsToUse.filter(r => typeof r === 'number' && isFinite(r));
                               const minResidual = Math.min(...validResiduals);
                               const maxResidual = Math.max(...validResiduals);
                               const range = maxResidual - minResidual;
                               const padding = range > 0 ? range * 0.1 : 1;
                               const yMin = minResidual - padding;
                               const yMax = maxResidual + padding;
+                              
+                              const residMean = validResiduals.length > 0 ? validResiduals.reduce((a, b) => a + b, 0) / validResiduals.length : 0;
+                              const residStd = validResiduals.length > 1 ? Math.sqrt(validResiduals.reduce((sum, val) => sum + Math.pow(val - residMean, 2), 0) / (validResiduals.length - 1)) : 0;
                               
                               return (
                                 <>
@@ -2389,15 +2407,15 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                       {
                                         type: 'scatter',
                                         mode: 'markers',
-                                        x: predictions,
-                                        y: residuals,
+                                        x: predictionsToUse,
+                                        y: residualsToUse,
                                         marker: { color: 'rgb(59, 130, 246)', size: 6 },
                                       } as any,
                                       {
                                         type: 'scatter',
                                         mode: 'lines',
-                                        x: predictions,
-                                        y: Array(predictions.length).fill(0),
+                                        x: predictionsToUse,
+                                        y: Array(predictionsToUse.length).fill(0),
                                         line: { color: 'red', dash: 'dash' },
                                       } as any,
                                     ]}
@@ -2423,15 +2441,15 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                       {
                                         type: 'scatter',
                                         mode: 'lines+markers',
-                                        x: Array.from({ length: residuals.length }, (_, i) => i + 1),
-                                        y: residuals,
+                                        x: Array.from({ length: residualsToUse.length }, (_, i) => i + 1),
+                                        y: residualsToUse,
                                         marker: { color: 'rgb(59, 130, 246)', size: 6 },
                                         line: { color: 'rgb(59, 130, 246)' },
                                       } as any,
                                       {
                                         type: 'scatter',
                                         mode: 'lines',
-                                        x: [1, residuals.length],
+                                        x: [1, residualsToUse.length],
                                         y: [0, 0],
                                         line: { color: 'red', dash: 'dash' },
                                       } as any,
@@ -2457,13 +2475,18 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
 
                             {/* Normal Probability Plot */}
                             {(() => {
-                              const sorted = [...residuals].sort((a, b) => a - b);
+                              const residualsToUse = reducedModel.residuals;
+                              const validResiduals = residualsToUse.filter(r => typeof r === 'number' && isFinite(r));
+                              const residMean = validResiduals.length > 0 ? validResiduals.reduce((a, b) => a + b, 0) / validResiduals.length : 0;
+                              const residStd = validResiduals.length > 1 ? Math.sqrt(validResiduals.reduce((sum, val) => sum + Math.pow(val - residMean, 2), 0) / (validResiduals.length - 1)) : 0;
+                              
+                              const sorted = [...residualsToUse].sort((a, b) => a - b);
                               const n_res = sorted.length;
                               const theoreticalQuantiles = sorted.map((_, i) => {
                                 const p = (i + 0.5) / n_res;
                                 return jStat.normal.inv(p, 0, 1);
                               });
-                              const lineX = [residualMean - 3 * residualStd, residualMean + 3 * residualStd];
+                              const lineX = [residMean - 3 * residStd, residMean + 3 * residStd];
                               const lineY = [-3, 3];
                               return (
                                 <Plot
@@ -2503,18 +2526,30 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                           <div className="border-t pt-4">
                             <p className="text-sm font-semibold mb-2">Residual Statistics</p>
                             <div className="grid grid-cols-3 gap-4">
-                              <div>
-                                <p className="text-sm text-muted-foreground">Mean Residual</p>
-                                <p className="text-lg font-bold">{residualMean.toFixed(6)}</p>
-                              </div>
-                              <div>
-                                <p className="text-sm text-muted-foreground">Std Dev Residuals</p>
-                                <p className="text-lg font-bold">{residualStd.toFixed(4)}</p>
-                              </div>
-                              <div>
-                                <p className="text-sm text-muted-foreground">Max Residual</p>
-                                <p className="text-lg font-bold">{Math.max(...residuals.map(Math.abs)).toFixed(4)}</p>
-                              </div>
+                              {(() => {
+                                const residualsToUse = reducedModel.residuals;
+                                const validResiduals = residualsToUse.filter(r => typeof r === 'number' && isFinite(r));
+                                const residMean = validResiduals.length > 0 ? validResiduals.reduce((a, b) => a + b, 0) / validResiduals.length : 0;
+                                const residStd = validResiduals.length > 1 ? Math.sqrt(validResiduals.reduce((sum, val) => sum + Math.pow(val - residMean, 2), 0) / (validResiduals.length - 1)) : 0;
+                                const maxResidual = Math.max(...residualsToUse.map(Math.abs));
+                                
+                                return (
+                                  <>
+                                    <div>
+                                      <p className="text-sm text-muted-foreground">Mean Residual</p>
+                                      <p className="text-lg font-bold">{residMean.toFixed(6)}</p>
+                                    </div>
+                                    <div>
+                                      <p className="text-sm text-muted-foreground">Std Dev Residuals</p>
+                                      <p className="text-lg font-bold">{residStd.toFixed(4)}</p>
+                                    </div>
+                                    <div>
+                                      <p className="text-sm text-muted-foreground">Max Residual</p>
+                                      <p className="text-lg font-bold">{maxResidual.toFixed(4)}</p>
+                                    </div>
+                                  </>
+                                );
+                              })()}
                             </div>
                           </div>
                         </div>
