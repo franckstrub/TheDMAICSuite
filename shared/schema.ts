@@ -2695,10 +2695,6 @@ export const doeFullFactorialConfig = pgTable(
     projectId: integer("project_id").notNull(),
     solutionId: text("solution_id").notNull(),
     
-    // Parent fractional factorial ID (if this is a follow-up)
-    parentFractionalId: integer("parent_fractional_id"),
-    isFollowUp: boolean("is_follow_up").default(false),
-    
     // Design type selection
     enableFullFactorial: boolean("enable_full_factorial").default(false),
     
