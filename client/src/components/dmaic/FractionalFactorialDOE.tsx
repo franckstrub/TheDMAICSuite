@@ -209,16 +209,8 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
           config.factors || factors
         );
         if (reconstructedPlan) {
-          // Use database k and p values only if they're valid (> 0), otherwise use reconstructed values
-          const dbK = config.k && config.k > 0 ? config.k : null;
-          const dbP = config.p && config.p > 0 ? config.p : null;
-          
-          const finalPlan = {
-            ...reconstructedPlan,
-            k: dbK || reconstructedPlan.k || 0,
-            p: dbP || reconstructedPlan.p || 0,
-          };
-          setGeneratedPlan(finalPlan);
+          // All metadata (k, p, resolution) comes from generatedPlan only
+          setGeneratedPlan(reconstructedPlan);
           
           // Extract responses from generatedPlan.plan[].runResponse
           if (reconstructedPlan.plan && Array.isArray(reconstructedPlan.plan)) {
