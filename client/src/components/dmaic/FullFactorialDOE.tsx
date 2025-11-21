@@ -1799,21 +1799,120 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                 
                 const centerPointCoeff = getCenterPointCoeff(beta[0]);
                 
-                // Calculate standard errors and t-values for all coefficients
-                const coeffStats = beta.map((b, idx) => {
-                  // Get the diagonal element of (X'X)^-1
-                  let xxtInvDiag = 0;
-                  if (idx === 0) {
-                    xxtInvDiag = 1 / XtX[0][0];
-                  } else {
-                    // Simple approximation for diagonal elements
-                    const denom = XtX[idx][idx] - (idx > 0 ? XtX[idx].slice(0, idx).reduce((sum, v, i) => sum + v * v / (XtX[i][i] || 1), 0) : 0);
-                    xxtInvDiag = Math.abs(denom) > 1e-10 ? 1 / denom : 1 / XtX[idx][idx];
+                // Function to recalculate regression with selected terms only
+                const calculateReducedModel = () => {
+                  // Determine which columns to include (always include intercept and center point)
+                  const isIncluded = (type: string, idx: number): boolean => {
+                    if (type === 'intercept') return true;
+                    if (type === 'factor') return selectedFactorsForModel[idx] !== false;
+                    if (type === 'interaction') return selectedFactorsForModel[`int-${idx}`] !== false;
+                    if (type === 'centerPoint') return selectedFactorsForModel['centerPoint'] !== false;
+                    return true;
+                  };
+                  
+                  // Build reduced X matrix
+                  const colMap: number[] = []; // Maps reduced column idx to original column idx
+                  const X_reduced: number[][] = [];
+                  
+                  // Always include intercept
+                  colMap.push(0);
+                  
+                  // Add factor columns
+                  for (let i = 0; i < factors.length; i++) {
+                    if (isIncluded('factor', i)) {
+                      colMap.push(i + 1);
+                    }
                   }
-                  const stdError = Math.sqrt(mse * Math.max(0, xxtInvDiag));
-                  const tValue = stdError > 0 ? b / stdError : 0;
-                  const pValue = stdError > 0 ? 2 * (1 - jStat.studentt.cdf(Math.abs(tValue), n - p)) : 1;
-                  return { stdError, tValue, pValue };
+                  
+                  // Add interaction columns
+                  for (let i = 0; i < interactionPairs.length; i++) {
+                    if (isIncluded('interaction', i)) {
+                      colMap.push(factors.length + 1 + i);
+                    }
+                  }
+                  
+                  // Build reduced X from selected columns
+                  for (let row = 0; row < X.length; row++) {
+                    const reducedRow: number[] = [];
+                    for (const col of colMap) {
+                      reducedRow.push(X[row][col]);
+                    }
+                    X_reduced.push(reducedRow);
+                  }
+                  
+                  const p_reduced = X_reduced[0].length;
+                  
+                  // Calculate X'X and X'y for reduced model
+                  let XtX_red: number[][] = Array(p_reduced).fill(null).map(() => Array(p_reduced).fill(0));
+                  let Xty_red: number[] = Array(p_reduced).fill(0);
+                  
+                  for (let i = 0; i < n; i++) {
+                    for (let j = 0; j < p_reduced; j++) {
+                      Xty_red[j] += X_reduced[i][j] * y[i];
+                      for (let k = 0; k < p_reduced; k++) {
+                        XtX_red[j][k] += X_reduced[i][j] * X_reduced[i][k];
+                      }
+                    }
+                  }
+                  
+                  // Solve reduced model
+                  let beta_red: number[] = [];
+                  if (Math.abs(XtX_red[0][0]) > 1e-10) {
+                    try {
+                      beta_red = solveNormalEquations(XtX_red, Xty_red);
+                    } catch (e) {
+                      beta_red = Xty_red.map(v => v / (XtX_red[0][0] || 1));
+                    }
+                  } else {
+                    beta_red = Xty_red.map(v => v / (XtX_red[0][0] || 1));
+                  }
+                  
+                  // Calculate predictions, residuals, and statistics for reduced model
+                  const predictions_red = X_reduced.map(row => row.reduce((sum, val, i) => sum + val * beta_red[i], 0));
+                  const residuals_red = y.map((val, i) => val - predictions_red[i]);
+                  const SS_res_red = residuals_red.reduce((sum, val) => sum + Math.pow(val, 2), 0);
+                  const mse_red = SS_res_red / Math.max(1, n - p_reduced);
+                  
+                  // Calculate coefficient stats for reduced model
+                  const coeffStats_red = beta_red.map((b, idx) => {
+                    let xxtInvDiag = 0;
+                    if (idx === 0) {
+                      xxtInvDiag = 1 / XtX_red[0][0];
+                    } else {
+                      const denom = XtX_red[idx][idx] - (idx > 0 ? XtX_red[idx].slice(0, idx).reduce((sum, v, i) => sum + v * v / (XtX_red[i][i] || 1), 0) : 0);
+                      xxtInvDiag = Math.abs(denom) > 1e-10 ? 1 / denom : 1 / XtX_red[idx][idx];
+                    }
+                    const stdError = Math.sqrt(mse_red * Math.max(0, xxtInvDiag));
+                    const tValue = stdError > 0 ? b / stdError : 0;
+                    const pValue = stdError > 0 ? 2 * (1 - jStat.studentt.cdf(Math.abs(tValue), n - p_reduced)) : 1;
+                    return { stdError, tValue, pValue };
+                  });
+                  
+                  return {
+                    beta: beta_red,
+                    coeffStats: coeffStats_red,
+                    colMap,
+                    XtX: XtX_red,
+                    predictions: predictions_red,
+                    residuals: residuals_red,
+                    SS_res: SS_res_red,
+                    mse: mse_red,
+                    p: p_reduced
+                  };
+                };
+                
+                const reducedModel = calculateReducedModel();
+                
+                // Use reduced model stats
+                const coeffStats = reducedModel.coeffStats;
+                const beta_display = reducedModel.beta;
+                const mse_display = reducedModel.mse;
+                const colMap = reducedModel.colMap;
+                
+                // Create mapping: original column idx -> reduced column idx (or -1 if excluded)
+                const colMapReverse: Record<number, number> = {};
+                colMap.forEach((origCol, reducedIdx) => {
+                  colMapReverse[origCol] = reducedIdx;
                 });
 
                 // Transform coefficients from coded to uncoded if needed
