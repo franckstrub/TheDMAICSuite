@@ -1810,9 +1810,28 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                     return true;
                   };
                   
-                  // Build reduced X matrix
+                  // Determine which rows to include (exclude center points if not selected)
+                  const shouldExcludeCenterPoints = selectedFactorsForModel['centerPoint'] === false;
+                  const centerPointIndices: number[] = [];
+                  
+                  if (shouldExcludeCenterPoints && includeCenterPoints) {
+                    runData.forEach((row, rowIdx) => {
+                      if (row.response !== null && !isNaN(row.response)) {
+                        const allFactorsZero = factors.every(factor => {
+                          const level = generatedPlan.plan[rowIdx]?.[factor.name] ?? 0;
+                          return Math.abs(level) < 0.01; // essentially 0
+                        });
+                        if (allFactorsZero) {
+                          centerPointIndices.push(rowIdx);
+                        }
+                      }
+                    });
+                  }
+                  
+                  // Build reduced X matrix with selected columns and rows
                   const colMap: number[] = []; // Maps reduced column idx to original column idx
                   const X_reduced: number[][] = [];
+                  const y_reduced: number[] = [];
                   
                   // Always include intercept
                   colMap.push(0);
@@ -1831,24 +1850,31 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                     }
                   }
                   
-                  // Build reduced X from selected columns
+                  // Build reduced X from selected columns and rows
                   for (let row = 0; row < X.length; row++) {
+                    // Skip center points if they're excluded
+                    if (shouldExcludeCenterPoints && centerPointIndices.includes(row)) {
+                      continue;
+                    }
+                    
                     const reducedRow: number[] = [];
                     for (const col of colMap) {
                       reducedRow.push(X[row][col]);
                     }
                     X_reduced.push(reducedRow);
+                    y_reduced.push(y[row]);
                   }
                   
+                  const n_reduced = y_reduced.length;
                   const p_reduced = X_reduced[0].length;
                   
                   // Calculate X'X and X'y for reduced model
                   let XtX_red: number[][] = Array(p_reduced).fill(null).map(() => Array(p_reduced).fill(0));
                   let Xty_red: number[] = Array(p_reduced).fill(0);
                   
-                  for (let i = 0; i < n; i++) {
+                  for (let i = 0; i < n_reduced; i++) {
                     for (let j = 0; j < p_reduced; j++) {
-                      Xty_red[j] += X_reduced[i][j] * y[i];
+                      Xty_red[j] += X_reduced[i][j] * y_reduced[i];
                       for (let k = 0; k < p_reduced; k++) {
                         XtX_red[j][k] += X_reduced[i][j] * X_reduced[i][k];
                       }
