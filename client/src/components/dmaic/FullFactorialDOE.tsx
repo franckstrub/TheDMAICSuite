@@ -1823,28 +1823,43 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                 </TableRow>
                                 );
                               })}
-                              {includeCenterPoints && (
-                              <TableRow>
-                                <TableCell className="font-medium">Center Point</TableCell>
-                                <TableCell className="text-right">-</TableCell>
-                                <TableCell className="text-right">-</TableCell>
-                                <TableCell className="text-right">-</TableCell>
-                                <TableCell className="text-right">-</TableCell>
-                                <TableCell className="text-right">-</TableCell>
-                                <TableCell className="text-center">
-                                  <Checkbox
-                                    checked={selectedFactorsForModel['centerPoint'] ?? true}
-                                    onCheckedChange={(checked) => {
-                                      setSelectedFactorsForModel(prev => ({
-                                        ...prev,
-                                        ['centerPoint']: !!checked
-                                      }));
-                                    }}
-                                    data-testid="checkbox-center-point"
-                                  />
-                                </TableCell>
-                              </TableRow>
-                              )}
+                              {includeCenterPoints && (() => {
+                                // Center point is at (0, 0, ..., 0) in coded units
+                                // Predicted value = beta[0] (intercept)
+                                const centerPrediction = displayBeta[0];
+                                
+                                // Standard error of prediction at center point
+                                // SE_pred = sqrt(mse * (1 + x'(X'X)^-1 x))
+                                // For center point: x = [1, 0, 0, ..., 0]
+                                // So: SE_pred = sqrt(mse * (1 + 1/XtX[0][0]))
+                                const xxtInvDiag = 1 / XtX[0][0];
+                                const centerSE = Math.sqrt(mse * (1 + xxtInvDiag));
+                                const centerTValue = centerSE > 0 ? centerPrediction / centerSE : 0;
+                                const centerPValue = centerSE > 0 ? 2 * (1 - jStat.studentt.cdf(Math.abs(centerTValue), n - p)) : 1;
+                                
+                                return (
+                                <TableRow key="center-point">
+                                  <TableCell className="font-medium">Center Point</TableCell>
+                                  <TableCell className="text-right">{centerPrediction?.toFixed(6)}</TableCell>
+                                  <TableCell className="text-right">{centerSE.toFixed(4)}</TableCell>
+                                  <TableCell className="text-right">{centerTValue.toFixed(4)}</TableCell>
+                                  <TableCell className={`text-right ${centerPValue < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{centerPValue.toFixed(4)}</TableCell>
+                                  <TableCell className="text-right">-</TableCell>
+                                  <TableCell className="text-center">
+                                    <Checkbox
+                                      checked={selectedFactorsForModel['centerPoint'] ?? true}
+                                      onCheckedChange={(checked) => {
+                                        setSelectedFactorsForModel(prev => ({
+                                          ...prev,
+                                          ['centerPoint']: !!checked
+                                        }));
+                                      }}
+                                      data-testid="checkbox-center-point"
+                                    />
+                                  </TableCell>
+                                </TableRow>
+                                );
+                              })()}
                             </TableBody>
                           </Table>
                         </div>
