@@ -93,6 +93,38 @@ export function reconstructGeneratedPlanFromPersisted(
   };
 }
 
+// Build runResponses map from runData array
+export function buildRunResponsesFromRunData(
+  runData: Array<{ run: number; factors: number[]; response: number | null }>
+): Record<string, number | null> {
+  const runResponses: Record<string, number | null> = {};
+  
+  runData.forEach(item => {
+    runResponses[item.run.toString()] = item.response;
+  });
+  
+  return runResponses;
+}
+
+// Build runData array from generatedPlan and runResponses
+export function buildRunDataFromPlanAndResponses(
+  generatedPlan: any,
+  runResponses: Record<string, number | null> | null | undefined,
+  factors: DOEFactor[]
+): Array<{ run: number; factors: number[]; response: number | null }> {
+  if (!generatedPlan || !generatedPlan.plan || !Array.isArray(generatedPlan.plan)) {
+    return [];
+  }
+  
+  const responsesMap = runResponses || {};
+  
+  return generatedPlan.plan.map((row: any) => ({
+    run: row.runOrder,
+    factors: factors.map(f => row[f.name] as number),
+    response: responsesMap[row.runOrder.toString()] ?? null,
+  }));
+}
+
 // Helper to get default factor based on index
 export function getDefaultFactor(index: number): DOEFactor {
   return {
