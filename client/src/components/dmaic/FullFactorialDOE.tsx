@@ -195,12 +195,8 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
           config.factors || factors
         );
         if (reconstructedPlan) {
-          // Use database k value if available, otherwise use reconstructed value or factors length
-          const finalPlan = {
-            ...reconstructedPlan,
-            k: config.k || reconstructedPlan.k || factors.length,
-          };
-          setGeneratedPlan(finalPlan);
+          // All metadata (k) comes from generatedPlan only
+          setGeneratedPlan(reconstructedPlan);
           
           // Extract responses from generatedPlan.plan[].runResponse
           if (reconstructedPlan.plan && Array.isArray(reconstructedPlan.plan)) {
