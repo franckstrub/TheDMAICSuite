@@ -41,7 +41,8 @@ import {
   reconstructGeneratedPlanFromPersisted,
   getDefaultFactor,
   validateFactorCount,
-  parseFactorValue
+  parseFactorValue,
+  calculateDOEVIF
 } from '@/lib/doeSharedUtils';
 
 interface FullFactorialDOEProps {
@@ -1654,7 +1655,6 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                               {factors.map((factor, i) => {
                                 const vif = (() => {
                                   try {
-                                    const { calculateDOEVIF } = require('@/lib/doeSharedUtils');
                                     return calculateDOEVIF(X, i);
                                   } catch {
                                     return null;
@@ -1688,7 +1688,6 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                               {interactionPairs.map((pair, i) => {
                                 const vif = (() => {
                                   try {
-                                    const { calculateDOEVIF } = require('@/lib/doeSharedUtils');
                                     return calculateDOEVIF(X, factors.length + i);
                                   } catch {
                                     return null;

@@ -82,6 +82,115 @@ export function validateFractionalFactorCount(factors: DOEFactor[], minFactors: 
 }
 
 /**
+ * Calculate R² from regressing y on X using QR decomposition approach
+ */
+function calculateR2(X: number[][], y: number[]): number {
+  const n = X.length;
+  const p = X[0].length;
+  
+  // Calculate means
+  const yMean = y.reduce((a, b) => a + b, 0) / n;
+  const yDevs = y.map(val => val - yMean);
+  const sst = yDevs.reduce((sum, d) => sum + d * d, 0);
+  
+  if (sst === 0) return 0;
+  
+  try {
+    // Simple approach: Use normal equations X'X beta = X'y
+    // X'X (p x p matrix)
+    const XtX: number[][] = [];
+    for (let i = 0; i < p; i++) {
+      XtX[i] = [];
+      for (let j = 0; j < p; j++) {
+        let sum = 0;
+        for (let k = 0; k < n; k++) {
+          sum += X[k][i] * X[k][j];
+        }
+        XtX[i][j] = sum;
+      }
+    }
+    
+    // X'y (p x 1 vector)
+    const Xty: number[] = [];
+    for (let i = 0; i < p; i++) {
+      let sum = 0;
+      for (let k = 0; k < n; k++) {
+        sum += X[k][i] * y[k];
+      }
+      Xty[i] = sum;
+    }
+    
+    // Solve using Gaussian elimination
+    const beta = gaussianElimination(XtX, Xty);
+    if (!beta) return 0;
+    
+    // Calculate fitted values and SSE
+    let sse = 0;
+    for (let i = 0; i < n; i++) {
+      let pred = 0;
+      for (let j = 0; j < p; j++) {
+        pred += X[i][j] * beta[j];
+      }
+      sse += (y[i] - pred) ** 2;
+    }
+    
+    const r2 = Math.max(0, 1 - sse / sst);
+    return Math.min(1, r2);
+  } catch {
+    return 0;
+  }
+}
+
+/**
+ * Gaussian elimination to solve Ax = b
+ */
+function gaussianElimination(A: number[][], b: number[]): number[] | null {
+  const n = A.length;
+  
+  // Create augmented matrix
+  const aug: number[][] = A.map((row, i) => [...row, b[i]]);
+  
+  // Forward elimination
+  for (let i = 0; i < n; i++) {
+    // Find pivot
+    let maxRow = i;
+    for (let k = i + 1; k < n; k++) {
+      if (Math.abs(aug[k][i]) > Math.abs(aug[maxRow][i])) {
+        maxRow = k;
+      }
+    }
+    
+    // Swap rows
+    [aug[i], aug[maxRow]] = [aug[maxRow], aug[i]];
+    
+    // Check for singular matrix
+    if (Math.abs(aug[i][i]) < 1e-10) {
+      return null;
+    }
+    
+    // Eliminate column
+    for (let k = i + 1; k < n; k++) {
+      const factor = aug[k][i] / aug[i][i];
+      for (let j = i; j <= n; j++) {
+        aug[k][j] -= factor * aug[i][j];
+      }
+    }
+  }
+  
+  // Back substitution
+  const x = Array(n).fill(0);
+  for (let i = n - 1; i >= 0; i--) {
+    x[i] = aug[i][n];
+    for (let j = i + 1; j < n; j++) {
+      x[i] -= aug[i][j] * x[j];
+    }
+    x[i] /= aug[i][i];
+  }
+  
+  return x;
+}
+
+/**
  * Calculate Variance Inflation Factor (VIF) for DOE terms
  * VIF_i = 1 / (1 - R²_i) where R²_i is from regressing term_i on all other terms
  */
@@ -90,11 +199,10 @@ export function calculateDOEVIF(X: number[][], termIndex: number): number {
   const k = X[0].length - 1; // Exclude intercept
   
   if (k <= 1) {
-    // Can't calculate VIF with only one term
     return 1;
   }
   
-  // Extract the target term and other terms
+  // Extract the target term values and other terms
   const y: number[] = [];
   const otherX: number[][] = [];
   
@@ -110,25 +218,8 @@ export function calculateDOEVIF(X: number[][], termIndex: number): number {
   }
   
   try {
-    // Simple regression: regress y on otherX
-    const yMean = y.reduce((a, b) => a + b, 0) / n;
-    const otherXMeans = Array(k - 1).fill(0);
-    for (let col = 0; col < k - 1; col++) {
-      otherXMeans[col] = otherX.reduce((sum, row) => sum + row[col + 1], 0) / n;
-    }
-    
-    // Calculate residuals from regressing y on others
-    let ssTotal = 0;
-    let ssResidual = 0;
-    
-    for (let i = 0; i < n; i++) {
-      ssTotal += (y[i] - yMean) ** 2;
-      // Simple estimate: predict y from first term
-      const pred = yMean + (otherX[i][1] - otherXMeans[0]) * ((y[i] - yMean) / (otherX[i][1] - otherXMeans[0] || 1));
-      ssResidual += (y[i] - pred) ** 2;
-    }
-    
-    const rSquared = Math.max(0, 1 - (ssResidual / ssTotal || 0));
+    // Calculate R² from regressing y on otherX
+    const rSquared = calculateR2(otherX, y);
     
     if (rSquared >= 0.9999) {
       return 999.99;
@@ -137,6 +228,6 @@ export function calculateDOEVIF(X: number[][], termIndex: number): number {
     const vif = 1 / Math.max(0.0001, 1 - rSquared);
     return Math.min(999.99, Math.max(1, vif));
   } catch (error) {
-    return 999.99;
+    return 1;
   }
 }
