@@ -57,7 +57,6 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
   const lastLoadedKey = useRef<string>('');
   
   // State for Setup tab
-  const [fractionalResolution, setFractionalResolution] = useState(1);
   const [responseVariableName, setResponseVariableName] = useState("Y Response");
   const [factors, setFactors] = useState<DOEFactor[]>([
     { name: "Factor A", type: "continuous", lowValue: NaN, highValue: NaN, units: "" },
@@ -110,7 +109,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
   useEffect(() => {
     if (activeTab === 'data' && validateFractionalFactorCount(factors) && factors.length >= 3) {
       const centerPoints = includeCenterPoints ? numberOfCenterPoints : 0;
-      const plan = generateFractionalFactorialPlan(factors, fractionalResolution, centerPoints, randomizeRuns, numberOfReplicates);
+      const plan = generateFractionalFactorialPlan(factors, 4, centerPoints, randomizeRuns, numberOfReplicates);
       
       setGeneratedPlan(plan);
       
@@ -125,7 +124,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
       
       setRunData(newRunData);
     }
-  }, [activeTab, factors, fractionalResolution, includeCenterPoints, numberOfCenterPoints, randomizeRuns, numberOfReplicates]);
+  }, [activeTab, factors, includeCenterPoints, numberOfCenterPoints, randomizeRuns, numberOfReplicates]);
   
   // Load config from API
   const configQuery = useQuery({
@@ -146,10 +145,6 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
       loadedRef.current = true;
       
       const config = configQuery.data as any;
-      
-      if (config.fractionalResolution !== undefined) {
-        setFractionalResolution(config.fractionalResolution);
-      }
       
       if (config.responseVariableName) {
         setResponseVariableName(config.responseVariableName);
@@ -292,7 +287,6 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
     console.log('handleSaveSetup - Saving k:', validK, 'p:', validP, 'resolution:', transformedPlan.resolutionText);
     
     saveConfigMutation.mutate({
-      fractionalResolution,
       responseVariableName,
       factors,
       numberOfReplicates,
@@ -321,7 +315,6 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
     console.log('handleSaveData - Saving k:', validK, 'p:', validP, 'resolution:', transformedPlan.resolutionText);
     
     saveConfigMutation.mutate({
-      fractionalResolution,
       responseVariableName,
       factors,
       numberOfReplicates,
@@ -340,13 +333,6 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
   
   const handleAddFactor = () => {
     const newFactorIndex = factors.length + 1;
-    if (newFactorIndex >= 12) {
-      setFractionalResolution(5 + (newFactorIndex - 12));
-    }
-    else if (newFactorIndex >= 9) {
-      setFractionalResolution(newFactorIndex - 7);
-    }
-    
     const newFactor = getDefaultFactor(newFactorIndex);
     setFactors([...factors, newFactor]);
   };
@@ -450,7 +436,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
     }
     
     const centerPoints = includeCenterPoints ? numberOfCenterPoints : 0;
-    const plan = generateFractionalFactorialPlan(factors, fractionalResolution, centerPoints, randomizeRuns, numberOfReplicates);
+    const plan = generateFractionalFactorialPlan(factors, 4, centerPoints, randomizeRuns, numberOfReplicates);
     
     setGeneratedPlan(plan);
     
@@ -694,89 +680,6 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                         </TableBody>
                       </Table>
                     </div>
-                  </div>
-
-                  {/* Fractional Factorial Resolution */}
-                  <div className="space-y-2">
-                    <Label htmlFor="fractional-resolution">Fractional Selection & Resolution</Label>
-                    {factors.length >= 3 ? (
-                      <>
-                        <Select
-                          value={fractionalResolution.toString()}
-                          onValueChange={(value) => setFractionalResolution(parseInt(value))}
-                        >
-                          <SelectTrigger id="fractional-resolution" data-testid="select-fractional-resolution">
-                            <SelectValue placeholder="Select resolution" />
-                          </SelectTrigger>
-
-                          {/*<SelectContent>
-                            {generateFractionalOptions(factors.length).map((opt) => (
-                              <SelectItem key={opt.p} value={opt.p.toString()}>
-                                {opt.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>*/}
-
-                          <SelectContent>
-                            {factors.length === 3 && <SelectItem value="1">2<sup>(3-1)</sup> Resolution III (4 runs)</SelectItem>}
-                            {factors.length === 4 && <SelectItem value="1">2<sup>(4-1)</sup> Resolution IV (8 runs)</SelectItem>}
-                            {factors.length === 5 && <SelectItem value="1">2<sup>(5-1)</sup> Resolution V (16 runs)</SelectItem>}
-                            {factors.length === 5 && <SelectItem value="2">2<sup>(5-2)</sup> Resolution III (8 runs)</SelectItem>}
-                            {factors.length === 6 && <SelectItem value="1">2<sup>(6-1)</sup> Resolution VI (32 runs)</SelectItem>}
-                            {factors.length === 6 && <SelectItem value="2">2<sup>(6-2)</sup> Resolution IV (16 runs)</SelectItem>}
-                            {factors.length === 6 && <SelectItem value="3">2<sup>(6-3)</sup> Resolution III (8 runs)</SelectItem>}
-                            {factors.length === 7 && <SelectItem value="1">2<sup>(7-1)</sup> Resolution VII (64 runs)</SelectItem>}
-                            {factors.length === 7 && <SelectItem value="2">2<sup>(7-2)</sup> Resolution IV (32 runs)</SelectItem>}
-                            {factors.length === 7 && <SelectItem value="3">2<sup>(7-3)</sup> Resolution IV (16 runs)</SelectItem>}
-                            {factors.length === 7 && <SelectItem value="4">2<sup>(7-4)</sup> Resolution III (8 runs)</SelectItem>}
-                            {factors.length === 8 && <SelectItem value="1">2<sup>(8-1)</sup> Resolution VIII (128 runs)</SelectItem>}
-                            {factors.length === 8 && <SelectItem value="2">2<sup>(8-2)</sup> Resolution V (64 runs)</SelectItem>}
-                            {factors.length === 8 && <SelectItem value="3">2<sup>(8-3)</sup> Resolution IV (32 runs)</SelectItem>}
-                            {factors.length === 8 && <SelectItem value="4">2<sup>(8-4)</sup> Resolution IV (16 runs)</SelectItem>}
-                            {factors.length === 9 && <SelectItem value="2">2<sup>(9-2)</sup> Resolution VI (128 runs)</SelectItem>}
-                            {factors.length === 9 && <SelectItem value="3">2<sup>(9-3)</sup> Resolution IV (64 runs)</SelectItem>}
-                            {factors.length === 9 && <SelectItem value="4">2<sup>(9-4)</sup> Resolution IV (32 runs)</SelectItem>}
-                            {factors.length === 9 && <SelectItem value="5">2<sup>(9-5)</sup> Resolution III (16 runs)</SelectItem>}
-                            {factors.length === 10 && <SelectItem value="3">2<sup>(10-3)</sup> Resolution V (128 runs)</SelectItem>}
-                            {factors.length === 10 && <SelectItem value="4">2<sup>(10-4)</sup> Resolution IV (64 runs)</SelectItem>}
-                            {factors.length === 10 && <SelectItem value="5">2<sup>(10-5)</sup> Resolution IV (32 runs)</SelectItem>}
-                            {factors.length === 10 && <SelectItem value="6">2<sup>(10-6)</sup> Resolution III (16 runs)</SelectItem>}
-                            {factors.length === 11 && <SelectItem value="4">2<sup>(11-4)</sup> Resolution V (128 runs)</SelectItem>}
-                            {factors.length === 11 && <SelectItem value="5">2<sup>(11-5)</sup> Resolution IV (64 runs)</SelectItem>}
-                            {factors.length === 11 && <SelectItem value="6">2<sup>(11-6)</sup> Resolution IV (32 runs)</SelectItem>}
-                            {factors.length === 11 && <SelectItem value="7">2<sup>(11-7)</sup> Resolution III (16 runs)</SelectItem>}
-                            {factors.length === 12 && <SelectItem value="5">2<sup>(12-5)</sup> Resolution V (128 runs)</SelectItem>}
-                            {factors.length === 12 && <SelectItem value="6">2<sup>(12-6)</sup> Resolution IV (64 runs)</SelectItem>}
-                            {factors.length === 12 && <SelectItem value="7">2<sup>(12-7)</sup> Resolution IV (32 runs)</SelectItem>}
-                            {factors.length === 12 && <SelectItem value="8">2<sup>(12-8)</sup> Resolution IV (16 runs)</SelectItem>}
-                            {/*{factors.length === 13 && <SelectItem value="6">2<sup>(13-6)</sup> Resolution V (128 runs)</SelectItem>}
-                            {factors.length === 13 && <SelectItem value="7">2<sup>(13-7)</sup> Resolution IV (64 runs)</SelectItem>}
-                            {factors.length === 13 && <SelectItem value="8">2<sup>(13-8)</sup> Resolution IV (32 runs)</SelectItem>}
-                            {factors.length === 13 && <SelectItem value="9">2<sup>(13-9)</sup> Resolution IV (16 runs)</SelectItem>}
-                            {factors.length === 14 && <SelectItem value="7">2<sup>(14-7)</sup> Resolution V (128 runs)</SelectItem>}
-                            {factors.length === 14 && <SelectItem value="8">2<sup>(14-8)</sup> Resolution IV (64 runs)</SelectItem>}
-                            {factors.length === 14 && <SelectItem value="9">2<sup>(14-9)</sup> Resolution IV (32 runs)</SelectItem>}
-                            {factors.length === 14 && <SelectItem value="10">2<sup>(14-10)</sup> Resolution IV (16 runs)</SelectItem>}
-                            {factors.length === 15 && <SelectItem value="8">2<sup>(15-8)</sup> Resolution V (128 runs)</SelectItem>}
-                            {factors.length === 15 && <SelectItem value="9">2<sup>(15-9)</sup> Resolution IV (64 runs)</SelectItem>}
-                            {factors.length === 15 && <SelectItem value="10">2<sup>(15-10)</sup> Resolution IV (32 runs)</SelectItem>}
-                            {factors.length === 15 && <SelectItem value="11">2<sup>(15-11)</sup> Resolution IV (16 runs)</SelectItem>} */}
-                            {factors.length > 12 && generateFractionalOptions(factors.length).map((opt) => (
-                              <SelectItem key={opt.p} value={opt.p.toString()}>
-                                {opt.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <div className="text-sm text-muted-foreground">
-                          The fractional design reduces experimental runs while maintaining analysis capability.
-                        </div>
-                      </>
-                    ) : (
-                      <div className="text-sm text-muted-foreground py-2 px-3 bg-muted rounded-md">
-                        Fractional factorial designs require at least 3 factors. Add more factors below.
-                      </div>
-                    )}
                   </div>
                   
                   {/* Run Settings */}
