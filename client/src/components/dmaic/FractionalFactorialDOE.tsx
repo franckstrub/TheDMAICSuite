@@ -1086,8 +1086,8 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                       [factor.name]: generatedPlan.plan[idx]?.[factor.name] || 0,
                     }));
                     
-                    const codedLevels = includeCenterPoints ? [-1, 0, 1] : [-1, 1];
-                    const mainEffectData = codedLevels.map(level => {
+                    const lineLevels = [-1, 1];
+                    const lineData = lineLevels.map(level => {
                       const levelResponses = factorData
                         .filter((d: any) => d[factor.name] === level && d.response !== null)
                         .map((d: any) => d.response);
@@ -1095,15 +1095,54 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                         ? levelResponses.reduce((a: number, b: number) => a + b, 0) / levelResponses.length 
                         : 0;
                     });
-                    
-                    const xLabels = showUncoded && allFactorsHaveValidLevels()
-                      ? codedLevels.map(level => {
+
+                    const lineXLabels = showUncoded && allFactorsHaveValidLevels()
+                      ? lineLevels.map(level => {
                           const decoded = decodeValue(level, factor);
                           return factor.type === 'continuous'
                             ? `${(decoded as number).toFixed(2)}${factor.units ? ' ' + factor.units : ''}`
                             : String(decoded);
                         })
-                      : (includeCenterPoints ? ['Low (-1)', 'Center (0)', 'High (+1)'] : ['Low (-1)', 'High (+1)']);
+                      : ['Low (-1)', 'High (+1)'];
+
+                    const plotData = [
+                      {
+                        x: lineXLabels,
+                        y: lineData,
+                        type: 'scatter',
+                        mode: 'lines+markers',
+                        line: { width: 3, color: '#3b82f6' },
+                        marker: { size: 10, color: '#3b82f6' },
+                      },
+                    ];
+
+                    // Add center point if included
+                    if (includeCenterPoints) {
+                      const centerResponses = factorData
+                        .filter((d: any) => d[factor.name] === 0 && d.response !== null)
+                        .map((d: any) => d.response);
+                      const centerValue = centerResponses.length > 0 
+                        ? centerResponses.reduce((a: number, b: number) => a + b, 0) / centerResponses.length 
+                        : 0;
+
+                      const centerXLabel = showUncoded && allFactorsHaveValidLevels()
+                        ? (() => {
+                            const decoded = decodeValue(0, factor);
+                            return factor.type === 'continuous'
+                              ? `${(decoded as number).toFixed(2)}${factor.units ? ' ' + factor.units : ''}`
+                              : String(decoded);
+                          })()
+                        : 'Center (0)';
+
+                      plotData.push({
+                        x: [centerXLabel],
+                        y: [centerValue],
+                        type: 'scatter',
+                        mode: 'markers',
+                        marker: { size: 10, color: '#ef4444' },
+                        showlegend: false,
+                      } as any);
+                    }
 
                     return (
                       <Card key={factorIndex}>
@@ -1112,16 +1151,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                         </CardHeader>
                         <CardContent>
                           <Plot
-                            data={[
-                              {
-                                x: xLabels,
-                                y: mainEffectData,
-                                type: 'scatter',
-                                mode: 'lines+markers',
-                                line: { width: 3, color: '#3b82f6' },
-                                marker: { size: 10, color: '#3b82f6' },
-                              },
-                            ]}
+                            data={plotData as any}
                             layout={{
                               title: { text: `<b>Main Effect: ${factor.name}</b>` },
                               xaxis: { title: { text: 'Factor Level' }, type: 'category' },
@@ -1158,46 +1188,97 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                           {factors.slice(0, -1).map((factorA, idxA) =>
                             factors.slice(idxA + 1).map((factorB, idxB) => {
-                              const interactionTraces = [-1, 1].map(levelA => {
-                                const interactionData = (includeCenterPoints ? [-1, 0, 1] : [-1, 1]).map(levelB => {
-                            const matches = runData.filter((_, idx) => {
-                              const row = generatedPlan.plan[idx];
-                              return row?.[factorA.name] === levelA && row?.[factorB.name] === levelB;
-                            });
-                            const responses = matches
-                              .map(m => m.response)
-                              .filter((r: any) => r !== null) as number[];
-                            return responses.length > 0 
-                              ? (responses.reduce((a: number, b: number) => a + b, 0) / responses.length)
-                              : 0;
-                          });
-                          
-                          const levelALabel = showUncoded && allFactorsHaveValidLevels()
-                            ? (() => {
-                                const decoded = decodeValue(levelA, factorA);
-                                return factorA.type === 'continuous'
-                                  ? `${(decoded as number).toFixed(2)}${factorA.units ? ' ' + factorA.units : ''}`
-                                  : String(decoded);
-                              })()
-                            : (levelA === -1 ? 'Low' : 'High');
+                              const interactionTraces: any[] = [];
 
-                                return {
-                                  x: showUncoded && allFactorsHaveValidLevels()
-                                    ? (includeCenterPoints ? [-1, 0, 1] : [-1, 1]).map(level => {
-                                        const decoded = decodeValue(level, factorB);
-                                        return factorB.type === 'continuous'
-                                          ? `${(decoded as number).toFixed(2)}${factorB.units ? ' ' + factorB.units : ''}`
-                                          : String(decoded);
-                                      })
-                                    : (includeCenterPoints ? ['Low (-1)', 'Center (0)', 'High (+1)'] : ['Low (-1)', 'High (+1)']),
-                                  y: interactionData,
+                              // Add line traces for -1 and +1 levels of factorB
+                              [-1, 1].forEach(levelA => {
+                                const lineData = [-1, 1].map(levelB => {
+                                  const matches = runData.filter((_, idx) => {
+                                    const row = generatedPlan.plan[idx];
+                                    return row?.[factorA.name] === levelA && row?.[factorB.name] === levelB;
+                                  });
+                                  const responses = matches
+                                    .map(m => m.response)
+                                    .filter((r: any) => r !== null) as number[];
+                                  return responses.length > 0 
+                                    ? (responses.reduce((a: number, b: number) => a + b, 0) / responses.length)
+                                    : 0;
+                                });
+
+                                const levelALabel = showUncoded && allFactorsHaveValidLevels()
+                                  ? (() => {
+                                      const decoded = decodeValue(levelA, factorA);
+                                      return factorA.type === 'continuous'
+                                        ? `${(decoded as number).toFixed(2)}${factorA.units ? ' ' + factorA.units : ''}`
+                                        : String(decoded);
+                                    })()
+                                  : (levelA === -1 ? 'Low' : 'High');
+
+                                const lineXLabels = showUncoded && allFactorsHaveValidLevels()
+                                  ? [-1, 1].map(level => {
+                                      const decoded = decodeValue(level, factorB);
+                                      return factorB.type === 'continuous'
+                                        ? `${(decoded as number).toFixed(2)}${factorB.units ? ' ' + factorB.units : ''}`
+                                        : String(decoded);
+                                    })
+                                  : ['Low (-1)', 'High (+1)'];
+
+                                interactionTraces.push({
+                                  x: lineXLabels,
+                                  y: lineData,
                                   type: 'scatter',
                                   mode: 'lines+markers',
                                   name: `${factorA.name} = ${levelALabel}`,
                                   line: { width: 2 },
                                   marker: { size: 8 },
-                                };
+                                });
                               });
+
+                              // Add center point markers if included
+                              if (includeCenterPoints) {
+                                [-1, 1].forEach(levelA => {
+                                  const centerValue = (() => {
+                                    const matches = runData.filter((_, idx) => {
+                                      const row = generatedPlan.plan[idx];
+                                      return row?.[factorA.name] === levelA && row?.[factorB.name] === 0;
+                                    });
+                                    const responses = matches
+                                      .map(m => m.response)
+                                      .filter((r: any) => r !== null) as number[];
+                                    return responses.length > 0 
+                                      ? (responses.reduce((a: number, b: number) => a + b, 0) / responses.length)
+                                      : 0;
+                                  })();
+
+                                  const levelALabel = showUncoded && allFactorsHaveValidLevels()
+                                    ? (() => {
+                                        const decoded = decodeValue(levelA, factorA);
+                                        return factorA.type === 'continuous'
+                                          ? `${(decoded as number).toFixed(2)}${factorA.units ? ' ' + factorA.units : ''}`
+                                          : String(decoded);
+                                      })()
+                                    : (levelA === -1 ? 'Low' : 'High');
+
+                                  const centerXLabel = showUncoded && allFactorsHaveValidLevels()
+                                    ? (() => {
+                                        const decoded = decodeValue(0, factorB);
+                                        return factorB.type === 'continuous'
+                                          ? `${(decoded as number).toFixed(2)}${factorB.units ? ' ' + factorB.units : ''}`
+                                          : String(decoded);
+                                      })()
+                                    : 'Center (0)';
+
+                                  interactionTraces.push({
+                                    x: [centerXLabel],
+                                    y: [centerValue],
+                                    type: 'scatter',
+                                    mode: 'markers',
+                                    name: `${factorA.name} = ${levelALabel} (Center)`,
+                                    marker: { size: 8, color: '#ef4444' },
+                                    showlegend: true,
+                                  });
+                                });
+                              }
 
                               return (
                                 <Card key={`${idxA}-${idxB}`}>
