@@ -2634,21 +2634,13 @@ export const doeFractionalFactorialConfig = pgTable(
       levels?: string[];  // For categorical: level names (e.g., ["Low", "High"])
     }>>().default([]),
     
-    // Experimental run data
-    // Structure: [{ run: 1, factors: [-1, 1, -1, ...], response: 45.2 }, ...]
-    runData: jsonb("run_data").$type<Array<{
-      run: number;
-      factors: number[]; // Coded values: -1, 0, +1
-      response: number | null;
-    }>>().default([]),
-    
     // Generated plan (persisted to ensure consistency on reload)
-    // Structure: [{ standardOrder: 1, runOrder: 3, factors: [-1, 1, -1, ...] }, ...]
-    generatedPlan: jsonb("generated_plan").$type<Array<{
-      standardOrder: number;
-      runOrder: number;
-      factors: number[]; // Coded values: -1, 0, +1
-    }>>().default([]),
+    // Contains complete experimental design with metadata
+    generatedPlan: jsonb("generated_plan"),
+    
+    // Response values keyed by run order
+    // Structure: { "1": 45.2, "2": 38.7, "3": null, ... }
+    runResponses: jsonb("run_responses").$type<Record<string, number | null>>().default({}),
     
     // Design options
     numberOfReplicates: integer("number_of_replicates").default(1),
@@ -2711,20 +2703,13 @@ export const doeFullFactorialConfig = pgTable(
       levels?: string[];
     }>>().default([]),
     
-    // Experimental run data
-    runData: jsonb("run_data").$type<Array<{
-      run: number;
-      factors: number[];
-      response: number | null;
-    }>>().default([]),
-    
     // Generated plan (persisted to ensure consistency on reload)
-    // Structure: [{ standardOrder: 1, runOrder: 3, factors: [-1, 1, -1, ...] }, ...]
-    generatedPlan: jsonb("generated_plan").$type<Array<{
-      standardOrder: number;
-      runOrder: number;
-      factors: number[]; // Coded values: -1, 0, +1
-    }>>().default([]),
+    // Contains complete experimental design with metadata
+    generatedPlan: jsonb("generated_plan"),
+    
+    // Response values keyed by run order
+    // Structure: { "1": 45.2, "2": 38.7, "3": null, ... }
+    runResponses: jsonb("run_responses").$type<Record<string, number | null>>().default({}),
     
     // Design options
     numberOfReplicates: integer("number_of_replicates").default(1),
