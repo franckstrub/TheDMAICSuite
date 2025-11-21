@@ -1112,10 +1112,12 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                             const factorMS = factorDF > 0 ? factorSS / factorDF : 0;
                             const errorMS = (totalSS - sumSS - factorSS) / (totalDF - sumDF - factorDF) || 0;
                             const fRatio = errorMS > 0 ? factorMS / errorMS : 0;
-                            const pValue = fRatio > 0 ? 1 - jStat.f.cdf(fRatio, factorDF, totalDF - sumDF - factorDF) : 1;
+                            const pValue = fRatio > 0 && factorDF > 0 && (totalDF - sumDF - factorDF) > 0 
+                              ? 1 - jStat.centralF.cdf(fRatio, factorDF, totalDF - sumDF - factorDF) 
+                              : 1;
 
                             const factorLabel = showUncoded && allFactorsHaveValidLevels()
-                              ? `${factor.name} (${factor.units || ''})`
+                              ? `${factor.name}${factor.type === 'continuous' && factor.units ? ` (${factor.units})` : ''}`
                               : factor.name;
 
                             rows.push(
