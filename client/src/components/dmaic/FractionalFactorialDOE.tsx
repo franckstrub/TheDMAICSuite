@@ -1347,7 +1347,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   }
                   const stdError = Math.sqrt(mse * Math.max(0, xxtInvDiag));
                   const tValue = stdError > 0 ? b / stdError : 0;
-                  const pValue = stdError > 0 ? (1 - jStat.t.cdf(Math.abs(tValue), n - p)) * 2 : 1;
+                  const pValue = stdError > 0 ? 2 * (1 - jStat.studentt.cdf(Math.abs(tValue), n - p)) : 1;
                   return { stdError, tValue, pValue };
                 });
 
