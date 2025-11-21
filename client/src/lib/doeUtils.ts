@@ -413,6 +413,7 @@ export function generateFractionalFactorialPlan(
     resolution,
     k,
     p,
+    generators,
   };
 }
 
