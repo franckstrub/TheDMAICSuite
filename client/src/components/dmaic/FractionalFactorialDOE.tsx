@@ -1097,7 +1097,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                         : 0;
                     });
 
-                    const lineXLabels = showUncoded && allFactorsHaveValidLevels()
+                    const lineLevelLabels = showUncoded && allFactorsHaveValidLevels()
                       ? lineLevels.map(level => {
                           const decoded = decodeValue(level, factor);
                           return factor.type === 'continuous'
@@ -1106,29 +1106,30 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                         })
                       : ['Low (-1)', 'High (+1)'];
 
+                    const xTickVals = includeCenterPoints ? [-1, 0, 1] : [-1, 1];
+                    const xTickText = includeCenterPoints
+                      ? [lineLevelLabels[0], showUncoded && allFactorsHaveValidLevels()
+                          ? (() => {
+                              const decoded = decodeValue(0, factor);
+                              return factor.type === 'continuous'
+                                ? `${(decoded as number).toFixed(2)}${factor.units ? ' ' + factor.units : ''}`
+                                : String(decoded);
+                            })()
+                          : 'Center (0)', lineLevelLabels[1]]
+                      : lineLevelLabels;
+
                     const plotData = [
                       {
-                        x: [-1, 1],
+                        x: lineLevels,
                         y: lineData,
                         type: 'scatter',
                         mode: 'lines+markers',
                         line: { width: 3, color: '#3b82f6' },
                         marker: { size: 10, color: '#3b82f6' },
                         hovertemplate: '%{text}<br>' + (responseVariableName || 'Y Response') + ': %{y:.3f}<extra></extra>',
-                        text: lineXLabels,
+                        text: lineLevelLabels,
                       },
                     ];
-
-                    // Generate x-axis tick labels
-                    const xTickVals = [-1, 0, 1];
-                    const xTickLabels = showUncoded && allFactorsHaveValidLevels()
-                      ? [-1, 0, 1].map(level => {
-                          const decoded = decodeValue(level, factor);
-                          return factor.type === 'continuous'
-                            ? `${(decoded as number).toFixed(2)}${factor.units ? ' ' + factor.units : ''}`
-                            : String(decoded);
-                        })
-                      : ['Low (-1)', 'Center (0)', 'High (+1)'];
 
                     // Add center point if included
                     if (includeCenterPoints) {
@@ -1139,7 +1140,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                         ? centerResponses.reduce((a: number, b: number) => a + b, 0) / centerResponses.length 
                         : 0;
 
-                      const centerXLabel = showUncoded && allFactorsHaveValidLevels()
+                      const centerLabel = showUncoded && allFactorsHaveValidLevels()
                         ? (() => {
                             const decoded = decodeValue(0, factor);
                             return factor.type === 'continuous'
@@ -1155,7 +1156,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                         mode: 'markers',
                         marker: { size: 10, color: '#ef4444' },
                         showlegend: false,
-                        hovertemplate: centerXLabel + '<br>' + (responseVariableName || 'Y Response') + ': %{y:.3f}<extra></extra>',
+                        hovertemplate: centerLabel + '<br>' + (responseVariableName || 'Y Response') + ': %{y:.3f}<extra></extra>',
                       } as any);
                     }
 
@@ -1169,7 +1170,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                             data={plotData as any}
                             layout={{
                               title: { text: `<b>Main Effect: ${factor.name}</b>` },
-                              xaxis: { title: { text: 'Factor Level' }, type: 'linear', tickmode: 'array', tickvals: xTickVals, ticktext: xTickLabels },
+                              xaxis: { title: { text: 'Factor Level' }, type: 'linear', tickmode: 'array', tickvals: xTickVals, ticktext: xTickText },
                               yaxis: { title: { text: responseVariableName || 'Y Response' }, range: [yAxisRangeMin, yAxisRangeMax] },
                               showlegend: false,
                               hovermode: 'closest',
