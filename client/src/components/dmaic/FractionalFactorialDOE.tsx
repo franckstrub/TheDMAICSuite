@@ -468,17 +468,17 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
     }));
   };
 
-  const generateFractionalOptions = (k: number) => {
-    if ( k < 13) {
+  const getDesignChoices = (k: number) => {
+    if (k < 3 || k > 7) {
       return [];
     }      
-    const minP = k - 7;
-    const maxP = minP + 3;
+    const minP = k >= 5 ? 1 : 0;
+    const maxP = Math.min(k - 3, minP + 2);
     const items = [];
 
     for (let p = minP; p <= maxP; p++) {
       const runs = 2 ** (k - p);
-      const resolutionNum = runs === 16 ? 3 : 4 ;
+      const resolutionNum = runs === 8 ? 3 : (runs === 16 ? 3 : 4);
       const resolutionRoman = toRoman(resolutionNum);
 
       items.push({
@@ -492,6 +492,12 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
     }
 
     return items;
+  };
+
+  const getResolutionRoman = (k: number, p: number) => {
+    const runs = 2 ** (k - p);
+    const resolutionNum = runs === 8 ? 3 : (runs === 16 ? 3 : 4);
+    return toRoman(resolutionNum);
   };
 
   const toRoman = (num: number) => {
@@ -681,30 +687,36 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   </div>
 
                   {/* Design Choice */}
-                  <div className="space-y-2">
-                    <Label htmlFor="design-choice">Design Selection</Label>
-                    <Select value={designChoice} onValueChange={setDesignChoice}>
-                      <SelectTrigger id="design-choice" data-testid="select-design-choice">
-                        <SelectValue placeholder="Select design type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="auto" data-testid="option-design-auto">Auto-detect based on factors</SelectItem>
-                        {factors.length >= 3 && factors.length <= 7 && (
-                          <>
-                            {getDesignChoices(factors.length).map((item) => (
-                              <SelectItem 
-                                key={`design-${item.p}`} 
-                                value={item.p.toString()} 
-                                data-testid={`option-design-p-${item.p}`}
-                              >
-                                <div dangerouslySetInnerHTML={{ __html: `2<sup>(${factors.length}-${item.p})</sup> Resolution ${getResolutionRoman(factors.length, item.p)} (${2 ** (factors.length - item.p)} runs)` }} />
-                              </SelectItem>
-                            ))}
-                          </>
-                        )}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  {(() => {
+                    const k = factors.length;
+                    const choices = getDesignChoices(k);
+                    return (
+                      <div className="space-y-2">
+                        <Label htmlFor="design-choice">Design Selection</Label>
+                        <Select value={designChoice} onValueChange={setDesignChoice}>
+                          <SelectTrigger id="design-choice" data-testid="select-design-choice">
+                            <SelectValue placeholder="Select design type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="auto" data-testid="option-design-auto">Auto-detect based on factors</SelectItem>
+                            {k >= 3 && k <= 7 && choices.length > 0 && (
+                              <>
+                                {choices.map((item) => (
+                                  <SelectItem 
+                                    key={`design-${item.p}`} 
+                                    value={item.p.toString()} 
+                                    data-testid={`option-design-p-${item.p}`}
+                                  >
+                                    2<sup>({k}-{item.p})</sup> Resolution {toRoman(item.p === 0 ? (k === 3 ? 3 : 4) : (2 ** (k - item.p) === 8 ? 3 : 4))} ({2 ** (k - item.p)} runs)
+                                  </SelectItem>
+                                ))}
+                              </>
+                            )}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    );
+                  })()}
                   
                   {/* Run Settings */}
                   <div className="space-y-4">
