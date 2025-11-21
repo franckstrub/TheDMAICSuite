@@ -1430,6 +1430,11 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                 });
                               }
 
+                              // Skip this interaction if either factor has only one level (not a real interaction)
+                              if (factorAHasOneLevel || factorBHasOneLevel) {
+                                return null;
+                              }
+
                               // Generate x-axis tick labels for center and edges
                               const xTickVals = [-1, 0, 1];
                               const xTickLabels = showUncoded && allFactorsHaveValidLevels()
