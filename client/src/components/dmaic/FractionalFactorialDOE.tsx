@@ -1266,6 +1266,11 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                               const factorAHasOneLevel = factorAUniqueLevels.size === 1;
                               const factorBHasOneLevel = factorBUniqueLevels.size === 1;
                               
+                              // Check if interaction is confounded due to resolution
+                              // In fractional designs, if runs <= 1 + number of factors, interactions are confounded
+                              const totalRuns = generatedPlan.plan.length;
+                              const isInteractionConfounded = totalRuns <= (1 + factors.length);
+                              
                               // For lines/markers logic: if either factor has only one level, show markers only
                               const showLinesInInteraction = !factorAHasOneLevel && !factorBHasOneLevel;
 
@@ -1431,9 +1436,15 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                 });
                               }
 
-                              // If either factor has only one level, show confounded term message
-                              if (factorAHasOneLevel || factorBHasOneLevel) {
-                                const confoundedFactor = factorAHasOneLevel ? factorA.name : factorB.name;
+                              // If either factor has only one level OR interaction is confounded, show message
+                              if (factorAHasOneLevel || factorBHasOneLevel || isInteractionConfounded) {
+                                let message = '';
+                                if (isInteractionConfounded) {
+                                  message = `This fractional factorial design does not have enough degrees of freedom to estimate ${factorA.name}${factorB.name} interaction independently. It is confounded with other effects.`;
+                                } else {
+                                  const confoundedFactor = factorAHasOneLevel ? factorA.name : factorB.name;
+                                  message = `Factor ${confoundedFactor} has only one level in this fraction, so the interaction between ${factorA.name} and ${factorB.name} cannot be estimated.`;
+                                }
                                 return (
                                   <Card key={`${idxA}-${idxB}`}>
                                     <CardHeader>
@@ -1444,7 +1455,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                         This interaction is <strong>confounded</strong> due to the fractional design.
                                       </p>
                                       <p className="text-sm mt-2">
-                                        Factor <strong>{confoundedFactor}</strong> has only one level in this fraction, so the interaction between {factorA.name} and {factorB.name} cannot be estimated.
+                                        {message}
                                       </p>
                                     </CardContent>
                                   </Card>
