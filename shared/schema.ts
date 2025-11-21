@@ -2620,10 +2620,6 @@ export const doeFractionalFactorialConfig = pgTable(
     projectId: integer("project_id").notNull(),
     solutionId: text("solution_id").notNull(),
     
-    // Design type selection
-    enableFullFactorial: boolean("enable_full_factorial").default(false),
-    enableFractionalFactorial: boolean("enable_fractional_factorial").default(false),
-    
     // Response variable name
     responseVariableName: text("response_variable_name").default("Y Response"),
     
@@ -2702,6 +2698,9 @@ export const doeFullFactorialConfig = pgTable(
     // Parent fractional factorial ID (if this is a follow-up)
     parentFractionalId: integer("parent_fractional_id"),
     isFollowUp: boolean("is_follow_up").default(false),
+    
+    // Design type selection
+    enableFullFactorial: boolean("enable_full_factorial").default(false),
     
     // Response variable name
     responseVariableName: text("response_variable_name").default("Y Response"),
