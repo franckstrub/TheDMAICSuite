@@ -58,6 +58,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
   
   // State for Setup tab
   const [responseVariableName, setResponseVariableName] = useState("Y Response");
+  const [designChoice, setDesignChoice] = useState<string>("auto"); // "auto" or specific p value
   const [factors, setFactors] = useState<DOEFactor[]>([
     { name: "Factor A", type: "continuous", lowValue: NaN, highValue: NaN, units: "" },
     { name: "Factor B", type: "continuous", lowValue: NaN, highValue: NaN, units: "" },
@@ -556,6 +557,32 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                       placeholder="Y Response"
                       data-testid="input-response-variable-name"
                     />
+                  </div>
+
+                  {/* Design Choice */}
+                  <div className="space-y-2">
+                    <Label htmlFor="design-choice">Design Selection</Label>
+                    <Select value={designChoice} onValueChange={setDesignChoice}>
+                      <SelectTrigger id="design-choice" data-testid="select-design-choice">
+                        <SelectValue placeholder="Select design type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="auto" data-testid="option-design-auto">Auto-detect based on factors</SelectItem>
+                        {factors.length >= 3 && factors.length <= 7 && (
+                          <>
+                            {getDesignChoices(factors.length).map((item) => (
+                              <SelectItem 
+                                key={`design-${item.p}`} 
+                                value={item.p.toString()} 
+                                data-testid={`option-design-p-${item.p}`}
+                              >
+                                <div dangerouslySetInnerHTML={{ __html: `2<sup>(${factors.length}-${item.p})</sup> Resolution ${getResolutionRoman(factors.length, item.p)} (${2 ** (factors.length - item.p)} runs)` }} />
+                              </SelectItem>
+                            ))}
+                          </>
+                        )}
+                      </SelectContent>
+                    </Select>
                   </div>
                   
                   {/* Factors Table */}
