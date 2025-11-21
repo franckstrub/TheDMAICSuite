@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -39,8 +39,6 @@ import jStat from 'jstat';
 import { 
   transformGeneratedPlanForSaving, 
   reconstructGeneratedPlanFromPersisted,
-  buildRunResponsesFromRunData,
-  buildRunDataFromPlanAndResponses,
   getDefaultFactor,
   getFactorDisplayName,
   validateFractionalFactorCount,
@@ -75,15 +73,21 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
   const [significanceLevel, setSignificanceLevel] = useState(0.05);
   
   // State for Data tab
-  const [runData, setRunData] = useState<Array<{
-    run: number;
-    factors: number[];
-    response: number | null;
-  }>>([]);
   const [generatedPlan, setGeneratedPlan] = useState<any>(null);
+  const [responses, setResponses] = useState<Record<string, number | null>>({});
   // UI state for raw string inputs for responses (allows partial numbers like "-", "0.", "1,5")
   const [responseInputs, setResponseInputs] = useState<Record<number, string>>({});
   const [showUncoded, setShowUncoded] = useState(false); // false = coded, true = uncoded
+  
+  // Computed runData from generatedPlan + responses (for backward compatibility with existing UI code)
+  const runData = useMemo(() => {
+    if (!generatedPlan || !generatedPlan.plan) return [];
+    return generatedPlan.plan.map((row: any) => ({
+      run: row.runOrder,
+      factors: factors.map(f => row[f.name] as number),
+      response: responses[row.runOrder.toString()] ?? null,
+    }));
+  }, [generatedPlan, responses, factors]);
   
   // Solver state for Analysis tab
   const [solveFactorIdx, setSolveFactorIdx] = useState(0);
@@ -115,16 +119,8 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
       
       setGeneratedPlan(plan);
       
-      // Preserve existing response values where possible (match by run order)
-      const existingResponseMap = new Map(runData.map(rd => [rd.run, rd.response]));
-      
-      const newRunData = plan.plan.map((row: any, index: number) => ({
-        run: row.runOrder,
-        factors: factors.map(f => row[f.name] as number),
-        response: existingResponseMap.get(row.runOrder) ?? null,
-      }));
-      
-      setRunData(newRunData);
+      // Responses are preserved automatically since they're keyed by run order
+      // No need to rebuild - existing responses state remains valid
     }
   }, [activeTab, factors, includeCenterPoints, numberOfCenterPoints, randomizeRuns, numberOfReplicates]);
   
@@ -224,20 +220,14 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
           };
           setGeneratedPlan(finalPlan);
           
-          // Build runData from generatedPlan + runResponses
-          const builtRunData = buildRunDataFromPlanAndResponses(
-            finalPlan,
-            config.runResponses,
-            config.factors || factors
-          );
-          
-          if (builtRunData.length > 0) {
-            setRunData(builtRunData);
+          // Load responses from runResponses
+          if (config.runResponses) {
+            setResponses(config.runResponses);
             // Initialize responseInputs from loaded response values
             const inputs: Record<number, string> = {};
-            builtRunData.forEach((rd: any) => {
-              if (rd.response !== null && rd.response !== undefined) {
-                inputs[rd.run] = String(rd.response);
+            Object.entries(config.runResponses).forEach(([runOrder, response]) => {
+              if (response !== null && response !== undefined) {
+                inputs[parseInt(runOrder)] = String(response);
               }
             });
             setResponseInputs(inputs);
@@ -247,14 +237,15 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
       
       // Fallback: Load from legacy runData format if no generatedPlan
       if (!config.generatedPlan && config.runData && Array.isArray(config.runData)) {
-        setRunData(config.runData);
-        // Initialize responseInputs from loaded response values
+        const legacyResponses: Record<string, number | null> = {};
         const inputs: Record<number, string> = {};
         config.runData.forEach((rd: any) => {
+          legacyResponses[rd.run.toString()] = rd.response;
           if (rd.response !== null && rd.response !== undefined) {
             inputs[rd.run] = String(rd.response);
           }
         });
+        setResponses(legacyResponses);
         setResponseInputs(inputs);
       }
     }
@@ -326,11 +317,10 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
   
   const handleSaveData = () => {
     const transformedPlan = transformGeneratedPlanForSaving(generatedPlan, factors);
-    const runResponses = buildRunResponsesFromRunData(runData);
     
     console.log('handleSaveData - transformedPlan:', transformedPlan);
     console.log('handleSaveData - generatedPlan k:', generatedPlan?.k, 'p:', generatedPlan?.p);
-    console.log('handleSaveData - runResponses:', runResponses);
+    console.log('handleSaveData - responses:', responses);
     
     // Only save k and p if they're valid (> 0), otherwise use null to avoid corrupting future loads
     const validK = transformedPlan.k && transformedPlan.k > 0 ? transformedPlan.k : null;
@@ -347,7 +337,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
       numberOfCenterPoints,
       significanceLevel,
       showUncoded,
-      runResponses,
+      runResponses: responses,
       generatedPlan: transformedPlan,
       k: validK,
       p: validP,
@@ -464,13 +454,9 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
     
     setGeneratedPlan(plan);
     
-    const newRunData = plan.plan.map((row: any, index: number) => ({
-      run: row.runOrder,
-      factors: factors.map(f => row[f.name] as number),
-      response: null,
-    }));
-    
-    setRunData(newRunData);
+    // Clear responses for new plan (responses state persists by run order)
+    setResponses({});
+    setResponseInputs({});
     
     toast({
       title: "Fractional Factorial DOE Plan Generated",
@@ -479,7 +465,10 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
   };
   
   const handleResponseChange = (runIndex: number, value: string) => {
-    const runOrderKey = runData[runIndex]?.run;
+    if (!generatedPlan || !generatedPlan.plan) return;
+    
+    const runOrderKey = generatedPlan.plan[runIndex]?.runOrder;
+    if (runOrderKey === undefined) return;
     
     // Store raw string in UI state
     setResponseInputs(prev => ({
@@ -487,11 +476,12 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
       [runOrderKey]: value
     }));
     
-    // Parse and store numeric value in runData
-    const newRunData = [...runData];
+    // Parse and store numeric value in responses
     const parsedValue = parseNumericValue(value);
-    newRunData[runIndex].response = isNaN(parsedValue) ? null : parsedValue;
-    setRunData(newRunData);
+    setResponses(prev => ({
+      ...prev,
+      [runOrderKey.toString()]: isNaN(parsedValue) ? null : parsedValue
+    }));
   };
 
   const generateFractionalOptions = (k: number) => {
@@ -843,7 +833,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                           </p>
                         )}
                         <p className="text-sm text-muted-foreground">
-                          Total Runs: {runData.length}
+                          Total Runs: {generatedPlan.plan.length}
                         </p>
                         <div className="flex flex-wrap gap-2 mt-2">
                           <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800" data-testid="badge-replicates">
@@ -887,7 +877,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                           </TableHeader>
                           <TableBody>
                             {generatedPlan.plan.map((planRow: any, rowIndex: number) => {
-                              const runDataRow = runData.find(r => r.run === planRow.runOrder);
+                              const response = responses[planRow.runOrder.toString()];
                               return (
                                 <TableRow key={rowIndex}>
                                   <TableCell>{planRow.standardOrder}</TableCell>
@@ -923,7 +913,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                   <TableCell>
                                     <Input
                                       type="text"
-                                      value={responseInputs[planRow.runOrder] ?? (runDataRow?.response !== null && runDataRow?.response !== undefined ? String(runDataRow.response) : '')}
+                                      value={responseInputs[planRow.runOrder] ?? (response !== null && response !== undefined ? String(response) : '')}
                                       onChange={(e) => handleResponseChange(rowIndex, e.target.value)}
                                       placeholder="Enter response"
                                       className="w-full"
