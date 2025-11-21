@@ -195,7 +195,12 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
           config.factors || factors
         );
         if (reconstructedPlan) {
-          setGeneratedPlan(reconstructedPlan);
+          // Use database k value if available, otherwise use reconstructed value or factors length
+          const finalPlan = {
+            ...reconstructedPlan,
+            k: config.k || reconstructedPlan.k || factors.length,
+          };
+          setGeneratedPlan(finalPlan);
           
           // Extract responses from generatedPlan.plan[].runResponse
           if (reconstructedPlan.plan && Array.isArray(reconstructedPlan.plan)) {
@@ -297,6 +302,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
       significanceLevel,
       showUncoded,
       generatedPlan: transformGeneratedPlanForSaving(generatedPlan, factors, responses),
+      k: generatedPlan?.k || factors.length,
     });
   };
   
@@ -311,6 +317,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
       significanceLevel,
       showUncoded,
       generatedPlan: transformGeneratedPlanForSaving(generatedPlan, factors, responses),
+      k: generatedPlan?.k || factors.length,
     });
   };
   
