@@ -1284,34 +1284,115 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                             return <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground">No valid data</TableCell></TableRow>;
                           }
 
-                          const n = responses.length;
-                          const grandMean = responses.reduce((a, b) => a + b, 0) / n;
-                          const totalSS = responses.reduce((sum, val) => sum + Math.pow(val - grandMean, 2), 0);
+                          // Build design matrix with factors and interactions
+                          const interactionPairs: Array<{i: number, j: number, name: string}> = [];
+                          for (let i = 0; i < factors.length; i++) {
+                            for (let j = i + 1; j < factors.length; j++) {
+                              interactionPairs.push({i, j, name: `${factors[i].name}×${factors[j].name}`});
+                            }
+                          }
+
+                          const X: number[][] = [];
+                          const y: number[] = [];
+                          const termIndices: Array<{type: string, idx: number, name: string, i?: number, j?: number}> = [];
+                          
+                          // Build term indices
+                          termIndices.push({type: 'intercept', idx: 0, name: 'Intercept'});
+                          factors.forEach((f, i) => termIndices.push({type: 'factor', idx: termIndices.length, name: f.name, i}));
+                          interactionPairs.forEach((p, i) => termIndices.push({type: 'interaction', idx: termIndices.length, name: p.name, i: p.i, j: p.j}));
+
+                          runData.forEach((row, rowIdx) => {
+                            if (row.response !== null && !isNaN(row.response)) {
+                              const row_vals = [1]; // intercept
+                              const factorValues: number[] = [];
+                              factors.forEach(factor => {
+                                const val = generatedPlan.plan[rowIdx]?.[factor.name] ?? 0;
+                                factorValues.push(val);
+                                row_vals.push(val);
+                              });
+                              interactionPairs.forEach(pair => {
+                                row_vals.push(factorValues[pair.i] * factorValues[pair.j]);
+                              });
+                              X.push(row_vals);
+                              y.push(row.response);
+                            }
+                          });
+
+                          const n = y.length;
+                          const p = X[0].length;
+                          const grandMean = y.reduce((a, b) => a + b, 0) / n;
+                          const totalSS = y.reduce((sum, val) => sum + Math.pow(val - grandMean, 2), 0);
                           const totalDF = n - 1;
 
-                          let rows: React.ReactNode[] = [];
-                          let sumSS = 0;
-                          let sumDF = 0;
+                          // Calculate regression using Gaussian elimination
+                          let XtX: number[][] = Array(p).fill(null).map(() => Array(p).fill(0));
+                          let Xty: number[] = Array(p).fill(0);
 
-                          factors.forEach((factor, idx) => {
-                            const factorGroups: Record<number, number[]> = {};
-                            runData.forEach((row, rowIdx) => {
-                              const level = generatedPlan.plan[rowIdx]?.[factor.name] ?? 0;
-                              if (row.response !== null && !isNaN(row.response)) {
-                                if (!factorGroups[level]) factorGroups[level] = [];
-                                factorGroups[level].push(row.response);
+                          for (let i = 0; i < n; i++) {
+                            for (let j = 0; j < p; j++) {
+                              Xty[j] += X[i][j] * y[i];
+                              for (let k = 0; k < p; k++) {
+                                XtX[j][k] += X[i][j] * X[i][k];
                               }
-                            });
+                            }
+                          }
 
-                            const groupMeans = Object.entries(factorGroups).map(([_, vals]) => vals.reduce((a, b) => a + b, 0) / vals.length);
-                            const levelCounts = Object.entries(factorGroups).map(([_, vals]) => vals.length);
-                            const factorSS = levelCounts.reduce((sum, count, i) => sum + count * Math.pow(groupMeans[i] - grandMean, 2), 0);
-                            const factorDF = Object.keys(factorGroups).length - 1;
-                            const factorMS = factorDF > 0 ? factorSS / factorDF : 0;
-                            const errorMS = (totalSS - sumSS - factorSS) / (totalDF - sumDF - factorDF) || 0;
-                            const fRatio = errorMS > 0 ? factorMS / errorMS : 0;
-                            const pValue = fRatio > 0 && factorDF > 0 && (totalDF - sumDF - factorDF) > 0 
-                              ? 1 - jStat.centralF.cdf(fRatio, factorDF, totalDF - sumDF - factorDF) 
+                          // Gaussian elimination
+                          const solveNormalEquations = (A: number[][], b: number[]): number[] => {
+                            const n = A.length;
+                            const aug = A.map((row, i) => [...row, b[i]]);
+                            
+                            for (let i = 0; i < n; i++) {
+                              let maxRow = i;
+                              for (let k = i + 1; k < n; k++) {
+                                if (Math.abs(aug[k][i]) > Math.abs(aug[maxRow][i])) maxRow = k;
+                              }
+                              [aug[i], aug[maxRow]] = [aug[maxRow], aug[i]];
+                              
+                              for (let k = i + 1; k < n; k++) {
+                                const factor = aug[k][i] / aug[i][i];
+                                for (let j = i; j <= n; j++) {
+                                  aug[k][j] -= factor * aug[i][j];
+                                }
+                              }
+                            }
+                            
+                            const x: number[] = Array(n).fill(0);
+                            for (let i = n - 1; i >= 0; i--) {
+                              x[i] = aug[i][n];
+                              for (let j = i + 1; j < n; j++) {
+                                x[i] -= aug[i][j] * x[j];
+                              }
+                              x[i] /= aug[i][i];
+                            }
+                            return x;
+                          };
+
+                          let beta: number[] = [];
+                          try {
+                            beta = solveNormalEquations(XtX, Xty);
+                          } catch {
+                            beta = Xty.map(v => v / (XtX[0][0] || 1));
+                          }
+
+                          // Calculate predictions and model SS
+                          const predictions = X.map(row => row.reduce((sum, val, i) => sum + val * beta[i], 0));
+                          const residuals = y.map((val, i) => val - predictions[i]);
+                          const modelSS = predictions.reduce((sum, pred) => sum + Math.pow(pred - grandMean, 2), 0);
+                          const residualSS = residuals.reduce((sum, res) => sum + Math.pow(res, 2), 0);
+
+                          let rows: React.ReactNode[] = [];
+                          
+                          // Add factor rows
+                          factors.forEach((factor, idx) => {
+                            const termIdx = idx + 1;
+                            const termSS = Math.pow(beta[termIdx], 2) * XtX[termIdx][termIdx];
+                            const termDF = 1;
+                            const termMS = termSS / termDF;
+                            const errorMS = residualSS / (n - p);
+                            const fRatio = errorMS > 0 ? termMS / errorMS : 0;
+                            const pValue = fRatio > 0 && (n - p) > 0 
+                              ? 1 - jStat.centralF.cdf(fRatio, termDF, n - p) 
                               : 1;
 
                             const factorLabel = showUncoded && allFactorsHaveValidLevels()
@@ -1321,9 +1402,9 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                             rows.push(
                               <TableRow key={`factor-${idx}`}>
                                 <TableCell className="font-medium">{factorLabel}</TableCell>
-                                <TableCell className="text-right">{factorDF}</TableCell>
-                                <TableCell className="text-right">{factorSS.toFixed(4)}</TableCell>
-                                <TableCell className="text-right">{factorMS.toFixed(4)}</TableCell>
+                                <TableCell className="text-right">{termDF}</TableCell>
+                                <TableCell className="text-right">{termSS.toFixed(4)}</TableCell>
+                                <TableCell className="text-right">{termMS.toFixed(4)}</TableCell>
                                 <TableCell className="text-right">{fRatio.toFixed(4)}</TableCell>
                                 <TableCell className="text-right">
                                   <span className={pValue < 0.05 ? "text-green-600 font-semibold" : ""}>
@@ -1332,48 +1413,26 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                 </TableCell>
                               </TableRow>
                             );
-
-                            sumSS += factorSS;
-                            sumDF += factorDF;
                           });
 
                           // Add interaction rows
-                          const interactionPairs: Array<{i: number, j: number, name: string}> = [];
-                          for (let i = 0; i < factors.length; i++) {
-                            for (let j = i + 1; j < factors.length; j++) {
-                              interactionPairs.push({i, j, name: `${factors[i].name}×${factors[j].name}`});
-                            }
-                          }
-
                           interactionPairs.forEach((pair, pairIdx) => {
-                            const interactionGroups: Record<number, number[]> = {};
-                            runData.forEach((row, rowIdx) => {
-                              const level1 = generatedPlan.plan[rowIdx]?.[factors[pair.i].name] ?? 0;
-                              const level2 = generatedPlan.plan[rowIdx]?.[factors[pair.j].name] ?? 0;
-                              const interactionLevel = level1 * level2; // -1, 0, or 1
-                              if (row.response !== null && !isNaN(row.response)) {
-                                if (!interactionGroups[interactionLevel]) interactionGroups[interactionLevel] = [];
-                                interactionGroups[interactionLevel].push(row.response);
-                              }
-                            });
-
-                            const groupMeans = Object.entries(interactionGroups).map(([_, vals]) => vals.reduce((a, b) => a + b, 0) / vals.length);
-                            const levelCounts = Object.entries(interactionGroups).map(([_, vals]) => vals.length);
-                            const interactionSS = levelCounts.reduce((sum, count, i) => sum + count * Math.pow(groupMeans[i] - grandMean, 2), 0);
-                            const interactionDF = Object.keys(interactionGroups).length - 1;
-                            const interactionMS = interactionDF > 0 ? interactionSS / interactionDF : 0;
-                            const errorMS = (totalSS - sumSS - interactionSS) / (totalDF - sumDF - interactionDF) || 0;
-                            const fRatio = errorMS > 0 ? interactionMS / errorMS : 0;
-                            const pValue = fRatio > 0 && interactionDF > 0 && (totalDF - sumDF - interactionDF) > 0 
-                              ? 1 - jStat.centralF.cdf(fRatio, interactionDF, totalDF - sumDF - interactionDF) 
+                            const termIdx = factors.length + 1 + pairIdx;
+                            const termSS = Math.pow(beta[termIdx], 2) * XtX[termIdx][termIdx];
+                            const termDF = 1;
+                            const termMS = termSS / termDF;
+                            const errorMS = residualSS / (n - p);
+                            const fRatio = errorMS > 0 ? termMS / errorMS : 0;
+                            const pValue = fRatio > 0 && (n - p) > 0 
+                              ? 1 - jStat.centralF.cdf(fRatio, termDF, n - p) 
                               : 1;
 
                             rows.push(
                               <TableRow key={`interaction-${pairIdx}`}>
                                 <TableCell className="font-medium">{pair.name}</TableCell>
-                                <TableCell className="text-right">{interactionDF}</TableCell>
-                                <TableCell className="text-right">{interactionSS.toFixed(4)}</TableCell>
-                                <TableCell className="text-right">{interactionMS.toFixed(4)}</TableCell>
+                                <TableCell className="text-right">{termDF}</TableCell>
+                                <TableCell className="text-right">{termSS.toFixed(4)}</TableCell>
+                                <TableCell className="text-right">{termMS.toFixed(4)}</TableCell>
                                 <TableCell className="text-right">{fRatio.toFixed(4)}</TableCell>
                                 <TableCell className="text-right">
                                   <span className={pValue < 0.05 ? "text-green-600 font-semibold" : ""}>
@@ -1382,20 +1441,16 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                 </TableCell>
                               </TableRow>
                             );
-
-                            sumSS += interactionSS;
-                            sumDF += interactionDF;
                           });
 
-                          const errorDF = totalDF - sumDF;
-                          const errorSS = totalSS - sumSS;
-                          const errorMS = errorDF > 0 ? errorSS / errorDF : 0;
+                          const errorDF = n - p;
+                          const errorMS = errorDF > 0 ? residualSS / errorDF : 0;
 
                           rows.push(
                             <TableRow key="error">
                               <TableCell className="font-medium">Error</TableCell>
                               <TableCell className="text-right">{errorDF}</TableCell>
-                              <TableCell className="text-right">{errorSS.toFixed(4)}</TableCell>
+                              <TableCell className="text-right">{Math.max(0, residualSS).toFixed(4)}</TableCell>
                               <TableCell className="text-right">{errorMS.toFixed(4)}</TableCell>
                               <TableCell className="text-right">-</TableCell>
                               <TableCell className="text-right">-</TableCell>
