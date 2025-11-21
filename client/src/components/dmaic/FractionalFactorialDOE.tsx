@@ -1258,22 +1258,15 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                           {factors.slice(0, -1).map((factorA, idxA) =>
                             factors.slice(idxA + 1).map((factorB, idxB) => {
                               // Check if interaction is confounded FIRST - before building any traces
-                              const k = factors.length;
-                              let numBaseFactors = k; // default to full factorial
-                              
-                              // Parse design type to get k and p from "2^(k-p)" format
-                              const designMatch = generatedPlan.designType.match(/2\^\((\d+)-(\d+)\)/);
-                              if (designMatch) {
-                                const k_design = parseInt(designMatch[1]);
-                                const p_design = parseInt(designMatch[2]);
-                                numBaseFactors = k_design - p_design;
+                              // Use k and p from plan if available, otherwise assume full factorial
+                              let numBaseFactors = factors.length;
+                              if (generatedPlan.k !== undefined && generatedPlan.p !== undefined) {
+                                numBaseFactors = generatedPlan.k - generatedPlan.p;
                               }
                               
                               const factorAIdx = factors.indexOf(factorA);
                               const factorBIdx = factors.indexOf(factorB);
                               const isInteractionConfounded = factorAIdx >= numBaseFactors || factorBIdx >= numBaseFactors;
-                              
-                              console.log(`Interaction ${factorA.name}×${factorB.name}: designType="${generatedPlan.designType}", match=${!!designMatch}, numBaseFactors=${numBaseFactors}, factorAIdx=${factorAIdx}, factorBIdx=${factorBIdx}, confounded=${isInteractionConfounded}`);
                               
                               // Get unique levels for both factors
                               const factorAUniqueLevels = getFactorLevels(factorA.name);
