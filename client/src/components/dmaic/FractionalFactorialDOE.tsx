@@ -1430,6 +1430,26 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                 });
                               }
 
+                              // If either factor has only one level, show confounded term message
+                              if (factorAHasOneLevel || factorBHasOneLevel) {
+                                const confoundedFactor = factorAHasOneLevel ? factorA.name : factorB.name;
+                                return (
+                                  <Card key={`${idxA}-${idxB}`}>
+                                    <CardHeader>
+                                      <CardTitle>Interaction: {factorA.name} × {factorB.name}</CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="p-8 text-center text-muted-foreground">
+                                      <p className="text-sm">
+                                        This interaction is <strong>confounded</strong> due to the fractional design.
+                                      </p>
+                                      <p className="text-sm mt-2">
+                                        Factor <strong>{confoundedFactor}</strong> has only one level in this fraction, so the interaction between {factorA.name} and {factorB.name} cannot be estimated.
+                                      </p>
+                                    </CardContent>
+                                  </Card>
+                                );
+                              }
+
                               // Generate x-axis tick labels for center and edges
                               const xTickVals = [-1, 0, 1];
                               const xTickLabels = showUncoded && allFactorsHaveValidLevels()
