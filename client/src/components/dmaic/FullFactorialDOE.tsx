@@ -1305,22 +1305,72 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                   const pValue = stdError > 0 ? (1 - jStat.centralT.cdf(Math.abs(tValue), n - p)) * 2 : 1;
                   return { stdError, tValue, pValue };
                 });
+
+                // Transform coefficients from coded to uncoded if needed
+                const displayBeta = showUncoded && allFactorsHaveValidLevels() ? 
+                  (() => {
+                    const transformed = [...beta];
+                    let interceptAdjustment = 0;
+                    
+                    for (let i = 0; i < factors.length; i++) {
+                      const factor = factors[i];
+                      if (factor.type === 'continuous' && factor.lowLevel !== undefined && factor.highLevel !== undefined) {
+                        const low = parseFloat(String(factor.lowLevel));
+                        const high = parseFloat(String(factor.highLevel));
+                        if (!isNaN(low) && !isNaN(high)) {
+                          const center = (low + high) / 2;
+                          const halfRange = (high - low) / 2;
+                          
+                          // β_uncoded = β_coded / halfRange
+                          transformed[i + 1] = beta[i + 1] / halfRange;
+                          // Adjust intercept: β0_uncoded = β0_coded - Σ(β_coded * center / halfRange)
+                          interceptAdjustment += beta[i + 1] * center / halfRange;
+                        }
+                      }
+                    }
+                    
+                    // Transform interactions
+                    for (let i = 0; i < interactionPairs.length; i++) {
+                      const pair = interactionPairs[i];
+                      const [idx1, idx2] = pair.indices;
+                      const factor1 = factors[idx1];
+                      const factor2 = factors[idx2];
+                      
+                      if (factor1.type === 'continuous' && factor2.type === 'continuous' &&
+                          factor1.lowLevel !== undefined && factor1.highLevel !== undefined &&
+                          factor2.lowLevel !== undefined && factor2.highLevel !== undefined) {
+                        const low1 = parseFloat(String(factor1.lowLevel));
+                        const high1 = parseFloat(String(factor1.highLevel));
+                        const low2 = parseFloat(String(factor2.lowLevel));
+                        const high2 = parseFloat(String(factor2.highLevel));
+                        
+                        if (!isNaN(low1) && !isNaN(high1) && !isNaN(low2) && !isNaN(high2)) {
+                          const halfRange1 = (high1 - low1) / 2;
+                          const halfRange2 = (high2 - low2) / 2;
+                          transformed[factors.length + 1 + i] = beta[factors.length + 1 + i] / (halfRange1 * halfRange2);
+                        }
+                      }
+                    }
+                    
+                    transformed[0] = beta[0] - interceptAdjustment;
+                    return transformed;
+                  })() : beta;
                 
                 const handleSolve = () => {
-                  if (p < 2 || beta[solveFactorIdx + 1] === 0) return;
+                  if (p < 2 || displayBeta[solveFactorIdx + 1] === 0) return;
                   // Calculate constraint contribution: sum of (coefficient * constraint_value) for all non-target factors
                   let constraintSum = 0;
                   for (let i = 0; i < factors.length; i++) {
                     if (i !== solveFactorIdx) {
                       const constraintVal = constraintValues[i];
                       if (constraintVal !== null && constraintVal !== undefined && Number.isFinite(constraintVal)) {
-                        constraintSum += beta[i + 1] * constraintVal;
+                        constraintSum += displayBeta[i + 1] * constraintVal;
                       }
                     }
                   }
                   // Solve: targetY = β0 + Σ_{j≠i} βj * constraint_j + βi * Xi
                   // Therefore: Xi = (targetY - β0 - constraintSum) / βi
-                  let result = (targetY - beta[0] - constraintSum) / beta[solveFactorIdx + 1];
+                  let result = (targetY - displayBeta[0] - constraintSum) / displayBeta[solveFactorIdx + 1];
                   setSolverResult(result);
                 };
 
@@ -1329,19 +1379,19 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                     {/* Regression Equation */}
                     <Card>
                       <CardHeader>
-                        <CardTitle>Regression Model (with Interactions)</CardTitle>
+                        <CardTitle>Regression Model {showUncoded && allFactorsHaveValidLevels() ? '(Uncoded)' : '(Coded)'}</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded font-mono text-sm">
-                          <p>Y = {beta[0]?.toFixed(4)}</p>
+                          <p>Y = {displayBeta[0]?.toFixed(4)}</p>
                           {factors.map((factor, i) => (
                             <p key={i}>
-                              &nbsp;&nbsp;&nbsp;&nbsp;{beta[i + 1] >= 0 ? '+' : ''} {beta[i + 1]?.toFixed(4)} × {factor.name}{factor.type === 'continuous' && factor.units ? ` (${factor.units})` : ''}
+                              &nbsp;&nbsp;&nbsp;&nbsp;{displayBeta[i + 1] >= 0 ? '+' : ''} {displayBeta[i + 1]?.toFixed(4)} × {factor.name}{factor.type === 'continuous' && factor.units ? ` (${factor.units})` : ''}
                             </p>
                           ))}
                           {interactionPairs.map((pair, i) => (
                             <p key={`int-${i}`}>
-                              &nbsp;&nbsp;&nbsp;&nbsp;{beta[factors.length + 1 + i] >= 0 ? '+' : ''} {beta[factors.length + 1 + i]?.toFixed(4)} × {pair.name}
+                              &nbsp;&nbsp;&nbsp;&nbsp;{displayBeta[factors.length + 1 + i] >= 0 ? '+' : ''} {displayBeta[factors.length + 1 + i]?.toFixed(4)} × {pair.name}
                             </p>
                           ))}
                         </div>
@@ -1396,7 +1446,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                             <TableBody>
                               <TableRow>
                                 <TableCell className="font-medium">Intercept</TableCell>
-                                <TableCell className="text-right">{beta[0]?.toFixed(6)}</TableCell>
+                                <TableCell className="text-right">{displayBeta[0]?.toFixed(6)}</TableCell>
                                 <TableCell className="text-right">{coeffStats[0]?.stdError.toFixed(4)}</TableCell>
                                 <TableCell className="text-right">{coeffStats[0]?.tValue.toFixed(4)}</TableCell>
                                 <TableCell className={`text-right ${(coeffStats[0]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{coeffStats[0]?.pValue.toFixed(4)}</TableCell>
@@ -1405,7 +1455,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                               {factors.map((factor, i) => (
                                 <TableRow key={i}>
                                   <TableCell className="font-medium">{factor.name}</TableCell>
-                                  <TableCell className="text-right">{beta[i + 1]?.toFixed(6)}</TableCell>
+                                  <TableCell className="text-right">{displayBeta[i + 1]?.toFixed(6)}</TableCell>
                                   <TableCell className="text-right">{coeffStats[i + 1]?.stdError.toFixed(4)}</TableCell>
                                   <TableCell className="text-right">{coeffStats[i + 1]?.tValue.toFixed(4)}</TableCell>
                                   <TableCell className={`text-right ${(coeffStats[i + 1]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{coeffStats[i + 1]?.pValue.toFixed(4)}</TableCell>
@@ -1426,7 +1476,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                               {interactionPairs.map((pair, i) => (
                                 <TableRow key={`int-${i}`}>
                                   <TableCell className="font-medium">{pair.name}</TableCell>
-                                  <TableCell className="text-right">{beta[factors.length + 1 + i]?.toFixed(6)}</TableCell>
+                                  <TableCell className="text-right">{displayBeta[factors.length + 1 + i]?.toFixed(6)}</TableCell>
                                   <TableCell className="text-right">{coeffStats[factors.length + 1 + i]?.stdError.toFixed(4)}</TableCell>
                                   <TableCell className="text-right">{coeffStats[factors.length + 1 + i]?.tValue.toFixed(4)}</TableCell>
                                   <TableCell className={`text-right ${(coeffStats[factors.length + 1 + i]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{coeffStats[factors.length + 1 + i]?.pValue.toFixed(4)}</TableCell>
