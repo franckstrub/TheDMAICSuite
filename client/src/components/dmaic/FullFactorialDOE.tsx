@@ -86,7 +86,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
   const [constraintValues, setConstraintValues] = useState<Record<number, number | null>>({});
   
   // Model reduction - track which factors to include (all enabled by default)
-  const [selectedFactorsForModel, setSelectedFactorsForModel] = useState<Record<number, boolean>>(
+  const [selectedFactorsForModel, setSelectedFactorsForModel] = useState<Record<number | string, boolean>>(
     {}
   );
   
@@ -1285,6 +1285,26 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                 const R_sq = 1 - SS_res / SS_tot;
                 const adj_R_sq = 1 - (1 - R_sq) * (n - 1) / (n - p);
                 const rmse = Math.sqrt(SS_res / (n - p));
+                const residualMean = residuals.reduce((a, b) => a + b, 0) / residuals.length;
+                const residualStd = Math.sqrt(residuals.reduce((sum, r) => sum + Math.pow(r - residualMean, 2), 0) / (residuals.length - 1));
+                const mse = SS_res / (n - p);
+                
+                // Calculate standard errors and t-values for all coefficients
+                const coeffStats = beta.map((b, idx) => {
+                  // Get the diagonal element of (X'X)^-1
+                  let xxtInvDiag = 0;
+                  if (idx === 0) {
+                    xxtInvDiag = 1 / XtX[0][0];
+                  } else {
+                    // Simple approximation for diagonal elements
+                    const denom = XtX[idx][idx] - (idx > 0 ? XtX[idx].slice(0, idx).reduce((sum, v, i) => sum + v * v / (XtX[i][i] || 1), 0) : 0);
+                    xxtInvDiag = Math.abs(denom) > 1e-10 ? 1 / denom : 1 / XtX[idx][idx];
+                  }
+                  const stdError = Math.sqrt(mse * Math.max(0, xxtInvDiag));
+                  const tValue = stdError > 0 ? b / stdError : 0;
+                  const pValue = stdError > 0 ? (1 - jStat.centralT.cdf(Math.abs(tValue), n - p)) * 2 : 1;
+                  return { stdError, tValue, pValue };
+                });
                 
                 const handleSolve = () => {
                   if (p < 2 || beta[solveFactorIdx + 1] === 0) return;
@@ -1365,20 +1385,31 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                           <Table>
                             <TableHeader>
                               <TableRow>
-                                <TableHead>Include</TableHead>
                                 <TableHead>Term</TableHead>
                                 <TableHead className="text-right">Coefficient</TableHead>
+                                <TableHead className="text-right">Std. Error</TableHead>
+                                <TableHead className="text-right">T-value</TableHead>
+                                <TableHead className="text-right">p-value</TableHead>
+                                <TableHead className="text-center">Include</TableHead>
                               </TableRow>
                             </TableHeader>
                             <TableBody>
                               <TableRow>
-                                <TableCell><Checkbox disabled checked /></TableCell>
                                 <TableCell className="font-medium">Intercept</TableCell>
                                 <TableCell className="text-right">{beta[0]?.toFixed(6)}</TableCell>
+                                <TableCell className="text-right">{coeffStats[0]?.stdError.toFixed(4)}</TableCell>
+                                <TableCell className="text-right">{coeffStats[0]?.tValue.toFixed(4)}</TableCell>
+                                <TableCell className={`text-right ${(coeffStats[0]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{coeffStats[0]?.pValue.toFixed(4)}</TableCell>
+                                <TableCell className="text-center"><Checkbox disabled checked /></TableCell>
                               </TableRow>
                               {factors.map((factor, i) => (
                                 <TableRow key={i}>
-                                  <TableCell>
+                                  <TableCell className="font-medium">{factor.name}</TableCell>
+                                  <TableCell className="text-right">{beta[i + 1]?.toFixed(6)}</TableCell>
+                                  <TableCell className="text-right">{coeffStats[i + 1]?.stdError.toFixed(4)}</TableCell>
+                                  <TableCell className="text-right">{coeffStats[i + 1]?.tValue.toFixed(4)}</TableCell>
+                                  <TableCell className={`text-right ${(coeffStats[i + 1]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{coeffStats[i + 1]?.pValue.toFixed(4)}</TableCell>
+                                  <TableCell className="text-center">
                                     <Checkbox
                                       checked={selectedFactorsForModel[i] ?? true}
                                       onCheckedChange={(checked) => {
@@ -1390,13 +1421,16 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                       data-testid={`checkbox-factor-${i}`}
                                     />
                                   </TableCell>
-                                  <TableCell className="font-medium">{factor.name}</TableCell>
-                                  <TableCell className="text-right">{beta[i + 1]?.toFixed(6)}</TableCell>
                                 </TableRow>
                               ))}
                               {interactionPairs.map((pair, i) => (
                                 <TableRow key={`int-${i}`}>
-                                  <TableCell>
+                                  <TableCell className="font-medium">{pair.name}</TableCell>
+                                  <TableCell className="text-right">{beta[factors.length + 1 + i]?.toFixed(6)}</TableCell>
+                                  <TableCell className="text-right">{coeffStats[factors.length + 1 + i]?.stdError.toFixed(4)}</TableCell>
+                                  <TableCell className="text-right">{coeffStats[factors.length + 1 + i]?.tValue.toFixed(4)}</TableCell>
+                                  <TableCell className={`text-right ${(coeffStats[factors.length + 1 + i]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{coeffStats[factors.length + 1 + i]?.pValue.toFixed(4)}</TableCell>
+                                  <TableCell className="text-center">
                                     <Checkbox
                                       checked={selectedFactorsForModel[`int-${i}`] ?? true}
                                       onCheckedChange={(checked) => {
@@ -1408,8 +1442,6 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                       data-testid={`checkbox-interaction-${i}`}
                                     />
                                   </TableCell>
-                                  <TableCell className="font-medium">{pair.name}</TableCell>
-                                  <TableCell className="text-right">{beta[factors.length + 1 + i]?.toFixed(6)}</TableCell>
                                 </TableRow>
                               ))}
                             </TableBody>
@@ -1425,43 +1457,163 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-4">
-                          <div className="grid grid-cols-3 gap-4">
-                            <div>
-                              <p className="text-sm text-muted-foreground">Mean Residual</p>
-                              <p className="text-lg font-bold">{(residuals.reduce((a, b) => a + b, 0) / residuals.length).toFixed(6)}</p>
+                          <div className="flex items-center gap-4 flex-wrap">
+                            <div className="flex items-center gap-2">
+                              <Checkbox
+                                id="residuals-vs-fits"
+                                checked={true}
+                                disabled
+                              />
+                              <Label htmlFor="residuals-vs-fits">Residuals vs Fits</Label>
                             </div>
-                            <div>
-                              <p className="text-sm text-muted-foreground">Std Dev Residuals</p>
-                              <p className="text-lg font-bold">{Math.sqrt(residuals.reduce((sum, r) => sum + r * r, 0) / residuals.length).toFixed(4)}</p>
+                            <div className="flex items-center gap-2">
+                              <Checkbox
+                                id="residuals-vs-order"
+                                checked={true}
+                                disabled
+                              />
+                              <Label htmlFor="residuals-vs-order">Residuals vs Order</Label>
                             </div>
-                            <div>
-                              <p className="text-sm text-muted-foreground">Max Residual</p>
-                              <p className="text-lg font-bold">{Math.max(...residuals.map(Math.abs)).toFixed(4)}</p>
+                            <div className="flex items-center gap-2">
+                              <Checkbox
+                                id="normal-prob-plot"
+                                checked={true}
+                                disabled
+                              />
+                              <Label htmlFor="normal-prob-plot">Normal Probability Plot</Label>
                             </div>
                           </div>
+
+                          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* Residuals vs Fitted Values */}
+                            <Plot
+                              data={[
+                                {
+                                  type: 'scatter',
+                                  mode: 'markers',
+                                  x: predictions,
+                                  y: residuals,
+                                  marker: { color: 'rgb(59, 130, 246)', size: 6 },
+                                } as any,
+                                {
+                                  type: 'scatter',
+                                  mode: 'lines',
+                                  x: predictions,
+                                  y: Array(predictions.length).fill(0),
+                                  line: { color: 'red', dash: 'dash' },
+                                } as any,
+                              ]}
+                              layout={{
+                                title: { text: '<b>Residuals vs Fitted Values</b>' },
+                                xaxis: { title: { text: '<b>Fitted Values</b>' } },
+                                yaxis: { title: { text: '<b>Residuals</b>' } },
+                                showlegend: false,
+                                margin: { l: 60, r: 80, t: 50, b: 60 },
+                              }}
+                              style={{ width: '100%', height: '400px' }}
+                              useResizeHandler
+                              config={{
+                                responsive: true,
+                                displayModeBar: true,
+                                displaylogo: false,
+                              }}
+                            />
+                            
+                            {/* Residuals vs Order */}
+                            <Plot
+                              data={[
+                                {
+                                  type: 'scatter',
+                                  mode: 'lines+markers',
+                                  x: Array.from({ length: residuals.length }, (_, i) => i + 1),
+                                  y: residuals,
+                                  marker: { color: 'rgb(59, 130, 246)', size: 6 },
+                                  line: { color: 'rgb(59, 130, 246)' },
+                                } as any,
+                                {
+                                  type: 'scatter',
+                                  mode: 'lines',
+                                  x: [1, residuals.length],
+                                  y: [0, 0],
+                                  line: { color: 'red', dash: 'dash' },
+                                } as any,
+                              ]}
+                              layout={{
+                                title: { text: '<b>Residuals vs Observation Order</b>' },
+                                xaxis: { title: { text: '<b>Observation Order</b>' } },
+                                yaxis: { title: { text: '<b>Residuals</b>' } },
+                                showlegend: false,
+                                margin: { l: 60, r: 80, t: 50, b: 60 },
+                              }}
+                              style={{ width: '100%', height: '400px' }}
+                              useResizeHandler
+                              config={{
+                                responsive: true,
+                                displayModeBar: true,
+                                displaylogo: false,
+                              }}
+                            />
+
+                            {/* Normal Probability Plot */}
+                            {(() => {
+                              const sorted = [...residuals].sort((a, b) => a - b);
+                              const n_res = sorted.length;
+                              const theoreticalQuantiles = sorted.map((_, i) => {
+                                const p = (i + 0.5) / n_res;
+                                return jStat.normal.inv(p, 0, 1);
+                              });
+                              const lineX = [residualMean - 3 * residualStd, residualMean + 3 * residualStd];
+                              const lineY = [-3, 3];
+                              return (
+                                <Plot
+                                  data={[
+                                    {
+                                      type: 'scatter',
+                                      mode: 'markers',
+                                      x: sorted,
+                                      y: theoreticalQuantiles,
+                                      marker: { color: 'rgb(59, 130, 246)', size: 6 },
+                                      name: 'Residuals'
+                                    } as any,
+                                    {
+                                      type: 'scatter',
+                                      mode: 'lines',
+                                      x: lineX,
+                                      y: lineY,
+                                      line: { color: 'red', dash: 'dash', width: 2 },
+                                      name: 'Normal line'
+                                    } as any,
+                                  ]}
+                                  layout={{
+                                    title: { text: '<b>Normal Probability (Q-Q) Plot</b>' },
+                                    xaxis: { title: { text: '<b>Residuals</b>' }, zeroline: true, showgrid: true },
+                                    yaxis: { title: { text: '<b>Theoretical Quantiles (Z)</b>' }, zeroline: true, showgrid: true },
+                                    showlegend: false,
+                                    margin: { l: 70, r: 80, t: 50, b: 60 },
+                                  }}
+                                  useResizeHandler
+                                  config={{ responsive: true, displayModeBar: true, displaylogo: false }}
+                                  style={{ width: '100%', height: '400px' }}
+                                />
+                              );
+                            })()}
+                          </div>
+
                           <div className="border-t pt-4">
-                            <p className="text-sm font-semibold mb-2">Residual Table (Sample)</p>
-                            <div className="overflow-x-auto">
-                              <Table>
-                                <TableHeader>
-                                  <TableRow>
-                                    <TableHead>Obs</TableHead>
-                                    <TableHead className="text-right">Actual</TableHead>
-                                    <TableHead className="text-right">Predicted</TableHead>
-                                    <TableHead className="text-right">Residual</TableHead>
-                                  </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                  {y.slice(0, 5).map((val, i) => (
-                                    <TableRow key={i}>
-                                      <TableCell>{i + 1}</TableCell>
-                                      <TableCell className="text-right">{val.toFixed(4)}</TableCell>
-                                      <TableCell className="text-right">{predictions[i].toFixed(4)}</TableCell>
-                                      <TableCell className="text-right">{residuals[i].toFixed(4)}</TableCell>
-                                    </TableRow>
-                                  ))}
-                                </TableBody>
-                              </Table>
+                            <p className="text-sm font-semibold mb-2">Residual Statistics</p>
+                            <div className="grid grid-cols-3 gap-4">
+                              <div>
+                                <p className="text-sm text-muted-foreground">Mean Residual</p>
+                                <p className="text-lg font-bold">{residualMean.toFixed(6)}</p>
+                              </div>
+                              <div>
+                                <p className="text-sm text-muted-foreground">Std Dev Residuals</p>
+                                <p className="text-lg font-bold">{residualStd.toFixed(4)}</p>
+                              </div>
+                              <div>
+                                <p className="text-sm text-muted-foreground">Max Residual</p>
+                                <p className="text-lg font-bold">{Math.max(...residuals.map(Math.abs)).toFixed(4)}</p>
+                              </div>
                             </div>
                           </div>
                         </div>
