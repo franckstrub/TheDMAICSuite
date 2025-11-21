@@ -2635,12 +2635,9 @@ export const doeFractionalFactorialConfig = pgTable(
     }>>().default([]),
     
     // Generated plan (persisted to ensure consistency on reload)
-    // Contains complete experimental design with metadata
+    // Contains complete experimental design with metadata and run responses
+    // Each run in the plan includes a runResponse field for storing the response value
     generatedPlan: jsonb("generated_plan"),
-    
-    // Response values keyed by run order
-    // Structure: { "1": 45.2, "2": 38.7, "3": null, ... }
-    runResponses: jsonb("run_responses").$type<Record<string, number | null>>().default({}),
     
     // Design options
     numberOfReplicates: integer("number_of_replicates").default(1),
@@ -2704,12 +2701,9 @@ export const doeFullFactorialConfig = pgTable(
     }>>().default([]),
     
     // Generated plan (persisted to ensure consistency on reload)
-    // Contains complete experimental design with metadata
+    // Contains complete experimental design with metadata and run responses
+    // Each run in the plan includes a runResponse field for storing the response value
     generatedPlan: jsonb("generated_plan"),
-    
-    // Response values keyed by run order
-    // Structure: { "1": 45.2, "2": 38.7, "3": null, ... }
-    runResponses: jsonb("run_responses").$type<Record<string, number | null>>().default({}),
     
     // Design options
     numberOfReplicates: integer("number_of_replicates").default(1),
