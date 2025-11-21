@@ -1986,6 +1986,11 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                 
                 const reducedModel = calculateReducedModel();
                 
+                // Calculate goodness of fit metrics for reduced model
+                const R_sq_red = 1 - reducedModel.SS_res / SS_tot;
+                const adj_R_sq_red = 1 - (1 - R_sq_red) * (n - 1) / (n - reducedModel.p);
+                const rmse_red = Math.sqrt(reducedModel.SS_res / (n - reducedModel.p));
+                
                 // Use reduced model stats
                 const coeffStats = reducedModel.coeffStats;
                 const beta_display = reducedModel.beta;
@@ -2144,15 +2149,15 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                         <div className="grid grid-cols-2 gap-4">
                           <div>
                             <p className="text-sm text-muted-foreground">R²</p>
-                            <p className="text-2xl font-bold">{(R_sq * 100).toFixed(2)}%</p>
+                            <p className="text-2xl font-bold">{(R_sq_red * 100).toFixed(2)}%</p>
                           </div>
                           <div>
                             <p className="text-sm text-muted-foreground">Adjusted R²</p>
-                            <p className="text-2xl font-bold">{(adj_R_sq * 100).toFixed(2)}%</p>
+                            <p className="text-2xl font-bold">{(adj_R_sq_red * 100).toFixed(2)}%</p>
                           </div>
                           <div>
                             <p className="text-sm text-muted-foreground">RMSE</p>
-                            <p className="text-2xl font-bold">{rmse.toFixed(4)}</p>
+                            <p className="text-2xl font-bold">{rmse_red.toFixed(4)}</p>
                           </div>
                           <div>
                             <p className="text-sm text-muted-foreground">N Observations</p>
