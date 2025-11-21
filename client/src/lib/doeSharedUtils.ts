@@ -39,6 +39,7 @@ export function transformGeneratedPlanForSaving(generatedPlan: any, factors: DOE
     resolutionText: resolutionNum > 0 ? toRoman(resolutionNum) : null,
     k: generatedPlan.k || 0,
     p: generatedPlan.p || 0,
+    generators: generatedPlan.generators || [],
   };
 }
 
@@ -67,6 +68,7 @@ export function reconstructGeneratedPlanFromPersisted(
       resolution: persistedData.resolution || 0,
       k: persistedData.k || 0,
       p: persistedData.p || 0,
+      generators: persistedData.generators || [],
     };
   } else {
     return null;
