@@ -1777,7 +1777,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                           // SE_uncoded = SE_coded / halfRange
                           if (transformedStats[i + 1]) {
                             transformedStats[i + 1].stdError = coeffStats[i + 1].stdError / halfRange;
-                            transformedStats[i + 1].tValue = transformed[i + 1] / transformedStats[i + 1].stdError;
+                            // t-value and p-value are INVARIANT: t = β/SE = (β_coded/hr) / (SE_coded/hr) = β_coded/SE_coded
                           }
                           interceptAdjustment += beta[i + 1] * center / halfRange;
                         }
@@ -1809,7 +1809,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                           // SE_uncoded_interaction = SE_coded_interaction / (halfRange1 * halfRange2)
                           if (transformedStats[interactionCoeffIdx]) {
                             transformedStats[interactionCoeffIdx].stdError = coeffStats[interactionCoeffIdx].stdError / (halfRange1 * halfRange2);
-                            transformedStats[interactionCoeffIdx].tValue = transformed[interactionCoeffIdx] / transformedStats[interactionCoeffIdx].stdError;
+                            // t-value and p-value are INVARIANT
                           }
                         }
                       }
@@ -1865,6 +1865,8 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     
                     transformedStats[0].stdError = Math.sqrt(Math.max(0, interceptSESquared));
                     transformedStats[0].tValue = (beta[0] - interceptAdjustment) / transformedStats[0].stdError;
+                    // Recalculate p-value for intercept since its t-value changes (SE is recalculated via variance propagation)
+                    transformedStats[0].pValue = transformedStats[0].stdError > 0 ? 2 * (1 - jStat.studentt.cdf(Math.abs(transformedStats[0].tValue), n - numCoefficients)) : 1;
                   }
                   
                   transformed[0] = beta[0] - interceptAdjustment;
