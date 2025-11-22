@@ -152,6 +152,35 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
     retry: false,
   });
   
+  // Save selected coefficients mutation
+  const saveSelectedCoefficientsMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest(
+        'PATCH',
+        `/api/projects/${projectId}/solutions/${solutionId}/doe-fractional`,
+        {
+          selectedFactorsForModel
+        }
+      );
+    },
+    onSuccess: () => {
+      toast({
+        title: "Coefficient selections saved",
+        description: "Your coefficient selections have been saved successfully.",
+      });
+      queryClient.invalidateQueries({
+        queryKey: [`/api/projects/${projectId}/solutions/${solutionId}/doe-fractional`]
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save coefficient selections.",
+        variant: "destructive",
+      });
+    },
+  });
+  
   // Load data when config is fetched
   useEffect(() => {
     const currentKey = `${projectId}-${solutionId}`;
@@ -222,6 +251,11 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
       
       if (config.showUncoded !== undefined) {
         setShowUncoded(config.showUncoded);
+      }
+      
+      // Load selected factors for model
+      if (config.selectedFactorsForModel) {
+        setSelectedFactorsForModel(config.selectedFactorsForModel);
       }
       
       // Load generatedPlan from persisted format
@@ -2175,8 +2209,26 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
 
                     {/* Coefficients Table with Model Selection */}
                     <Card>
-                      <CardHeader>
+                      <CardHeader className="flex flex-row items-center justify-between">
                         <CardTitle>Regression Coefficients (uncheck to exclude from model)</CardTitle>
+                        <Button 
+                          onClick={() => saveSelectedCoefficientsMutation.mutate()} 
+                          disabled={saveSelectedCoefficientsMutation.isPending}
+                          variant="outline"
+                          size="sm"
+                        >
+                          {saveSelectedCoefficientsMutation.isPending ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              Saving...
+                            </>
+                          ) : (
+                            <>
+                              <Save className="w-4 h-4 mr-2" />
+                              Save Selected Coefficients
+                            </>
+                          )}
+                        </Button>
                       </CardHeader>
                       <CardContent>
                         <div className="overflow-x-auto">
