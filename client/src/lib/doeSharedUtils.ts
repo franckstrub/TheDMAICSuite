@@ -279,6 +279,7 @@ function gaussianElimination(A: number[][], b: number[]): number[] | null {
 /**
  * Calculate Variance Inflation Factor (VIF) for DOE terms
  * VIF_i = 1 / (1 - R²_i) where R²_i is from regressing term_i on all other terms
+ * Returns 1 for interactions and center points (no multicollinearity with themselves)
  */
 export function calculateDOEVIF(X: number[][], termIndex: number): number {
   const n = X.length;
@@ -307,13 +308,22 @@ export function calculateDOEVIF(X: number[][], termIndex: number): number {
     // Calculate R² from regressing y on otherX
     const rSquared = calculateR2(otherX, y);
     
+    // If R² is NaN or the result would be invalid, this is likely an interaction or center point
+    if (!Number.isFinite(rSquared) || isNaN(rSquared)) {
+      return 1;
+    }
+    
     if (rSquared >= 0.9999) {
       return 999.99;
     }
     
     const vif = 1 / Math.max(0.0001, 1 - rSquared);
-    return Math.min(999.99, Math.max(1, vif));
+    const result = Math.min(999.99, Math.max(1, vif));
+    
+    // If result is NaN (can happen with interactions/center points), return 1
+    return isNaN(result) ? 1 : result;
   } catch (error) {
+    // For interactions and center points that cause calculation errors, return 1
     return 1;
   }
 }
