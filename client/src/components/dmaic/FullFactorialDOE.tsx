@@ -2020,15 +2020,17 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                 });
 
                 // Transform coefficients and standard errors from coded to uncoded if needed
+                // Transform the REDUCED model coefficients (what's actually displayed in table)
                 const transformCoefficientsAndSE = () => {
                   if (!showUncoded || !allFactorsHaveValidLevels()) {
-                    return { displayBeta: beta, displayCoeffStats: coeffStats };
+                    return { displayBeta: beta_display, displayCoeffStats: coeffStats };
                   }
                   
-                  const transformed = [...beta];
+                  const transformed = [...beta_display];
                   const transformedStats = coeffStats.map(s => ({ ...s }));
                   let interceptAdjustment = 0;
                   
+                  // For each factor in the original factors list
                   for (let i = 0; i < factors.length; i++) {
                     const factor = factors[i];
                     if (factor.type === 'continuous' && factor.lowValue !== undefined && factor.highValue !== undefined) {
@@ -2038,17 +2040,20 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                         const center = (low + high) / 2;
                         const halfRange = (high - low) / 2;
                         
-                        // β_uncoded = β_coded / halfRange
-                        transformed[i + 1] = beta[i + 1] / halfRange;
-                        // SE_uncoded = SE_coded / halfRange
-                        if (transformedStats[i + 1]) {
-                          transformedStats[i + 1].stdError = coeffStats[i + 1].stdError / halfRange;
-                          // t-value remains the same since t = beta / SE
-                          // Recalculate t-value with transformed coefficients and SE (should be identical)
-                          transformedStats[i + 1].tValue = transformed[i + 1] / transformedStats[i + 1].stdError;
+                        // Check if this factor is in the reduced model
+                        const origColIdx = i + 1;
+                        const reducedColIdx = colMapReverse[origColIdx];
+                        if (reducedColIdx !== undefined && beta_display[reducedColIdx] !== undefined) {
+                          // β_uncoded = β_coded / halfRange
+                          transformed[reducedColIdx] = beta_display[reducedColIdx] / halfRange;
+                          // SE_uncoded = SE_coded / halfRange
+                          if (transformedStats[reducedColIdx]) {
+                            transformedStats[reducedColIdx].stdError = coeffStats[reducedColIdx].stdError / halfRange;
+                            transformedStats[reducedColIdx].tValue = transformed[reducedColIdx] / transformedStats[reducedColIdx].stdError;
+                          }
+                          // Adjust intercept: β0_uncoded = β0_coded - Σ(β_coded * center / halfRange)
+                          interceptAdjustment += beta_display[reducedColIdx] * center / halfRange;
                         }
-                        // Adjust intercept: β0_uncoded = β0_coded - Σ(β_coded * center / halfRange)
-                        interceptAdjustment += beta[i + 1] * center / halfRange;
                       }
                     }
                   }
@@ -2072,12 +2077,15 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                       if (!isNaN(low1) && !isNaN(high1) && !isNaN(low2) && !isNaN(high2)) {
                         const halfRange1 = (high1 - low1) / 2;
                         const halfRange2 = (high2 - low2) / 2;
-                        const interactionCoeffIdx = factors.length + 1 + i;
-                        transformed[interactionCoeffIdx] = beta[interactionCoeffIdx] / (halfRange1 * halfRange2);
-                        // SE_uncoded_interaction = SE_coded_interaction / (halfRange1 * halfRange2)
-                        if (transformedStats[interactionCoeffIdx]) {
-                          transformedStats[interactionCoeffIdx].stdError = coeffStats[interactionCoeffIdx].stdError / (halfRange1 * halfRange2);
-                          transformedStats[interactionCoeffIdx].tValue = transformed[interactionCoeffIdx] / transformedStats[interactionCoeffIdx].stdError;
+                        const origInteractionIdx = factors.length + 1 + i;
+                        const reducedInteractionIdx = colMapReverse[origInteractionIdx];
+                        if (reducedInteractionIdx !== undefined && beta_display[reducedInteractionIdx] !== undefined) {
+                          transformed[reducedInteractionIdx] = beta_display[reducedInteractionIdx] / (halfRange1 * halfRange2);
+                          // SE_uncoded_interaction = SE_coded_interaction / (halfRange1 * halfRange2)
+                          if (transformedStats[reducedInteractionIdx]) {
+                            transformedStats[reducedInteractionIdx].stdError = coeffStats[reducedInteractionIdx].stdError / (halfRange1 * halfRange2);
+                            transformedStats[reducedInteractionIdx].tValue = transformed[reducedInteractionIdx] / transformedStats[reducedInteractionIdx].stdError;
+                          }
                         }
                       }
                     }
@@ -2085,10 +2093,10 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                   
                   // Transform intercept SE as well
                   if (transformedStats[0]) {
-                    transformedStats[0].tValue = (beta[0] - interceptAdjustment) / transformedStats[0].stdError;
+                    transformedStats[0].tValue = (beta_display[0] - interceptAdjustment) / transformedStats[0].stdError;
                   }
                   
-                  transformed[0] = beta[0] - interceptAdjustment;
+                  transformed[0] = beta_display[0] - interceptAdjustment;
                   return { displayBeta: transformed, displayCoeffStats: transformedStats };
                 };
                 
@@ -2266,7 +2274,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                   return (
                                   <TableRow key={i}>
                                     <TableCell className="font-medium w-48">{factor.name}</TableCell>
-                                    <TableCell className="text-right w-24">{beta_display[reducedColIdx]?.toFixed(6)}</TableCell>
+                                    <TableCell className="text-right w-24">{displayBeta[reducedColIdx]?.toFixed(6)}</TableCell>
                                     <TableCell className="text-right w-24">{displayCoeffStats[reducedColIdx]?.stdError.toFixed(4)}</TableCell>
                                     <TableCell className="text-right w-20">{displayCoeffStats[reducedColIdx]?.tValue.toFixed(4)}</TableCell>
                                     <TableCell className={`text-right w-20 ${(displayCoeffStats[reducedColIdx]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{displayCoeffStats[reducedColIdx]?.pValue.toFixed(4)}</TableCell>
@@ -2328,7 +2336,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                   return (
                                   <TableRow key={`int-${i}`}>
                                     <TableCell className="font-medium w-48">{pair.name}</TableCell>
-                                    <TableCell className="text-right w-24">{beta_display[reducedColIdx]?.toFixed(6)}</TableCell>
+                                    <TableCell className="text-right w-24">{displayBeta[reducedColIdx]?.toFixed(6)}</TableCell>
                                     <TableCell className="text-right w-24">{displayCoeffStats[reducedColIdx]?.stdError.toFixed(4)}</TableCell>
                                     <TableCell className="text-right w-20">{displayCoeffStats[reducedColIdx]?.tValue.toFixed(4)}</TableCell>
                                     <TableCell className={`text-right w-20 ${(displayCoeffStats[reducedColIdx]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{displayCoeffStats[reducedColIdx]?.pValue.toFixed(4)}</TableCell>
