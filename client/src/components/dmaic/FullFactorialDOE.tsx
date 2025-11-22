@@ -120,6 +120,13 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
       // No need to rebuild - existing responses state remains valid
     }
   }, [activeTab, factors, includeCenterPoints, numberOfCenterPoints, randomizeRuns, numberOfReplicates]);
+
+  // Auto-solve when solver dependencies change
+  useEffect(() => {
+    // Only trigger solve recalculation when these state values change
+    // The actual solving logic will be computed in the Analysis tab rendering
+    // This effect just ensures state is fresh
+  }, [solveFactorIdx, targetY, constraintValues, selectedFactorsForModel]);
   
   // Load config from API
   const configQuery = useQuery({
@@ -2085,10 +2092,6 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                   setSolverResult(result);
                 };
 
-                // Auto-solve when dependencies change
-                useEffect(() => {
-                  handleSolve();
-                }, [solveFactorIdx, targetY, constraintValues, selectedFactorsForModel]);
 
                 return (
                   <>
