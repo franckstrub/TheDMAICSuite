@@ -1814,10 +1814,8 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   setSolverResult(result);
                 };
 
-                // Auto-solve when solver dependencies change
-                useEffect(() => {
-                  handleSolve();
-                }, [solveFactorIdx, targetY, constraintValues]);
+                // Auto-solve immediately when this component mounts/updates
+                handleSolve();
 
                 return (
                   <>
