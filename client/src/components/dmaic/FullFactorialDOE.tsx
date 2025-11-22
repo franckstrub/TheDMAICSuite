@@ -2049,7 +2049,8 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                           // SE_uncoded = SE_coded / halfRange
                           if (transformedStats[reducedColIdx]) {
                             transformedStats[reducedColIdx].stdError = coeffStats[reducedColIdx].stdError / halfRange;
-                            transformedStats[reducedColIdx].tValue = transformed[reducedColIdx] / transformedStats[reducedColIdx].stdError;
+                            // t-value and p-value are INVARIANT: t = β/SE = (β_coded/hr) / (SE_coded/hr) = β_coded/SE_coded
+                            // So we keep them unchanged - no need to recalculate
                           }
                           // Adjust intercept: β0_uncoded = β0_coded - Σ(β_coded * center / halfRange)
                           interceptAdjustment += beta_display[reducedColIdx] * center / halfRange;
@@ -2084,7 +2085,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                           // SE_uncoded_interaction = SE_coded_interaction / (halfRange1 * halfRange2)
                           if (transformedStats[reducedInteractionIdx]) {
                             transformedStats[reducedInteractionIdx].stdError = coeffStats[reducedInteractionIdx].stdError / (halfRange1 * halfRange2);
-                            transformedStats[reducedInteractionIdx].tValue = transformed[reducedInteractionIdx] / transformedStats[reducedInteractionIdx].stdError;
+                            // t-value and p-value are INVARIANT
                           }
                         }
                       }
@@ -2150,6 +2151,8 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                     
                     transformedStats[0].stdError = Math.sqrt(Math.max(0, interceptSESquared));
                     transformedStats[0].tValue = (beta_display[0] - interceptAdjustment) / transformedStats[0].stdError;
+                    // Recalculate p-value for intercept since its t-value changes (SE is recalculated via variance propagation)
+                    transformedStats[0].pValue = transformedStats[0].stdError > 0 ? 2 * (1 - jStat.studentt.cdf(Math.abs(transformedStats[0].tValue), reducedModel.n - reducedModel.p)) : 1;
                   }
                   
                   transformed[0] = beta_display[0] - interceptAdjustment;
