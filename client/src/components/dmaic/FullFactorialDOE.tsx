@@ -89,8 +89,19 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
   // Solver state for Analysis tab
   const [solveFactorIdx, setSolveFactorIdx] = useState(0);
   const [targetY, setTargetY] = useState(100);
+  const [targetYDisplay, setTargetYDisplay] = useState('100');
   const [solverResult, setSolverResult] = useState<number | null>(null);
   const [constraintValues, setConstraintValues] = useState<Record<number, number | null>>({});
+  const [constraintDisplay, setConstraintDisplay] = useState<Record<number, string>>({});
+  
+  // Helper function to parse decimal values accepting both "," and "." separators
+  const parseDecimalValue = (str: string): number | null => {
+    if (str === '' || str === null) return null;
+    // Replace "," with "." for parsing
+    const normalized = String(str).trim().replace(',', '.');
+    const parsed = parseFloat(normalized);
+    return isNaN(parsed) ? null : parsed;
+  };
   
   // Model reduction - track which factors to include (all enabled by default)
   const [selectedFactorsForModel, setSelectedFactorsForModel] = useState<Record<number | string, boolean>>(
@@ -2765,9 +2776,16 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                           <div>
                             <Label>Target Y Value</Label>
                             <Input
-                              type="number"
-                              value={targetY}
-                              onChange={(e) => setTargetY(parseFloat(e.target.value) || mean_y)}
+                              type="text"
+                              value={targetYDisplay}
+                              onChange={(e) => {
+                                setTargetYDisplay(e.target.value);
+                                const parsed = parseDecimalValue(e.target.value);
+                                if (parsed !== null) {
+                                  setTargetY(parsed);
+                                }
+                              }}
+                              placeholder="Enter target Y value (use . or , for decimals)"
                               data-testid="input-solver-target-y"
                             />
                           </div>
@@ -2801,17 +2819,21 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                       </Label>
                                       <Input
                                         id={`constraint-${idx}`}
-                                        type="number"
-                                        step="any"
-                                        value={constraintValues[idx] ?? ''}
+                                        type="text"
+                                        value={constraintDisplay[idx] ?? ''}
                                         onChange={(e) => {
-                                          const value = e.target.value === '' ? null : parseFloat(e.target.value);
+                                          const displayVal = e.target.value;
+                                          setConstraintDisplay({
+                                            ...constraintDisplay,
+                                            [idx]: displayVal
+                                          });
+                                          const value = displayVal === '' ? null : parseDecimalValue(displayVal);
                                           setConstraintValues({
                                             ...constraintValues,
                                             [idx]: value
                                           });
                                         }}
-                                        placeholder={`Enter ${factor.name} value`}
+                                        placeholder={`Enter ${factor.name} value (use . or ,)`}
                                         data-testid={`input-constraint-${idx}`}
                                       />
                                     </div>
