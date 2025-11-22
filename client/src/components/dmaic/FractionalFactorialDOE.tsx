@@ -96,6 +96,11 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
   const [solverResult, setSolverResult] = useState<number | null>(null);
   const [constraintValues, setConstraintValues] = useState<Record<number, number | null>>({});
   
+  // Model reduction - track which factors to include (all enabled by default)
+  const [selectedFactorsForModel, setSelectedFactorsForModel] = useState<Record<number | string, boolean>>(
+    {}
+  );
+  
   // Ref to store the solve function so it can be called by useEffect
   const solveRef = useRef<(() => void) | null>(null);
 
@@ -105,11 +110,6 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
       solveRef.current();
     }
   }, [solveFactorIdx, targetY, constraintValues, selectedFactorsForModel]);
-  
-  // Model reduction - track which factors to include (all enabled by default)
-  const [selectedFactorsForModel, setSelectedFactorsForModel] = useState<Record<number | string, boolean>>(
-    {}
-  );
   
   // Tab persistence
   const [activeTab, setActiveTab] = useState<string>(() => {
