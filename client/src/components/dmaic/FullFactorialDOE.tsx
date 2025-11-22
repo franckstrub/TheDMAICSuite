@@ -2095,10 +2095,8 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                   setSolverResult(result);
                 };
 
-                // Auto-solve when solver dependencies change
-                useEffect(() => {
-                  handleSolve();
-                }, [solveFactorIdx, targetY, constraintValues, selectedFactorsForModel]);
+                // Auto-solve immediately when this component mounts/updates
+                handleSolve();
 
                 return (
                   <>
