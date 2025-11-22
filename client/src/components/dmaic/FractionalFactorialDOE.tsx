@@ -1816,8 +1816,54 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     }
                   }
                   
-                  // Transform intercept SE as well
+                  // Transform intercept SE using variance propagation
+                  // β₀_uncoded = β₀_coded - Σ(β_coded * center / halfRange)
+                  // SE(β₀_uncoded)² = SE(β₀_coded)² + Σ((center / halfRange)² * SE(βᵢ_coded)²)
                   if (transformedStats[0]) {
+                    let interceptSESquared = coeffStats[0].stdError ** 2;
+                    
+                    // Add variance contributions from each factor
+                    for (let i = 0; i < factors.length; i++) {
+                      const factor = factors[i];
+                      if (factor.type === 'continuous' && factor.lowValue !== undefined && factor.highValue !== undefined) {
+                        const low = parseFloat(String(factor.lowValue));
+                        const high = parseFloat(String(factor.highValue));
+                        if (!isNaN(low) && !isNaN(high)) {
+                          const center = (low + high) / 2;
+                          const halfRange = (high - low) / 2;
+                          
+                          if (Number.isFinite(beta[i + 1]) && Number.isFinite(coeffStats[i + 1]?.stdError)) {
+                            const weight = center / halfRange;
+                            interceptSESquared += (weight ** 2) * (coeffStats[i + 1].stdError ** 2);
+                          }
+                        }
+                      }
+                    }
+                    
+                    // Add variance contributions from interactions
+                    for (let i = 0; i < interactionPairs.length; i++) {
+                      const pair = interactionPairs[i];
+                      const idx1 = pair.i;
+                      const idx2 = pair.j;
+                      const factor1 = factors[idx1];
+                      const factor2 = factors[idx2];
+                      
+                      if (factor1.type === 'continuous' && factor2.type === 'continuous' &&
+                          factor1.lowValue !== undefined && factor1.highValue !== undefined &&
+                          factor2.lowValue !== undefined && factor2.highValue !== undefined) {
+                        const low1 = parseFloat(String(factor1.lowValue));
+                        const high1 = parseFloat(String(factor1.highValue));
+                        const low2 = parseFloat(String(factor2.lowValue));
+                        const high2 = parseFloat(String(factor2.highValue));
+                        
+                        if (!isNaN(low1) && !isNaN(high1) && !isNaN(low2) && !isNaN(high2)) {
+                          // For interactions, the center term is 0 (no interaction centers in DOE)
+                          // So no variance contribution from interactions
+                        }
+                      }
+                    }
+                    
+                    transformedStats[0].stdError = Math.sqrt(Math.max(0, interceptSESquared));
                     transformedStats[0].tValue = (beta[0] - interceptAdjustment) / transformedStats[0].stdError;
                   }
                   
