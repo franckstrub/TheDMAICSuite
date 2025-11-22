@@ -1604,7 +1604,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                             );
                           });
 
-                          // Calculate curvature if center points exist
+                          // Calculate curvature if center points exist AND are included in model
                           let curvatureSS = 0;
                           let curvatureDF = 0;
                           let curvatureMS = 0;
@@ -1612,7 +1612,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                           let curvaturePValue = 1;
                           let curveEffect = 0;
                           
-                          if (includeCenterPoints) {
+                          if (includeCenterPoints && selectedFactorsForModel['centerPoint'] !== false) {
                             // Separate center points from factorial points
                             const centerPointIndices: number[] = [];
                             const factorialPointIndices: number[] = [];

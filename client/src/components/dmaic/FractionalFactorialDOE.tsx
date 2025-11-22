@@ -1954,8 +1954,8 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                   );
                                 });
 
-                                // Calculate curvature effect if center points exist
-                                if (includeCenterPoints) {
+                                // Calculate curvature effect if center points exist AND are included in model
+                                if (includeCenterPoints && selectedFactorsForModel['centerPoint'] !== false) {
                                   const centerPointIndices: number[] = [];
                                   const factorialPointIndices: number[] = [];
                                   
