@@ -2086,7 +2086,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                 };
 
                 // Auto-solve when dependencies change
-                React.useEffect(() => {
+                useEffect(() => {
                   handleSolve();
                 }, [solveFactorIdx, targetY, constraintValues, selectedFactorsForModel]);
 
