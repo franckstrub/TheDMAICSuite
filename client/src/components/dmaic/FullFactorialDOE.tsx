@@ -121,9 +121,15 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
     }
   }, [activeTab, factors, includeCenterPoints, numberOfCenterPoints, randomizeRuns, numberOfReplicates]);
 
-  // Auto-solve will be triggered by useEffect when dependencies change
-  // The actual solve function is defined inside the Analysis tab rendering
-  // and will be auto-triggered when those dependencies change
+  // Ref to store the solve function so it can be called by useEffect
+  const solveRef = useRef<(() => void) | null>(null);
+
+  // Auto-solve when solver dependencies change
+  useEffect(() => {
+    if (solveRef.current) {
+      solveRef.current();
+    }
+  }, [solveFactorIdx, targetY, constraintValues, selectedFactorsForModel]);
   
   // Load config from API
   const configQuery = useQuery({
@@ -2095,8 +2101,8 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                   setSolverResult(result);
                 };
 
-                // Auto-solve immediately when this component mounts/updates
-                handleSolve();
+                // Store solve function in ref so top-level useEffect can call it
+                solveRef.current = handleSolve;
 
                 return (
                   <>
