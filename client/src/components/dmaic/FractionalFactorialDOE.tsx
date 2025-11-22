@@ -1894,10 +1894,14 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     if (i !== solveFactorIdx && selectedFactorsForModel[i] !== false) {
                       const constraintVal = constraintValues[i];
                       if (constraintVal !== null && constraintVal !== undefined && Number.isFinite(constraintVal)) {
+                        // Use displayBeta (uncoded coefficients)
                         constraintSum += displayBeta[i + 1] * constraintVal;
                       }
                     }
                   }
+                  // Solve using UNCODED equation: targetY = β0_uncoded + Σ_{j≠i} βj_uncoded * constraint_j + βi_uncoded * Xi
+                  // Therefore: Xi = (targetY - β0_uncoded - constraintSum) / βi_uncoded
+                  // User enters target and constraints in uncoded space, result is also uncoded
                   let result = (targetY - displayBeta[0] - constraintSum) / displayBeta[solveFactorIdx + 1];
                   setSolverResult(result);
                 };
