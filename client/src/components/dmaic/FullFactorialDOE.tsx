@@ -2170,7 +2170,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                   
                   const origColIdx = solveFactorIdx + 1;
                   const reducedColIdx = colMapReverse[origColIdx];
-                  if (reducedColIdx === undefined || beta_display[reducedColIdx] === 0) return;
+                  if (reducedColIdx === undefined || displayBeta[reducedColIdx] === 0) return;
                   
                   // Calculate constraint contribution: sum of (coefficient * constraint_value) for all non-target factors that are included
                   let constraintSum = 0;
@@ -2181,14 +2181,16 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                         const origCol = i + 1;
                         const redCol = colMapReverse[origCol];
                         if (redCol !== undefined) {
-                          constraintSum += beta_display[redCol] * constraintVal;
+                          // Use displayBeta (uncoded coefficients)
+                          constraintSum += displayBeta[redCol] * constraintVal;
                         }
                       }
                     }
                   }
-                  // Solve: targetY = β0 + Σ_{j≠i} βj * constraint_j + βi * Xi
-                  // Therefore: Xi = (targetY - β0 - constraintSum) / βi
-                  let result = (targetY - displayBeta[0] - constraintSum) / beta_display[reducedColIdx];
+                  // Solve using UNCODED equation: targetY = β0_uncoded + Σ_{j≠i} βj_uncoded * constraint_j + βi_uncoded * Xi
+                  // Therefore: Xi = (targetY - β0_uncoded - constraintSum) / βi_uncoded
+                  // User enters target and constraints in uncoded space, result is also uncoded
+                  let result = (targetY - displayBeta[0] - constraintSum) / displayBeta[reducedColIdx];
                   setSolverResult(result);
                 };
 
