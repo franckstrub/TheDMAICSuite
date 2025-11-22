@@ -104,7 +104,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
     if (solveRef.current) {
       solveRef.current();
     }
-  }, [solveFactorIdx, targetY, constraintValues]);
+  }, [solveFactorIdx, targetY, constraintValues, selectedFactorsForModel]);
   
   // Model reduction - track which factors to include (all enabled by default)
   const [selectedFactorsForModel, setSelectedFactorsForModel] = useState<Record<number | string, boolean>>(
