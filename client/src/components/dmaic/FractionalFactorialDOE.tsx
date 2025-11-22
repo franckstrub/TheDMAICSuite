@@ -1753,6 +1753,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 });
 
                 // Transform coefficients and standard errors from coded to uncoded if needed
+                // Note: For fractional DOE, beta and beta_display are the same (no model reduction by coefficient selection)
                 const transformCoefficientsAndSE = () => {
                   if (!showUncoded || !allFactorsHaveValidLevels()) {
                     return { displayBeta: beta, displayCoeffStats: coeffStats };
@@ -1776,7 +1777,6 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                           // SE_uncoded = SE_coded / halfRange
                           if (transformedStats[i + 1]) {
                             transformedStats[i + 1].stdError = coeffStats[i + 1].stdError / halfRange;
-                            // t-value remains the same since t = beta / SE
                             transformedStats[i + 1].tValue = transformed[i + 1] / transformedStats[i + 1].stdError;
                           }
                           interceptAdjustment += beta[i + 1] * center / halfRange;
