@@ -1752,62 +1752,85 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   return { stdError, tValue, pValue };
                 });
 
-                // Transform coefficients from coded to uncoded if needed
-                const displayBeta = showUncoded && allFactorsHaveValidLevels() ? 
-                  (() => {
-                    const transformed = [...beta];
-                    let interceptAdjustment = 0;
-                    
-                    for (let i = 0; i < factors.length; i++) {
-                      const factor = factors[i];
-                      if (factor.type === 'continuous' && factor.lowValue !== undefined && factor.highValue !== undefined) {
-                        const low = parseFloat(String(factor.lowValue));
-                        const high = parseFloat(String(factor.highValue));
-                        if (!isNaN(low) && !isNaN(high)) {
-                          const center = (low + high) / 2;
-                          const halfRange = (high - low) / 2;
-                          
-                          if (Number.isFinite(beta[i + 1])) {
-                            transformed[i + 1] = beta[i + 1] / halfRange;
-                            interceptAdjustment += beta[i + 1] * center / halfRange;
-                          }
-                        }
-                      }
-                    }
-                    
-                    for (let i = 0; i < interactionPairs.length; i++) {
-                      const pair = interactionPairs[i];
-                      const idx1 = pair.i;
-                      const idx2 = pair.j;
-                      const factor1 = factors[idx1];
-                      const factor2 = factors[idx2];
-                      
-                      if (factor1.type === 'continuous' && factor2.type === 'continuous' &&
-                          factor1.lowValue !== undefined && factor1.highValue !== undefined &&
-                          factor2.lowValue !== undefined && factor2.highValue !== undefined) {
-                        const low1 = parseFloat(String(factor1.lowValue));
-                        const high1 = parseFloat(String(factor1.highValue));
-                        const low2 = parseFloat(String(factor2.lowValue));
-                        const high2 = parseFloat(String(factor2.highValue));
+                // Transform coefficients and standard errors from coded to uncoded if needed
+                const transformCoefficientsAndSE = () => {
+                  if (!showUncoded || !allFactorsHaveValidLevels()) {
+                    return { displayBeta: beta, displayCoeffStats: coeffStats };
+                  }
+                  
+                  const transformed = [...beta];
+                  const transformedStats = coeffStats.map(s => ({ ...s }));
+                  let interceptAdjustment = 0;
+                  
+                  for (let i = 0; i < factors.length; i++) {
+                    const factor = factors[i];
+                    if (factor.type === 'continuous' && factor.lowValue !== undefined && factor.highValue !== undefined) {
+                      const low = parseFloat(String(factor.lowValue));
+                      const high = parseFloat(String(factor.highValue));
+                      if (!isNaN(low) && !isNaN(high)) {
+                        const center = (low + high) / 2;
+                        const halfRange = (high - low) / 2;
                         
-                        if (!isNaN(low1) && !isNaN(high1) && !isNaN(low2) && !isNaN(high2)) {
-                          const halfRange1 = (high1 - low1) / 2;
-                          const halfRange2 = (high2 - low2) / 2;
-                          if (Number.isFinite(beta[factors.length + 1 + i])) {
-                            transformed[factors.length + 1 + i] = beta[factors.length + 1 + i] / (halfRange1 * halfRange2);
+                        if (Number.isFinite(beta[i + 1])) {
+                          transformed[i + 1] = beta[i + 1] / halfRange;
+                          // SE_uncoded = SE_coded / halfRange
+                          if (transformedStats[i + 1]) {
+                            transformedStats[i + 1].stdError = coeffStats[i + 1].stdError / halfRange;
+                            // t-value remains the same since t = beta / SE
+                            transformedStats[i + 1].tValue = transformed[i + 1] / transformedStats[i + 1].stdError;
+                          }
+                          interceptAdjustment += beta[i + 1] * center / halfRange;
+                        }
+                      }
+                    }
+                  }
+                  
+                  for (let i = 0; i < interactionPairs.length; i++) {
+                    const pair = interactionPairs[i];
+                    const idx1 = pair.i;
+                    const idx2 = pair.j;
+                    const factor1 = factors[idx1];
+                    const factor2 = factors[idx2];
+                    
+                    if (factor1.type === 'continuous' && factor2.type === 'continuous' &&
+                        factor1.lowValue !== undefined && factor1.highValue !== undefined &&
+                        factor2.lowValue !== undefined && factor2.highValue !== undefined) {
+                      const low1 = parseFloat(String(factor1.lowValue));
+                      const high1 = parseFloat(String(factor1.highValue));
+                      const low2 = parseFloat(String(factor2.lowValue));
+                      const high2 = parseFloat(String(factor2.highValue));
+                      
+                      if (!isNaN(low1) && !isNaN(high1) && !isNaN(low2) && !isNaN(high2)) {
+                        const halfRange1 = (high1 - low1) / 2;
+                        const halfRange2 = (high2 - low2) / 2;
+                        const interactionCoeffIdx = factors.length + 1 + i;
+                        if (Number.isFinite(beta[interactionCoeffIdx])) {
+                          transformed[interactionCoeffIdx] = beta[interactionCoeffIdx] / (halfRange1 * halfRange2);
+                          // SE_uncoded_interaction = SE_coded_interaction / (halfRange1 * halfRange2)
+                          if (transformedStats[interactionCoeffIdx]) {
+                            transformedStats[interactionCoeffIdx].stdError = coeffStats[interactionCoeffIdx].stdError / (halfRange1 * halfRange2);
+                            transformedStats[interactionCoeffIdx].tValue = transformed[interactionCoeffIdx] / transformedStats[interactionCoeffIdx].stdError;
                           }
                         }
                       }
                     }
-                    
-                    transformed[0] = beta[0] - interceptAdjustment;
-                    
-                    // If transformation resulted in non-finite values, use coded instead
-                    if (!transformed.every(v => Number.isFinite(v))) {
-                      return beta;
-                    }
-                    return transformed;
-                  })() : beta;
+                  }
+                  
+                  // Transform intercept SE as well
+                  if (transformedStats[0]) {
+                    transformedStats[0].tValue = (beta[0] - interceptAdjustment) / transformedStats[0].stdError;
+                  }
+                  
+                  transformed[0] = beta[0] - interceptAdjustment;
+                  
+                  // If transformation resulted in non-finite values, use coded instead
+                  if (!transformed.every(v => Number.isFinite(v))) {
+                    return { displayBeta: beta, displayCoeffStats: coeffStats };
+                  }
+                  return { displayBeta: transformed, displayCoeffStats: transformedStats };
+                };
+                
+                const { displayBeta, displayCoeffStats } = transformCoefficientsAndSE();
                 
                 const handleSolve = () => {
                   if (baseFactorCount < 1 || displayBeta[solveFactorIdx + 1] === 0) return;
@@ -2103,9 +2126,9 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                               <TableRow>
                                 <TableCell className="font-medium">Intercept</TableCell>
                                 <TableCell className="text-right">{displayBeta[0]?.toFixed(6)}</TableCell>
-                                <TableCell className="text-right">{coeffStats[0]?.stdError.toFixed(4)}</TableCell>
-                                <TableCell className="text-right">{coeffStats[0]?.tValue.toFixed(4)}</TableCell>
-                                <TableCell className={`text-right ${(coeffStats[0]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{coeffStats[0]?.pValue.toFixed(4)}</TableCell>
+                                <TableCell className="text-right">{displayCoeffStats[0]?.stdError.toFixed(4)}</TableCell>
+                                <TableCell className="text-right">{displayCoeffStats[0]?.tValue.toFixed(4)}</TableCell>
+                                <TableCell className={`text-right ${(displayCoeffStats[0]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{displayCoeffStats[0]?.pValue.toFixed(4)}</TableCell>
                                 <TableCell className="text-right">-</TableCell>
                                 <TableCell className="text-center"><Checkbox disabled checked /></TableCell>
                               </TableRow>
@@ -2123,9 +2146,9 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                 <TableRow key={i}>
                                   <TableCell className="font-medium">{factor.name}</TableCell>
                                   <TableCell className="text-right">{displayBeta[i + 1]?.toFixed(6)}</TableCell>
-                                  <TableCell className="text-right">{coeffStats[i + 1]?.stdError.toFixed(4)}</TableCell>
-                                  <TableCell className="text-right">{coeffStats[i + 1]?.tValue.toFixed(4)}</TableCell>
-                                  <TableCell className={`text-right ${(coeffStats[i + 1]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{coeffStats[i + 1]?.pValue.toFixed(4)}</TableCell>
+                                  <TableCell className="text-right">{displayCoeffStats[i + 1]?.stdError.toFixed(4)}</TableCell>
+                                  <TableCell className="text-right">{displayCoeffStats[i + 1]?.tValue.toFixed(4)}</TableCell>
+                                  <TableCell className={`text-right ${(displayCoeffStats[i + 1]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{displayCoeffStats[i + 1]?.pValue.toFixed(4)}</TableCell>
                                   <TableCell className={`text-right ${isHighVIF ? 'text-red-600 font-semibold' : isModerateVIF ? 'text-yellow-400 font-semibold' : ''}`}>{vif !== null ? vif.toFixed(2) : '-'}</TableCell>
                                   <TableCell className="text-center">
                                     <Checkbox
@@ -2156,9 +2179,9 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                 <TableRow key={`int-${i}`}>
                                   <TableCell className="font-medium">{pair.name}</TableCell>
                                   <TableCell className="text-right">{displayBeta[factors.length + 1 + i]?.toFixed(6)}</TableCell>
-                                  <TableCell className="text-right">{coeffStats[factors.length + 1 + i]?.stdError.toFixed(4)}</TableCell>
-                                  <TableCell className="text-right">{coeffStats[factors.length + 1 + i]?.tValue.toFixed(4)}</TableCell>
-                                  <TableCell className={`text-right ${(coeffStats[factors.length + 1 + i]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{coeffStats[factors.length + 1 + i]?.pValue.toFixed(4)}</TableCell>
+                                  <TableCell className="text-right">{displayCoeffStats[factors.length + 1 + i]?.stdError.toFixed(4)}</TableCell>
+                                  <TableCell className="text-right">{displayCoeffStats[factors.length + 1 + i]?.tValue.toFixed(4)}</TableCell>
+                                  <TableCell className={`text-right ${(displayCoeffStats[factors.length + 1 + i]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{displayCoeffStats[factors.length + 1 + i]?.pValue.toFixed(4)}</TableCell>
                                   <TableCell className={`text-right ${isHighVIF ? 'text-red-600 font-semibold' : isModerateVIF ? 'text-yellow-400 font-semibold' : ''}`}>{vif !== null ? vif.toFixed(2) : '-'}</TableCell>
                                   <TableCell className="text-center">
                                     <Checkbox
