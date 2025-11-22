@@ -2214,7 +2214,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                             if (reducedColIdx === undefined) return null;
                             return (
                               <p key={i}>
-                                &nbsp;&nbsp;&nbsp;&nbsp;{beta_display[reducedColIdx] >= 0 ? '+' : ''} {beta_display[reducedColIdx]?.toFixed(4)} × {factor.name}{factor.type === 'continuous' && factor.units ? ` (${factor.units})` : ''}
+                                &nbsp;&nbsp;&nbsp;&nbsp;{displayBeta[reducedColIdx] >= 0 ? '+' : ''} {displayBeta[reducedColIdx]?.toFixed(4)} × {factor.name}{factor.type === 'continuous' && factor.units ? ` (${factor.units})` : ''}
                               </p>
                             );
                           })}
@@ -2225,7 +2225,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                             if (reducedColIdx === undefined) return null;
                             return (
                               <p key={`int-${i}`}>
-                                &nbsp;&nbsp;&nbsp;&nbsp;{beta_display[reducedColIdx] >= 0 ? '+' : ''} {beta_display[reducedColIdx]?.toFixed(4)} × {pair.name}
+                                &nbsp;&nbsp;&nbsp;&nbsp;{displayBeta[reducedColIdx] >= 0 ? '+' : ''} {displayBeta[reducedColIdx]?.toFixed(4)} × {pair.name}
                               </p>
                             );
                           })}
