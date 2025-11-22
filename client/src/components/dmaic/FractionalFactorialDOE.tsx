@@ -1725,102 +1725,223 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   beta[0] = mean_y;
                 }
 
-                const predictions = X.map(row => row.reduce((sum, val, i) => sum + val * beta[i], 0));
-                const residuals = y.map((val, i) => val - predictions[i]);
-                const SS_res = residuals.reduce((sum, val) => sum + Math.pow(val, 2), 0);
-                const R_sq = 1 - SS_res / SS_tot;
-                const adj_R_sq = 1 - (1 - R_sq) * (n - 1) / (n - numCoefficients);
-                const rmse = Math.sqrt(SS_res / (n - numCoefficients));
+                // Apply model reduction based on selectedFactorsForModel
+                const selectedFactorIndices = Array.from({length: baseFactorCount}).map((_, i) => i).filter(i => selectedFactorsForModel[i] !== false);
+                const selectedInteractionIndices = interactionPairs.map((_, i) => i).filter(i => selectedFactorsForModel[`int-${i}`] !== false);
+                const centerPointSelected = selectedFactorsForModel['centerPoint'] !== false;
+                
+                let finalBeta = beta;
+                let finalNumCoefficients = numCoefficients;
+                let X_final = X;
+                let predictions: number[];
+                let residuals: number[];
+                let SS_res: number;
+                let R_sq: number;
+                let adj_R_sq: number;
+                let rmse: number;
+                let mse: number;
+                
+                if (selectedFactorIndices.length < baseFactorCount || selectedInteractionIndices.length < interactionPairs.length || !centerPointSelected) {
+                  // Build reduced X matrix with only selected factors
+                  const X_reduced: number[][] = [];
+                  
+                  X.forEach((row, rowIdx) => {
+                    const reduced_row = [row[0]]; // Always include intercept
+                    
+                    // Add selected base factors only
+                    for (let i = 0; i < baseFactorCount; i++) {
+                      if (selectedFactorIndices.includes(i)) {
+                        reduced_row.push(row[i + 1]);
+                      }
+                    }
+                    
+                    // Add selected interactions only
+                    for (let i = 0; i < interactionPairs.length; i++) {
+                      if (selectedInteractionIndices.includes(i)) {
+                        reduced_row.push(row[baseFactorCount + 1 + i]);
+                      }
+                    }
+                    
+                    X_reduced.push(reduced_row);
+                  });
+                  
+                  // Recalculate X'X and X'y for reduced model
+                  const X_reduced_cols = X_reduced[0].length;
+                  let XtX_reduced: number[][] = Array(X_reduced_cols).fill(null).map(() => Array(X_reduced_cols).fill(0));
+                  let Xty_reduced: number[] = Array(X_reduced_cols).fill(0);
+                  
+                  for (let i = 0; i < n; i++) {
+                    for (let j = 0; j < X_reduced_cols; j++) {
+                      Xty_reduced[j] += X_reduced[i][j] * y[i];
+                      for (let k = 0; k < X_reduced_cols; k++) {
+                        XtX_reduced[j][k] += X_reduced[i][j] * X_reduced[i][k];
+                      }
+                    }
+                  }
+                  
+                  // Solve reduced model
+                  let beta_reduced: number[] = [];
+                  if (Math.abs(XtX_reduced[0][0]) > 1e-10) {
+                    try {
+                      beta_reduced = solveNormalEquations(XtX_reduced, Xty_reduced);
+                    } catch (e) {
+                      beta_reduced = Xty_reduced.map(v => v / (XtX_reduced[0][0] || 1));
+                    }
+                  } else {
+                    beta_reduced = Xty_reduced.map(v => v / (XtX_reduced[0][0] || 1));
+                  }
+                  
+                  if (!beta_reduced.every(b => Number.isFinite(b))) {
+                    beta_reduced = Array(X_reduced_cols).fill(0);
+                    beta_reduced[0] = mean_y;
+                  }
+                  
+                  finalBeta = beta_reduced;
+                  finalNumCoefficients = X_reduced_cols;
+                  X_final = X_reduced;
+                }
+                
+                predictions = X_final.map(row => row.reduce((sum, val, i) => sum + val * finalBeta[i], 0));
+                residuals = y.map((val, i) => val - predictions[i]);
+                SS_res = residuals.reduce((sum, val) => sum + Math.pow(val, 2), 0);
+                R_sq = 1 - SS_res / SS_tot;
+                adj_R_sq = 1 - (1 - R_sq) * (n - 1) / (n - finalNumCoefficients);
+                rmse = Math.sqrt(SS_res / (n - finalNumCoefficients));
                 const residualMean = residuals.reduce((a, b) => a + b, 0) / residuals.length;
                 const residualStd = Math.sqrt(residuals.reduce((sum, r) => sum + Math.pow(r - residualMean, 2), 0) / (residuals.length - 1));
-                const mse = SS_res / (n - numCoefficients);
+                mse = SS_res / (n - finalNumCoefficients);
                 
-                // Calculate standard errors and t-values for all coefficients
-                const coeffStats = beta.map((b, idx) => {
-                  // Get the diagonal element of (X'X)^-1
+                // Calculate standard errors and t-values for reduced model coefficients
+                const coeffStats = finalBeta.map((b, idx) => {
                   let xxtInvDiag = 0;
                   if (idx === 0) {
-                    xxtInvDiag = 1 / XtX[0][0];
+                    xxtInvDiag = 1 / X_final[0].reduce((sum, v, j) => sum + (j === 0 ? v * v : 0), 0);
                   } else {
-                    // Simple approximation for diagonal elements
-                    const denom = XtX[idx][idx] - (idx > 0 ? XtX[idx].slice(0, idx).reduce((sum, v, i) => sum + v * v / (XtX[i][i] || 1), 0) : 0);
-                    xxtInvDiag = Math.abs(denom) > 1e-10 ? 1 / denom : 1 / XtX[idx][idx];
+                    xxtInvDiag = 1 / (X_final.reduce((sum, row) => sum + row[idx] * row[idx], 0) - X_final[0].length);
                   }
-                  const stdError = Math.sqrt(mse * Math.max(0, xxtInvDiag));
+                  const stdError = Math.sqrt(mse * Math.max(0, Math.abs(xxtInvDiag)));
                   const tValue = stdError > 0 ? b / stdError : 0;
-                  const pValue = stdError > 0 ? 2 * (1 - jStat.studentt.cdf(Math.abs(tValue), n - numCoefficients)) : 1;
+                  const pValue = stdError > 0 ? 2 * (1 - jStat.studentt.cdf(Math.abs(tValue), n - finalNumCoefficients)) : 1;
                   return { stdError, tValue, pValue };
                 });
 
-                // Transform coefficients from coded to uncoded if needed
-                const displayBeta = showUncoded && allFactorsHaveValidLevels() ? 
+                // Transform coefficients from coded to uncoded (always use uncoded for solver and display)
+                const displayBeta = allFactorsHaveValidLevels() ? 
                   (() => {
-                    const transformed = [...beta];
+                    const transformed = [...finalBeta];
                     let interceptAdjustment = 0;
+                    let colIdx = 1;
                     
-                    for (let i = 0; i < factors.length; i++) {
-                      const factor = factors[i];
-                      if (factor.type === 'continuous' && factor.lowValue !== undefined && factor.highValue !== undefined) {
-                        const low = parseFloat(String(factor.lowValue));
-                        const high = parseFloat(String(factor.highValue));
-                        if (!isNaN(low) && !isNaN(high)) {
-                          const center = (low + high) / 2;
-                          const halfRange = (high - low) / 2;
-                          
-                          if (Number.isFinite(beta[i + 1])) {
-                            transformed[i + 1] = beta[i + 1] / halfRange;
-                            interceptAdjustment += beta[i + 1] * center / halfRange;
+                    // Transform selected base factors only
+                    for (let i = 0; i < baseFactorCount; i++) {
+                      if (selectedFactorIndices.includes(i)) {
+                        const factor = factors[i];
+                        if (factor.type === 'continuous' && factor.lowValue !== undefined && factor.highValue !== undefined) {
+                          const low = parseFloat(String(factor.lowValue));
+                          const high = parseFloat(String(factor.highValue));
+                          if (!isNaN(low) && !isNaN(high)) {
+                            const center = (low + high) / 2;
+                            const halfRange = (high - low) / 2;
+                            
+                            if (Number.isFinite(finalBeta[colIdx])) {
+                              transformed[colIdx] = finalBeta[colIdx] / halfRange;
+                              interceptAdjustment += finalBeta[colIdx] * center / halfRange;
+                            }
                           }
                         }
+                        colIdx++;
                       }
                     }
                     
+                    // Transform selected interactions only
                     for (let i = 0; i < interactionPairs.length; i++) {
-                      const pair = interactionPairs[i];
-                      const idx1 = pair.i;
-                      const idx2 = pair.j;
-                      const factor1 = factors[idx1];
-                      const factor2 = factors[idx2];
-                      
-                      if (factor1.type === 'continuous' && factor2.type === 'continuous' &&
-                          factor1.lowValue !== undefined && factor1.highValue !== undefined &&
-                          factor2.lowValue !== undefined && factor2.highValue !== undefined) {
-                        const low1 = parseFloat(String(factor1.lowValue));
-                        const high1 = parseFloat(String(factor1.highValue));
-                        const low2 = parseFloat(String(factor2.lowValue));
-                        const high2 = parseFloat(String(factor2.highValue));
+                      if (selectedInteractionIndices.includes(i)) {
+                        const pair = interactionPairs[i];
+                        const idx1 = pair.i;
+                        const idx2 = pair.j;
+                        const factor1 = factors[idx1];
+                        const factor2 = factors[idx2];
                         
-                        if (!isNaN(low1) && !isNaN(high1) && !isNaN(low2) && !isNaN(high2)) {
-                          const halfRange1 = (high1 - low1) / 2;
-                          const halfRange2 = (high2 - low2) / 2;
-                          if (Number.isFinite(beta[factors.length + 1 + i])) {
-                            transformed[factors.length + 1 + i] = beta[factors.length + 1 + i] / (halfRange1 * halfRange2);
+                        if (factor1.type === 'continuous' && factor2.type === 'continuous' &&
+                            factor1.lowValue !== undefined && factor1.highValue !== undefined &&
+                            factor2.lowValue !== undefined && factor2.highValue !== undefined) {
+                          const low1 = parseFloat(String(factor1.lowValue));
+                          const high1 = parseFloat(String(factor1.highValue));
+                          const low2 = parseFloat(String(factor2.lowValue));
+                          const high2 = parseFloat(String(factor2.highValue));
+                          
+                          if (!isNaN(low1) && !isNaN(high1) && !isNaN(low2) && !isNaN(high2)) {
+                            const halfRange1 = (high1 - low1) / 2;
+                            const halfRange2 = (high2 - low2) / 2;
+                            if (Number.isFinite(finalBeta[colIdx])) {
+                              transformed[colIdx] = finalBeta[colIdx] / (halfRange1 * halfRange2);
+                            }
                           }
                         }
+                        colIdx++;
                       }
                     }
                     
-                    transformed[0] = beta[0] - interceptAdjustment;
+                    transformed[0] = finalBeta[0] - interceptAdjustment;
                     
                     // If transformation resulted in non-finite values, use coded instead
                     if (!transformed.every(v => Number.isFinite(v))) {
-                      return beta;
+                      return finalBeta;
                     }
                     return transformed;
-                  })() : beta;
+                  })() : finalBeta;
                 
                 const handleSolve = () => {
-                  if (baseFactorCount < 1 || displayBeta[solveFactorIdx + 1] === 0) return;
+                  // Only allow solving for selected factors
+                  if (!selectedFactorIndices.includes(solveFactorIdx)) {
+                    setSolverResult(null);
+                    return;
+                  }
+                  
+                  // Map solveFactorIdx to column index in displayBeta
+                  let solveBetaIdx = 1;
+                  for (let i = 0; i < solveFactorIdx; i++) {
+                    if (selectedFactorIndices.includes(i)) {
+                      solveBetaIdx++;
+                    }
+                  }
+                  
+                  if (baseFactorCount < 1 || displayBeta[solveBetaIdx] === 0) {
+                    setSolverResult(null);
+                    return;
+                  }
+                  
                   let constraintSum = 0;
-                  for (let i = 0; i < factors.length; i++) {
-                    if (i !== solveFactorIdx) {
+                  let constraintBetaIdx = 1;
+                  
+                  // Add constraint sums only for selected factors (not the solve factor)
+                  for (let i = 0; i < baseFactorCount; i++) {
+                    if (i !== solveFactorIdx && selectedFactorIndices.includes(i)) {
                       const constraintVal = constraintValues[i];
                       if (constraintVal !== null && constraintVal !== undefined && Number.isFinite(constraintVal)) {
-                        constraintSum += displayBeta[i + 1] * constraintVal;
+                        constraintSum += displayBeta[constraintBetaIdx] * constraintVal;
+                      }
+                    }
+                    if (selectedFactorIndices.includes(i) && i !== solveFactorIdx) {
+                      constraintBetaIdx++;
+                    }
+                  }
+                  
+                  // Add interaction constraints if selected
+                  for (let i = 0; i < interactionPairs.length; i++) {
+                    if (selectedInteractionIndices.includes(i)) {
+                      const pair = interactionPairs[i];
+                      // Calculate interaction term value
+                      const val1 = constraintValues[pair.i];
+                      const val2 = constraintValues[pair.j];
+                      if (val1 !== null && val1 !== undefined && val2 !== null && val2 !== undefined && 
+                          Number.isFinite(val1) && Number.isFinite(val2)) {
+                        constraintSum += displayBeta[1 + selectedFactorIndices.length + selectedInteractionIndices.indexOf(i)] * val1 * val2;
                       }
                     }
                   }
-                  let result = (targetY - displayBeta[0] - constraintSum) / displayBeta[solveFactorIdx + 1];
+                  
+                  let result = (targetY - displayBeta[0] - constraintSum) / displayBeta[solveBetaIdx];
                   setSolverResult(result);
                 };
 
@@ -1837,20 +1958,23 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                       <CardContent>
                         <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded font-mono text-sm">
                           <p>Y = {Number.isFinite(displayBeta[0]) ? displayBeta[0].toFixed(4) : 'N/A'}</p>
-                          {Array.from({length: baseFactorCount}).map((_, i) => (
-                            Number.isFinite(displayBeta[i + 1]) && (
-                              <p key={i}>
-                                &nbsp;&nbsp;&nbsp;&nbsp;{displayBeta[i + 1] >= 0 ? '+' : ''} {displayBeta[i + 1].toFixed(4)} × {factors[i].name}{factors[i].type === 'continuous' && factors[i].units ? ` (${factors[i].units})` : ''}
+                          {selectedFactorIndices.map((factorIdx, betaIdx) => {
+                            const coeff = displayBeta[betaIdx + 1];
+                            return Number.isFinite(coeff) && (
+                              <p key={factorIdx}>
+                                &nbsp;&nbsp;&nbsp;&nbsp;{coeff >= 0 ? '+' : ''} {coeff.toFixed(4)} × {factors[factorIdx].name}{factors[factorIdx].type === 'continuous' && factors[factorIdx].units ? ` (${factors[factorIdx].units})` : ''}
                               </p>
-                            )
-                          ))}
-                          {interactionPairs.map((pair, i) => (
-                            Number.isFinite(displayBeta[baseFactorCount + 1 + i]) && (
-                              <p key={`int-${i}`}>
-                                &nbsp;&nbsp;&nbsp;&nbsp;{displayBeta[baseFactorCount + 1 + i] >= 0 ? '+' : ''} {displayBeta[baseFactorCount + 1 + i].toFixed(4)} × {pair.name}
+                            );
+                          })}
+                          {selectedInteractionIndices.map((intIdx, displayIdx) => {
+                            const coeff = displayBeta[1 + selectedFactorIndices.length + displayIdx];
+                            const pair = interactionPairs[intIdx];
+                            return Number.isFinite(coeff) && (
+                              <p key={`int-${intIdx}`}>
+                                &nbsp;&nbsp;&nbsp;&nbsp;{coeff >= 0 ? '+' : ''} {coeff.toFixed(4)} × {pair.name}
                               </p>
-                            )
-                          ))}
+                            );
+                          })}
                           {displayBeta.every(v => !Number.isFinite(v)) && (
                             <p className="text-muted-foreground">Unable to compute regression equation. Check data validity.</p>
                           )}

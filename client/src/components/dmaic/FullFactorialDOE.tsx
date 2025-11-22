@@ -2019,56 +2019,58 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                   colMapReverse[origCol] = reducedIdx;
                 });
 
-                // Transform coefficients from coded to uncoded if needed
-                const displayBeta = showUncoded && allFactorsHaveValidLevels() ? 
+                // Transform coefficients from coded to uncoded (always use uncoded for solver and display)
+                const displayBeta = allFactorsHaveValidLevels() ? 
                   (() => {
-                    const transformed = [...beta];
+                    const transformed = [...beta_display];
                     let interceptAdjustment = 0;
                     
-                    for (let i = 0; i < factors.length; i++) {
-                      const factor = factors[i];
-                      if (factor.type === 'continuous' && factor.lowValue !== undefined && factor.highValue !== undefined) {
-                        const low = parseFloat(String(factor.lowValue));
-                        const high = parseFloat(String(factor.highValue));
-                        if (!isNaN(low) && !isNaN(high)) {
-                          const center = (low + high) / 2;
-                          const halfRange = (high - low) / 2;
-                          
-                          // β_uncoded = β_coded / halfRange
-                          transformed[i + 1] = beta[i + 1] / halfRange;
-                          // Adjust intercept: β0_uncoded = β0_coded - Σ(β_coded * center / halfRange)
-                          interceptAdjustment += beta[i + 1] * center / halfRange;
-                        }
-                      }
-                    }
-                    
-                    // Transform interactions
-                    for (let i = 0; i < interactionPairs.length; i++) {
-                      const pair = interactionPairs[i];
-                      const idx1 = pair.i;
-                      const idx2 = pair.j;
-                      const factor1 = factors[idx1];
-                      const factor2 = factors[idx2];
+                    // Transform only included factors
+                    colMap.forEach((origColIdx, reducedIdx) => {
+                      if (origColIdx === 0) return; // Skip intercept for now
                       
-                      if (factor1.type === 'continuous' && factor2.type === 'continuous' &&
-                          factor1.lowValue !== undefined && factor1.highValue !== undefined &&
-                          factor2.lowValue !== undefined && factor2.highValue !== undefined) {
-                        const low1 = parseFloat(String(factor1.lowValue));
-                        const high1 = parseFloat(String(factor1.highValue));
-                        const low2 = parseFloat(String(factor2.lowValue));
-                        const high2 = parseFloat(String(factor2.highValue));
+                      if (origColIdx <= factors.length) {
+                        // This is a factor coefficient
+                        const factorIdx = origColIdx - 1;
+                        const factor = factors[factorIdx];
+                        if (factor.type === 'continuous' && factor.lowValue !== undefined && factor.highValue !== undefined) {
+                          const low = parseFloat(String(factor.lowValue));
+                          const high = parseFloat(String(factor.highValue));
+                          if (!isNaN(low) && !isNaN(high)) {
+                            const center = (low + high) / 2;
+                            const halfRange = (high - low) / 2;
+                            
+                            transformed[reducedIdx] = beta_display[reducedIdx] / halfRange;
+                            interceptAdjustment += beta_display[reducedIdx] * center / halfRange;
+                          }
+                        }
+                      } else {
+                        // This is an interaction coefficient
+                        const intIdx = origColIdx - factors.length - 1;
+                        const pair = interactionPairs[intIdx];
+                        const factor1 = factors[pair.i];
+                        const factor2 = factors[pair.j];
                         
-                        if (!isNaN(low1) && !isNaN(high1) && !isNaN(low2) && !isNaN(high2)) {
-                          const halfRange1 = (high1 - low1) / 2;
-                          const halfRange2 = (high2 - low2) / 2;
-                          transformed[factors.length + 1 + i] = beta[factors.length + 1 + i] / (halfRange1 * halfRange2);
+                        if (factor1.type === 'continuous' && factor2.type === 'continuous' &&
+                            factor1.lowValue !== undefined && factor1.highValue !== undefined &&
+                            factor2.lowValue !== undefined && factor2.highValue !== undefined) {
+                          const low1 = parseFloat(String(factor1.lowValue));
+                          const high1 = parseFloat(String(factor1.highValue));
+                          const low2 = parseFloat(String(factor2.lowValue));
+                          const high2 = parseFloat(String(factor2.highValue));
+                          
+                          if (!isNaN(low1) && !isNaN(high1) && !isNaN(low2) && !isNaN(high2)) {
+                            const halfRange1 = (high1 - low1) / 2;
+                            const halfRange2 = (high2 - low2) / 2;
+                            transformed[reducedIdx] = beta_display[reducedIdx] / (halfRange1 * halfRange2);
+                          }
                         }
                       }
-                    }
+                    });
                     
-                    transformed[0] = beta[0] - interceptAdjustment;
+                    transformed[0] = beta_display[0] - interceptAdjustment;
                     return transformed;
-                  })() : beta;
+                  })() : beta_display;
                 
                 const handleSolve = () => {
                   // Check if solve factor is included in the model
@@ -2079,7 +2081,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                   
                   const origColIdx = solveFactorIdx + 1;
                   const reducedColIdx = colMapReverse[origColIdx];
-                  if (reducedColIdx === undefined || beta_display[reducedColIdx] === 0) return;
+                  if (reducedColIdx === undefined || displayBeta[reducedColIdx] === 0) return;
                   
                   // Calculate constraint contribution: sum of (coefficient * constraint_value) for all non-target factors that are included
                   let constraintSum = 0;
@@ -2090,14 +2092,30 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                         const origCol = i + 1;
                         const redCol = colMapReverse[origCol];
                         if (redCol !== undefined) {
-                          constraintSum += beta_display[redCol] * constraintVal;
+                          constraintSum += displayBeta[redCol] * constraintVal;
+                        }
+                      }
+                    }
+                  }
+                  // Add interaction constraints if needed
+                  for (let i = 0; i < interactionPairs.length; i++) {
+                    if (selectedFactorsForModel[`int-${i}`] !== false) {
+                      const pair = interactionPairs[i];
+                      const val1 = constraintValues[pair.i];
+                      const val2 = constraintValues[pair.j];
+                      if (val1 !== null && val1 !== undefined && val2 !== null && val2 !== undefined && 
+                          Number.isFinite(val1) && Number.isFinite(val2)) {
+                        const origColIdx = factors.length + 1 + i;
+                        const redCol = colMapReverse[origColIdx];
+                        if (redCol !== undefined) {
+                          constraintSum += displayBeta[redCol] * val1 * val2;
                         }
                       }
                     }
                   }
                   // Solve: targetY = β0 + Σ_{j≠i} βj * constraint_j + βi * Xi
                   // Therefore: Xi = (targetY - β0 - constraintSum) / βi
-                  let result = (targetY - displayBeta[0] - constraintSum) / beta_display[reducedColIdx];
+                  let result = (targetY - displayBeta[0] - constraintSum) / displayBeta[reducedColIdx];
                   setSolverResult(result);
                 };
 
@@ -2126,7 +2144,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                             if (reducedColIdx === undefined) return null;
                             return (
                               <p key={i}>
-                                &nbsp;&nbsp;&nbsp;&nbsp;{beta_display[reducedColIdx] >= 0 ? '+' : ''} {beta_display[reducedColIdx]?.toFixed(4)} × {factor.name}{factor.type === 'continuous' && factor.units ? ` (${factor.units})` : ''}
+                                &nbsp;&nbsp;&nbsp;&nbsp;{displayBeta[reducedColIdx] >= 0 ? '+' : ''} {displayBeta[reducedColIdx]?.toFixed(4)} × {factor.name}{factor.type === 'continuous' && factor.units ? ` (${factor.units})` : ''}
                               </p>
                             );
                           })}
@@ -2137,7 +2155,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                             if (reducedColIdx === undefined) return null;
                             return (
                               <p key={`int-${i}`}>
-                                &nbsp;&nbsp;&nbsp;&nbsp;{beta_display[reducedColIdx] >= 0 ? '+' : ''} {beta_display[reducedColIdx]?.toFixed(4)} × {pair.name}
+                                &nbsp;&nbsp;&nbsp;&nbsp;{displayBeta[reducedColIdx] >= 0 ? '+' : ''} {displayBeta[reducedColIdx]?.toFixed(4)} × {pair.name}
                               </p>
                             );
                           })}
