@@ -1932,6 +1932,10 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                   const n_reduced = y_reduced.length;
                   const p_reduced = X_reduced[0].length;
                   
+                  // Calculate total sum of squares for reduced data
+                  const mean_y_reduced = y_reduced.reduce((a, b) => a + b, 0) / n_reduced;
+                  const SS_tot_reduced = y_reduced.reduce((sum, val) => sum + Math.pow(val - mean_y_reduced, 2), 0);
+                  
                   // Calculate X'X and X'y for reduced model
                   let XtX_red: number[][] = Array(p_reduced).fill(null).map(() => Array(p_reduced).fill(0));
                   let Xty_red: number[] = Array(p_reduced).fill(0);
@@ -1959,9 +1963,9 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                   
                   // Calculate predictions, residuals, and statistics for reduced model
                   const predictions_red = X_reduced.map(row => row.reduce((sum, val, i) => sum + val * beta_red[i], 0));
-                  const residuals_red = y.map((val, i) => val - predictions_red[i]);
+                  const residuals_red = y_reduced.map((val, i) => val - predictions_red[i]);
                   const SS_res_red = residuals_red.reduce((sum, val) => sum + Math.pow(val, 2), 0);
-                  const mse_red = SS_res_red / Math.max(1, n - p_reduced);
+                  const mse_red = SS_res_red / Math.max(1, n_reduced - p_reduced);
                   
                   // Calculate coefficient stats for reduced model
                   const coeffStats_red = beta_red.map((b, idx) => {
@@ -1974,7 +1978,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                     }
                     const stdError = Math.sqrt(mse_red * Math.max(0, xxtInvDiag));
                     const tValue = stdError > 0 ? b / stdError : 0;
-                    const pValue = stdError > 0 ? 2 * (1 - jStat.studentt.cdf(Math.abs(tValue), n - p_reduced)) : 1;
+                    const pValue = stdError > 0 ? 2 * (1 - jStat.studentt.cdf(Math.abs(tValue), n_reduced - p_reduced)) : 1;
                     return { stdError, tValue, pValue };
                   });
                   
@@ -1986,17 +1990,19 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                     predictions: predictions_red,
                     residuals: residuals_red,
                     SS_res: SS_res_red,
+                    SS_tot: SS_tot_reduced,
                     mse: mse_red,
-                    p: p_reduced
+                    p: p_reduced,
+                    n: n_reduced
                   };
                 };
                 
                 const reducedModel = calculateReducedModel();
                 
                 // Calculate goodness of fit metrics for reduced model
-                const R_sq_red = 1 - reducedModel.SS_res / SS_tot;
-                const adj_R_sq_red = 1 - (1 - R_sq_red) * (n - 1) / (n - reducedModel.p);
-                const rmse_red = Math.sqrt(reducedModel.SS_res / (n - reducedModel.p));
+                const R_sq_red = 1 - reducedModel.SS_res / reducedModel.SS_tot;
+                const adj_R_sq_red = 1 - (1 - R_sq_red) * (reducedModel.n - 1) / (reducedModel.n - reducedModel.p);
+                const rmse_red = Math.sqrt(reducedModel.SS_res / (reducedModel.n - reducedModel.p));
                 
                 // Use reduced model stats
                 const coeffStats = reducedModel.coeffStats;
@@ -2169,7 +2175,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                           </div>
                           <div>
                             <p className="text-sm text-muted-foreground">N Observations</p>
-                            <p className="text-2xl font-bold">{n}</p>
+                            <p className="text-2xl font-bold">{reducedModel.n}</p>
                           </div>
                         </div>
                       </CardContent>
@@ -2388,7 +2394,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                     <TableCell className="text-right w-24">{curvatureSE.toFixed(4)}</TableCell>
                                     <TableCell className="text-right w-20">{curvatureTValue.toFixed(4)}</TableCell>
                                     <TableCell className={`text-right w-20 ${curvaturePValue < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{curvaturePValue.toFixed(4)}</TableCell>
-                                    <TableCell className="text-right w-16">-</TableCell>
+                                    <TableCell className="text-right w-16">1.00</TableCell>
                                     <TableCell className="text-center w-16">
                                       <Checkbox
                                         checked={true}
