@@ -1881,10 +1881,17 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 const { displayBeta, displayCoeffStats } = transformCoefficientsAndSE();
                 
                 const handleSolve = () => {
-                  if (baseFactorCount < 1 || displayBeta[solveFactorIdx + 1] === 0) return;
+                  // Check if solve factor is included in the model
+                  if (selectedFactorsForModel[solveFactorIdx] === false || baseFactorCount < 1) {
+                    setSolverResult(null);
+                    return;
+                  }
+                  
+                  if (displayBeta[solveFactorIdx + 1] === 0) return;
                   let constraintSum = 0;
                   for (let i = 0; i < factors.length; i++) {
-                    if (i !== solveFactorIdx) {
+                    // Only include constraints for factors that are NOT the solve factor and ARE included in the model
+                    if (i !== solveFactorIdx && selectedFactorsForModel[i] !== false) {
                       const constraintVal = constraintValues[i];
                       if (constraintVal !== null && constraintVal !== undefined && Number.isFinite(constraintVal)) {
                         constraintSum += displayBeta[i + 1] * constraintVal;
@@ -2464,9 +2471,11 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                {factors.map((f, i) => (
-                                  <SelectItem key={i} value={String(i)}>{f.name}</SelectItem>
-                                ))}
+                                {factors.map((f, i) => {
+                                  // Only show factors that are included in the model
+                                  if (selectedFactorsForModel[i] === false) return null;
+                                  return <SelectItem key={i} value={String(i)}>{f.name}</SelectItem>;
+                                })}
                               </SelectContent>
                             </Select>
                           </div>
@@ -2476,7 +2485,8 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                             <Label>Set Constraint Values for Other Factors</Label>
                             <div className="grid grid-cols-2 gap-3">
                               {factors.map((factor, idx) => {
-                                if (idx !== solveFactorIdx) {
+                                // Only show included factors that are NOT the solve factor
+                                if (idx !== solveFactorIdx && selectedFactorsForModel[idx] !== false) {
                                   return (
                                     <div key={idx} className="space-y-1">
                                       <Label htmlFor={`constraint-${idx}`} className="text-sm">

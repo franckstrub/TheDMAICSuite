@@ -2776,9 +2776,11 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                {factors.map((f, i) => (
-                                  <SelectItem key={i} value={String(i)}>{f.name}</SelectItem>
-                                ))}
+                                {factors.map((f, i) => {
+                                  // Only show factors that are included in the model
+                                  if (selectedFactorsForModel[i] === false) return null;
+                                  return <SelectItem key={i} value={String(i)}>{f.name}</SelectItem>;
+                                })}
                               </SelectContent>
                             </Select>
                           </div>
@@ -2788,7 +2790,8 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                             <Label>Set Constraint Values for Other Factors</Label>
                             <div className="grid grid-cols-2 gap-3">
                               {factors.map((factor, idx) => {
-                                if (idx !== solveFactorIdx) {
+                                // Only show included factors that are NOT the solve factor
+                                if (idx !== solveFactorIdx && selectedFactorsForModel[idx] !== false) {
                                   return (
                                     <div key={idx} className="space-y-1">
                                       <Label htmlFor={`constraint-${idx}`} className="text-sm">
