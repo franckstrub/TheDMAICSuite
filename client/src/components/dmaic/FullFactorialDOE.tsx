@@ -281,6 +281,14 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
       }
       if (config.constraintValues !== undefined) {
         setConstraintValues(config.constraintValues);
+        // Also restore constraint display strings
+        const displayMap: Record<number, string> = {};
+        Object.entries(config.constraintValues).forEach(([key, val]) => {
+          if (val !== null && val !== undefined) {
+            displayMap[parseInt(key)] = String(val);
+          }
+        });
+        setConstraintDisplay(displayMap);
       }
       
       // Load generatedPlan from persisted format
