@@ -2896,14 +2896,96 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                             </div>
                           </div>
 
-                          {solverResult !== null && (
-                            <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded border border-green-200 dark:border-green-800">
-                              <p className="text-sm text-muted-foreground">Result:</p>
-                              <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                                {factors[solveFactorIdx].name} = {solverResult.toFixed(4)} {factors[solveFactorIdx].type === 'continuous' && factors[solveFactorIdx].units ? `${factors[solveFactorIdx].units}` : ''}
-                              </p>
-                            </div>
-                          )}
+                          {solverResult !== null && (() => {
+                            // Calculate confidence and prediction intervals for Y target
+                            const tValue = jStat.studentt.inv((1 - significanceLevel / 2), reducedModel.n - reducedModel.p);
+                            const s = Math.sqrt(reducedModel.mse); // Residual standard error
+                            
+                            // Build design matrix row for constraint values: [1, x1, x2, ..., xk]
+                            const xRow: number[] = [1]; // Intercept
+                            for (let i = 0; i < factors.length; i++) {
+                              if (selectedFactorsForModel[i] !== false) {
+                                const val = i === solveFactorIdx ? solverResult : (constraintValues[i] ?? 0);
+                                xRow.push(val);
+                              }
+                            }
+                            
+                            // Calculate X'X for reduced model
+                            const reducedXtX: number[][] = Array(xRow.length).fill(0).map(() => Array(xRow.length).fill(0));
+                            for (let row = 0; row < X.length; row++) {
+                              const reducedRow: number[] = [1];
+                              for (let i = 0; i < factors.length; i++) {
+                                if (selectedFactorsForModel[i] !== false) {
+                                  const origColIdx = i + 1;
+                                  const reducedColIdx = colMapReverse[origColIdx];
+                                  if (reducedColIdx !== undefined && reducedColIdx < X[row].length) {
+                                    reducedRow.push(X[row][reducedColIdx]);
+                                  }
+                                }
+                              }
+                              for (let i = 0; i < reducedRow.length; i++) {
+                                for (let j = 0; j < reducedRow.length; j++) {
+                                  reducedXtX[i][j] += reducedRow[i] * reducedRow[j];
+                                }
+                              }
+                            }
+                            
+                            // Invert (X'X) - simple 2x2 matrix inversion for common case
+                            let XtXInv: number[][] | null = null;
+                            if (reducedXtX.length === 2) {
+                              const det = reducedXtX[0][0] * reducedXtX[1][1] - reducedXtX[0][1] * reducedXtX[1][0];
+                              if (Math.abs(det) > 1e-10) {
+                                XtXInv = [[reducedXtX[1][1]/det, -reducedXtX[0][1]/det], [-reducedXtX[1][0]/det, reducedXtX[0][0]/det]];
+                              }
+                            }
+                            
+                            let varY = 0;
+                            let ciLower = NaN, ciUpper = NaN, piLower = NaN, piUpper = NaN;
+                            if (XtXInv && xRow.length === 2) {
+                              // Calculate x'(X'X)^-1 x
+                              for (let i = 0; i < 2; i++) {
+                                for (let j = 0; j < 2; j++) {
+                                  varY += xRow[i] * XtXInv[i][j] * xRow[j];
+                                }
+                              }
+                              varY *= (s * s);
+                              const seConfidence = Math.sqrt(Math.max(0, varY));
+                              const sePrediction = Math.sqrt(Math.max(0, varY + s * s));
+                              ciLower = targetY - tValue * seConfidence;
+                              ciUpper = targetY + tValue * seConfidence;
+                              piLower = targetY - tValue * sePrediction;
+                              piUpper = targetY + tValue * sePrediction;
+                            }
+                            
+                            return (
+                              <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded border border-green-200 dark:border-green-800">
+                                <p className="text-sm text-muted-foreground mb-2">Result:</p>
+                                <p className="text-2xl font-bold text-green-600 dark:text-green-400 mb-3">
+                                  {factors[solveFactorIdx].name} = {solverResult.toFixed(4)} {factors[solveFactorIdx].type === 'continuous' && factors[solveFactorIdx].units ? `${factors[solveFactorIdx].units}` : ''}
+                                </p>
+                                <div className="overflow-x-auto">
+                                  <table className="text-xs w-full">
+                                    <thead>
+                                      <tr className="border-b">
+                                        <th className="text-sm text-muted-foreground pb-1 text-left">Target Y {(1 - significanceLevel) * 100}% Confidence Interval:</th>
+                                        <th className="text-sm text-muted-foreground pb-1 text-left">Target Y {(1 - significanceLevel) * 100}% Prediction Interval:</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      <tr>
+                                        <td className="font-medium pb-1 align-text-top">
+                                          {isNaN(ciLower) ? 'N/A' : `[${ciLower.toFixed(4)}, ${ciUpper.toFixed(4)}]`}
+                                        </td>
+                                        <td className="font-medium pb-1 align-text-top">
+                                          {isNaN(piLower) ? 'N/A' : `[${piLower.toFixed(4)}, ${piUpper.toFixed(4)}]`}
+                                        </td>
+                                      </tr>
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+                            );
+                          })()}
                         </div>
                       </CardContent>
                     </Card>
