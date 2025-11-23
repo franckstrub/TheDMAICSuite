@@ -2772,3 +2772,36 @@ export const insertUserSettingsSchema = createInsertSchema(userSettings).omit({
 
 export type InsertUserSettings = z.infer<typeof insertUserSettingsSchema>;
 export type UserSettings = typeof userSettings.$inferSelect;
+
+// DOE Solver Setup (for saving solver configurations)
+export const doeSolverSetup = pgTable(
+  "doe_solver_setup",
+  {
+    id: serial("id").primaryKey(),
+    organizationId: integer("organization_id")
+      .references(() => organizations.id)
+      .notNull(),
+    projectId: integer("project_id").notNull(),
+    solutionId: text("solution_id").notNull(),
+    doeType: text("doe_type").notNull(), // "fullFactorial" or "fractionalFactorial"
+    
+    // Solver configuration
+    setupName: text("setup_name").notNull(),
+    targetY: real("target_y").notNull(),
+    solveFactorIdx: integer("solve_factor_idx").notNull(),
+    constraintValues: jsonb("constraint_values").$type<Record<number, number | null>>().default({}),
+    
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    indexSolverSetup: index("idx_solver_setup_solution").on(table.projectId, table.solutionId, table.doeType),
+  }),
+);
+
+export const insertDoeSolverSetupSchema = createInsertSchema(doeSolverSetup).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertDoeSolverSetup = z.infer<typeof insertDoeSolverSetupSchema>;
+export type DoeSolverSetup = typeof doeSolverSetup.$inferSelect;
