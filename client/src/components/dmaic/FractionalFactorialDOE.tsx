@@ -181,33 +181,6 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
       });
     },
   });
-
-  // Save solving setup mutation
-  const saveSolvingSetupMutation = useMutation({
-    mutationFn: async (data: any) => {
-      return apiRequest(
-        'POST',
-        `/api/projects/${projectId}/solutions/${solutionId}/doe-fractional`,
-        data
-      );
-    },
-    onSuccess: () => {
-      toast({
-        title: "Solving setup saved",
-        description: "Your solving setup (target Y, factor selection, and constraints) has been saved successfully.",
-      });
-      queryClient.invalidateQueries({
-        queryKey: [`/api/projects/${projectId}/solutions/${solutionId}/doe-fractional`]
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to save solving setup",
-        variant: "destructive",
-      });
-    },
-  });
   
   // Load data when config is fetched
   useEffect(() => {
@@ -284,26 +257,6 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
       // Load selected factors for model
       if (config.selectedFactorsForModel) {
         setSelectedFactorsForModel(config.selectedFactorsForModel);
-      }
-      
-      // Load solver state
-      if (config.solveFactorIdx !== undefined) {
-        setSolveFactorIdx(config.solveFactorIdx);
-      }
-      if (config.targetY !== undefined) {
-        setTargetY(config.targetY);
-        setTargetYDisplay(String(config.targetY));
-      }
-      if (config.constraintValues !== undefined) {
-        setConstraintValues(config.constraintValues);
-        // Also restore constraint display strings
-        const displayMap: Record<number, string> = {};
-        Object.entries(config.constraintValues).forEach(([key, val]) => {
-          if (val !== null && val !== undefined) {
-            displayMap[parseInt(key)] = String(val);
-          }
-        });
-        setConstraintDisplay(displayMap);
       }
       
       // Load generatedPlan from persisted format
@@ -430,27 +383,6 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
       showUncoded,
       generatedPlan: transformedPlan,
     });
-  };
-
-  const handleSaveSolvingSetup = async () => {
-    const config = configQuery.data as any;
-    const transformedPlan = transformGeneratedPlanForSaving(generatedPlan, factors, responses);
-    const configData = {
-      responseVariableName: config?.responseVariableName || responseVariableName,
-      factors: config?.factors || factors,
-      numberOfReplicates: config?.numberOfReplicates || numberOfReplicates,
-      randomizeRuns: config?.randomizeRuns || randomizeRuns,
-      includeCenterPoints: config?.includeCenterPoints || includeCenterPoints,
-      numberOfCenterPoints: config?.numberOfCenterPoints || numberOfCenterPoints,
-      significanceLevel: config?.significanceLevel || significanceLevel,
-      showUncoded: config?.showUncoded || showUncoded,
-      generatedPlan: config?.generatedPlan || transformedPlan,
-      selectedFactorsForModel: config?.selectedFactorsForModel || selectedFactorsForModel,
-      solveFactorIdx,
-      targetY,
-      constraintValues,
-    };
-    await saveSolvingSetupMutation.mutateAsync(configData);
   };
   
   const handleAddFactor = () => {
@@ -2725,25 +2657,11 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                             }
                             
                             return (
-                              <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded border border-green-200 dark:border-green-800 space-y-3">
-                                <div className="flex items-center justify-between">
-                                  <div>
-                                    <p className="text-sm text-muted-foreground mb-2">Result:</p>
-                                    <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                                      {factors[solveFactorIdx].name} = {solverResult.toFixed(4)} {factors[solveFactorIdx].type === 'continuous' && factors[solveFactorIdx].units ? `${factors[solveFactorIdx].units}` : ''}
-                                    </p>
-                                  </div>
-                                  <Button
-                                    onClick={handleSaveSolvingSetup}
-                                    disabled={saveSolvingSetupMutation.isPending}
-                                    size="sm"
-                                    className="gap-2"
-                                    data-testid="button-save-solving-setup"
-                                  >
-                                    {saveSolvingSetupMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-                                    Save Solving Setup
-                                  </Button>
-                                </div>
+                              <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded border border-green-200 dark:border-green-800">
+                                <p className="text-sm text-muted-foreground mb-2">Result:</p>
+                                <p className="text-2xl font-bold text-green-600 dark:text-green-400 mb-3">
+                                  {factors[solveFactorIdx].name} = {solverResult.toFixed(4)} {factors[solveFactorIdx].type === 'continuous' && factors[solveFactorIdx].units ? `${factors[solveFactorIdx].units}` : ''}
+                                </p>
                                 <div className="overflow-x-auto">
                                   <table className="text-xs w-full">
                                     <thead>
