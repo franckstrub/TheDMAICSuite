@@ -2600,40 +2600,31 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                           {solverResult !== null && (() => {
                             // Calculate confidence and prediction intervals for Y target
                             const tValue = jStat.studentt.inv((1 - significanceLevel / 2), n - numCoefficients);
-                            const s = Math.sqrt(SS_res / (n - numCoefficients)); // Residual standard error
-                            const s2 = s * s; // Variance estimate
+                            const s2 = SS_res / (n - numCoefficients); // Variance estimate
                             
-                            // Build design matrix row for constraint values: [1, x1, x2, ..., xk]
+                            // Build prediction vector x for constraint values: [1, x1, x2, ..., xk]
                             const xRow: number[] = [1]; // Intercept
-                            for (let i = 0; i < factors.length; i++) {
+                            for (let i = 0; i < baseFactorCount; i++) {
                               if (selectedFactorsForModel[i] !== false) {
                                 const val = i === solveFactorIdx ? solverResult : (constraintValues[i] ?? 0);
                                 xRow.push(val);
                               }
                             }
                             
-                            // Build the design matrix X for only the selected base factors (no confounded interactions)
-                            const designMatrixForIntervals: number[][] = [];
-                            runData.forEach((row: any, idx: any) => {
-                              if (row.response !== null && !isNaN(row.response)) {
-                                const matrixRow = [1]; // intercept
-                                for (let i = 0; i < baseFactorCount; i++) {
-                                  if (selectedFactorsForModel[i] !== false) {
-                                    const val = generatedPlan.plan[idx]?.[factors[i].name] ?? 0;
-                                    matrixRow.push(val);
-                                  }
+                            // Calculate X'X matrix for selected base factors only
+                            const XtXForIntervals: number[][] = Array(xRow.length).fill(0).map(() => Array(xRow.length).fill(0));
+                            for (let row = 0; row < n; row++) {
+                              // Build row of X matrix for selected factors only
+                              const xRow_data = [1]; // intercept
+                              for (let i = 0; i < baseFactorCount; i++) {
+                                if (selectedFactorsForModel[i] !== false) {
+                                  xRow_data.push(X[row][i + 1]);
                                 }
-                                designMatrixForIntervals.push(matrixRow);
                               }
-                            });
-                            
-                            // Calculate X'X from the reduced design matrix
-                            const reducedXtX: number[][] = Array(xRow.length).fill(0).map(() => Array(xRow.length).fill(0));
-                            for (let row = 0; row < designMatrixForIntervals.length; row++) {
-                              const matRow = designMatrixForIntervals[row];
-                              for (let i = 0; i < matRow.length; i++) {
-                                for (let j = 0; j < matRow.length; j++) {
-                                  reducedXtX[i][j] += matRow[i] * matRow[j];
+                              // Accumulate X'X
+                              for (let i = 0; i < xRow_data.length; i++) {
+                                for (let j = 0; j < xRow_data.length; j++) {
+                                  XtXForIntervals[i][j] += xRow_data[i] * xRow_data[j];
                                 }
                               }
                             }
@@ -2641,7 +2632,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                             // Invert (X'X)
                             let XtXInv: number[][] | null = null;
                             try {
-                              XtXInv = invertMatrix(reducedXtX);
+                              XtXInv = invertMatrix(XtXForIntervals);
                             } catch (e) {
                               // Matrix is singular
                             }
@@ -2655,10 +2646,10 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                   varY += xRow[i] * XtXInv[i][j] * xRow[j];
                                 }
                               }
-                              varY *= s2;
-                              const varYPrediction = varY + s2; // Add individual observation variance
-                              const seConfidence = Math.sqrt(Math.max(0, varY));
-                              const sePrediction = Math.sqrt(Math.max(0, varYPrediction));
+                              const varConfidence = s2 * varY;
+                              const varPrediction = s2 * varY + s2; // Add individual observation variance
+                              const seConfidence = Math.sqrt(Math.max(0, varConfidence));
+                              const sePrediction = Math.sqrt(Math.max(0, varPrediction));
                               ciLower = targetY - tValue * seConfidence;
                               ciUpper = targetY + tValue * seConfidence;
                               piLower = targetY - tValue * sePrediction;
