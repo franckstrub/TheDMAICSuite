@@ -2900,25 +2900,29 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                           {solverResult !== null && (() => {
                             // Calculate confidence and prediction intervals for Y target
                             const tValue = jStat.studentt.inv((1 - significanceLevel / 2), reducedModel.n - reducedModel.p);
-                            const s = Math.sqrt(reducedModel.mse); // Residual standard error
                             const s2 = reducedModel.mse; // Variance estimate
                             
-                            // Build prediction vector x for constraint values: [1, x1, x2, ..., xk]
+                            // Build prediction vector matching the reduced model structure
+                            // This must include: [1, main effects for selected factors, interactions for selected factor pairs]
                             const xRow: number[] = [1]; // Intercept
-                            for (let i = 0; i < reducedModel.p; i++) {
-                              if (i === 0) continue; // Skip intercept (already added)
-                              // Map factor index to x position
-                              let factorIdx = -1;
-                              for (let f = 0; f < factors.length; f++) {
-                                const origColIdx = f + 1;
-                                if (colMapReverse[origColIdx] === i) {
-                                  factorIdx = f;
-                                  break;
-                                }
-                              }
-                              if (factorIdx >= 0) {
-                                const val = factorIdx === solveFactorIdx ? solverResult : (constraintValues[factorIdx] ?? 0);
+                            
+                            // Get factor values
+                            const factorValues: Record<number, number> = {};
+                            for (let i = 0; i < factors.length; i++) {
+                              if (selectedFactorsForModel[i] !== false) {
+                                const val = i === solveFactorIdx ? solverResult : (constraintValues[i] ?? 0);
+                                factorValues[i] = val;
                                 xRow.push(val);
+                              }
+                            }
+                            
+                            // Add interaction terms for included factor pairs
+                            for (let i = 0; i < interactionPairs.length; i++) {
+                              const pair = interactionPairs[i];
+                              if (selectedFactorsForModel[pair.i] !== false && selectedFactorsForModel[pair.j] !== false) {
+                                const val1 = pair.i === solveFactorIdx ? solverResult : (constraintValues[pair.i] ?? 0);
+                                const val2 = pair.j === solveFactorIdx ? solverResult : (constraintValues[pair.j] ?? 0);
+                                xRow.push(val1 * val2);
                               }
                             }
                             
@@ -2927,12 +2931,12 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                             try {
                               XtXInv = invertMatrix(reducedModel.XtX);
                             } catch (e) {
-                              // Matrix is singular
+                              // Matrix is singular, XtXInv stays null
                             }
                             
                             let varY = 0;
                             let ciLower = NaN, ciUpper = NaN, piLower = NaN, piUpper = NaN;
-                            if (XtXInv && xRow.length === XtXInv.length && s2 > 0) {
+                            if (XtXInv && xRow.length === XtXInv.length && xRow.length === reducedModel.p && s2 > 0) {
                               // Calculate x'(X'X)^-1 x
                               for (let i = 0; i < xRow.length; i++) {
                                 for (let j = 0; j < xRow.length; j++) {

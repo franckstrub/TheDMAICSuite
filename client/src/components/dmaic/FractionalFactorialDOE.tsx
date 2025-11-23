@@ -2602,7 +2602,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                             const tValue = jStat.studentt.inv((1 - significanceLevel / 2), n - numCoefficients);
                             const s2 = SS_res / (n - numCoefficients); // Variance estimate
                             
-                            // Build prediction vector x for constraint values: [1, x1, x2, ..., xk]
+                            // Build prediction vector x for selected factors: [1, x1, x2, ..., xk]
                             const xRow: number[] = [1]; // Intercept
                             for (let i = 0; i < baseFactorCount; i++) {
                               if (selectedFactorsForModel[i] !== false) {
@@ -2634,7 +2634,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                             try {
                               XtXInv = invertMatrix(XtXForIntervals);
                             } catch (e) {
-                              // Matrix is singular
+                              // Matrix is singular, XtXInv stays null
                             }
                             
                             let varY = 0;
