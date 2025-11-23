@@ -2883,6 +2883,11 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                               {factors.map((factor, idx) => {
                                 // Only show included factors that are NOT the solve factor
                                 if (idx !== solveFactorIdx && selectedFactorsForModel[idx] !== false) {
+                                  const constraintVal = constraintValues[idx];
+                                  const isOutsideRange = constraintVal !== null && constraintVal !== undefined && (
+                                    constraintVal < parseFloat(String(factor.lowValue)) || 
+                                    constraintVal > parseFloat(String(factor.highValue))
+                                  );
                                   return (
                                     <div key={idx} className="space-y-1">
                                       <Label htmlFor={`constraint-${idx}`} className="text-sm">
@@ -2907,6 +2912,9 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                         placeholder={`Enter ${factor.name} value (use . or ,)`}
                                         data-testid={`input-constraint-${idx}`}
                                       />
+                                      {isOutsideRange && (
+                                        <p className="text-xs text-orange-600 dark:text-orange-400">⚠️ Outside the inference space</p>
+                                      )}
                                     </div>
                                   );
                                 }
@@ -2919,6 +2927,19 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                             // Calculate confidence and prediction intervals for Y target
                             const tValue = jStat.studentt.inv((1 - significanceLevel / 2), reducedModel.n - reducedModel.p);
                             const s2 = reducedModel.mse; // Variance estimate
+                            
+                            // Get observed Y range from responses
+                            const observedYValues = Object.values(responses).filter(r => r !== null && typeof r === 'number' && isFinite(r)) as number[];
+                            const minY = observedYValues.length > 0 ? Math.min(...observedYValues) : NaN;
+                            const maxY = observedYValues.length > 0 ? Math.max(...observedYValues) : NaN;
+                            const targetYOutsideRange = Number.isFinite(minY) && Number.isFinite(maxY) && (targetY < minY || targetY > maxY);
+                            
+                            // Check if solution is outside the solve factor's range
+                            const solveFactor = factors[solveFactorIdx];
+                            const solveFactorLow = parseFloat(String(solveFactor.lowValue));
+                            const solveFactorHigh = parseFloat(String(solveFactor.highValue));
+                            const solverOutsideRange = !isNaN(solveFactorLow) && !isNaN(solveFactorHigh) && 
+                              (solverResult < solveFactorLow || solverResult > solveFactorHigh);
                             
                             // Build prediction vector matching the reduced model structure
                             // This must include: [1, main effects for selected factors, interactions for selected factor pairs]
@@ -2997,6 +3018,12 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                 <p className="text-2xl font-bold text-green-600 dark:text-green-400 mb-3">
                                   {factors[solveFactorIdx].name} = {solverResult.toFixed(4)} {factors[solveFactorIdx].type === 'continuous' && factors[solveFactorIdx].units ? `${factors[solveFactorIdx].units}` : ''}
                                 </p>
+                                {solverOutsideRange && (
+                                  <p className="text-sm text-orange-600 dark:text-orange-400 mb-2">⚠️ Outside the inference space</p>
+                                )}
+                                {targetYOutsideRange && (
+                                  <p className="text-sm text-orange-600 dark:text-orange-400 mb-2">⚠️ Target Y outside the studied model (range: {minY.toFixed(4)} - {maxY.toFixed(4)})</p>
+                                )}
                                 <div className="overflow-x-auto">
                                   <table className="text-xs w-full">
                                     <thead>
