@@ -46,6 +46,7 @@ import {
   parseFactorValue,
   calculateDOEVIF
 } from '@/lib/doeSharedUtils';
+import { performNormalityTest } from '@/lib/statisticsUtils';
 
 interface FractionalFactorialDOEProps {
   projectId: number;
@@ -2756,9 +2757,12 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                       displaylogo: false,
                                     }}
                                   />
-                                  
-                                  {/* Residuals vs Order */}
-                                  <Plot
+                                      </div>
+                                    )}
+                                    
+                                    {showResidualsVsOrder && (
+                                      <div>
+                                        <Plot
                                     data={[
                                       {
                                         type: 'scatter',
@@ -2791,22 +2795,24 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                       displaylogo: false,
                                     }}
                                   />
-                                </>
-                              );
-                            })()}
+                                      </div>
+                                    )}
+                                  </>
+                                );
+                              })()}
 
-                            {/* Normal Probability Plot */}
-                            {(() => {
-                              const sorted = [...residuals].sort((a, b) => a - b);
-                              const n_res = sorted.length;
-                              const theoreticalQuantiles = sorted.map((_, i) => {
-                                const p = (i + 0.5) / n_res;
-                                return jStat.normal.inv(p, 0, 1);
-                              });
-                              const lineX = [residualMean - 3 * residualStd, residualMean + 3 * residualStd];
-                              const lineY = [-3, 3];
-                              return (
-                                <Plot
+                              {showNormalProbPlot && (() => {
+                                const sorted = [...residuals].sort((a, b) => a - b);
+                                const n_res = sorted.length;
+                                const theoreticalQuantiles = sorted.map((_, i) => {
+                                  const p = (i + 0.5) / n_res;
+                                  return jStat.normal.inv(p, 0, 1);
+                                });
+                                const lineX = [residualMean - 3 * residualStd, residualMean + 3 * residualStd];
+                                const lineY = [-3, 3];
+                                return (
+                                  <div>
+                                    <Plot
                                   data={[
                                     {
                                       type: 'scatter',
@@ -2835,27 +2841,56 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                   useResizeHandler
                                   config={{ responsive: true, displayModeBar: true, displaylogo: false }}
                                   style={{ width: '100%', height: '400px' }}
-                                />
-                              );
-                            })()}
-                          </div>
+                                    />
+                                  </div>
+                                );
+                              })()}
+                            </div>
+                          )}
 
                           <div className="border-t pt-4">
                             <p className="text-sm font-semibold mb-2">Residual Statistics</p>
-                            <div className="grid grid-cols-3 gap-4">
-                              <div>
-                                <p className="text-sm text-muted-foreground">Mean Residual</p>
-                                <p className="text-lg font-bold">{residualMean.toFixed(6)}</p>
-                              </div>
-                              <div>
-                                <p className="text-sm text-muted-foreground">Std Dev Residuals</p>
-                                <p className="text-lg font-bold">{residualStd.toFixed(4)}</p>
-                              </div>
-                              <div>
-                                <p className="text-sm text-muted-foreground">Max Residual</p>
-                                <p className="text-lg font-bold">{Math.max(...residuals.map(Math.abs)).toFixed(4)}</p>
-                              </div>
-                            </div>
+                            {(() => {
+                              const adTest = performNormalityTest(residuals, residualMean, residualStd);
+                              
+                              return (
+                                <>
+                                  <div className="grid grid-cols-3 gap-4">
+                                    <div>
+                                      <p className="text-sm text-muted-foreground">Standard Deviation</p>
+                                      <p className="text-lg font-bold">{residualStd.toFixed(6)}</p>
+                                    </div>
+                                    <div>
+                                      <p className="text-sm text-muted-foreground">Mean Residual</p>
+                                      <p className="text-lg font-bold">{residualMean.toFixed(6)}</p>
+                                    </div>
+                                    <div>
+                                      <p className="text-sm text-muted-foreground">Max Residual</p>
+                                      <p className="text-lg font-bold">{Math.max(...residuals.map(Math.abs)).toFixed(4)}</p>
+                                    </div>
+                                  </div>
+                                  <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                                    <p className="text-sm font-semibold mb-3">Normality Test (Anderson-Darling):</p>
+                                    <div className="grid grid-cols-3 gap-4">
+                                      <div>
+                                        <p className="text-sm text-muted-foreground">AD Statistic</p>
+                                        <p className="text-lg font-bold">{adTest.adStatistic.toFixed(4)}</p>
+                                      </div>
+                                      <div>
+                                        <p className="text-sm text-muted-foreground">p-value</p>
+                                        <p className="text-lg font-bold">{adTest.pValue.toFixed(4)}</p>
+                                      </div>
+                                      <div>
+                                        <p className="text-sm text-muted-foreground">Conclusion (5% significance)</p>
+                                        <p className={`text-lg font-bold ${adTest.isNormal ? 'text-green-600 dark:text-green-400' : adTest.isNormal === false ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'}`}>
+                                          {adTest.isNormal ? 'Normal' : adTest.isNormal === false ? 'Not Normal' : 'Inconclusive'}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </>
+                              );
+                            })()}
                           </div>
                         </div>
                       </CardContent>
