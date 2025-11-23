@@ -2651,6 +2651,14 @@ export const doeFractionalFactorialConfig = pgTable(
     // Display options
     showUncoded: boolean("show_uncoded").default(false),
     
+    // Selected factors for model (allows model reduction)
+    selectedFactorsForModel: jsonb("selected_factors_for_model").$type<Record<number, boolean>>().default({}),
+    
+    // Solve for X settings
+    targetY: real("target_y"),
+    solveFactorIdx: integer("solve_factor_idx"),
+    constraintValues: jsonb("constraint_values").$type<Record<number, number | null>>().default({}),
+    
     lastUpdated: timestamp("last_updated").notNull().defaultNow(),
   },
   (table) => ({
@@ -2710,6 +2718,14 @@ export const doeFullFactorialConfig = pgTable(
     
     // Display options
     showUncoded: boolean("show_uncoded").default(false),
+    
+    // Selected factors for model (allows model reduction)
+    selectedFactorsForModel: jsonb("selected_factors_for_model").$type<Record<number, boolean>>().default({}),
+    
+    // Solve for X settings
+    targetY: real("target_y"),
+    solveFactorIdx: integer("solve_factor_idx"),
+    constraintValues: jsonb("constraint_values").$type<Record<number, number | null>>().default({}),
     
     lastUpdated: timestamp("last_updated").notNull().defaultNow(),
   },
