@@ -2218,12 +2218,24 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                   const reducedColIdx = colMapReverse[origColIdx];
                   if (reducedColIdx === undefined || displayBeta[reducedColIdx] === 0) return;
                   
+                  // Check that ALL non-solve factors have constraint values entered
+                  for (let i = 0; i < factors.length; i++) {
+                    if (i !== solveFactorIdx && selectedFactorsForModel[i] !== false) {
+                      const constraintVal = constraintValues[i];
+                      // If constraint value is not set (null or undefined), don't solve
+                      if (constraintVal === null || constraintVal === undefined || !Number.isFinite(constraintVal)) {
+                        setSolverResult(null);
+                        return;
+                      }
+                    }
+                  }
+                  
                   // Calculate constraint contribution: sum of (coefficient * constraint_value) for all non-target factors that are included
                   let constraintSum = 0;
                   for (let i = 0; i < factors.length; i++) {
                     if (i !== solveFactorIdx && selectedFactorsForModel[i] !== false) {
                       const constraintVal = constraintValues[i];
-                      if (constraintVal !== null && constraintVal !== undefined && Number.isFinite(constraintVal)) {
+                      if (Number.isFinite(constraintVal)) {
                         const origCol = i + 1;
                         const redCol = colMapReverse[origCol];
                         if (redCol !== undefined) {
