@@ -1976,65 +1976,6 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
 
                 return (
                   <>
-                    {/* Regression Equation */}
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Regression Model {showUncoded && allFactorsHaveValidLevels() ? '(Uncoded)' : '(Coded)'}</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded font-mono text-sm">
-                          <p>Y = {Number.isFinite(displayBeta[0]) ? displayBeta[0].toFixed(4) : 'N/A'}</p>
-                          {Array.from({length: baseFactorCount}).map((_, i) => (
-                            Number.isFinite(displayBeta[i + 1]) && (
-                              <p key={i}>
-                                &nbsp;&nbsp;&nbsp;&nbsp;{displayBeta[i + 1] >= 0 ? '+' : ''} {displayBeta[i + 1].toFixed(4)} × {factors[i].name}{factors[i].type === 'continuous' && factors[i].units ? ` (${factors[i].units})` : ''}
-                              </p>
-                            )
-                          ))}
-                          {interactionPairs.map((pair, i) => (
-                            Number.isFinite(displayBeta[baseFactorCount + 1 + i]) && (
-                              <p key={`int-${i}`}>
-                                &nbsp;&nbsp;&nbsp;&nbsp;{displayBeta[baseFactorCount + 1 + i] >= 0 ? '+' : ''} {displayBeta[baseFactorCount + 1 + i].toFixed(4)} × {pair.name}
-                              </p>
-                            )
-                          ))}
-                          {displayBeta.every(v => !Number.isFinite(v)) && (
-                            <p className="text-muted-foreground">Unable to compute regression equation. Check data validity.</p>
-                          )}
-                          {p > 0 && (
-                            <p className="text-xs text-muted-foreground mt-2">Note: Generated factors (last {p}) are confounded and not shown.</p>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    {/* Goodness of Fit */}
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Goodness of Fit</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <p className="text-sm text-muted-foreground">R²</p>
-                            <p className="text-2xl font-bold">{(R_sq * 100).toFixed(2)}%</p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground">Adjusted R²</p>
-                            <p className="text-2xl font-bold">{(adj_R_sq * 100).toFixed(2)}%</p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground">RMSE</p>
-                            <p className="text-2xl font-bold">{rmse.toFixed(4)}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground">N Observations</p>
-                            <p className="text-2xl font-bold">{n}</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-
                     {/* ANOVA Table */}
                     <Card>
                       <CardHeader>
@@ -2230,7 +2171,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     {/* Coefficients Table with Model Selection */}
                     <Card>
                       <CardHeader className="flex flex-row items-center justify-between">
-                        <CardTitle>Regression Coefficients (uncheck to exclude from model)</CardTitle>
+                        <CardTitle>Regression Coefficients <span className="text-xs"> (Uncheck to exclude from model)</span></CardTitle>
                         <Button 
                           onClick={() => saveSelectedCoefficientsMutation.mutate()} 
                           disabled={saveSelectedCoefficientsMutation.isPending}
@@ -2350,6 +2291,381 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                         </div>
                       </CardContent>
                     </Card>
+
+                    {/* Regression Equation */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Regression Model {showUncoded && allFactorsHaveValidLevels() ? '(Uncoded)' : '(Coded)'}</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded font-mono text-sm">
+                          <p>Y = {Number.isFinite(displayBeta[0]) ? displayBeta[0].toFixed(4) : 'N/A'}</p>
+                          {Array.from({length: baseFactorCount}).map((_, i) => (
+                            Number.isFinite(displayBeta[i + 1]) && (
+                              <p key={i}>
+                                &nbsp;&nbsp;&nbsp;&nbsp;{displayBeta[i + 1] >= 0 ? '+' : ''} {displayBeta[i + 1].toFixed(4)} × {factors[i].name}{factors[i].type === 'continuous' && factors[i].units ? ` (${factors[i].units})` : ''}
+                              </p>
+                            )
+                          ))}
+                          {interactionPairs.map((pair, i) => (
+                            Number.isFinite(displayBeta[baseFactorCount + 1 + i]) && (
+                              <p key={`int-${i}`}>
+                                &nbsp;&nbsp;&nbsp;&nbsp;{displayBeta[baseFactorCount + 1 + i] >= 0 ? '+' : ''} {displayBeta[baseFactorCount + 1 + i].toFixed(4)} × {pair.name}
+                              </p>
+                            )
+                          ))}
+                          {displayBeta.every(v => !Number.isFinite(v)) && (
+                            <p className="text-muted-foreground">Unable to compute regression equation. Check data validity.</p>
+                          )}
+                          {p > 0 && (
+                            <p className="text-xs text-muted-foreground mt-2">Note: Generated factors (last {p}) are confounded and not shown.</p>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Goodness of Fit */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Goodness of Fit</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-sm text-muted-foreground">R²</p>
+                            <p className="text-2xl font-bold">{(R_sq * 100).toFixed(2)}%</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground">Adjusted R²</p>
+                            <p className="text-2xl font-bold">{(adj_R_sq * 100).toFixed(2)}%</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground">RMSE</p>
+                            <p className="text-2xl font-bold">{rmse.toFixed(4)}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground">N Observations</p>
+                            <p className="text-2xl font-bold">{n}</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* ANOVA Table */}
+                    {/*<Card>
+                      <CardHeader>
+                        <CardTitle>ANOVA Analysis</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="overflow-x-auto">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Source</TableHead>
+                                <TableHead className="text-right">DF</TableHead>
+                                <TableHead className="text-right">Sum of Squares</TableHead>
+                                <TableHead className="text-right">Mean Square</TableHead>
+                                <TableHead className="text-right">F-Ratio</TableHead>
+                                <TableHead className="text-right">P-Value</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {(() => {
+                                let rows: React.ReactNode[] = [];
+                                
+                                // Add base factor rows only (not confounded)
+                                for (let i = 0; i < baseFactorCount; i++) {
+                                  const factor = factors[i];
+                                  const termIdx = i + 1;
+                                  const termSS = Math.pow(beta[termIdx], 2) * XtX[termIdx][termIdx];
+                                  const termDF = 1;
+                                  const termMS = termSS / termDF;
+                                  const errorMS = SS_res / (n - p);
+                                  const fRatio = errorMS > 0 ? termMS / errorMS : 0;
+                                  const pValue = fRatio > 0 && (n - p) > 0 
+                                    ? 1 - jStat.centralF.cdf(fRatio, termDF, n - p) 
+                                    : 1;
+
+                                  rows.push(
+                                    <TableRow key={`factor-${i}`}>
+                                      <TableCell className="font-medium">{factor.name}</TableCell>
+                                      <TableCell className="text-right">{termDF}</TableCell>
+                                      <TableCell className="text-right">{termSS.toFixed(4)}</TableCell>
+                                      <TableCell className="text-right">{termMS.toFixed(4)}</TableCell>
+                                      <TableCell className="text-right">{fRatio.toFixed(4)}</TableCell>
+                                      <TableCell className="text-right">
+                                        <span className={pValue < 0.05 ? "text-green-600 font-semibold" : ""}>
+                                          {pValue.toFixed(4)}
+                                        </span>
+                                      </TableCell>
+                                    </TableRow>
+                                  );
+                                }
+
+                                // Add interaction rows (only between base factors)
+                                interactionPairs.forEach((pair, pairIdx) => {
+                                  const termIdx = baseFactorCount + 1 + pairIdx;
+                                  const termSS = Math.pow(beta[termIdx], 2) * XtX[termIdx][termIdx];
+                                  const termDF = 1;
+                                  const termMS = termSS / termDF;
+                                  const errorMS = SS_res / (n - p);
+                                  const fRatio = errorMS > 0 ? termMS / errorMS : 0;
+                                  const pValue = fRatio > 0 && (n - p) > 0 
+                                    ? 1 - jStat.centralF.cdf(fRatio, termDF, n - p) 
+                                    : 1;
+
+                                  rows.push(
+                                    <TableRow key={`interaction-${pairIdx}`}>
+                                      <TableCell className="font-medium">{pair.name}</TableCell>
+                                      <TableCell className="text-right">{termDF}</TableCell>
+                                      <TableCell className="text-right">{termSS.toFixed(4)}</TableCell>
+                                      <TableCell className="text-right">{termMS.toFixed(4)}</TableCell>
+                                      <TableCell className="text-right">{fRatio.toFixed(4)}</TableCell>
+                                      <TableCell className="text-right">
+                                        <span className={pValue < 0.05 ? "text-green-600 font-semibold" : ""}>
+                                          {pValue.toFixed(4)}
+                                        </span>
+                                      </TableCell>
+                                    </TableRow>
+                                  );
+                                });
+
+                                // Calculate curvature effect if center points exist AND are included in model
+                                if (includeCenterPoints && selectedFactorsForModel['centerPoint'] !== false) {
+                                  const centerPointIndices: number[] = [];
+                                  const factorialPointIndices: number[] = [];
+                                  
+                                  runData.forEach((row, rowIdx) => {
+                                    if (row.response !== null && !isNaN(row.response)) {
+                                      const allBaseFactorsZero = Array.from({length: baseFactorCount}).every((_,i) => {
+                                        const level = generatedPlan.plan[rowIdx]?.[factors[i].name] ?? 0;
+                                        return Math.abs(level) < 0.01;
+                                      });
+                                      if (allBaseFactorsZero) {
+                                        centerPointIndices.push(rowIdx);
+                                      } else {
+                                        factorialPointIndices.push(rowIdx);
+                                      }
+                                    }
+                                  });
+
+                                  const n_c = centerPointIndices.length;
+                                  const n_f = factorialPointIndices.length;
+                                  
+                                  if (n_c > 0 && n_f > 0) {
+                                    const centerResponses = centerPointIndices.map(idx => runData[idx].response).filter((r): r is number => r !== null && !isNaN(r));
+                                    const y_c_avg = centerResponses.length > 0 ? centerResponses.reduce((a, b) => a + b, 0) / centerResponses.length : 0;
+                                    const y_f_at_center = beta[0];
+                                    const curveEffect = y_c_avg - y_f_at_center;
+                                    const curveSS = (n_c * n_f / (n_c + n_f)) * Math.pow(curveEffect, 2);
+                                    const curveDF = 1;
+                                    const curveMS = curveSS / curveDF;
+                                    const errorMS = SS_res / (n - p);
+                                    const curveFRatio = errorMS > 0 ? curveMS / errorMS : 0;
+                                    const curvePValue = curveFRatio > 0 && (n - p) > 0 
+                                      ? 1 - jStat.centralF.cdf(curveFRatio, curveDF, n - p) 
+                                      : 1;
+
+                                    rows.push(
+                                      <TableRow key="curvature">
+                                        <TableCell className="font-medium">Curvature</TableCell>
+                                        <TableCell className="text-right">{curveDF}</TableCell>
+                                        <TableCell className="text-right">{curveSS.toFixed(4)}</TableCell>
+                                        <TableCell className="text-right">{curveMS.toFixed(4)}</TableCell>
+                                        <TableCell className="text-right">{curveFRatio.toFixed(4)}</TableCell>
+                                        <TableCell className="text-right">
+                                          <span className={curvePValue < 0.05 ? "text-green-600 font-semibold" : ""}>
+                                            {curvePValue.toFixed(4)}
+                                          </span>
+                                        </TableCell>
+                                      </TableRow>
+                                    );
+                                  }
+                                }
+
+                                // Add model row
+                                const numTerms = 1 + baseFactorCount + interactionPairs.length;
+                                const modelDF = numTerms - 1;
+                                const modelMS = (SS_tot - SS_res) / modelDF;
+                                const errorMS = SS_res / (n - numTerms);
+                                const modelFRatio = errorMS > 0 ? modelMS / errorMS : 0;
+                                const modelPValue = modelFRatio > 0 && (n - numTerms) > 0 
+                                  ? 1 - jStat.centralF.cdf(modelFRatio, modelDF, n - numTerms) 
+                                  : 1;
+
+                                rows.push(
+                                  <TableRow key="model" className="font-semibold">
+                                    <TableCell>Model</TableCell>
+                                    <TableCell className="text-right">{modelDF}</TableCell>
+                                    <TableCell className="text-right">{(SS_tot - SS_res).toFixed(4)}</TableCell>
+                                    <TableCell className="text-right">{modelMS.toFixed(4)}</TableCell>
+                                    <TableCell className="text-right">{modelFRatio.toFixed(4)}</TableCell>
+                                    <TableCell className="text-right">
+                                      <span className={modelPValue < 0.05 ? "text-green-600 font-semibold" : ""}>
+                                        {modelPValue.toFixed(4)}
+                                      </span>
+                                    </TableCell>
+                                  </TableRow>
+                                );
+
+                                // Add error row
+                                const errorDF = n - numTerms;
+                                const errorMSVal = SS_res / errorDF;
+
+                                rows.push(
+                                  <TableRow key="error">
+                                    <TableCell>Error</TableCell>
+                                    <TableCell className="text-right">{errorDF}</TableCell>
+                                    <TableCell className="text-right">{SS_res.toFixed(4)}</TableCell>
+                                    <TableCell className="text-right">{errorMSVal.toFixed(4)}</TableCell>
+                                    <TableCell className="text-right">-</TableCell>
+                                    <TableCell className="text-right">-</TableCell>
+                                  </TableRow>
+                                );
+
+                                // Add total row
+                                rows.push(
+                                  <TableRow key="total" className="font-semibold">
+                                    <TableCell>Total</TableCell>
+                                    <TableCell className="text-right">{n - 1}</TableCell>
+                                    <TableCell className="text-right">{SS_tot.toFixed(4)}</TableCell>
+                                    <TableCell className="text-right">-</TableCell>
+                                    <TableCell className="text-right">-</TableCell>
+                                    <TableCell className="text-right">-</TableCell>
+                                  </TableRow>
+                                );
+
+                                return rows;
+                              })()}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </CardContent>
+                    </Card> */}
+
+                    {/* Coefficients Table with Model Selection */}
+                    {/* <Card>
+                      <CardHeader className="flex flex-row items-center justify-between">
+                        <CardTitle>Regression Coefficients (uncheck to exclude from model)</CardTitle>
+                        <Button 
+                          onClick={() => saveSelectedCoefficientsMutation.mutate()} 
+                          disabled={saveSelectedCoefficientsMutation.isPending}
+                          variant="outline"
+                          size="sm"
+                        >
+                          {saveSelectedCoefficientsMutation.isPending ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              Saving...
+                            </>
+                          ) : (
+                            <>
+                              <Save className="w-4 h-4 mr-2" />
+                              Save Selected Coefficients
+                            </>
+                          )}
+                        </Button>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="overflow-x-auto">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Term</TableHead>
+                                <TableHead className="text-right">Coefficient</TableHead>
+                                <TableHead className="text-right">Std. Error</TableHead>
+                                <TableHead className="text-right">T-value</TableHead>
+                                <TableHead className="text-right">p-value</TableHead>
+                                <TableHead className="text-right">VIF</TableHead>
+                                <TableHead className="text-center">Include</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              <TableRow>
+                                <TableCell className="font-medium">Intercept</TableCell>
+                                <TableCell className="text-right">{displayBeta[0]?.toFixed(6)}</TableCell>
+                                <TableCell className="text-right">{displayCoeffStats[0]?.stdError.toFixed(4)}</TableCell>
+                                <TableCell className="text-right">{displayCoeffStats[0]?.tValue.toFixed(4)}</TableCell>
+                                <TableCell className={`text-right ${(displayCoeffStats[0]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{displayCoeffStats[0]?.pValue.toFixed(4)}</TableCell>
+                                <TableCell className="text-right">-</TableCell>
+                                <TableCell className="text-center"><Checkbox disabled checked /></TableCell>
+                              </TableRow>
+                              {factors.map((factor, i) => {
+                                const vif = (() => {
+                                  try {
+                                    return calculateDOEVIF(X, i);
+                                  } catch {
+                                    return null;
+                                  }
+                                })();
+                                const isHighVIF = vif !== null && vif > 5;
+                                const isModerateVIF = vif !== null && vif > 1 && vif <= 5;
+                                return (
+                                <TableRow key={i}>
+                                  <TableCell className="font-medium">{factor.name}</TableCell>
+                                  <TableCell className="text-right">{displayBeta[i + 1]?.toFixed(6)}</TableCell>
+                                  <TableCell className="text-right">{displayCoeffStats[i + 1]?.stdError.toFixed(4)}</TableCell>
+                                  <TableCell className="text-right">{displayCoeffStats[i + 1]?.tValue.toFixed(4)}</TableCell>
+                                  <TableCell className={`text-right ${(displayCoeffStats[i + 1]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{displayCoeffStats[i + 1]?.pValue.toFixed(4)}</TableCell>
+                                  <TableCell className={`text-right ${isHighVIF ? 'text-red-600 font-semibold' : isModerateVIF ? 'text-yellow-400 font-semibold' : ''}`}>{vif !== null ? vif.toFixed(2) : '-'}</TableCell>
+                                  <TableCell className="text-center">
+                                    <Checkbox
+                                      checked={selectedFactorsForModel[i] ?? true}
+                                      onCheckedChange={(checked) => {
+                                        setSelectedFactorsForModel(prev => ({
+                                          ...prev,
+                                          [i]: !!checked
+                                        }));
+                                      }}
+                                      data-testid={`checkbox-factor-${i}`}
+                                    />
+                                  </TableCell>
+                                </TableRow>
+                                );
+                              })}
+                              {interactionPairs.map((pair, i) => {
+                                const vif = (() => {
+                                  try {
+                                    return calculateDOEVIF(X, factors.length + i);
+                                  } catch {
+                                    return null;
+                                  }
+                                })();
+                                const isHighVIF = vif !== null && vif > 5;
+                                const isModerateVIF = vif !== null && vif > 1 && vif <= 5;
+                                return (
+                                <TableRow key={`int-${i}`}>
+                                  <TableCell className="font-medium">{pair.name}</TableCell>
+                                  <TableCell className="text-right">{displayBeta[factors.length + 1 + i]?.toFixed(6)}</TableCell>
+                                  <TableCell className="text-right">{displayCoeffStats[factors.length + 1 + i]?.stdError.toFixed(4)}</TableCell>
+                                  <TableCell className="text-right">{displayCoeffStats[factors.length + 1 + i]?.tValue.toFixed(4)}</TableCell>
+                                  <TableCell className={`text-right ${(displayCoeffStats[factors.length + 1 + i]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{displayCoeffStats[factors.length + 1 + i]?.pValue.toFixed(4)}</TableCell>
+                                  <TableCell className={`text-right ${isHighVIF ? 'text-red-600 font-semibold' : isModerateVIF ? 'text-yellow-400 font-semibold' : ''}`}>{vif !== null ? vif.toFixed(2) : '-'}</TableCell>
+                                  <TableCell className="text-center">
+                                    <Checkbox
+                                      checked={selectedFactorsForModel[`int-${i}`] ?? true}
+                                      onCheckedChange={(checked) => {
+                                        setSelectedFactorsForModel(prev => ({
+                                          ...prev,
+                                          [`int-${i}`]: !!checked
+                                        }));
+                                      }}
+                                      data-testid={`checkbox-interaction-${i}`}
+                                    />
+                                  </TableCell>
+                                </TableRow>
+                                );
+                              })}
+                            </TableBody>
+                          </Table>
+                        </div>
+                        <div className="mt-2 text-sm text-muted-foreground">
+                          VIF &gt; 5 indicates problematic multicollinearity (high correlation between terms - shown in red)<br></br>
+                          &gt; 1 VIF &le; 5 indicates moderate multicollinearity (correlation between terms - shown in yellow)<br></br>
+                          VIF &le; 1 indicates no multicollinearity (no correlation between terms - shown in black)
+                        </div>
+                      </CardContent>
+                    </Card> */}
 
                     {/* Residual Analysis */}
                     <Card>
@@ -2563,7 +2879,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                               const maxY = observedYValues.length > 0 ? Math.max(...observedYValues) : NaN;
                               const isOutsideRange = targetYDisplay !== '' && Number.isFinite(minY) && Number.isFinite(maxY) && Number.isFinite(targetY) && (targetY < minY || targetY > maxY);
                               return isOutsideRange ? (
-                                <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">⚠️ Outside inference space range: [{minY.toFixed(4)}, {maxY.toFixed(4)}]</p>
+                                <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">⚠️ Target Y outside the studied model range: [{minY.toFixed(4)}, {maxY.toFixed(4)}]</p>
                               ) : null;
                             })()}
                           </div>
