@@ -2901,6 +2901,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                             // Calculate confidence and prediction intervals for Y target
                             const tValue = jStat.studentt.inv((1 - significanceLevel / 2), reducedModel.n - reducedModel.p);
                             const s = Math.sqrt(reducedModel.mse); // Residual standard error
+                            const s2 = s * s; // Variance estimate
                             
                             // Build design matrix row for constraint values: [1, x1, x2, ..., xk]
                             const xRow: number[] = [1]; // Intercept
@@ -2911,22 +2912,29 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                               }
                             }
                             
-                            // Calculate X'X for reduced model
-                            const reducedXtX: number[][] = Array(xRow.length).fill(0).map(() => Array(xRow.length).fill(0));
-                            for (let row = 0; row < X.length; row++) {
-                              const reducedRow: number[] = [1];
-                              for (let i = 0; i < factors.length; i++) {
-                                if (selectedFactorsForModel[i] !== false) {
-                                  const origColIdx = i + 1;
-                                  const reducedColIdx = colMapReverse[origColIdx];
-                                  if (reducedColIdx !== undefined && reducedColIdx < X[row].length) {
-                                    reducedRow.push(X[row][reducedColIdx]);
+                            // Build the design matrix X for only the selected factors (no interactions)
+                            // This should only include intercept + selected base factors
+                            const designMatrixForIntervals: number[][] = [];
+                            runData.forEach((row: any, idx: any) => {
+                              if (row.response !== null && !isNaN(row.response)) {
+                                const matrixRow = [1]; // intercept
+                                for (let i = 0; i < factors.length; i++) {
+                                  if (selectedFactorsForModel[i] !== false) {
+                                    const val = generatedPlan.plan[idx]?.[factors[i].name] ?? 0;
+                                    matrixRow.push(val);
                                   }
                                 }
+                                designMatrixForIntervals.push(matrixRow);
                               }
-                              for (let i = 0; i < reducedRow.length; i++) {
-                                for (let j = 0; j < reducedRow.length; j++) {
-                                  reducedXtX[i][j] += reducedRow[i] * reducedRow[j];
+                            });
+                            
+                            // Calculate X'X from the reduced design matrix
+                            const reducedXtX: number[][] = Array(xRow.length).fill(0).map(() => Array(xRow.length).fill(0));
+                            for (let row = 0; row < designMatrixForIntervals.length; row++) {
+                              const matRow = designMatrixForIntervals[row];
+                              for (let i = 0; i < matRow.length; i++) {
+                                for (let j = 0; j < matRow.length; j++) {
+                                  reducedXtX[i][j] += matRow[i] * matRow[j];
                                 }
                               }
                             }
@@ -2941,16 +2949,17 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                             
                             let varY = 0;
                             let ciLower = NaN, ciUpper = NaN, piLower = NaN, piUpper = NaN;
-                            if (XtXInv && xRow.length === XtXInv.length) {
+                            if (XtXInv && xRow.length === XtXInv.length && s2 > 0) {
                               // Calculate x'(X'X)^-1 x
                               for (let i = 0; i < xRow.length; i++) {
                                 for (let j = 0; j < xRow.length; j++) {
                                   varY += xRow[i] * XtXInv[i][j] * xRow[j];
                                 }
                               }
-                              varY *= (s * s);
+                              varY *= s2;
+                              const varYPrediction = varY + s2; // Add individual observation variance
                               const seConfidence = Math.sqrt(Math.max(0, varY));
-                              const sePrediction = Math.sqrt(Math.max(0, varY + s * s));
+                              const sePrediction = Math.sqrt(Math.max(0, varYPrediction));
                               ciLower = targetY - tValue * seConfidence;
                               ciUpper = targetY + tValue * seConfidence;
                               piLower = targetY - tValue * sePrediction;
