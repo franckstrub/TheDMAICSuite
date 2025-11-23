@@ -2863,7 +2863,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                               const observedYValues = Object.values(responses).filter(r => r !== null && typeof r === 'number' && isFinite(r)) as number[];
                               const minY = observedYValues.length > 0 ? Math.min(...observedYValues) : NaN;
                               const maxY = observedYValues.length > 0 ? Math.max(...observedYValues) : NaN;
-                              const isOutsideRange = Number.isFinite(minY) && Number.isFinite(maxY) && Number.isFinite(targetY) && (targetY < minY || targetY > maxY);
+                              const isOutsideRange = targetYDisplay !== '' && Number.isFinite(minY) && Number.isFinite(maxY) && Number.isFinite(targetY) && (targetY < minY || targetY > maxY);
                               return isOutsideRange ? (
                                 <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">⚠️ Outside inference space range: [{minY.toFixed(4)}, {maxY.toFixed(4)}]</p>
                               ) : null;
