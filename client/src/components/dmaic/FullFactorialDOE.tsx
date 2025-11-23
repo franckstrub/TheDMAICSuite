@@ -2936,6 +2936,15 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                             
                             let varY = 0;
                             let ciLower = NaN, ciUpper = NaN, piLower = NaN, piUpper = NaN;
+                            console.log('DEBUG Solver Intervals:', {
+                              XtXInvExists: !!XtXInv,
+                              xRowLength: xRow.length,
+                              XtXInvLength: XtXInv?.length,
+                              reducedModelP: reducedModel.p,
+                              s2,
+                              targetY,
+                              tValue
+                            });
                             if (XtXInv && xRow.length === XtXInv.length && xRow.length === reducedModel.p && s2 > 0) {
                               // Calculate x'(X'X)^-1 x
                               for (let i = 0; i < xRow.length; i++) {
@@ -2951,6 +2960,17 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                               ciUpper = targetY + tValue * seConfidence;
                               piLower = targetY - tValue * sePrediction;
                               piUpper = targetY + tValue * sePrediction;
+                              console.log('DEBUG Solver Intervals Calculated:', {
+                                varY,
+                                varConfidence,
+                                varPrediction,
+                                seConfidence,
+                                sePrediction,
+                                ciLower,
+                                ciUpper,
+                                piLower,
+                                piUpper
+                              });
                             }
                             
                             return (
