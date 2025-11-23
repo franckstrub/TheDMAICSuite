@@ -93,8 +93,8 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
   
   // Solver state for Analysis tab
   const [solveFactorIdx, setSolveFactorIdx] = useState(0);
-  const [targetY, setTargetY] = useState(100);
-  const [targetYDisplay, setTargetYDisplay] = useState('100');
+  const [targetY, setTargetY] = useState(0);
+  const [targetYDisplay, setTargetYDisplay] = useState('');
   const [solverResult, setSolverResult] = useState<number | null>(null);
   const [constraintValues, setConstraintValues] = useState<Record<number, number | null>>({});
   const [constraintDisplay, setConstraintDisplay] = useState<Record<number, string>>({});
@@ -1929,6 +1929,12 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 const handleSolve = () => {
                   // Check if solve factor is included in the model
                   if (selectedFactorsForModel[solveFactorIdx] === false || baseFactorCount < 1) {
+                    setSolverResult(null);
+                    return;
+                  }
+                  
+                  // Check if target Y is set (targetYDisplay should be non-empty and targetY should be a valid number)
+                  if (targetYDisplay === '' || !Number.isFinite(targetY)) {
                     setSolverResult(null);
                     return;
                   }
