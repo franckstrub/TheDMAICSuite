@@ -113,6 +113,11 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
     {}
   );
   
+  // Residual analysis plot visibility
+  const [showResidualsVsFits, setShowResidualsVsFits] = useState(false);
+  const [showResidualsVsOrder, setShowResidualsVsOrder] = useState(false);
+  const [showNormalProbPlot, setShowNormalProbPlot] = useState(false);
+  
   // Ref to store the solve function so it can be called by useEffect
   const solveRef = useRef<(() => void) | null>(null);
 
@@ -2678,43 +2683,48 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                             <div className="flex items-center gap-2">
                               <Checkbox
                                 id="residuals-vs-fits"
-                                checked={true}
-                                disabled
+                                checked={showResidualsVsFits}
+                                onCheckedChange={(checked) => setShowResidualsVsFits(checked as boolean)}
+                                data-testid="checkbox-residuals-vs-fits"
                               />
                               <Label htmlFor="residuals-vs-fits">Residuals vs Fits</Label>
                             </div>
                             <div className="flex items-center gap-2">
                               <Checkbox
                                 id="residuals-vs-order"
-                                checked={true}
-                                disabled
+                                checked={showResidualsVsOrder}
+                                onCheckedChange={(checked) => setShowResidualsVsOrder(checked as boolean)}
+                                data-testid="checkbox-residuals-vs-order"
                               />
                               <Label htmlFor="residuals-vs-order">Residuals vs Order</Label>
                             </div>
                             <div className="flex items-center gap-2">
                               <Checkbox
                                 id="normal-prob-plot"
-                                checked={true}
-                                disabled
+                                checked={showNormalProbPlot}
+                                onCheckedChange={(checked) => setShowNormalProbPlot(!!checked)}
+                                data-testid="checkbox-normal-prob-plot"
                               />
                               <Label htmlFor="normal-prob-plot">Normal Probability Plot</Label>
                             </div>
                           </div>
 
-                          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {(() => {
-                              const validResiduals = residuals.filter(r => typeof r === 'number' && isFinite(r));
-                              const minResidual = Math.min(...validResiduals);
-                              const maxResidual = Math.max(...validResiduals);
-                              const range = maxResidual - minResidual;
-                              const padding = range > 0 ? range * 0.1 : 1;
-                              const yMin = minResidual - padding;
-                              const yMax = maxResidual + padding;
-                              
-                              return (
-                                <>
-                                  {/* Residuals vs Fitted Values */}
-                                  <Plot
+                          {(showResidualsVsFits || showResidualsVsOrder || showNormalProbPlot) && (
+                            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {(() => {
+                                const validResiduals = residuals.filter(r => typeof r === 'number' && isFinite(r));
+                                const minResidual = Math.min(...validResiduals);
+                                const maxResidual = Math.max(...validResiduals);
+                                const range = maxResidual - minResidual;
+                                const padding = range > 0 ? range * 0.1 : 1;
+                                const yMin = minResidual - padding;
+                                const yMax = maxResidual + padding;
+                                
+                                return (
+                                  <>
+                                    {showResidualsVsFits && (
+                                      <div>
+                                        <Plot
                                     data={[
                                       {
                                         type: 'scatter',
