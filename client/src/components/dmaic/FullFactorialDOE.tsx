@@ -109,6 +109,11 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
     {}
   );
   
+  // Residual analysis plot visibility
+  const [showResidualsVsFits, setShowResidualsVsFits] = useState(false);
+  const [showResidualsVsOrder, setShowResidualsVsOrder] = useState(false);
+  const [showNormalProbPlot, setShowNormalProbPlot] = useState(false);
+  
   // Tab persistence
   const [activeTab, setActiveTab] = useState<string>(() => {
     const stored = localStorage.getItem(`doe-full-active-tab-${projectId}-${solutionId}`);
@@ -2915,48 +2920,53 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                             <div className="flex items-center gap-2">
                               <Checkbox
                                 id="residuals-vs-fits"
-                                checked={true}
-                                disabled
+                                checked={showResidualsVsFits}
+                                onCheckedChange={(checked) => setShowResidualsVsFits(checked as boolean)}
+                                data-testid="checkbox-residuals-vs-fits"
                               />
                               <Label htmlFor="residuals-vs-fits">Residuals vs Fits</Label>
                             </div>
                             <div className="flex items-center gap-2">
                               <Checkbox
                                 id="residuals-vs-order"
-                                checked={true}
-                                disabled
+                                checked={showResidualsVsOrder}
+                                onCheckedChange={(checked) => setShowResidualsVsOrder(checked as boolean)}
+                                data-testid="checkbox-residuals-vs-order"
                               />
                               <Label htmlFor="residuals-vs-order">Residuals vs Order</Label>
                             </div>
                             <div className="flex items-center gap-2">
                               <Checkbox
                                 id="normal-prob-plot"
-                                checked={true}
-                                disabled
+                                checked={showNormalProbPlot}
+                                onCheckedChange={(checked) => setShowNormalProbPlot(!!checked)}
+                                data-testid="checkbox-normal-prob-plot"
                               />
                               <Label htmlFor="normal-prob-plot">Normal Probability Plot</Label>
                             </div>
                           </div>
 
-                          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {(() => {
-                              const residualsToUse = reducedModel.residuals;
-                              const predictionsToUse = reducedModel.predictions;
-                              const validResiduals = residualsToUse.filter(r => typeof r === 'number' && isFinite(r));
-                              const minResidual = Math.min(...validResiduals);
-                              const maxResidual = Math.max(...validResiduals);
-                              const range = maxResidual - minResidual;
-                              const padding = range > 0 ? range * 0.1 : 1;
-                              const yMin = minResidual - padding;
-                              const yMax = maxResidual + padding;
-                              
-                              const residMean = validResiduals.length > 0 ? validResiduals.reduce((a, b) => a + b, 0) / validResiduals.length : 0;
-                              const residStd = validResiduals.length > 1 ? Math.sqrt(validResiduals.reduce((sum, val) => sum + Math.pow(val - residMean, 2), 0) / (validResiduals.length - 1)) : 0;
-                              
-                              return (
-                                <>
-                                  {/* Residuals vs Fitted Values */}
-                                  <Plot
+                          {(showResidualsVsFits || showResidualsVsOrder || showNormalProbPlot) && (
+                            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {(() => {
+                                const residualsToUse = reducedModel.residuals;
+                                const predictionsToUse = reducedModel.predictions;
+                                const validResiduals = residualsToUse.filter(r => typeof r === 'number' && isFinite(r));
+                                const minResidual = Math.min(...validResiduals);
+                                const maxResidual = Math.max(...validResiduals);
+                                const range = maxResidual - minResidual;
+                                const padding = range > 0 ? range * 0.1 : 1;
+                                const yMin = minResidual - padding;
+                                const yMax = maxResidual + padding;
+                                
+                                const residMean = validResiduals.length > 0 ? validResiduals.reduce((a, b) => a + b, 0) / validResiduals.length : 0;
+                                const residStd = validResiduals.length > 1 ? Math.sqrt(validResiduals.reduce((sum, val) => sum + Math.pow(val - residMean, 2), 0) / (validResiduals.length - 1)) : 0;
+                                
+                                return (
+                                  <>
+                                    {showResidualsVsFits && (
+                                      <div>
+                                        <Plot
                                     data={[
                                       {
                                         type: 'scatter',
@@ -2988,9 +2998,12 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                       displaylogo: false,
                                     }}
                                   />
-                                  
-                                  {/* Residuals vs Order */}
-                                  <Plot
+                                      </div>
+                                    )}
+                                    
+                                    {showResidualsVsOrder && (
+                                      <div>
+                                        <Plot
                                     data={[
                                       {
                                         type: 'scatter',
@@ -3023,12 +3036,13 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                       displaylogo: false,
                                     }}
                                   />
-                                </>
-                              );
-                            })()}
+                                      </div>
+                                    )}
+                                  </>
+                                );
+                              })()}
 
-                            {/* Normal Probability Plot */}
-                            {(() => {
+                              {showNormalProbPlot && (() => {
                               const residualsToUse = reducedModel.residuals;
                               const validResiduals = residualsToUse.filter(r => typeof r === 'number' && isFinite(r));
                               const residMean = validResiduals.length > 0 ? validResiduals.reduce((a, b) => a + b, 0) / validResiduals.length : 0;
@@ -3075,7 +3089,8 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                 />
                               );
                             })()}
-                          </div>
+                            </div>
+                          )}
 
                           <div className="border-t pt-4">
                             <p className="text-sm font-semibold mb-2">Residual Statistics</p>
