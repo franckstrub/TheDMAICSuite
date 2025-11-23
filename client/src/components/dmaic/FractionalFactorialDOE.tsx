@@ -2582,9 +2582,11 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                 // Only show included factors that are NOT the solve factor
                                 if (idx !== solveFactorIdx && selectedFactorsForModel[idx] !== false) {
                                   const constraintVal = constraintValues[idx];
+                                  const factorLow = parseFloat(String(factor.lowValue));
+                                  const factorHigh = parseFloat(String(factor.highValue));
                                   const isOutsideRange = constraintVal !== null && constraintVal !== undefined && (
-                                    constraintVal < parseFloat(String(factor.lowValue)) || 
-                                    constraintVal > parseFloat(String(factor.highValue))
+                                    constraintVal < factorLow || 
+                                    constraintVal > factorHigh
                                   );
                                   return (
                                     <div key={idx} className="space-y-1">
@@ -2611,7 +2613,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                         data-testid={`input-constraint-${idx}`}
                                       />
                                       {isOutsideRange && (
-                                        <p className="text-xs text-orange-600 dark:text-orange-400">⚠️ Outside the inference space</p>
+                                        <p className="text-xs text-orange-600 dark:text-orange-400">⚠️ Outside inference space range: [{factorLow.toFixed(4)}, {factorHigh.toFixed(4)}]</p>
                                       )}
                                     </div>
                                   );
@@ -2641,6 +2643,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                             const solveFactorHigh = parseFloat(String(solveFactor.highValue));
                             const solverOutsideRange = !isNaN(solveFactorLow) && !isNaN(solveFactorHigh) && 
                               (solverResult < solveFactorLow || solverResult > solveFactorHigh);
+                            const solveFactorRangeStr = `[${solveFactorLow.toFixed(4)}, ${solveFactorHigh.toFixed(4)}]`;
                             
                             // Build prediction vector x for selected factors: [1, x1, x2, ..., xk]
                             const xRow: number[] = [1]; // Intercept
@@ -2703,7 +2706,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                   {factors[solveFactorIdx].name} = {solverResult.toFixed(4)} {factors[solveFactorIdx].type === 'continuous' && factors[solveFactorIdx].units ? `${factors[solveFactorIdx].units}` : ''}
                                 </p>
                                 {solverOutsideRange && (
-                                  <p className="text-sm text-orange-600 dark:text-orange-400 mb-2">⚠️ Outside the inference space</p>
+                                  <p className="text-sm text-orange-600 dark:text-orange-400 mb-2">⚠️ Outside inference space range: {solveFactorRangeStr}</p>
                                 )}
                                 {targetYOutsideRange && (
                                   <p className="text-sm text-orange-600 dark:text-orange-400 mb-2">⚠️ Target Y outside the studied model (range: {minY.toFixed(4)} - {maxY.toFixed(4)})</p>
