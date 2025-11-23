@@ -45,6 +45,7 @@ import {
   parseFactorValue,
   calculateDOEVIF
 } from '@/lib/doeSharedUtils';
+import { performNormalityTest } from '@/lib/statisticsUtils';
 
 interface FullFactorialDOEProps {
   projectId: number;
@@ -3094,32 +3095,52 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
 
                           <div className="border-t pt-4">
                             <p className="text-sm font-semibold mb-2">Residual Statistics</p>
-                            <div className="grid grid-cols-3 gap-4">
-                              {(() => {
-                                const residualsToUse = reducedModel.residuals;
-                                const validResiduals = residualsToUse.filter(r => typeof r === 'number' && isFinite(r));
-                                const residMean = validResiduals.length > 0 ? validResiduals.reduce((a, b) => a + b, 0) / validResiduals.length : 0;
-                                const residStd = validResiduals.length > 1 ? Math.sqrt(validResiduals.reduce((sum, val) => sum + Math.pow(val - residMean, 2), 0) / (validResiduals.length - 1)) : 0;
-                                const maxResidual = Math.max(...residualsToUse.map(Math.abs));
-                                
-                                return (
-                                  <>
+                            {(() => {
+                              const residualsToUse = reducedModel.residuals;
+                              const validResiduals = residualsToUse.filter(r => typeof r === 'number' && isFinite(r));
+                              const residMean = validResiduals.length > 0 ? validResiduals.reduce((a, b) => a + b, 0) / validResiduals.length : 0;
+                              const residStd = validResiduals.length > 1 ? Math.sqrt(validResiduals.reduce((sum, val) => sum + Math.pow(val - residMean, 2), 0) / (validResiduals.length - 1)) : 0;
+                              const maxResidual = Math.max(...residualsToUse.map(Math.abs));
+                              const adTest = performNormalityTest(validResiduals, residMean, residStd);
+                              
+                              return (
+                                <>
+                                  <div className="grid grid-cols-3 gap-4">
+                                    <div>
+                                      <p className="text-sm text-muted-foreground">Standard Deviation</p>
+                                      <p className="text-lg font-bold">{residStd.toFixed(6)}</p>
+                                    </div>
                                     <div>
                                       <p className="text-sm text-muted-foreground">Mean Residual</p>
                                       <p className="text-lg font-bold">{residMean.toFixed(6)}</p>
                                     </div>
                                     <div>
-                                      <p className="text-sm text-muted-foreground">Std Dev Residuals</p>
-                                      <p className="text-lg font-bold">{residStd.toFixed(4)}</p>
-                                    </div>
-                                    <div>
                                       <p className="text-sm text-muted-foreground">Max Residual</p>
                                       <p className="text-lg font-bold">{maxResidual.toFixed(4)}</p>
                                     </div>
-                                  </>
-                                );
-                              })()}
-                            </div>
+                                  </div>
+                                  <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                                    <p className="text-sm font-semibold mb-3">Normality Test (Anderson-Darling):</p>
+                                    <div className="grid grid-cols-3 gap-4">
+                                      <div>
+                                        <p className="text-sm text-muted-foreground">AD Statistic</p>
+                                        <p className="text-lg font-bold">{adTest.adStatistic.toFixed(4)}</p>
+                                      </div>
+                                      <div>
+                                        <p className="text-sm text-muted-foreground">p-value</p>
+                                        <p className="text-lg font-bold">{adTest.pValue.toFixed(4)}</p>
+                                      </div>
+                                      <div>
+                                        <p className="text-sm text-muted-foreground">Conclusion (5% significance)</p>
+                                        <p className={`text-lg font-bold ${adTest.isNormal ? 'text-green-600 dark:text-green-400' : adTest.isNormal === false ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'}`}>
+                                          {adTest.isNormal ? 'Normal' : adTest.isNormal === false ? 'Not Normal' : 'Inconclusive'}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </>
+                              );
+                            })()}
                           </div>
                         </div>
                       </CardContent>
