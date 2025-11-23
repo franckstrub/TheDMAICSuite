@@ -237,7 +237,7 @@ function multipleRegressionCore(
 /**
  * Invert a matrix using Gauss-Jordan elimination
  */
-function invertMatrix(matrix: number[][]): number[][] {
+export function invertMatrix(matrix: number[][]): number[][] {
   const n = matrix.length;
   const augmented: number[][] = [];
   

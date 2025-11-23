@@ -34,6 +34,7 @@ import {
   calculateMainEffects,
   calculateInteractionEffects
 } from '@/lib/doeUtils';
+import { invertMatrix } from '@/lib/multipleRegressionUtils';
 import { parseNumericValue } from '@/lib/excelPasteUtils';
 import jStat from 'jstat';
 import { 
@@ -2930,21 +2931,20 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                               }
                             }
                             
-                            // Invert (X'X) - simple 2x2 matrix inversion for common case
+                            // Invert (X'X)
                             let XtXInv: number[][] | null = null;
-                            if (reducedXtX.length === 2) {
-                              const det = reducedXtX[0][0] * reducedXtX[1][1] - reducedXtX[0][1] * reducedXtX[1][0];
-                              if (Math.abs(det) > 1e-10) {
-                                XtXInv = [[reducedXtX[1][1]/det, -reducedXtX[0][1]/det], [-reducedXtX[1][0]/det, reducedXtX[0][0]/det]];
-                              }
+                            try {
+                              XtXInv = invertMatrix(reducedXtX);
+                            } catch (e) {
+                              // Matrix is singular
                             }
                             
                             let varY = 0;
                             let ciLower = NaN, ciUpper = NaN, piLower = NaN, piUpper = NaN;
-                            if (XtXInv && xRow.length === 2) {
+                            if (XtXInv && xRow.length === XtXInv.length) {
                               // Calculate x'(X'X)^-1 x
-                              for (let i = 0; i < 2; i++) {
-                                for (let j = 0; j < 2; j++) {
+                              for (let i = 0; i < xRow.length; i++) {
+                                for (let j = 0; j < xRow.length; j++) {
                                   varY += xRow[i] * XtXInv[i][j] * xRow[j];
                                 }
                               }
