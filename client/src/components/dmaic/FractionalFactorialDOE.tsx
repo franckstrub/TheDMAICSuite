@@ -1680,21 +1680,34 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                       })
                                     : ['Low (-1)', 'High (+1)']);
 
-                              const aliasA = getFactorAlias(idxA);
-                              const aliasB = getFactorAlias(idxB);
-                              const interactionTitleSuffixA = aliasA ? ` (alias: ${aliasA})` : '';
-                              const interactionTitleSuffixB = aliasB ? ` (alias: ${aliasB})` : '';
+                              const interactionAlias = (() => {
+                                // For interactions, look for the product term (e.g., "AB") in aliases
+                                if (!generatedPlan?.aliases || generatedPlan.aliases.length === 0) return null;
+                                const factorLetterA = String.fromCharCode(65 + idxA);
+                                const factorLetterB = String.fromCharCode(65 + idxB);
+                                // Look for interaction alias like "AB = ..."
+                                const interactionTerm = (factorLetterA + factorLetterB).split('').sort().join('');
+                                const aliasEntry = generatedPlan.aliases.find((alias: string) => 
+                                  alias.startsWith(interactionTerm + ' =') || alias.startsWith(factorLetterA + factorLetterB + ' =')
+                                );
+                                if (aliasEntry) {
+                                  const parts = aliasEntry.split('=');
+                                  return parts[1]?.trim() || null;
+                                }
+                                return null;
+                              })();
+                              const interactionTitleSuffix = interactionAlias ? ` (alias: ${interactionAlias})` : '';
                               
                               return (
                                 <Card key={`${idxA}-${idxB}`}>
                                   <CardHeader>
-                                    <CardTitle>Interaction: {factorA.name}{interactionTitleSuffixA} × {factorB.name}{interactionTitleSuffixB}</CardTitle>
+                                    <CardTitle>Interaction: {factorA.name} × {factorB.name}{interactionTitleSuffix}</CardTitle>
                                   </CardHeader>
                                   <CardContent>
                                     <Plot
                                       data={interactionTraces}
                                       layout={{
-                                        title: { text: `<b>${factorA.name}${interactionTitleSuffixA} × ${factorB.name}${interactionTitleSuffixB}</b>` },
+                                        title: { text: `<b>${factorA.name} × ${factorB.name}${interactionTitleSuffix}</b>` },
                                         xaxis: { title: { text: factorB.name }, type: 'linear', tickmode: 'array', tickvals: xTickVals, ticktext: xTickLabels },
                                         yaxis: { title: { text: responseVariableName || 'Y Response' }, range: [yAxisRangeMin, yAxisRangeMax] },
                                         showlegend: true,
