@@ -606,10 +606,15 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
     }));
   };
 
-  // Helper: Get alias string for a factor from generatedPlan
-  const getFactorAlias = (factorName: string): string | null => {
-    if (!generatedPlan?.aliases) return null;
-    const aliasEntry = generatedPlan.aliases.find((alias: string) => alias.startsWith(factorName + ' ='));
+  // Helper: Get alias string for a factor by index from generatedPlan
+  const getFactorAlias = (factorIndex: number): string | null => {
+    if (!generatedPlan?.aliases || generatedPlan.aliases.length === 0) return null;
+    
+    // Convert factor index to letter (0->A, 1->B, 2->C, etc.)
+    const factorLetter = String.fromCharCode(65 + factorIndex);
+    
+    // Find the alias that starts with this letter
+    const aliasEntry = generatedPlan.aliases.find((alias: string) => alias.startsWith(factorLetter + ' ='));
     if (aliasEntry) {
       const parts = aliasEntry.split('=');
       return parts[1]?.trim() || null;
@@ -1395,7 +1400,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                       } as any);
                     }
 
-                    const factorAlias = getFactorAlias(factor.name);
+                    const factorAlias = getFactorAlias(factorIndex);
                     const titleSuffix = factorAlias ? ` (alias: ${factorAlias})` : '';
                     
                     return (
@@ -1675,8 +1680,8 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                       })
                                     : ['Low (-1)', 'High (+1)']);
 
-                              const aliasA = getFactorAlias(factorA.name);
-                              const aliasB = getFactorAlias(factorB.name);
+                              const aliasA = getFactorAlias(idxA);
+                              const aliasB = getFactorAlias(idxB);
                               const interactionTitleSuffixA = aliasA ? ` (alias: ${aliasA})` : '';
                               const interactionTitleSuffixB = aliasB ? ` (alias: ${aliasB})` : '';
                               
