@@ -1806,43 +1806,23 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   }
                 }
 
-                // Solve normal equations using least-squares with regularization
+                // Gaussian elimination for solving normal equations
                 const solveNormalEquations = (A: number[][], b: number[]): number[] => {
                   const n = A.length;
+                  const aug = A.map((row, i) => [...row, b[i]]);
                   
-                  // Check condition number - if too high, add small regularization
-                  const maxDiag = Math.max(...A.map(row => Math.abs(row[row.length - 1])));
-                  const minDiag = Math.min(...A.map((row, i) => Math.abs(row[i])).filter(x => x > 1e-14));
-                  const conditionNumber = maxDiag / minDiag;
-                  
-                  console.log(`Condition number of X'X: ${conditionNumber.toExponential(2)}`);
-                  
-                  // If ill-conditioned, add ridge regularization
-                  const lambda = conditionNumber > 1e6 ? 1e-8 * maxDiag : 0;
-                  const regularizedA = A.map((row, i) => {
-                    const newRow = [...row];
-                    newRow[i] += lambda;
-                    return newRow;
-                  });
-                  
-                  // Gaussian elimination with partial pivoting on regularized matrix
-                  const aug = regularizedA.map((row, i) => [...row, b[i]]);
-                  
+                  // Forward elimination with partial pivoting
                   for (let i = 0; i < n; i++) {
-                    // Find pivot
                     let maxRow = i;
                     for (let k = i + 1; k < n; k++) {
                       if (Math.abs(aug[k][i]) > Math.abs(aug[maxRow][i])) maxRow = k;
                     }
                     [aug[i], aug[maxRow]] = [aug[maxRow], aug[i]];
                     
-                    // Check for singular matrix
                     if (Math.abs(aug[i][i]) < 1e-14) {
-                      console.warn(`Singular matrix at row ${i}`);
-                      throw new Error(`Singular matrix`);
+                      throw new Error(`Singular matrix at row ${i}`);
                     }
                     
-                    // Eliminate column
                     for (let k = i + 1; k < n; k++) {
                       const factor = aug[k][i] / aug[i][i];
                       for (let j = i; j <= n; j++) {
