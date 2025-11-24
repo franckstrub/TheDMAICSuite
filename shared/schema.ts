@@ -2666,7 +2666,13 @@ export const insertDoeFractionalFactorialConfigSchema = createInsertSchema(doeFr
   lastUpdated: true,
 });
 
+export const updateDoeFractionalFactorialConfigSchema = z.object({
+  selectedFactorsForModel: z.record(z.union([z.number(), z.string()]), z.boolean()).optional(),
+  significanceLevel: z.number().min(0).max(1).optional(),
+});
+
 export type InsertDoeFractionalFactorialConfig = z.infer<typeof insertDoeFractionalFactorialConfigSchema>;
+export type UpdateDoeFractionalFactorialConfig = z.infer<typeof updateDoeFractionalFactorialConfigSchema>;
 export type DoeFractionalFactorialConfig = typeof doeFractionalFactorialConfig.$inferSelect;
 
 // DOE Full Factorial Configuration (2^k designs or follow-up from fractional)
@@ -2729,7 +2735,13 @@ export const insertDoeFullFactorialConfigSchema = createInsertSchema(doeFullFact
   lastUpdated: true,
 });
 
+export const updateDoeFullFactorialConfigSchema = z.object({
+  selectedFactorsForModel: z.record(z.union([z.number(), z.string()]), z.boolean()).optional(),
+  significanceLevel: z.number().min(0).max(1).optional(),
+});
+
 export type InsertDoeFullFactorialConfig = z.infer<typeof insertDoeFullFactorialConfigSchema>;
+export type UpdateDoeFullFactorialConfig = z.infer<typeof updateDoeFullFactorialConfigSchema>;
 export type DoeFullFactorialConfig = typeof doeFullFactorialConfig.$inferSelect;
 
 // User Settings Table
