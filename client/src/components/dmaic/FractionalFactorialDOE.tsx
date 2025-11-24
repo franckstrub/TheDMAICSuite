@@ -1864,32 +1864,21 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   return x;
                 };
 
-                console.log('X matrix shape:', n, 'rows x', numCoefficients, 'cols');
-                console.log('First row of X:', X[0]);
-                console.log('XtX[0]:', XtX[0]);
-                console.log('Xty:', Xty);
-                
                 let beta: number[] = [];
                 if (Math.abs(XtX[0][0]) > 1e-10) {
                   try {
-                    console.log('Attempting to solve normal equations...');
                     beta = solveNormalEquations(XtX, Xty);
-                    console.log('Solved successfully, beta:', beta.slice(0, 5));
                   } catch (e) {
-                    console.log('Gaussian elimination failed:', e);
-                    console.log('Falling back to simple inversion');
+                    console.warn('Gaussian elimination failed, using fallback');
                     beta = Xty.map(v => v / (XtX[0][0] || 1));
                   }
                 } else {
-                  console.log('XtX[0][0] too small, using fallback');
                   beta = Xty.map(v => v / (XtX[0][0] || 1));
                 }
                 
-                console.log('Regression beta before validation:', beta.slice(0, 5));
-                
                 // Ensure beta contains valid numbers
                 if (!beta.every(b => Number.isFinite(b))) {
-                  console.log('Beta contains non-finite values, falling back to mean');
+                  console.warn('Beta contains non-finite values, falling back to mean');
                   beta = Array(numCoefficients).fill(0);
                   beta[0] = mean_y;
                 }
