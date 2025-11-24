@@ -2783,44 +2783,27 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                       <CardContent>
                         <div className="space-y-4">
                           <div className="border-t pt-4">
-                            <p className="text-sm font-semibold mb-2">Residual Statistics</p>
                             {(() => {
                               const adTest = performNormalityTest(residuals, residualMean, residualStd);
                               
                               return (
-                                <>
-                                  <table className="w-full border-collapse bg-gray-50 dark:bg-gray-900 rounded-lg">
-                                    <tbody>
-                                      <th className="text-sm text-muted-foreground py-2 pr-4 w-1/5">Standard Deviation:</th>
-                                      <th className="text-sm text-muted-foreground py-2 pr-4 w-1/5">Max Residual:</th>
-                                      <th className="text-sm text-muted-foreground py-2 pr-4 align-top w-3/5">Normality Test (Anderson-Darling):</th>
-                                      <tr>
-                                        <td className="font-medium py-2 text-center">{residualStd.toFixed(6)}</td>
-                                        <td className="font-medium py-2 text-center">{Math.max(...residuals.map(Math.abs)).toFixed(4)}</td>
-                                        <table className="w-full">
-                                          <tbody>                         
-                                            <th className="text-sm text-muted-foreground pb-1 w-1/5">AD Statistic:</th>
-                                            <th className="text-sm text-muted-foreground pb-1 w 1/5">p-value:</th>
-                                            <th className="text-sm text-muted-foreground pb-1 w-3/5">Conclusion (5% significance (α)):</th>
-                                            <tr>
-                                              <td className="font-medium pb-1 text-center">{adTest.adStatistic.toFixed(4)}</td>
-                                              <td className="font-medium pb-1 text-center">{adTest.pValue.toFixed(4)}</td>
-                                              <td className={`font-medium pb-1  text-center ${
-                                                adTest.isNormal ? 'text-green-600 dark:text-green-400' :
-                                                !adTest.isNormal ? 'text-red-600 dark:text-red-400' :
-                                                'text-yellow-600 dark:text-yellow-400'
-                                                }`}>
-                                                {adTest.isNormal ? 'Normal' : adTest.isNormal === false ? 'Not Normal' : 'Inconclusive'}
-                                              </td>
-                                            </tr>
-                                          </tbody>
-                                        </table>
-                                      </tr>
-                                    </tbody>
-                                  </table>
+                                <div className="space-y-4">
+                                  <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                                    <p className="text-sm font-semibold mb-3">Residual Statistics</p>
+                                    <div className="grid grid-cols-2 gap-4">
+                                      <div>
+                                        <p className="text-sm text-muted-foreground">Standard Deviation</p>
+                                        <p className="text-lg font-bold">{residualStd.toFixed(6)}</p>
+                                      </div>
+                                      <div>
+                                        <p className="text-sm text-muted-foreground">Max Residual</p>
+                                        <p className="text-lg font-bold">{Math.max(...residuals.map(Math.abs)).toFixed(4)}</p>
+                                      </div>
+                                    </div>
+                                  </div>
 
-                                  <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
-                                    <p className="text-sm font-semibold mb-3">Normality Test (Anderson-Darling):</p>
+                                  <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                                    <p className="text-sm font-semibold mb-3">Normality Test (Anderson-Darling)</p>
                                     <div className="grid grid-cols-3 gap-4">
                                       <div>
                                         <p className="text-sm text-muted-foreground">AD Statistic</p>
@@ -2838,7 +2821,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                       </div>
                                     </div>
                                   </div>
-                                </>
+                                </div>
                               );
                             })()}
                           </div>
