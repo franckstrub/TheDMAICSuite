@@ -2022,8 +2022,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     return;
                   }
                   
-                  // Check if coefficient is too small (nearly zero) - division by ~0 would give infinite/undefined result
-                  if (Math.abs(displayBeta[solveFactorIdx + 1]) < 1e-10) {
+                  if (displayBeta[solveFactorIdx + 1] === 0) {
                     setSolverResult(null);
                     return;
                   }
@@ -3102,10 +3101,10 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                             Save Setup
                           </Button>
 
-                          {targetYDisplay !== '' && Number.isFinite(targetY) && Math.abs(displayBeta[solveFactorIdx + 1]) < 1e-10 && (
+                          {targetYDisplay !== '' && Number.isFinite(targetY) && displayBeta[solveFactorIdx + 1] === 0 && (
                             <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded border border-amber-200 dark:border-amber-800">
                               <p className="text-sm text-amber-600 dark:text-amber-400">
-                                ⚠️ Cannot solve for {factors[solveFactorIdx].name}: This factor has a negligible coefficient in the model, making it impossible to solve (would cause division by near-zero).
+                                ⚠️ Cannot solve for {factors[solveFactorIdx].name}: This factor has a coefficient of 0 in the model, meaning it has no significant effect on the response in this design.
                               </p>
                             </div>
                           )}
