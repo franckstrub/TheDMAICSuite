@@ -418,10 +418,22 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
   };
 
   const handleSaveSolvingSetup = async () => {
+    // Ensure all constraint values are numbers (not strings)
+    const cleanedConstraintValues: Record<number, number | null> = {};
+    Object.entries(constraintValues).forEach(([key, value]) => {
+      const numKey = parseInt(key);
+      if (value === null || value === undefined) {
+        cleanedConstraintValues[numKey] = null;
+      } else {
+        const numValue = typeof value === 'string' ? parseDecimalValue(value) : value;
+        cleanedConstraintValues[numKey] = numValue;
+      }
+    });
+    
     const solverSetupData = {
       targetY,
       solveFactorIdx,
-      constraintValues,
+      constraintValues: cleanedConstraintValues,
       significanceLevel,
     };
     
