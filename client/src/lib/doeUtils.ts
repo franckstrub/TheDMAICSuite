@@ -70,6 +70,8 @@ export interface FractionalFactorialPlan {
   resolution: number;
   k?: number;
   p?: number;
+  generators?: string[];
+  aliases?: string[];
 }
 
 /**
@@ -405,6 +407,8 @@ export function generateFractionalFactorialPlan(
     ? centerPoints * Math.pow(2, categoricalFactors.length)
     : centerPoints;
   
+  const aliases = calculateAliases(k, p, generators, definingRelation);
+  
   return {
     plan,
     factors,
@@ -414,7 +418,66 @@ export function generateFractionalFactorialPlan(
     k,
     p,
     generators,
+    aliases,
   };
+}
+
+/**
+ * Calculate aliases for a fractional factorial design
+ */
+function calculateAliases(k: number, p: number, generators: string[], definingRelation: string): string[] {
+  const aliases: string[] = [];
+  
+  // Helper to multiply effect strings (product in GF(2))
+  const multiplyEffects = (effect1: string, effect2: string): string => {
+    let result = '';
+    const factors = new Set([...effect1, ...effect2]);
+    
+    // Count each factor
+    const factorCounts: { [key: string]: number } = {};
+    for (const f of effect1) factorCounts[f] = (factorCounts[f] || 0) + 1;
+    for (const f of effect2) factorCounts[f] = (factorCounts[f] || 0) + 1;
+    
+    // Keep factors with odd count (mod 2)
+    for (const f of Array.from(factors).sort()) {
+      if ((factorCounts[f] || 0) % 2 === 1) {
+        result += f;
+      }
+    }
+    
+    return result || 'I';
+  };
+  
+  // Get base factor names from first k characters of generators
+  const baseFactors = generators.map(g => g.split('=')[0]);
+  const allFactors = Array.from({ length: k }, (_, i) => String.fromCharCode(65 + i)); // A, B, C, ...
+  
+  // Extract main effects and their aliases
+  const aliasMap: { [key: string]: string } = {};
+  
+  for (const factor of allFactors) {
+    // For each main effect, multiply by defining relation terms
+    const defTerms = definingRelation.split('=')[1]?.trim().split(/\s+/) || ['I'];
+    
+    for (const term of defTerms) {
+      if (term !== 'I') {
+        const alias = multiplyEffects(factor, term);
+        if (alias && alias !== factor && alias !== 'I') {
+          aliasMap[factor] = alias;
+          break; // Take first non-trivial alias
+        }
+      }
+    }
+  }
+  
+  // Format aliases
+  for (const [effect, alias] of Object.entries(aliasMap)) {
+    if (alias && alias !== 'I') {
+      aliases.push(`${effect} = ${alias}`);
+    }
+  }
+  
+  return aliases;
 }
 
 /**
