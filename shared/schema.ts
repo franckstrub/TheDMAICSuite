@@ -2651,11 +2651,6 @@ export const doeFractionalFactorialConfig = pgTable(
     // Display options
     showUncoded: boolean("show_uncoded").default(false),
     
-    // Solver setup (persisted for loading on return)
-    targetY: real("target_y"),
-    solveFactorIdx: integer("solve_factor_idx"),
-    constraintValues: jsonb("constraint_values").$type<Record<number, number | null>>(),
-    
     lastUpdated: timestamp("last_updated").notNull().defaultNow(),
   },
   (table) => ({
@@ -2715,11 +2710,6 @@ export const doeFullFactorialConfig = pgTable(
     
     // Display options
     showUncoded: boolean("show_uncoded").default(false),
-    
-    // Solver setup (persisted for loading on return)
-    targetY: real("target_y"),
-    solveFactorIdx: integer("solve_factor_idx"),
-    constraintValues: jsonb("constraint_values").$type<Record<number, number | null>>(),
     
     lastUpdated: timestamp("last_updated").notNull().defaultNow(),
   },
