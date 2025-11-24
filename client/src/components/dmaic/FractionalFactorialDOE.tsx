@@ -397,6 +397,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
       numberOfCenterPoints,
       significanceLevel,
       showUncoded,
+      selectedFactorsForModel,
       generatedPlan: transformedPlan,
     });
   };
@@ -413,6 +414,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
       numberOfCenterPoints,
       significanceLevel,
       showUncoded,
+      selectedFactorsForModel,
       generatedPlan: transformedPlan,
     });
   };

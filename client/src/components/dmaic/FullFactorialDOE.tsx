@@ -385,6 +385,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
       numberOfCenterPoints,
       significanceLevel,
       showUncoded,
+      selectedFactorsForModel,
       generatedPlan: transformGeneratedPlanForSaving(generatedPlan, factors, responses),
     });
   };
@@ -399,6 +400,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
       numberOfCenterPoints,
       significanceLevel,
       showUncoded,
+      selectedFactorsForModel,
       generatedPlan: transformGeneratedPlanForSaving(generatedPlan, factors, responses),
     });
   };
