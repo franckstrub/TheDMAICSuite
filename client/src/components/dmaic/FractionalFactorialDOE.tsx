@@ -119,6 +119,12 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
   const [showResidualsVsOrder, setShowResidualsVsOrder] = useState(false);
   const [showNormalProbPlot, setShowNormalProbPlot] = useState(false);
   
+  // Tab persistence
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    const stored = localStorage.getItem(`doe-fractional-active-tab-${projectId}-${solutionId}`);
+    return stored || "setup";
+  });
+  
   // Ref to store the solve function so it can be called by useEffect
   const solveRef = useRef<(() => void) | null>(null);
 
@@ -134,12 +140,6 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
       return () => clearTimeout(timeoutId);
     }
   }, [solveFactorIdx, targetY, constraintValues, selectedFactorsForModel, activeTab]);
-  
-  // Tab persistence
-  const [activeTab, setActiveTab] = useState<string>(() => {
-    const stored = localStorage.getItem(`doe-fractional-active-tab-${projectId}-${solutionId}`);
-    return stored || "setup";
-  });
   
   // Update localStorage when tab changes
   useEffect(() => {
