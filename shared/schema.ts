@@ -2648,6 +2648,9 @@ export const doeFractionalFactorialConfig = pgTable(
     // Analysis options
     significanceLevel: real("significance_level").default(0.05),
     
+    // Selected factors for model (allows model reduction)
+    selectedFactorsForModel: jsonb("selected_factors_for_model").$type<Record<number | string, boolean>>().default({}),
+    
     // Display options
     showUncoded: boolean("show_uncoded").default(false),
     
@@ -2707,6 +2710,9 @@ export const doeFullFactorialConfig = pgTable(
     
     // Analysis options
     significanceLevel: real("significance_level").default(0.05),
+    
+    // Selected factors for model (allows model reduction)
+    selectedFactorsForModel: jsonb("selected_factors_for_model").$type<Record<number | string, boolean>>().default({}),
     
     // Display options
     showUncoded: boolean("show_uncoded").default(false),
