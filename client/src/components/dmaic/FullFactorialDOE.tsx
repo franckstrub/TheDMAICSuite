@@ -310,27 +310,6 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
         });
         setResponseInputs(inputs);
       }
-
-      // Load solver setup if available
-      if (config.targetY !== null && config.targetY !== undefined) {
-        setTargetY(config.targetY);
-        setTargetYDisplay(String(config.targetY));
-      }
-
-      if (config.solveFactorIdx !== null && config.solveFactorIdx !== undefined) {
-        setSolveFactorIdx(config.solveFactorIdx);
-      }
-
-      if (config.constraintValues) {
-        setConstraintValues(config.constraintValues);
-        const display: Record<number, string> = {};
-        Object.entries(config.constraintValues).forEach(([key, value]: [string, any]) => {
-          if (value !== null && value !== undefined) {
-            display[parseInt(key)] = String(value);
-          }
-        });
-        setConstraintDisplay(display);
-      }
     }
   }, [configQuery.data, projectId, solutionId]);
   
@@ -365,7 +344,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
     mutationFn: async (data: any) => {
       return apiRequest(
         'POST',
-        `/api/projects/${projectId}/solutions/${solutionId}/doe-full`,
+        `/api/projects/${projectId}/solutions/${solutionId}/doe-full-solver`,
         data
       );
     },
@@ -425,23 +404,11 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
   };
 
   const handleSaveSolvingSetup = async () => {
-    // Get current config data from loaded data
-    const config = configQuery.data as any;
-    
     const solverSetupData = {
-      responseVariableName: config?.responseVariableName || responseVariableName,
-      factors: config?.factors || factors,
-      numberOfReplicates: config?.numberOfReplicates || numberOfReplicates,
-      randomizeRuns: config?.randomizeRuns || randomizeRuns,
-      includeCenterPoints: config?.includeCenterPoints || includeCenterPoints,
-      numberOfCenterPoints: config?.numberOfCenterPoints || numberOfCenterPoints,
-      significanceLevel,
-      showUncoded: config?.showUncoded || showUncoded,
-      selectedFactorsForModel: config?.selectedFactorsForModel || selectedFactorsForModel,
-      generatedPlan: config?.generatedPlan || transformGeneratedPlanForSaving(generatedPlan, factors, responses),
       targetY,
       solveFactorIdx,
       constraintValues,
+      significanceLevel,
     };
     
     await saveSolvingSetupMutation.mutateAsync(solverSetupData);
