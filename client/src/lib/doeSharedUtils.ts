@@ -1,7 +1,6 @@
 // Shared utilities for DOE components (Full Factorial and Fractional Factorial)
 
 import type { DOEFactor } from '@/lib/doeUtils';
-import { calculateAliases } from '@/lib/doeUtils';
 
 // Helper to convert number to Roman numeral (for resolution)
 function toRoman(num: number): string {
@@ -41,7 +40,6 @@ export function transformGeneratedPlanForSaving(generatedPlan: any, factors: DOE
     k: generatedPlan.k || 0,
     p: generatedPlan.p || 0,
     generators: generatedPlan.generators || [],
-    aliases: generatedPlan.aliases || [],
   };
 }
 
@@ -64,18 +62,6 @@ export function reconstructGeneratedPlanFromPersisted(
   } else if (persistedData.plan && Array.isArray(persistedData.plan)) {
     // New object format with metadata
     planArray = persistedData.plan;
-    
-    // Recalculate aliases if they're missing
-    let aliases = persistedData.aliases || [];
-    if ((!aliases || aliases.length === 0) && persistedData.k && persistedData.p && persistedData.definingRelation) {
-      aliases = calculateAliases(
-        persistedData.k,
-        persistedData.p,
-        persistedData.generators || [],
-        persistedData.definingRelation
-      );
-    }
-    
     metadata = {
       designType: persistedData.designType || '',
       definingRelation: persistedData.definingRelation || '',
@@ -83,7 +69,6 @@ export function reconstructGeneratedPlanFromPersisted(
       k: persistedData.k || 0,
       p: persistedData.p || 0,
       generators: persistedData.generators || [],
-      aliases: aliases,
     };
   } else {
     return null;

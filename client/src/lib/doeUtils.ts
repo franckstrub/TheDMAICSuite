@@ -425,7 +425,7 @@ export function generateFractionalFactorialPlan(
 /**
  * Calculate aliases for a fractional factorial design
  */
-export function calculateAliases(k: number, p: number, generators: string[], definingRelation: string): string[] {
+function calculateAliases(k: number, p: number, generators: string[], definingRelation: string): string[] {
   const aliases: string[] = [];
   
   // Helper to multiply effect strings (product in GF(2))
@@ -448,56 +448,23 @@ export function calculateAliases(k: number, p: number, generators: string[], def
     return result || 'I';
   };
   
-  // Helper to generate all possible effects (main and interactions)
-  const generateAllEffects = (numFactors: number): string[] => {
-    const effects: string[] = [];
-    const allFactors = Array.from({ length: numFactors }, (_, i) => String.fromCharCode(65 + i));
-    
-    // Main effects
-    for (const f of allFactors) {
-      effects.push(f);
-    }
-    
-    // Two-factor interactions
-    for (let i = 0; i < allFactors.length - 1; i++) {
-      for (let j = i + 1; j < allFactors.length; j++) {
-        effects.push(allFactors[i] + allFactors[j]);
-      }
-    }
-    
-    // Three-factor interactions (if k >= 4)
-    if (numFactors >= 4) {
-      for (let i = 0; i < allFactors.length - 2; i++) {
-        for (let j = i + 1; j < allFactors.length - 1; j++) {
-          for (let l = j + 1; l < allFactors.length; l++) {
-            effects.push(allFactors[i] + allFactors[j] + allFactors[l]);
-          }
-        }
-      }
-    }
-    
-    return effects;
-  };
+  // Get base factor names from first k characters of generators
+  const baseFactors = generators.map(g => g.split('=')[0]);
+  const allFactors = Array.from({ length: k }, (_, i) => String.fromCharCode(65 + i)); // A, B, C, ...
   
-  const allEffects = generateAllEffects(k);
+  // Extract main effects and their aliases
   const aliasMap: { [key: string]: string } = {};
   
-  // Parse the defining relation to get all terms
-  const parts = definingRelation.split('=');
-  if (parts.length >= 2) {
-    const termsStr = parts.slice(1).join('=').trim();
-    const terms = termsStr.split('=').map(t => t.trim()).filter(t => t && t !== 'I');
+  for (const factor of allFactors) {
+    // For each main effect, multiply by defining relation terms
+    const defTerms = definingRelation.split('=')[1]?.trim().split(/\s+/) || ['I'];
     
-    // For each effect, multiply with each term in the defining relation to get alias
-    for (const effect of allEffects) {
-      for (const term of terms) {
-        const alias = multiplyEffects(effect, term);
-        if (alias && alias !== effect && alias !== 'I') {
-          // Store the first meaningful alias we find
-          if (!aliasMap[effect]) {
-            aliasMap[effect] = alias;
-          }
-          break;
+    for (const term of defTerms) {
+      if (term !== 'I') {
+        const alias = multiplyEffects(factor, term);
+        if (alias && alias !== factor && alias !== 'I') {
+          aliasMap[factor] = alias;
+          break; // Take first non-trivial alias
         }
       }
     }
