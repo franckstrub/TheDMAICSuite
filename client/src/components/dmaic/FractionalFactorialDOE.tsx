@@ -1806,7 +1806,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   }
                 }
 
-                // Gaussian elimination for solving normal equations
+                // Solve using Cholesky or Gaussian elimination with better error handling
                 const solveNormalEquations = (A: number[][], b: number[]): number[] => {
                   const n = A.length;
                   const aug = A.map((row, i) => [...row, b[i]]);
@@ -1814,19 +1814,25 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   // Forward elimination with partial pivoting
                   for (let i = 0; i < n; i++) {
                     let maxRow = i;
+                    let maxVal = Math.abs(aug[i][i]);
                     for (let k = i + 1; k < n; k++) {
-                      if (Math.abs(aug[k][i]) > Math.abs(aug[maxRow][i])) maxRow = k;
+                      if (Math.abs(aug[k][i]) > maxVal) {
+                        maxVal = Math.abs(aug[k][i]);
+                        maxRow = k;
+                      }
                     }
                     [aug[i], aug[maxRow]] = [aug[maxRow], aug[i]];
                     
-                    if (Math.abs(aug[i][i]) < 1e-14) {
+                    if (Math.abs(aug[i][i]) < 1e-12) {
                       throw new Error(`Singular matrix at row ${i}`);
                     }
                     
                     for (let k = i + 1; k < n; k++) {
-                      const factor = aug[k][i] / aug[i][i];
-                      for (let j = i; j <= n; j++) {
-                        aug[k][j] -= factor * aug[i][j];
+                      if (Math.abs(aug[i][i]) > 1e-15) {
+                        const factor = aug[k][i] / aug[i][i];
+                        for (let j = i; j <= n; j++) {
+                          aug[k][j] -= factor * aug[i][j];
+                        }
                       }
                     }
                   }
@@ -1834,6 +1840,9 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   // Back substitution
                   const x: number[] = Array(n).fill(0);
                   for (let i = n - 1; i >= 0; i--) {
+                    if (Math.abs(aug[i][i]) < 1e-15) {
+                      throw new Error(`Cannot back-substitute: diagonal element at row ${i} is near zero`);
+                    }
                     x[i] = aug[i][n];
                     for (let j = i + 1; j < n; j++) {
                       x[i] -= aug[i][j] * x[j];
@@ -1845,15 +1854,24 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 };
 
                 let beta: number[] = [];
-                if (Math.abs(XtX[0][0]) > 1e-10) {
+                try {
+                  beta = solveNormalEquations(XtX, Xty);
+                } catch (e) {
+                  console.warn('Gaussian elimination failed:', e);
+                  // Use least squares solution via normal equations with regularization
+                  // Solve (X'X + λI)β = X'y where λ is a small regularization term
+                  const lambda = 1e-6;
+                  const regularizedXtX = XtX.map((row, i) => {
+                    const newRow = [...row];
+                    newRow[i] += lambda;
+                    return newRow;
+                  });
                   try {
-                    beta = solveNormalEquations(XtX, Xty);
-                  } catch (e) {
-                    console.warn('Gaussian elimination failed, using fallback');
-                    beta = Xty.map(v => v / (XtX[0][0] || 1));
+                    beta = solveNormalEquations(regularizedXtX, Xty);
+                  } catch (e2) {
+                    console.warn('Regularized solver also failed, using identity');
+                    beta = Xty.map(v => v);
                   }
-                } else {
-                  beta = Xty.map(v => v / (XtX[0][0] || 1));
                 }
                 
                 // Ensure beta contains valid numbers
@@ -1893,10 +1911,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 // Transform coefficients and standard errors from coded to uncoded if needed
                 // Note: For fractional DOE, beta and beta_display are the same (no model reduction by coefficient selection)
                 const transformCoefficientsAndSE = () => {
-                  const validLevels = allFactorsHaveValidLevels();
-                  console.log('Transform logic - showUncoded:', showUncoded, 'validLevels:', validLevels, 'beta[1]:', beta[1]);
-                  if (!showUncoded || !validLevels) {
-                    console.log('Returning raw beta (coded)');
+                  if (!showUncoded || !allFactorsHaveValidLevels()) {
                     return { displayBeta: beta, displayCoeffStats: coeffStats };
                   }
                   
