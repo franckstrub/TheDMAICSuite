@@ -275,6 +275,14 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
       }
       if (config.constraintValues) {
         setConstraintValues(config.constraintValues);
+        // Also populate constraintDisplay for the input fields
+        const displayValues: Record<number, string> = {};
+        Object.entries(config.constraintValues).forEach(([key, value]) => {
+          if (value !== null && value !== undefined) {
+            displayValues[parseInt(key)] = String(value);
+          }
+        });
+        setConstraintDisplay(displayValues);
       }
       
       // Load generatedPlan from persisted format
