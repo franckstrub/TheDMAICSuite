@@ -3084,19 +3084,15 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                             </div>
                           </div>
 
-                          <div className="grid grid-cols-2 gap-2">
-                            <Button onClick={handleSolve} data-testid="button-solve">
-                              Solve
-                            </Button>
-                            <Button
-                              onClick={handleSaveSolvingSetup}
-                              disabled={targetY === null || saveSolvingSetupMutation.isPending}
-                              data-testid="button-save-solving-setup"
-                            >
-                              {saveSolvingSetupMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                              Save Setup
-                            </Button>
-                          </div>
+                          <Button
+                            onClick={handleSaveSolvingSetup}
+                            disabled={targetY === null || saveSolvingSetupMutation.isPending}
+                            data-testid="button-save-solving-setup"
+                            className="w-full"
+                          >
+                            {saveSolvingSetupMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Save Setup
+                          </Button>
 
                           {solverResult !== null && (() => {
                             // Calculate confidence and prediction intervals for Y target
