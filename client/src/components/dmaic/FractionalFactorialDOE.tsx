@@ -2012,19 +2012,34 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 const { displayBeta, displayCoeffStats } = transformCoefficientsAndSE();
                 
                 const handleSolve = () => {
+                  console.log('handleSolve called', {
+                    solveFactorIdx,
+                    selectedFactorsForModel,
+                    baseFactorCount,
+                    targetYDisplay,
+                    targetY,
+                    constraintValues,
+                    displayBeta: displayBeta.slice(0, 3)
+                  });
+
                   // Check if solve factor is included in the model
                   if (selectedFactorsForModel[solveFactorIdx] === false || baseFactorCount < 1) {
+                    console.log('Failed check 1: solve factor not in model or no base factors');
                     setSolverResult(null);
                     return;
                   }
                   
                   // Check if target Y is set (targetYDisplay should be non-empty and targetY should be a valid number)
                   if (targetYDisplay === '' || !Number.isFinite(targetY)) {
+                    console.log('Failed check 2: targetY not set', { targetYDisplay, targetY });
                     setSolverResult(null);
                     return;
                   }
                   
-                  if (displayBeta[solveFactorIdx + 1] === 0) return;
+                  if (displayBeta[solveFactorIdx + 1] === 0) {
+                    console.log('Failed check 3: displayBeta coefficient is 0', { idx: solveFactorIdx + 1, beta: displayBeta[solveFactorIdx + 1] });
+                    return;
+                  }
                   
                   // Check that ALL non-solve factors have constraint values entered
                   for (let i = 0; i < factors.length; i++) {
@@ -2032,6 +2047,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                       const constraintVal = constraintValues[i];
                       // If constraint value is not set (null or undefined), don't solve
                       if (constraintVal === null || constraintVal === undefined || !Number.isFinite(constraintVal)) {
+                        console.log('Failed check 4: missing constraint value', { i, constraintVal, isSelected: selectedFactorsForModel[i] !== false });
                         setSolverResult(null);
                         return;
                       }
@@ -2053,6 +2069,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   // Therefore: Xi = (targetY - β0_uncoded - constraintSum) / βi_uncoded
                   // User enters target and constraints in uncoded space, result is also uncoded
                   let result = (targetY - displayBeta[0] - constraintSum) / displayBeta[solveFactorIdx + 1];
+                  console.log('Solver result:', result);
                   setSolverResult(result);
                 };
 
