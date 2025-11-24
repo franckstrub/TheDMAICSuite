@@ -1368,7 +1368,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                         ? (() => {
                             const decoded = decodeValue(0, factor);
                             return factor.type === 'continuous'
-                              ? `${(decoded as number).toFixed(2)}${factor.units ? ' ' + factor.units : ''}`
+                              ? `Center point: ${(decoded as number).toFixed(2)}${factor.units ? ' ' + factor.units : ''}`
                               : String(decoded);
                           })()
                         : 'Center (0)';
@@ -1621,7 +1621,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                     ? (() => {
                                         const decoded = decodeValue(0, factorB);
                                         return factorB.type === 'continuous'
-                                          ? `${(decoded as number).toFixed(2)}${factorB.units ? ' ' + factorB.units : ''}`
+                                          ? `Center point: ${(decoded as number).toFixed(2)}${factorB.units ? ' ' + factorB.units : ''}`
                                           : String(decoded);
                                       })()
                                     : 'Center (0)';
