@@ -606,22 +606,6 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
     }));
   };
 
-  // Helper: Get alias string for a factor by index from generatedPlan
-  const getFactorAlias = (factorIndex: number): string | null => {
-    if (!generatedPlan?.aliases || generatedPlan.aliases.length === 0) return null;
-    
-    // Convert factor index to letter (0->A, 1->B, 2->C, etc.)
-    const factorLetter = String.fromCharCode(65 + factorIndex);
-    
-    // Find the alias that starts with this letter
-    const aliasEntry = generatedPlan.aliases.find((alias: string) => alias.startsWith(factorLetter + ' ='));
-    if (aliasEntry) {
-      const parts = aliasEntry.split('=');
-      return parts[1]?.trim() || null;
-    }
-    return null;
-  };
-
   const getDesignChoices = (k: number) => {
     if (k < 3 || k > 7) {
       return [];
@@ -1400,19 +1384,16 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                       } as any);
                     }
 
-                    const factorAlias = getFactorAlias(factorIndex);
-                    const titleSuffix = factorAlias ? ` (alias: ${factorAlias})` : '';
-                    
                     return (
                       <Card key={factorIndex}>
                         <CardHeader>
-                          <CardTitle>Main Effect Plot: {factor.name}{titleSuffix}</CardTitle>
+                          <CardTitle>Main Effect Plot: {factor.name}</CardTitle>
                         </CardHeader>
                         <CardContent>
                           <Plot
                             data={plotData as any}
                             layout={{
-                              title: { text: `<b>Main Effect: ${factor.name}${titleSuffix}</b>` },
+                              title: { text: `<b>Main Effect: ${factor.name}</b>` },
                               xaxis: { title: { text: 'Factor Level' }, type: 'linear', tickmode: 'array', tickvals: xTickVals, ticktext: xTickText },
                               yaxis: { title: { text: responseVariableName || 'Y Response' }, range: [yAxisRangeMin, yAxisRangeMax] },
                               showlegend: false,
@@ -1680,44 +1661,16 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                       })
                                     : ['Low (-1)', 'High (+1)']);
 
-                              const interactionAlias = (() => {
-                                // For interactions, search for the interaction term in aliases (both sides)
-                                if (!generatedPlan?.aliases || generatedPlan.aliases.length === 0) return null;
-                                const factorLetterA = String.fromCharCode(65 + idxA);
-                                const factorLetterB = String.fromCharCode(65 + idxB);
-                                const interactionTerms = [factorLetterA + factorLetterB, factorLetterB + factorLetterA];
-                                
-                                // Search for the interaction term in all aliases
-                                for (const alias of generatedPlan.aliases) {
-                                  const parts = alias.split('=');
-                                  const leftSide = parts[0]?.trim() || '';
-                                  const rightSide = parts[1]?.trim() || '';
-                                  
-                                  // Check if interaction is on the left side: "AB = C"
-                                  if (interactionTerms.includes(leftSide)) {
-                                    return `${rightSide}=${leftSide}`;
-                                  }
-                                  
-                                  // Check if interaction is on the right side: "C = AB"
-                                  if (interactionTerms.includes(rightSide)) {
-                                    return `${rightSide}=${leftSide}`;
-                                  }
-                                }
-                                
-                                return null;
-                              })();
-                              const interactionTitleSuffix = interactionAlias ? ` (alias: ${interactionAlias})` : '';
-                              
                               return (
                                 <Card key={`${idxA}-${idxB}`}>
                                   <CardHeader>
-                                    <CardTitle>Interaction: {factorA.name} × {factorB.name}{interactionTitleSuffix}</CardTitle>
+                                    <CardTitle>Interaction: {factorA.name} × {factorB.name}</CardTitle>
                                   </CardHeader>
                                   <CardContent>
                                     <Plot
                                       data={interactionTraces}
                                       layout={{
-                                        title: { text: `<b>${factorA.name} × ${factorB.name}${interactionTitleSuffix}</b>` },
+                                        title: { text: `<b>${factorA.name} × ${factorB.name}</b>` },
                                         xaxis: { title: { text: factorB.name }, type: 'linear', tickmode: 'array', tickvals: xTickVals, ticktext: xTickLabels },
                                         yaxis: { title: { text: responseVariableName || 'Y Response' }, range: [yAxisRangeMin, yAxisRangeMax] },
                                         showlegend: true,
