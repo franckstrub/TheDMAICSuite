@@ -448,23 +448,31 @@ function calculateAliases(k: number, p: number, generators: string[], definingRe
     return result || 'I';
   };
   
-  // Get base factor names from first k characters of generators
-  const baseFactors = generators.map(g => g.split('=')[0]);
   const allFactors = Array.from({ length: k }, (_, i) => String.fromCharCode(65 + i)); // A, B, C, ...
   
-  // Extract main effects and their aliases
+  // Extract main effects and their aliases by multiplying each factor with the defining relation
   const aliasMap: { [key: string]: string } = {};
   
   for (const factor of allFactors) {
-    // For each main effect, multiply by defining relation terms
-    const defTerms = definingRelation.split('=')[1]?.trim().split(/\s+/) || ['I'];
-    
-    for (const term of defTerms) {
-      if (term !== 'I') {
+    // Parse the defining relation to get all terms after "I ="
+    // e.g., "I = ABC" -> terms = ["ABC"]
+    // e.g., "I = ABCE = BCDF = ADEF" -> terms = ["ABCE", "BCDF", "ADEF"]
+    const parts = definingRelation.split('=');
+    if (parts.length >= 2) {
+      // Get everything after "I ="
+      const termsStr = parts.slice(1).join('=').trim();
+      // Split on = to get individual terms
+      const terms = termsStr.split('=').map(t => t.trim()).filter(t => t && t !== 'I');
+      
+      // For each term, multiply with the factor to get alias
+      for (const term of terms) {
         const alias = multiplyEffects(factor, term);
         if (alias && alias !== factor && alias !== 'I') {
-          aliasMap[factor] = alias;
-          break; // Take first non-trivial alias
+          // Store the first meaningful alias we find
+          if (!aliasMap[factor]) {
+            aliasMap[factor] = alias;
+          }
+          break;
         }
       }
     }
