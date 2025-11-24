@@ -1681,21 +1681,26 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                     : ['Low (-1)', 'High (+1)']);
 
                               const interactionAlias = (() => {
-                                // For interactions, look for the interaction term (e.g., "AB") in aliases
+                                // For interactions, search for the interaction term in aliases (both sides)
                                 if (!generatedPlan?.aliases || generatedPlan.aliases.length === 0) return null;
                                 const factorLetterA = String.fromCharCode(65 + idxA);
                                 const factorLetterB = String.fromCharCode(65 + idxB);
-                                
-                                // First, try to find an alias where this interaction equals something
-                                // e.g., "AB = D" or "AB = CDE"
                                 const interactionTerms = [factorLetterA + factorLetterB, factorLetterB + factorLetterA];
-                                for (const term of interactionTerms) {
-                                  const aliasEntry = generatedPlan.aliases.find((alias: string) => 
-                                    alias.startsWith(term + ' =')
-                                  );
-                                  if (aliasEntry) {
-                                    const parts = aliasEntry.split('=');
-                                    return parts[1]?.trim() || null;
+                                
+                                // Search for the interaction term in all aliases
+                                for (const alias of generatedPlan.aliases) {
+                                  const parts = alias.split('=');
+                                  const leftSide = parts[0]?.trim() || '';
+                                  const rightSide = parts[1]?.trim() || '';
+                                  
+                                  // Check if interaction is on the left side: "AB = C"
+                                  if (interactionTerms.includes(leftSide)) {
+                                    return `${rightSide}=${leftSide}`;
+                                  }
+                                  
+                                  // Check if interaction is on the right side: "C = AB"
+                                  if (interactionTerms.includes(rightSide)) {
+                                    return `${rightSide}=${leftSide}`;
                                   }
                                 }
                                 
