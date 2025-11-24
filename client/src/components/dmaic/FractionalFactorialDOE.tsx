@@ -1893,7 +1893,10 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 // Transform coefficients and standard errors from coded to uncoded if needed
                 // Note: For fractional DOE, beta and beta_display are the same (no model reduction by coefficient selection)
                 const transformCoefficientsAndSE = () => {
-                  if (!showUncoded || !allFactorsHaveValidLevels()) {
+                  const validLevels = allFactorsHaveValidLevels();
+                  console.log('Transform logic - showUncoded:', showUncoded, 'validLevels:', validLevels, 'beta[1]:', beta[1]);
+                  if (!showUncoded || !validLevels) {
+                    console.log('Returning raw beta (coded)');
                     return { displayBeta: beta, displayCoeffStats: coeffStats };
                   }
                   
