@@ -1044,6 +1044,9 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                               {generatedPlan.generators && generatedPlan.generators.length > 0 && (
                                 <> • Generators: {generatedPlan.generators.join(', ')}</>
                               )}
+                              {generatedPlan.aliases && generatedPlan.aliases.length > 0 && (
+                                <> • Aliases: {generatedPlan.aliases.join(', ')}</>
+                              )}
                             </>
                           )}
                         </p>
