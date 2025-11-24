@@ -7963,7 +7963,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const solverSchema = z.object({
           targetY: z.number().optional(),
           solveFactorIdx: z.number().optional(),
-          constraintValues: z.record(z.number(), z.number().nullable()).optional(),
+          constraintValues: z.record(z.string(), z.number().nullable()).optional(),
           significanceLevel: z.number().min(0).max(1).optional(),
         });
 
@@ -8223,7 +8223,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const solverSchema = z.object({
           targetY: z.number().optional(),
           solveFactorIdx: z.number().optional(),
-          constraintValues: z.record(z.number(), z.number().nullable()).optional(),
+          constraintValues: z.record(z.string(), z.number().nullable()).optional(),
           significanceLevel: z.number().min(0).max(1).optional(),
         });
 
