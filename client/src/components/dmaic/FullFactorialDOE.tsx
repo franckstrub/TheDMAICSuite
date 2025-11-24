@@ -2114,8 +2114,14 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                     }
                     const stdError = Math.sqrt(mse_red * Math.max(0, xxtInvDiag));
                     const tValue = stdError > 0 ? b / stdError : 0;
-                    const pValue = stdError > 0 ? 2 * (1 - jStat.studentt.cdf(Math.abs(tValue), n_reduced - p_reduced)) : 1;
-                    return { stdError, tValue, pValue };
+                    let pValue = 1;
+                    if (stdError > 0 && Number.isFinite(tValue)) {
+                      const df = n_reduced - p_reduced;
+                      const cdfVal = jStat.studentt.cdf(Math.abs(tValue), df);
+                      pValue = Number.isFinite(cdfVal) ? 2 * (1 - cdfVal) : 1;
+                      pValue = Math.max(0, Math.min(1, pValue));
+                    }
+                    return { stdError: Number.isFinite(stdError) ? stdError : 0, tValue: Number.isFinite(tValue) ? tValue : 0, pValue };
                   });
                   
                   return {
