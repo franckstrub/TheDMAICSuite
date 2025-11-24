@@ -606,6 +606,52 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
     }));
   };
 
+  // Helper: Calculate GF(2) multiplication of two effects
+  const multiplyEffects = (effect1: string, effect2: string): string => {
+    let result = '';
+    const factors = new Set([...effect1, ...effect2]);
+    
+    // Count each factor
+    const factorCounts: { [key: string]: number } = {};
+    for (const f of effect1) factorCounts[f] = (factorCounts[f] || 0) + 1;
+    for (const f of effect2) factorCounts[f] = (factorCounts[f] || 0) + 1;
+    
+    // Keep factors with odd count (mod 2)
+    for (const f of Array.from(factors).sort()) {
+      if ((factorCounts[f] || 0) % 2 === 1) {
+        result += f;
+      }
+    }
+    
+    return result || 'I';
+  };
+
+  // Helper: Get interaction alias from generatedPlan
+  const getInteractionAlias = (factorIndexA: number, factorIndexB: number): string | null => {
+    if (!generatedPlan?.definingRelation) return null;
+    
+    // Convert indices to letters (0->A, 1->B, etc.)
+    const letterA = String.fromCharCode(65 + factorIndexA);
+    const letterB = String.fromCharCode(65 + factorIndexB);
+    const interaction = letterA + letterB; // e.g., "AB"
+    
+    // Parse the defining relation
+    const parts = generatedPlan.definingRelation.split('=');
+    if (parts.length >= 2) {
+      const termsStr = parts.slice(1).join('=').trim();
+      const terms = termsStr.split('=').map(t => t.trim()).filter(t => t && t !== 'I');
+      
+      // Multiply interaction with first defining relation term to get alias
+      if (terms.length > 0) {
+        const alias = multiplyEffects(interaction, terms[0]);
+        if (alias && alias !== interaction && alias !== 'I') {
+          return alias;
+        }
+      }
+    }
+    return null;
+  };
+
   // Helper: Get alias string for a factor by index from generatedPlan
   const getFactorAlias = (factorIndex: number): string | null => {
     if (!generatedPlan?.aliases || generatedPlan.aliases.length === 0) return null;
@@ -1680,21 +1726,19 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                       })
                                     : ['Low (-1)', 'High (+1)']);
 
-                              const aliasA = getFactorAlias(idxA);
-                              const aliasB = getFactorAlias(idxB);
-                              const interactionTitleSuffixA = aliasA ? ` (alias: ${aliasA})` : '';
-                              const interactionTitleSuffixB = aliasB ? ` (alias: ${aliasB})` : '';
+                              const interactionAlias = getInteractionAlias(idxA, idxB);
+                              const interactionTitleSuffix = interactionAlias ? ` (alias: ${interactionAlias})` : '';
                               
                               return (
                                 <Card key={`${idxA}-${idxB}`}>
                                   <CardHeader>
-                                    <CardTitle>Interaction: {factorA.name}{interactionTitleSuffixA} × {factorB.name}{interactionTitleSuffixB}</CardTitle>
+                                    <CardTitle>Interaction: {factorA.name} × {factorB.name}{interactionTitleSuffix}</CardTitle>
                                   </CardHeader>
                                   <CardContent>
                                     <Plot
                                       data={interactionTraces}
                                       layout={{
-                                        title: { text: `<b>${factorA.name}${interactionTitleSuffixA} × ${factorB.name}${interactionTitleSuffixB}</b>` },
+                                        title: { text: `<b>${factorA.name} × ${factorB.name}${interactionTitleSuffix}</b>` },
                                         xaxis: { title: { text: factorB.name }, type: 'linear', tickmode: 'array', tickvals: xTickVals, ticktext: xTickLabels },
                                         yaxis: { title: { text: responseVariableName || 'Y Response' }, range: [yAxisRangeMin, yAxisRangeMax] },
                                         showlegend: true,
