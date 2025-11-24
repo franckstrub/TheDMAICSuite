@@ -1157,7 +1157,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                         ? (() => {
                             const decoded = decodeValue(0, factor);
                             return factor.type === 'continuous'
-                              ? `${(decoded as number).toFixed(2)}${factor.units ? ' ' + factor.units : ''}`
+                              ? `Center point: ${(decoded as number).toFixed(2)}${factor.units ? ' ' + factor.units : ''}`
                               : String(decoded);
                           })()
                         : 'Center (0)';
@@ -1283,7 +1283,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                 labels[f.name] = showUncoded && allFactorsHaveValidLevels()
                                   ? (() => {
                                       const decoded = decodeValue(0, f);
-                                      return f.type === 'continuous' ? `${(decoded as number).toFixed(2)}${f.units ? ' ' + f.units : ''}` : String(decoded);
+                                      return f.type === 'continuous' ? `Center point: ${(decoded as number).toFixed(2)}${f.units ? ' ' + f.units : ''}` : String(decoded);
                                     })()
                                   : 'Center (0)';
                               });
@@ -1354,7 +1354,18 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                   : 0;
                               })();
                               
-                              const centerLabel = `Center: ${Object.entries(combo.labels).map(([f, l]) => `${f}=${l}`).join(', ')}`;
+                              const centerLabel = `Center point: ${Object.entries(combo.labels).map(([f, l]) => `${f}=${l}`).join(', ')}`;
+                              
+                              // Decode center point X coordinate (factorB at level 0)
+                              const decodedXValue = (() => {
+                                if (showUncoded && allFactorsHaveValidLevels()) {
+                                  const decoded = decodeValue(0, factorB);
+                                  return factorB.type === 'continuous'
+                                    ? `${(decoded as number).toFixed(2)}${factorB.units ? ' ' + factorB.units : ''}`
+                                    : String(decoded);
+                                }
+                                return 'Center (0)';
+                              })();
                               
                               interactionTraces.push({
                                 x: [0],
@@ -1364,7 +1375,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                 name: centerLabel,
                                 marker: { size: 8, color: '#ef4444' },
                                 showlegend: true,
-                                hovertemplate: centerLabel + '<br>' + (responseVariableName || 'Y Response') + ': %{y:.3f}<extra></extra>',
+                                hovertemplate: centerLabel + '<br>' + factorB.name + ': ' + decodedXValue + '<br>' + (responseVariableName || 'Y Response') + ': %{y:.3f}<extra></extra>',
                               });
                             });
                           }
