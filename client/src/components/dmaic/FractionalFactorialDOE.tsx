@@ -2396,6 +2396,88 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                 </TableRow>
                                 );
                               })}
+                              {includeCenterPoints && (() => {
+                                const isIncluded = selectedFactorsForModel['centerPoint'] !== false;
+                                
+                                if (isIncluded) {
+                                  const centerPointIndices: number[] = [];
+                                  const factorialPointIndices: number[] = [];
+                                  
+                                  runData.forEach((row, rowIdx) => {
+                                    if (row.response !== null && !isNaN(row.response)) {
+                                      const allBaseFactorsZero = Array.from({length: baseFactorCount}).every((_,i) => {
+                                        const level = generatedPlan.plan[rowIdx]?.[factors[i].name] ?? 0;
+                                        return Math.abs(level) < 0.01;
+                                      });
+                                      if (allBaseFactorsZero) {
+                                        centerPointIndices.push(rowIdx);
+                                      } else {
+                                        factorialPointIndices.push(rowIdx);
+                                      }
+                                    }
+                                  });
+
+                                  const n_c = centerPointIndices.length;
+                                  const n_f = factorialPointIndices.length;
+                                  
+                                  let curvatureCoeff = 0;
+                                  let curvatureSE = 0;
+                                  let curvatureTValue = 0;
+                                  let curvaturePValue = 1;
+                                  
+                                  if (n_c > 0 && n_f > 0) {
+                                    const centerResponses = centerPointIndices.map(idx => runData[idx].response).filter((r): r is number => r !== null && !isNaN(r));
+                                    const y_c_avg = centerResponses.length > 0 ? centerResponses.reduce((a, b) => a + b, 0) / centerResponses.length : 0;
+                                    const y_f_at_center = displayBeta[0];
+                                    curvatureCoeff = y_c_avg - y_f_at_center;
+                                    curvatureSE = Math.sqrt(mse * (1 / n_c + 1 / n_f));
+                                    curvatureTValue = curvatureSE > 0 ? curvatureCoeff / curvatureSE : 0;
+                                    curvaturePValue = curvatureSE > 0 ? 2 * (1 - jStat.studentt.cdf(Math.abs(curvatureTValue), n - numCoefficients)) : 1;
+                                  }
+                                  
+                                  return (
+                                  <TableRow key="center-point">
+                                    <TableCell className="font-medium">Center Point (Curvature)</TableCell>
+                                    <TableCell className="text-right">{curvatureCoeff.toFixed(6)}</TableCell>
+                                    <TableCell className="text-right">{curvatureSE.toFixed(4)}</TableCell>
+                                    <TableCell className="text-right">{curvatureTValue.toFixed(4)}</TableCell>
+                                    <TableCell className={`text-right ${curvaturePValue < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{(Math.max(0, Math.min(1, curvaturePValue))).toFixed(4)}</TableCell>
+                                    <TableCell className="text-right">1.00</TableCell>
+                                    <TableCell className="text-center">
+                                      <Checkbox
+                                        checked={true}
+                                        onCheckedChange={(checked) => {
+                                          setSelectedFactorsForModel(prev => ({
+                                            ...prev,
+                                            ['centerPoint']: !!checked
+                                          }));
+                                        }}
+                                        data-testid="checkbox-center-point"
+                                      />
+                                    </TableCell>
+                                  </TableRow>
+                                  );
+                                } else {
+                                  return (
+                                  <TableRow key="center-point" className="opacity-50">
+                                    <TableCell className="font-medium text-muted-foreground">Center Point (Curvature)</TableCell>
+                                    <TableCell colSpan={5} className="text-muted-foreground">Term not included in model</TableCell>
+                                    <TableCell className="text-center">
+                                      <Checkbox
+                                        checked={false}
+                                        onCheckedChange={(checked) => {
+                                          setSelectedFactorsForModel(prev => ({
+                                            ...prev,
+                                            ['centerPoint']: !!checked
+                                          }));
+                                        }}
+                                        data-testid="checkbox-center-point"
+                                      />
+                                    </TableCell>
+                                  </TableRow>
+                                  );
+                                }
+                              })()}
                             </TableBody>
                           </Table>
                         </div>
