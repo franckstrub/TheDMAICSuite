@@ -128,18 +128,16 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
   // Ref to store the solve function so it can be called by useEffect
   const solveRef = useRef<(() => void) | null>(null);
 
-  // Auto-solve when solver dependencies change (only on Analysis tab)
+  // Auto-solve when solver dependencies change
   useEffect(() => {
-    if (activeTab === 'analysis' && solveRef.current) {
-      // Use setTimeout to ensure solveRef.current is updated first
-      const timeoutId = setTimeout(() => {
-        if (solveRef.current) {
-          solveRef.current();
-        }
-      }, 0);
-      return () => clearTimeout(timeoutId);
-    }
-  }, [solveFactorIdx, targetY, constraintValues, selectedFactorsForModel, activeTab]);
+    // Use setTimeout to ensure solveRef.current is updated first
+    const timeoutId = setTimeout(() => {
+      if (solveRef.current) {
+        solveRef.current();
+      }
+    }, 0);
+    return () => clearTimeout(timeoutId);
+  }, [solveFactorIdx, targetY, constraintValues, selectedFactorsForModel]);
   
   // Update localStorage when tab changes
   useEffect(() => {
