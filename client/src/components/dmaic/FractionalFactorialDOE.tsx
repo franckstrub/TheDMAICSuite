@@ -1899,8 +1899,15 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   }
                   const stdError = Math.sqrt(mse * Math.max(0, xxtInvDiag));
                   const tValue = stdError > 0 ? b / stdError : 0;
-                  const pValue = stdError > 0 ? 2 * (1 - jStat.studentt.cdf(Math.abs(tValue), n - numCoefficients)) : 1;
-                  return { stdError, tValue, pValue };
+                  let pValue = 1;
+                  if (stdError > 0 && Number.isFinite(tValue)) {
+                    const df = n - numCoefficients;
+                    const cdfVal = jStat.studentt.cdf(Math.abs(tValue), df);
+                    pValue = Number.isFinite(cdfVal) ? 2 * (1 - cdfVal) : 1;
+                    // Clamp p-value to [0, 1]
+                    pValue = Math.max(0, Math.min(1, pValue));
+                  }
+                  return { stdError: Number.isFinite(stdError) ? stdError : 0, tValue: Number.isFinite(tValue) ? tValue : 0, pValue };
                 });
 
                 // Transform coefficients and standard errors from coded to uncoded if needed
