@@ -448,29 +448,54 @@ export function calculateAliases(k: number, p: number, generators: string[], def
     return result || 'I';
   };
   
-  const allFactors = Array.from({ length: k }, (_, i) => String.fromCharCode(65 + i)); // A, B, C, ...
+  // Helper to generate all possible effects (main and interactions)
+  const generateAllEffects = (numFactors: number): string[] => {
+    const effects: string[] = [];
+    const allFactors = Array.from({ length: numFactors }, (_, i) => String.fromCharCode(65 + i));
+    
+    // Main effects
+    for (const f of allFactors) {
+      effects.push(f);
+    }
+    
+    // Two-factor interactions
+    for (let i = 0; i < allFactors.length - 1; i++) {
+      for (let j = i + 1; j < allFactors.length; j++) {
+        effects.push(allFactors[i] + allFactors[j]);
+      }
+    }
+    
+    // Three-factor interactions (if k >= 4)
+    if (numFactors >= 4) {
+      for (let i = 0; i < allFactors.length - 2; i++) {
+        for (let j = i + 1; j < allFactors.length - 1; j++) {
+          for (let l = j + 1; l < allFactors.length; l++) {
+            effects.push(allFactors[i] + allFactors[j] + allFactors[l]);
+          }
+        }
+      }
+    }
+    
+    return effects;
+  };
   
-  // Extract main effects and their aliases by multiplying each factor with the defining relation
+  const allEffects = generateAllEffects(k);
   const aliasMap: { [key: string]: string } = {};
   
-  for (const factor of allFactors) {
-    // Parse the defining relation to get all terms after "I ="
-    // e.g., "I = ABC" -> terms = ["ABC"]
-    // e.g., "I = ABCE = BCDF = ADEF" -> terms = ["ABCE", "BCDF", "ADEF"]
-    const parts = definingRelation.split('=');
-    if (parts.length >= 2) {
-      // Get everything after "I ="
-      const termsStr = parts.slice(1).join('=').trim();
-      // Split on = to get individual terms
-      const terms = termsStr.split('=').map(t => t.trim()).filter(t => t && t !== 'I');
-      
-      // For each term, multiply with the factor to get alias
+  // Parse the defining relation to get all terms
+  const parts = definingRelation.split('=');
+  if (parts.length >= 2) {
+    const termsStr = parts.slice(1).join('=').trim();
+    const terms = termsStr.split('=').map(t => t.trim()).filter(t => t && t !== 'I');
+    
+    // For each effect, multiply with each term in the defining relation to get alias
+    for (const effect of allEffects) {
       for (const term of terms) {
-        const alias = multiplyEffects(factor, term);
-        if (alias && alias !== factor && alias !== 'I') {
+        const alias = multiplyEffects(effect, term);
+        if (alias && alias !== effect && alias !== 'I') {
           // Store the first meaningful alias we find
-          if (!aliasMap[factor]) {
-            aliasMap[factor] = alias;
+          if (!aliasMap[effect]) {
+            aliasMap[effect] = alias;
           }
           break;
         }
