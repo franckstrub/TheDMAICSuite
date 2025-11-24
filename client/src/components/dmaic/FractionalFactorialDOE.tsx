@@ -277,7 +277,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
         setTargetYDisplay(String(config.targetY));
       }
       if (config.solveFactorIdx !== undefined && config.solveFactorIdx !== null) {
-        setSolveForPredictorIdx(config.solveFactorIdx);
+        setSolveFactorIdx(config.solveFactorIdx);
       }
       if (config.constraintValues) {
         setConstraintValues(config.constraintValues);
