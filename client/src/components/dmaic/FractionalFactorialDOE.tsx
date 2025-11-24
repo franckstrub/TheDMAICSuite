@@ -265,6 +265,18 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
         setSelectedFactorsForModel(config.selectedFactorsForModel);
       }
       
+      // Load solver setup
+      if (config.targetY !== undefined && config.targetY !== null) {
+        setTargetY(config.targetY);
+        setTargetYDisplay(String(config.targetY));
+      }
+      if (config.solveFactorIdx !== undefined && config.solveFactorIdx !== null) {
+        setSolveForPredictorIdx(config.solveFactorIdx);
+      }
+      if (config.constraintValues) {
+        setConstraintValues(config.constraintValues);
+      }
+      
       // Load generatedPlan from persisted format
       if (config.generatedPlan) {
         const reconstructedPlan = reconstructGeneratedPlanFromPersisted(

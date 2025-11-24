@@ -250,6 +250,18 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
         setSelectedFactorsForModel(config.selectedFactorsForModel);
       }
       
+      // Load solver setup
+      if (config.targetY !== undefined && config.targetY !== null) {
+        setTargetY(config.targetY);
+        setTargetYDisplay(String(config.targetY));
+      }
+      if (config.solveFactorIdx !== undefined && config.solveFactorIdx !== null) {
+        setSolveFactorIdx(config.solveFactorIdx);
+      }
+      if (config.constraintValues) {
+        setConstraintValues(config.constraintValues);
+      }
+      
       // Load generatedPlan from persisted format
       if (config.generatedPlan) {
         const reconstructedPlan = reconstructGeneratedPlanFromPersisted(
