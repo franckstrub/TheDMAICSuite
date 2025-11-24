@@ -1460,12 +1460,12 @@ export function ANOVATwoWay({ projectId, solutionId }: ANOVATwoWayProps) {
             <CardContent className="space-y-4">
               <div>
                 <p className="font-semibold mb-2">Residuals Analysis:</p>
-                <table className="w-full border-collapse">
+                <table className="w-full border-collapse bg-gray-50 dark:bg-gray-900 rounded-lg">
                   <tbody>
                     <th className="text-sm text-muted-foreground py-2 pr-4 w-1/4">Standard Deviation:</th>
                     <th className="text-sm text-muted-foreground py-2 pr-4 align-top w-3/4">Normality Test (Anderson-Darling):</th>
                     <tr>
-                      <td className="font-medium py-2">{anovaResult.residualStd.toFixed(6)}</td>
+                      <td className="font-medium py-2 text-center">{anovaResult.residualStd.toFixed(6)}</td>
                       <table className="w-full">
                         <tbody>                         
                           <th className="text-sm text-muted-foreground pb-1 w-1/5">AD Statistic:</th>
