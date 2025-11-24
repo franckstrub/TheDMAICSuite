@@ -1848,8 +1848,11 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   beta = Xty.map(v => v / (XtX[0][0] || 1));
                 }
                 
+                console.log('Regression beta before validation:', beta.slice(0, 5));
+                
                 // Ensure beta contains valid numbers
                 if (!beta.every(b => Number.isFinite(b))) {
+                  console.log('Beta contains non-finite values, falling back to mean');
                   beta = Array(numCoefficients).fill(0);
                   beta[0] = mean_y;
                 }
