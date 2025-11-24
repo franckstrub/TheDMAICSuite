@@ -2010,32 +2010,19 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 const { displayBeta, displayCoeffStats } = transformCoefficientsAndSE();
                 
                 const handleSolve = () => {
-                  console.log('handleSolve called', {
-                    solveFactorIdx,
-                    selectedFactorsForModel,
-                    baseFactorCount,
-                    targetYDisplay,
-                    targetY,
-                    constraintValues,
-                    displayBeta: displayBeta.slice(0, 3)
-                  });
-
                   // Check if solve factor is included in the model
                   if (selectedFactorsForModel[solveFactorIdx] === false || baseFactorCount < 1) {
-                    console.log('Failed check 1: solve factor not in model or no base factors');
                     setSolverResult(null);
                     return;
                   }
                   
                   // Check if target Y is set (targetYDisplay should be non-empty and targetY should be a valid number)
                   if (targetYDisplay === '' || !Number.isFinite(targetY)) {
-                    console.log('Failed check 2: targetY not set', { targetYDisplay, targetY });
                     setSolverResult(null);
                     return;
                   }
                   
                   if (displayBeta[solveFactorIdx + 1] === 0) {
-                    console.log('Failed check 3: displayBeta coefficient is 0', { idx: solveFactorIdx + 1, beta: displayBeta[solveFactorIdx + 1] });
                     setSolverResult(null);
                     return;
                   }
@@ -2046,7 +2033,6 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                       const constraintVal = constraintValues[i];
                       // If constraint value is not set (null or undefined), don't solve
                       if (constraintVal === null || constraintVal === undefined || !Number.isFinite(constraintVal)) {
-                        console.log('Failed check 4: missing constraint value', { i, constraintVal, isSelected: selectedFactorsForModel[i] !== false });
                         setSolverResult(null);
                         return;
                       }
@@ -2068,7 +2054,6 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   // Therefore: Xi = (targetY - β0_uncoded - constraintSum) / βi_uncoded
                   // User enters target and constraints in uncoded space, result is also uncoded
                   let result = (targetY - displayBeta[0] - constraintSum) / displayBeta[solveFactorIdx + 1];
-                  console.log('Solver result:', result);
                   setSolverResult(result);
                 };
 
@@ -3115,6 +3100,14 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                             {saveSolvingSetupMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             Save Setup
                           </Button>
+
+                          {targetYDisplay !== '' && Number.isFinite(targetY) && displayBeta[solveFactorIdx + 1] === 0 && (
+                            <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded border border-amber-200 dark:border-amber-800">
+                              <p className="text-sm text-amber-600 dark:text-amber-400">
+                                ⚠️ Cannot solve for {factors[solveFactorIdx].name}: This factor has a coefficient of 0 in the model, meaning it has no significant effect on the response in this design.
+                              </p>
+                            </div>
+                          )}
 
                           {solverResult !== null && (() => {
                             // Calculate confidence and prediction intervals for Y target
