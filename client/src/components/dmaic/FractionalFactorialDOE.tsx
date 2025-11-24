@@ -606,6 +606,17 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
     }));
   };
 
+  // Helper: Get alias string for a factor from generatedPlan
+  const getFactorAlias = (factorName: string): string | null => {
+    if (!generatedPlan?.aliases) return null;
+    const aliasEntry = generatedPlan.aliases.find((alias: string) => alias.startsWith(factorName + ' ='));
+    if (aliasEntry) {
+      const parts = aliasEntry.split('=');
+      return parts[1]?.trim() || null;
+    }
+    return null;
+  };
+
   const getDesignChoices = (k: number) => {
     if (k < 3 || k > 7) {
       return [];
@@ -1384,16 +1395,19 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                       } as any);
                     }
 
+                    const factorAlias = getFactorAlias(factor.name);
+                    const titleSuffix = factorAlias ? ` (alias: ${factorAlias})` : '';
+                    
                     return (
                       <Card key={factorIndex}>
                         <CardHeader>
-                          <CardTitle>Main Effect Plot: {factor.name}</CardTitle>
+                          <CardTitle>Main Effect Plot: {factor.name}{titleSuffix}</CardTitle>
                         </CardHeader>
                         <CardContent>
                           <Plot
                             data={plotData as any}
                             layout={{
-                              title: { text: `<b>Main Effect: ${factor.name}</b>` },
+                              title: { text: `<b>Main Effect: ${factor.name}${titleSuffix}</b>` },
                               xaxis: { title: { text: 'Factor Level' }, type: 'linear', tickmode: 'array', tickvals: xTickVals, ticktext: xTickText },
                               yaxis: { title: { text: responseVariableName || 'Y Response' }, range: [yAxisRangeMin, yAxisRangeMax] },
                               showlegend: false,
@@ -1661,16 +1675,21 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                       })
                                     : ['Low (-1)', 'High (+1)']);
 
+                              const aliasA = getFactorAlias(factorA.name);
+                              const aliasB = getFactorAlias(factorB.name);
+                              const interactionTitleSuffixA = aliasA ? ` (alias: ${aliasA})` : '';
+                              const interactionTitleSuffixB = aliasB ? ` (alias: ${aliasB})` : '';
+                              
                               return (
                                 <Card key={`${idxA}-${idxB}`}>
                                   <CardHeader>
-                                    <CardTitle>Interaction: {factorA.name} × {factorB.name}</CardTitle>
+                                    <CardTitle>Interaction: {factorA.name}{interactionTitleSuffixA} × {factorB.name}{interactionTitleSuffixB}</CardTitle>
                                   </CardHeader>
                                   <CardContent>
                                     <Plot
                                       data={interactionTraces}
                                       layout={{
-                                        title: { text: `<b>${factorA.name} × ${factorB.name}</b>` },
+                                        title: { text: `<b>${factorA.name}${interactionTitleSuffixA} × ${factorB.name}${interactionTitleSuffixB}</b>` },
                                         xaxis: { title: { text: factorB.name }, type: 'linear', tickmode: 'array', tickvals: xTickVals, ticktext: xTickLabels },
                                         yaxis: { title: { text: responseVariableName || 'Y Response' }, range: [yAxisRangeMin, yAxisRangeMax] },
                                         showlegend: true,
