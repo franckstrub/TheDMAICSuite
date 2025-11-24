@@ -2651,6 +2651,11 @@ export const doeFractionalFactorialConfig = pgTable(
     // Selected factors for model (allows model reduction)
     selectedFactorsForModel: jsonb("selected_factors_for_model").$type<Record<number | string, boolean>>().default({}),
     
+    // Solver settings (for solving for optimal factor values given target Y)
+    targetY: real("target_y"),
+    solveFactorIdx: integer("solve_factor_idx"),
+    constraintValues: jsonb("constraint_values").$type<Record<number, number | null>>().default({}),
+    
     // Display options
     showUncoded: boolean("show_uncoded").default(false),
     
@@ -2669,6 +2674,9 @@ export const insertDoeFractionalFactorialConfigSchema = createInsertSchema(doeFr
 export const updateDoeFractionalFactorialConfigSchema = z.object({
   selectedFactorsForModel: z.record(z.union([z.number(), z.string()]), z.boolean()).optional(),
   significanceLevel: z.number().min(0).max(1).optional(),
+  targetY: z.number().optional(),
+  solveFactorIdx: z.number().optional(),
+  constraintValues: z.record(z.number(), z.number().nullable()).optional(),
 });
 
 export type InsertDoeFractionalFactorialConfig = z.infer<typeof insertDoeFractionalFactorialConfigSchema>;
@@ -2720,6 +2728,11 @@ export const doeFullFactorialConfig = pgTable(
     // Selected factors for model (allows model reduction)
     selectedFactorsForModel: jsonb("selected_factors_for_model").$type<Record<number | string, boolean>>().default({}),
     
+    // Solver settings (for solving for optimal factor values given target Y)
+    targetY: real("target_y"),
+    solveFactorIdx: integer("solve_factor_idx"),
+    constraintValues: jsonb("constraint_values").$type<Record<number, number | null>>().default({}),
+    
     // Display options
     showUncoded: boolean("show_uncoded").default(false),
     
@@ -2738,6 +2751,9 @@ export const insertDoeFullFactorialConfigSchema = createInsertSchema(doeFullFact
 export const updateDoeFullFactorialConfigSchema = z.object({
   selectedFactorsForModel: z.record(z.union([z.number(), z.string()]), z.boolean()).optional(),
   significanceLevel: z.number().min(0).max(1).optional(),
+  targetY: z.number().optional(),
+  solveFactorIdx: z.number().optional(),
+  constraintValues: z.record(z.number(), z.number().nullable()).optional(),
 });
 
 export type InsertDoeFullFactorialConfig = z.infer<typeof insertDoeFullFactorialConfigSchema>;
