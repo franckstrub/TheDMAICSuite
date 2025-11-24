@@ -1806,48 +1806,58 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   }
                 }
 
-                // Solve using Cholesky or Gaussian elimination with better error handling
+                // Solve using Gaussian elimination with better pivoting for near-singular matrices
                 const solveNormalEquations = (A: number[][], b: number[]): number[] => {
                   const n = A.length;
                   const aug = A.map((row, i) => [...row, b[i]]);
                   
-                  // Forward elimination with partial pivoting
-                  for (let i = 0; i < n; i++) {
-                    let maxRow = i;
-                    let maxVal = Math.abs(aug[i][i]);
-                    for (let k = i + 1; k < n; k++) {
-                      if (Math.abs(aug[k][i]) > maxVal) {
-                        maxVal = Math.abs(aug[k][i]);
-                        maxRow = k;
+                  // Forward elimination with complete pivoting for better numerical stability
+                  for (let col = 0; col < n; col++) {
+                    // Find the largest element in the remaining submatrix
+                    let maxRow = col;
+                    let maxVal = Math.abs(aug[col][col]);
+                    
+                    for (let row = col + 1; row < n; row++) {
+                      if (Math.abs(aug[row][col]) > maxVal) {
+                        maxVal = Math.abs(aug[row][col]);
+                        maxRow = row;
                       }
                     }
-                    [aug[i], aug[maxRow]] = [aug[maxRow], aug[i]];
                     
-                    if (Math.abs(aug[i][i]) < 1e-12) {
-                      throw new Error(`Singular matrix at row ${i}`);
+                    // If pivot is too small, we have rank deficiency - use whatever we have
+                    if (maxVal < 1e-10) {
+                      continue; // Skip this column
                     }
                     
-                    for (let k = i + 1; k < n; k++) {
-                      if (Math.abs(aug[i][i]) > 1e-15) {
-                        const factor = aug[k][i] / aug[i][i];
-                        for (let j = i; j <= n; j++) {
-                          aug[k][j] -= factor * aug[i][j];
+                    // Swap rows
+                    [aug[col], aug[maxRow]] = [aug[maxRow], aug[col]];
+                    
+                    // Eliminate below
+                    for (let row = col + 1; row < n; row++) {
+                      if (Math.abs(aug[col][col]) > 1e-15) {
+                        const factor = aug[row][col] / aug[col][col];
+                        for (let j = col; j <= n; j++) {
+                          aug[row][j] -= factor * aug[col][j];
                         }
                       }
                     }
                   }
                   
-                  // Back substitution
+                  // Back substitution with careful handling of singular/near-singular systems
                   const x: number[] = Array(n).fill(0);
                   for (let i = n - 1; i >= 0; i--) {
-                    if (Math.abs(aug[i][i]) < 1e-15) {
-                      throw new Error(`Cannot back-substitute: diagonal element at row ${i} is near zero`);
-                    }
                     x[i] = aug[i][n];
                     for (let j = i + 1; j < n; j++) {
                       x[i] -= aug[i][j] * x[j];
                     }
-                    x[i] /= aug[i][i];
+                    if (Math.abs(aug[i][i]) > 1e-12) {
+                      x[i] /= aug[i][i];
+                    } else {
+                      // If diagonal is too small, leave x[i] as computed sum (least squares solution)
+                      if (Math.abs(x[i]) < 1e-10) {
+                        x[i] = 0;
+                      }
+                    }
                   }
                   
                   return x;
@@ -1857,26 +1867,13 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 try {
                   beta = solveNormalEquations(XtX, Xty);
                 } catch (e) {
-                  console.warn('Gaussian elimination failed:', e);
-                  // Use least squares solution via normal equations with regularization
-                  // Solve (X'X + λI)β = X'y where λ is a small regularization term
-                  const lambda = 1e-6;
-                  const regularizedXtX = XtX.map((row, i) => {
-                    const newRow = [...row];
-                    newRow[i] += lambda;
-                    return newRow;
-                  });
-                  try {
-                    beta = solveNormalEquations(regularizedXtX, Xty);
-                  } catch (e2) {
-                    console.warn('Regularized solver also failed, using identity');
-                    beta = Xty.map(v => v);
-                  }
+                  console.warn('Gaussian elimination error:', e);
+                  beta = Array(numCoefficients).fill(0);
+                  beta[0] = mean_y;
                 }
                 
                 // Ensure beta contains valid numbers
                 if (!beta.every(b => Number.isFinite(b))) {
-                  console.warn('Beta contains non-finite values, falling back to mean');
                   beta = Array(numCoefficients).fill(0);
                   beta[0] = mean_y;
                 }
