@@ -1443,8 +1443,6 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                               const factorBIdx = factors.indexOf(factorB);
                               const isInteractionConfounded = factorAIdx >= numBaseFactors || factorBIdx >= numBaseFactors;
                               
-                              console.log(`Interaction ${factorA.name}×${factorB.name}: generatedPlan=${!!generatedPlan}, k=${generatedPlan?.k}, p=${generatedPlan?.p}, numBaseFactors=${numBaseFactors}, idxA=${factorAIdx}, idxB=${factorBIdx}, confounded=${isInteractionConfounded}`);
-                              
                               // Get unique levels for both factors
                               const factorAUniqueLevels = getFactorLevels(factorA.name);
                               const factorBUniqueLevels = getFactorLevels(factorB.name);
