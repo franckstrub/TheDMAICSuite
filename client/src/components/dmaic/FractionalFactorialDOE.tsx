@@ -3151,21 +3151,25 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                             
                             let varY = 0;
                             let ciLower = NaN, ciUpper = NaN, piLower = NaN, piUpper = NaN;
-                            if (XtXInv && xRow.length === XtXInv.length && s2 > 0) {
+                            if (XtXInv && xRow.length === XtXInv.length && isFinite(s2) && s2 > 0 && isFinite(tValue)) {
                               // Calculate x'(X'X)^-1 x
                               for (let i = 0; i < xRow.length; i++) {
                                 for (let j = 0; j < xRow.length; j++) {
                                   varY += xRow[i] * XtXInv[i][j] * xRow[j];
                                 }
                               }
-                              const varConfidence = s2 * varY;
-                              const varPrediction = s2 * varY + s2; // Add individual observation variance
-                              const seConfidence = Math.sqrt(Math.max(0, varConfidence));
-                              const sePrediction = Math.sqrt(Math.max(0, varPrediction));
-                              ciLower = targetY - tValue * seConfidence;
-                              ciUpper = targetY + tValue * seConfidence;
-                              piLower = targetY - tValue * sePrediction;
-                              piUpper = targetY + tValue * sePrediction;
+                              if (isFinite(varY) && varY >= 0) {
+                                const varConfidence = s2 * varY;
+                                const varPrediction = s2 * varY + s2; // Add individual observation variance
+                                const seConfidence = Math.sqrt(Math.max(0, varConfidence));
+                                const sePrediction = Math.sqrt(Math.max(0, varPrediction));
+                                if (isFinite(seConfidence) && isFinite(sePrediction)) {
+                                  ciLower = targetY - tValue * seConfidence;
+                                  ciUpper = targetY + tValue * seConfidence;
+                                  piLower = targetY - tValue * sePrediction;
+                                  piUpper = targetY + tValue * sePrediction;
+                                }
+                              }
                             }
                             
                             return (
