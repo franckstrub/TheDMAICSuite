@@ -2319,7 +2319,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                 <TableCell className="text-right">{displayBeta[0]?.toFixed(6)}</TableCell>
                                 <TableCell className="text-right">{displayCoeffStats[0]?.stdError.toFixed(4)}</TableCell>
                                 <TableCell className="text-right">{displayCoeffStats[0]?.tValue.toFixed(4)}</TableCell>
-                                <TableCell className={`text-right ${(displayCoeffStats[0]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{displayCoeffStats[0]?.pValue.toFixed(4)}</TableCell>
+                                <TableCell className={`text-right ${(displayCoeffStats[0]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{(Math.max(0, Math.min(1, displayCoeffStats[0]?.pValue ?? 1))).toFixed(4)}</TableCell>
                                 <TableCell className="text-right">-</TableCell>
                                 <TableCell className="text-center"><Checkbox disabled checked /></TableCell>
                               </TableRow>
@@ -2339,7 +2339,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                   <TableCell className="text-right">{displayBeta[i + 1]?.toFixed(6)}</TableCell>
                                   <TableCell className="text-right">{displayCoeffStats[i + 1]?.stdError.toFixed(4)}</TableCell>
                                   <TableCell className="text-right">{displayCoeffStats[i + 1]?.tValue.toFixed(4)}</TableCell>
-                                  <TableCell className={`text-right ${(displayCoeffStats[i + 1]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{displayCoeffStats[i + 1]?.pValue.toFixed(4)}</TableCell>
+                                  <TableCell className={`text-right ${(displayCoeffStats[i + 1]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{(Math.max(0, Math.min(1, displayCoeffStats[i + 1]?.pValue ?? 1))).toFixed(4)}</TableCell>
                                   <TableCell className={`text-right ${isHighVIF ? 'text-red-600 font-semibold' : isModerateVIF ? 'text-yellow-400 font-semibold' : ''}`}>{vif !== null ? vif.toFixed(2) : '-'}</TableCell>
                                   <TableCell className="text-center">
                                     <Checkbox
@@ -2372,7 +2372,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                   <TableCell className="text-right">{displayBeta[factors.length + 1 + i]?.toFixed(6)}</TableCell>
                                   <TableCell className="text-right">{displayCoeffStats[factors.length + 1 + i]?.stdError.toFixed(4)}</TableCell>
                                   <TableCell className="text-right">{displayCoeffStats[factors.length + 1 + i]?.tValue.toFixed(4)}</TableCell>
-                                  <TableCell className={`text-right ${(displayCoeffStats[factors.length + 1 + i]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{displayCoeffStats[factors.length + 1 + i]?.pValue.toFixed(4)}</TableCell>
+                                  <TableCell className={`text-right ${(displayCoeffStats[factors.length + 1 + i]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{(Math.max(0, Math.min(1, displayCoeffStats[factors.length + 1 + i]?.pValue ?? 1))).toFixed(4)}</TableCell>
                                   <TableCell className={`text-right ${isHighVIF ? 'text-red-600 font-semibold' : isModerateVIF ? 'text-yellow-400 font-semibold' : ''}`}>{vif !== null ? vif.toFixed(2) : '-'}</TableCell>
                                   <TableCell className="text-center">
                                     <Checkbox
@@ -2694,7 +2694,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                 <TableCell className="text-right">{displayBeta[0]?.toFixed(6)}</TableCell>
                                 <TableCell className="text-right">{displayCoeffStats[0]?.stdError.toFixed(4)}</TableCell>
                                 <TableCell className="text-right">{displayCoeffStats[0]?.tValue.toFixed(4)}</TableCell>
-                                <TableCell className={`text-right ${(displayCoeffStats[0]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{displayCoeffStats[0]?.pValue.toFixed(4)}</TableCell>
+                                <TableCell className={`text-right ${(displayCoeffStats[0]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{(Math.max(0, Math.min(1, displayCoeffStats[0]?.pValue ?? 1))).toFixed(4)}</TableCell>
                                 <TableCell className="text-right">-</TableCell>
                                 <TableCell className="text-center"><Checkbox disabled checked /></TableCell>
                               </TableRow>
@@ -2714,7 +2714,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                   <TableCell className="text-right">{displayBeta[i + 1]?.toFixed(6)}</TableCell>
                                   <TableCell className="text-right">{displayCoeffStats[i + 1]?.stdError.toFixed(4)}</TableCell>
                                   <TableCell className="text-right">{displayCoeffStats[i + 1]?.tValue.toFixed(4)}</TableCell>
-                                  <TableCell className={`text-right ${(displayCoeffStats[i + 1]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{displayCoeffStats[i + 1]?.pValue.toFixed(4)}</TableCell>
+                                  <TableCell className={`text-right ${(displayCoeffStats[i + 1]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{(Math.max(0, Math.min(1, displayCoeffStats[i + 1]?.pValue ?? 1))).toFixed(4)}</TableCell>
                                   <TableCell className={`text-right ${isHighVIF ? 'text-red-600 font-semibold' : isModerateVIF ? 'text-yellow-400 font-semibold' : ''}`}>{vif !== null ? vif.toFixed(2) : '-'}</TableCell>
                                   <TableCell className="text-center">
                                     <Checkbox
@@ -2747,7 +2747,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                   <TableCell className="text-right">{displayBeta[factors.length + 1 + i]?.toFixed(6)}</TableCell>
                                   <TableCell className="text-right">{displayCoeffStats[factors.length + 1 + i]?.stdError.toFixed(4)}</TableCell>
                                   <TableCell className="text-right">{displayCoeffStats[factors.length + 1 + i]?.tValue.toFixed(4)}</TableCell>
-                                  <TableCell className={`text-right ${(displayCoeffStats[factors.length + 1 + i]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{displayCoeffStats[factors.length + 1 + i]?.pValue.toFixed(4)}</TableCell>
+                                  <TableCell className={`text-right ${(displayCoeffStats[factors.length + 1 + i]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{(Math.max(0, Math.min(1, displayCoeffStats[factors.length + 1 + i]?.pValue ?? 1))).toFixed(4)}</TableCell>
                                   <TableCell className={`text-right ${isHighVIF ? 'text-red-600 font-semibold' : isModerateVIF ? 'text-yellow-400 font-semibold' : ''}`}>{vif !== null ? vif.toFixed(2) : '-'}</TableCell>
                                   <TableCell className="text-center">
                                     <Checkbox
