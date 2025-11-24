@@ -2036,6 +2036,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   
                   if (displayBeta[solveFactorIdx + 1] === 0) {
                     console.log('Failed check 3: displayBeta coefficient is 0', { idx: solveFactorIdx + 1, beta: displayBeta[solveFactorIdx + 1] });
+                    setSolverResult(null);
                     return;
                   }
                   
