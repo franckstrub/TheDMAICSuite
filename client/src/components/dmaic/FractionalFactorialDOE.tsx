@@ -1248,7 +1248,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 <Label htmlFor="chart-uncoded-toggle">Uncoded</Label>
               </div>
               
-              {showUncoded && !allFactorsHaveValidLevels() && (
+              {!allFactorsHaveValidLevels() && (
                 <div className="p-3 bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-lg">
                   <p className="text-sm text-yellow-800 dark:text-yellow-200">
                     <strong>Note:</strong> Cannot display uncoded values. Please define low and high values for all factors in the Setup tab.
