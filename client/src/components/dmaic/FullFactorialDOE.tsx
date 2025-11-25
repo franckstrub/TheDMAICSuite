@@ -1371,7 +1371,9 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                   : 0;
                               })();
                               
-                              const centerLabel = `Center w. ${Object.entries(combo.labels).map(([f, l]) => `${f}=${l}`).join(', ')}`;
+                              const centerLabel = Object.entries(combo.labels).length > 0 
+                                ? `Center w. ${Object.entries(combo.labels).map(([f, l]) => `${f}=${l}`).join(', ')}`
+                                : 'Center point';
                               
                               // Decode center point X coordinate (factorB at level 0)
                               const decodedXValue = (() => {
