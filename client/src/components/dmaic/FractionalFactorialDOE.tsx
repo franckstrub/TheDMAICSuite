@@ -1628,7 +1628,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                       })()
                                     : 'Center (0)';
                                   
-                                  const centerLabel = `Center: ${Object.entries(combo.labels).map(([f, l]) => `${f}=${l}`).join(', ')}`;
+                                  const centerLabel = `Center w. ${Object.entries(combo.labels).map(([f, l]) => `${f}<br>=${l}`).join(', ')}`;
                                   
                                   interactionTraces.push({
                                     x: [0],
@@ -1676,9 +1676,9 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                         xaxis: { title: { text: factorB.name }, type: 'linear', tickmode: 'array', tickvals: xTickVals, ticktext: xTickLabels },
                                         yaxis: { title: { text: responseVariableName || 'Y Response' }, range: [yAxisRangeMin, yAxisRangeMax] },
                                         showlegend: true,
-                                        legend: { title: { text: factorA.name } },
+                                        legend: { title: { text: "Legend:" }, font: { size: 10 }, x: 1, y: 0.5  },
                                         hovermode: 'closest',
-                                        margin: { l: 60, r: 160, t: 60, b: 60 },
+                                        margin: { l: 60, r: 100, t: 60, b: 60 },
                                       }}
                                       config={{
                                         responsive: true,

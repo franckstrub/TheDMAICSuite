@@ -1319,13 +1319,30 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                               // All categorical: 2^k combinations
                               const generateCombinations = (cats: typeof categoricalOthers, idx: number, current: Record<string, number>, currentLabels: Record<string, string>): void => {
                                 if (idx === cats.length) {
+                                  // Add labels for continuous factors
+                                  otherFactors.forEach(f => {
+                                    if (f.type === 'continuous') {
+                                      current[f.name] = 0;
+                                      currentLabels[f.name] = showUncoded && allFactorsHaveValidLevels()
+                                        ? (() => {
+                                            const decoded = decodeValue(0, f);
+                                            return f.type === 'continuous' ? `${(decoded as number).toFixed(2)}${f.units ? ' ' + f.units : ''}` : String(decoded);
+                                          })()
+                                        : 'Center (0)';
+                                    }
+                                  });
                                   centerPointCombinations.push({ levels: { ...current }, labels: { ...currentLabels } });
                                   return;
                                 }
                                 const cat = cats[idx];
                                 [-1, 1].forEach(level => {
                                   current[cat.name] = level;
-                                  currentLabels[cat.name] = level === -1 ? 'Low (-1)' : 'High (+1)';
+                                  currentLabels[cat.name] = showUncoded && allFactorsHaveValidLevels()
+                                    ? (() => {
+                                        const decoded = decodeValue(level, cat);
+                                        return String(decoded);
+                                      })()
+                                    : (level === -1 ? 'Low (-1)' : 'High (+1)');
                                   generateCombinations(cats, idx + 1, current, currentLabels);
                                 });
                               };
@@ -1354,7 +1371,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                   : 0;
                               })();
                               
-                              const centerLabel = `Center point: ${Object.entries(combo.labels).map(([f, l]) => `${f}=${l}`).join(', ')}`;
+                              const centerLabel = `Center w. ${Object.entries(combo.labels).map(([f, l]) => `${f}=${l}`).join(', ')}`;
                               
                               // Decode center point X coordinate (factorB at level 0)
                               const decodedXValue = (() => {
@@ -1375,7 +1392,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                 name: centerLabel,
                                 marker: { size: 8, color: '#ef4444' },
                                 showlegend: true,
-                                hovertemplate: centerLabel + '<br>' + factorB.name + ': ' + decodedXValue + '<br>' + (responseVariableName || 'Y Response') + ': %{y:.3f}<extra></extra>',
+                                hovertemplate: 'Center point:<br>' + factorB.name + ': ' + decodedXValue + '<br>' + (responseVariableName || 'Y Response') + ': %{y:.3f}<extra></extra>',
                               });
                             });
                           }
@@ -1439,9 +1456,9 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                   },
                                   yaxis: { title: { text: responseVariableName || 'Y Response' }, range: [yAxisRangeMin, yAxisRangeMax] },
                                     showlegend: true,
-                                    legend: { title: { text: factorA.name } },
+                                    legend: { title: { text: "Legend:" }, font: { size: 10 }, x: 1, y: 0.5  },
                                     hovermode: 'closest',
-                                    margin: { l: 60, r: 160, t: 60, b: 60 },
+                                    margin: { l: 60, r: 100, t: 60, b: 60 },
                                   }}
                                   config={{
                                     responsive: true,
