@@ -47,7 +47,6 @@ import {
   calculateDOEVIF
 } from '@/lib/doeSharedUtils';
 import { performNormalityTest } from '@/lib/statisticsUtils';
-import { ChildProcess } from 'child_process';
 
 interface FractionalFactorialDOEProps {
   projectId: number;
@@ -149,8 +148,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
   useEffect(() => {
     if (activeTab === 'data' && validateFractionalFactorCount(factors) && factors.length >= 3) {
       const centerPoints = includeCenterPoints ? numberOfCenterPoints : 0;
-      const p = parseInt(designChoice);
-      const plan = generateFractionalFactorialPlan(factors, p, centerPoints, randomizeRuns, numberOfReplicates);
+      const plan = generateFractionalFactorialPlan(factors, 4, centerPoints, randomizeRuns, numberOfReplicates);
       
       setGeneratedPlan(plan);
       
@@ -469,23 +467,14 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
   
   const handleAddFactor = () => {
     const newFactorIndex = factors.length + 1;
-    if (newFactorIndex > 10) { 
-      toast({ 
-        title: "Cannot Add Factor",
-        description: "Fractional Factorial DOE supports a maximum of 10 factors.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (newFactorIndex >= 12) { // will; happen in thhe future !!!!
-      setDesignChoice(String(5 + (newFactorIndex - 12)));
-    }
-    else if (newFactorIndex >= 9) {
-      setDesignChoice(String(newFactorIndex - 7));
-    } 
-    const newFactor = getDefaultFactor(newFactorIndex);
-    setFactors([...factors, newFactor]);  
+  if (newFactorIndex >= 12) {
+    setDesignChoice(5 + (newFactorIndex - 12));
+  }
+  else if (newFactorIndex >= 9) {
+    setDesignChoice(newFactorIndex - 7);
+  }
+        const newFactor = getDefaultFactor(newFactorIndex);
+    setFactors([...factors, newFactor]);
   };
   
   const handleDeleteFactor = (index: number) => {
@@ -842,8 +831,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   {/* Design Choice */}
                   {(() => {
                     const k = factors.length;
-                    //const choices = getDesignChoices(k);
-                    
+                    const choices = getDesignChoices(k);
                     return (
                       <div className="space-y-2">
                         <Label htmlFor="design-choice" className="text-lg font-semibold">Design Selection</Label>
@@ -1052,7 +1040,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   ) : (
                     <>
                       <div className="space-y-2">
-                        <h3 className="text-lg font-semibold">2<sup>({factors.length}-{generatedPlan.p})</sup>{generatedPlan.designType}</h3>
+                        <h3 className="text-lg font-semibold">{generatedPlan.designType}</h3>
                         <p className="text-sm text-muted-foreground">
                           {generatedPlan.definingRelation && (
                             <>
@@ -1205,36 +1193,6 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
             </Card>
           ) : (
             <>
-              <div className="space-y-2">
-                <h3 className="text-lg font-semibold">2<sup>({factors.length}-{generatedPlan.p})</sup>{generatedPlan.designType}</h3>
-                <p className="text-sm text-muted-foreground">
-                  {generatedPlan.definingRelation && (
-                    <>
-                      Defining Relation: {generatedPlan.definingRelation}
-                      {generatedPlan.generators && generatedPlan.generators.length > 0 && (
-                        <> • Generators: {generatedPlan.generators.join(', ')}</>
-                      )}
-                      {generatedPlan.aliases && generatedPlan.aliases.length > 0 && (
-                        <> • Aliases: {generatedPlan.aliases.join(', ')}</>
-                      )}
-                    </>
-                  )}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Total Runs: {generatedPlan.plan.length}
-                </p>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800" data-testid="badge-replicates">
-                    Replicates: {numberOfReplicates}
-                  </Badge>
-                  <Badge variant="outline" className={randomizeRuns ? "bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800" : "bg-gray-50 dark:bg-gray-950 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-800"} data-testid="badge-randomization">
-                    Randomization: {randomizeRuns ? "ON" : "OFF"}
-                  </Badge>
-                  <Badge variant="outline" className="bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800" data-testid="badge-center-points">
-                    Center Points: {includeCenterPoints ? numberOfCenterPoints : 0}
-                  </Badge>
-                </div>
-              </div>
               {/* Toggle for Coded/Uncoded Values */}
               <div className="flex items-center space-x-2">
                 <Label htmlFor="chart-uncoded-toggle">Coded</Label>
@@ -1247,14 +1205,6 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 />
                 <Label htmlFor="chart-uncoded-toggle">Uncoded</Label>
               </div>
-              
-              {!allFactorsHaveValidLevels() && (
-                <div className="p-3 bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                  <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                    <strong>Note:</strong> Cannot display uncoded values. Please define low and high values for all factors in the Setup tab.
-                  </p>
-                </div>
-              )}
 
               {(() => {
                 // Helper: Get unique levels for a factor
@@ -1770,36 +1720,6 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
             </Card>
           ) : (
             <>
-              <div className="space-y-2">
-                <h3 className="text-lg font-semibold">2<sup>({factors.length}-{generatedPlan.p})</sup>{generatedPlan.designType}</h3>
-                <p className="text-sm text-muted-foreground">
-                  {generatedPlan.definingRelation && (
-                    <>
-                      Defining Relation: {generatedPlan.definingRelation}
-                      {generatedPlan.generators && generatedPlan.generators.length > 0 && (
-                        <> • Generators: {generatedPlan.generators.join(', ')}</>
-                      )}
-                      {generatedPlan.aliases && generatedPlan.aliases.length > 0 && (
-                        <> • Aliases: {generatedPlan.aliases.join(', ')}</>
-                      )}
-                    </>
-                  )}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Total Runs: {generatedPlan.plan.length}
-                </p>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800" data-testid="badge-replicates">
-                    Replicates: {numberOfReplicates}
-                  </Badge>
-                  <Badge variant="outline" className={randomizeRuns ? "bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800" : "bg-gray-50 dark:bg-gray-950 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-800"} data-testid="badge-randomization">
-                    Randomization: {randomizeRuns ? "ON" : "OFF"}
-                  </Badge>
-                  <Badge variant="outline" className="bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800" data-testid="badge-center-points">
-                    Center Points: {includeCenterPoints ? numberOfCenterPoints : 0}
-                  </Badge>
-                </div>
-              </div>
               {/* Toggle for Coded/Uncoded Analysis */}
               <div className="flex items-center space-x-2">
                 <Label htmlFor="analysis-uncoded-toggle">Coded</Label>
