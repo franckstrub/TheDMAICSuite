@@ -211,7 +211,7 @@ export function generateFullFactorialPlan(
   return {
     plan,
     factors,
-    designType: `2^${k} Full Factorial${actualCenterPointRuns > 0 ? ` with ${actualCenterPointRuns} center point runs` : ''}`,
+    designType: ` Full Factorial${actualCenterPointRuns > 0 ? ` with ${actualCenterPointRuns} center point runs` : ''}`,
     k,
   };
 }
@@ -228,44 +228,151 @@ export function generateFullFactorialPlan(
  */
 export function generateFractionalFactorialPlan(
   factors: DOEFactor[],
-  resolution: number = 4,
-  centerPoints: number = 0,
-  randomize: boolean = true,
-  replicates: number = 1
+  p: number,
+  centerPoints: number,
+  randomize: boolean,
+  replicates: number
 ): FractionalFactorialPlan {
   const k = factors.length;
   
   // Determine the fraction based on number of factors and resolution
-  let p = 0; // Number of generators
+  let resolution = 0;
   let generators: string[] = [];
   let definingRelation = '';
   
-  if (k === 3) {
+  if ((k === 3) && (p === 1)) {
     // 2^(3-1) design, Resolution III
-    p = 1;
+    resolution = 3;
     generators = ['C=AB'];
     definingRelation = 'I = ABC';
-    resolution = 3;
   } else if (k === 4) {
-    // 2^(4-1) design, Resolution IV
-    p = 1;
-    generators = ['D=ABC'];
-    definingRelation = 'I = ABCD';
+    if (p === 1) {
+      // 2^(4-1) design, Resolution IV
+      resolution = 4;    
+      generators = ['D=ABC'];
+      definingRelation = 'I = ABCD';
+    }
   } else if (k === 5) {
+    if (p === 1) {
     // 2^(5-1) design, Resolution V
-    p = 1;
+    resolution = 5;
     generators = ['E=ABCD'];
     definingRelation = 'I = ABCDE';
+    }
+    else if (p === 2) {
+    // 2^(5-2) design, Resolution III
+    resolution = 3;
+    generators = ['D=AB', 'E=AC'];
+    definingRelation = 'I = ABD = ACE = BCDE';
+    }
   } else if (k === 6) {
+    if (p ===1) {
+    // 2^(6-1) design, Resolution V
+    resolution= 5;
+    generators = ['F=ABCDE'];
+    definingRelation = 'I = ABCDEF';
+    }
+    else if (p === 2) {
     // 2^(6-2) design, Resolution IV
-    p = 2;
+    resolution = 4;
     generators = ['E=ABC', 'F=BCD'];
     definingRelation = 'I = ABCE = BCDF = ADEF';
+    }
+    else if (p === 3) {
+    // 2^(6-3) design, Resolution III
+    resolution = 3;
+    generators = ['D=AB', 'E=AC', 'F=BC'];
+    definingRelation = 'I = ABD = ACE = BCF = DE = DF = EF';
+    }
   } else if (k === 7) {
+    if (p === 1) {    
+    // 2^(7-1) design, Resolution VII
+    resolution = 7;
+    generators = ['G=ABCDEF'];
+    definingRelation = 'I = ABCDEFG';
+    } else if (p === 2) {
+    // 2^(7-2) design, Resolution IV
+    resolution = 4;
+    generators = ['F=ABCD', 'G=BCDE'];
+    definingRelation = 'I = ABCD = BCDE = AEFG';
+  } else if (p === 3) {
     // 2^(7-3) design, Resolution IV
-    p = 3;
+    resolution = 4;
     generators = ['E=ABC', 'F=BCD', 'G=ACD'];
     definingRelation = 'I = ABCE = BCDF = ACDG';
+  } else if (p === 4) {
+    // 2^(7-4) design, Resolution III
+    resolution = 3;
+    generators = ['D=AB', 'E=AC', 'F=BC', 'G=AD'];
+    definingRelation = 'I = ABD = ACE = BCF = ADG';
+    }
+  } else if (k === 8) {
+    if (p === 1) {    
+    // 2^(8-1) design, Resolution VIII
+    resolution = 8;
+    generators = ['H=ABCDEFG'];
+    definingRelation = 'I = ABCDEFGH';
+    } else if (p === 2) {
+    // 2^(8-2) design, Resolution V
+    resolution = 5;
+    generators = ['G=ABCD', 'H=BCDE'];
+    definingRelation = 'I = ABCD = BCDE = AFGH';
+  } else if (p === 3) {
+    // 2^(8-3) design, Resolution IV
+    resolution = 4;
+    generators = ['F=ABC', 'G=BCD', 'H=ACD'];
+    definingRelation = 'I = ABCE = BCDF = ACDG';
+  } else if (p === 4) {
+    // 2^(8-4) design, Resolution IV
+    resolution = 4;
+    generators = ['E=AB', 'F=AC', 'G=BC', 'H=AD'];
+    definingRelation = 'I = ABE = ACF = BCG = ADH';
+    }
+  } else if (k === 9) {
+    if (p === 2) {
+    // 2^(9-2) design, Resolution VI
+    resolution = 6;
+    generators = ['H=ABCD', 'I=BCDE'];
+    definingRelation = 'I = ABCD = BCDE = AFGH';
+    }
+    else if (p === 3) {
+    // 2^(9-3) design, Resolution IV
+    resolution = 4;
+    generators = ['G=ABC', 'H=BCD', 'I=ACD'];
+    definingRelation = 'I = ABCE = BCDF = ACDG';
+    } else if (p === 4) {
+    // 2^(9-4) design, Resolution IV
+    resolution = 4;
+    generators = ['F=AB', 'G=AC', 'H=BC', 'I=AD'];
+    definingRelation = 'I = ABF = ACG = BCH = ADI';
+    } else if (p === 5) {
+    // 2^(9-5) design, Resolution III
+    resolution = 3;
+    generators = ['E=AB', 'F=AC', 'G=BC', 'H=AD', 'I=AE'];
+    definingRelation = 'I = ABE = ACF = BCG = ADH = AEI';
+    }
+  } else if (k === 10) {
+    if (p === 3) {
+    // 2^(10-3) design, Resolution V
+    resolution = 5;
+    generators = ['H=ABCD', 'I=BCDE', 'J=CDEF'];
+    definingRelation = 'I = ABCD = BCDE = CDEF = AFGH';
+    } else if (p === 4) {
+    // 2^(10-4) design, Resolution IV
+    resolution = 4;
+    generators = ['G=ABC', 'H=BCD', 'I=ACD', 'J=ADE'];
+    definingRelation = 'I = ABCE = BCDF = ACDG = ADEJ';
+    } else if (p === 5) {
+    // 2^(10-5) design, Resolution IV
+    resolution = 4;
+    generators = ['F=AB', 'G=AC', 'H=BC', 'I=AD', 'J=AE'];
+    definingRelation = 'I = ABF = ACG = BCH = ADH = AEI';
+    } else if (p === 6) {
+    // 2^(10-6) design, Resolution III
+    resolution = 3;
+    generators = ['E=AB', 'F=AC', 'G=BC', 'H=AD', 'I=AE', 'J=AF'];
+    definingRelation = 'I = ABE = ACF = BCG = ADH = AEI = AFJ';
+    }
   } else {
     // For other cases, generate full factorial
     return {
@@ -412,7 +519,7 @@ export function generateFractionalFactorialPlan(
   return {
     plan,
     factors,
-    designType: `2^(${k}-${p}) Fractional Factorial (Resolution ${toRoman(resolution)})${actualCenterPointRuns > 0 ? ` with ${actualCenterPointRuns} center point runs` : ''}`,
+    designType: ` Fractional Factorial (Resolution ${toRoman(resolution)})${actualCenterPointRuns > 0 ? ` with ${actualCenterPointRuns} center point runs` : ''}`,
     definingRelation,
     resolution,
     k,
