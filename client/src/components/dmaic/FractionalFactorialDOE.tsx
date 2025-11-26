@@ -2506,7 +2506,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                     const seCurvSquared = mse * (1 / n_c + 1 / n_f);
                                     curvatureSE = Number.isFinite(seCurvSquared) && seCurvSquared >= 0 ? Math.sqrt(seCurvSquared) : 0;
                                     curvatureTValue = curvatureSE > 0 ? curvatureCoeff / curvatureSE : 0;
-                                    curvaturePValue = curvatureSE > 0 && n - numCoefficients > 0 ? 2 * (1 - jStat.studentt.cdf(Math.abs(curvatureTValue), n - numCoefficients)) : 1;
+                                    curvaturePValue = curvatureSE > 0 && n_f - numCoefficients > 0 ? 2 * (1 - jStat.studentt.cdf(Math.abs(curvatureTValue), n_f - numCoefficients)) : 1;
                                   }
                                   
                                   return (
