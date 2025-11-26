@@ -2498,14 +2498,15 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                   let curvatureTValue = 0;
                                   let curvaturePValue = 1;
                                   
-                                  if (n_c > 0 && n_f > 0) {
+                                  if (n_c > 0 && n_f > 0 && mse > 0) {
                                     const centerResponses = centerPointIndices.map(idx => runData[idx].response).filter((r): r is number => r !== null && !isNaN(r));
                                     const y_c_avg = centerResponses.length > 0 ? centerResponses.reduce((a, b) => a + b, 0) / centerResponses.length : 0;
                                     const y_f_at_center = displayBeta[0];
                                     curvatureCoeff = y_c_avg - y_f_at_center;
-                                    curvatureSE = Math.sqrt(mse * (1 / n_c + 1 / n_f));
+                                    const seCurvSquared = mse * (1 / n_c + 1 / n_f);
+                                    curvatureSE = Number.isFinite(seCurvSquared) && seCurvSquared >= 0 ? Math.sqrt(seCurvSquared) : 0;
                                     curvatureTValue = curvatureSE > 0 ? curvatureCoeff / curvatureSE : 0;
-                                    curvaturePValue = curvatureSE > 0 ? 2 * (1 - jStat.studentt.cdf(Math.abs(curvatureTValue), n - numCoefficients)) : 1;
+                                    curvaturePValue = curvatureSE > 0 && n - numCoefficients > 0 ? 2 * (1 - jStat.studentt.cdf(Math.abs(curvatureTValue), n - numCoefficients)) : 1;
                                   }
                                   
                                   return (
