@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Save, Plus, Trash2 } from "lucide-react";
+import { Loader2, Save, Plus, Trash2, Plane } from "lucide-react";
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -148,7 +148,8 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
   useEffect(() => {
     if (activeTab === 'data' && validateFractionalFactorCount(factors) && factors.length >= 3) {
       const centerPoints = includeCenterPoints ? numberOfCenterPoints : 0;
-      const plan = generateFractionalFactorialPlan(factors, 4, centerPoints, randomizeRuns, numberOfReplicates);
+      const p = parseInt(designChoice);
+      const plan = generateFractionalFactorialPlan(factors, p, centerPoints, randomizeRuns, numberOfReplicates);
       
       setGeneratedPlan(plan);
       
@@ -467,11 +468,20 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
   
   const handleAddFactor = () => {
     const newFactorIndex = factors.length + 1;
+    if (newFactorIndex > 10) { 
+      toast({ 
+        title: "Cannot Add Factor",
+        description: "Fractional Factorial DOE supports a maximum of 10 factors.",
+        variant: "destructive",
+      });
+      return;
+    }
+
   if (newFactorIndex >= 12) {
-    setDesignChoice(5 + (newFactorIndex - 12));
+    setDesignChoice(String(5 + (newFactorIndex - 12)));
   }
   else if (newFactorIndex >= 9) {
-    setDesignChoice(newFactorIndex - 7);
+    setDesignChoice(String(newFactorIndex - 7));
   }
         const newFactor = getDefaultFactor(newFactorIndex);
     setFactors([...factors, newFactor]);
@@ -576,7 +586,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
     }
     
     const centerPoints = includeCenterPoints ? numberOfCenterPoints : 0;
-    const plan = generateFractionalFactorialPlan(factors, 4, centerPoints, randomizeRuns, numberOfReplicates);
+    const plan = generateFractionalFactorialPlan(factors, parseInt(designChoice), centerPoints, randomizeRuns, numberOfReplicates);
     
     setGeneratedPlan(plan);
     
@@ -831,7 +841,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   {/* Design Choice */}
                   {(() => {
                     const k = factors.length;
-                    const choices = getDesignChoices(k);
+                    //const choices = getDesignChoices(k);
                     return (
                       <div className="space-y-2">
                         <Label htmlFor="design-choice" className="text-lg font-semibold">Design Selection</Label>
@@ -1040,7 +1050,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   ) : (
                     <>
                       <div className="space-y-2">
-                        <h3 className="text-lg font-semibold">{generatedPlan.designType}</h3>
+                        <h3 className="text-lg font-semibold">2<sup>({factors.length}-{generatedPlan.p})</sup> {generatedPlan.designType}</h3>
                         <p className="text-sm text-muted-foreground">
                           {generatedPlan.definingRelation && (
                             <>
@@ -1056,6 +1066,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                         </p>
                         <p className="text-sm text-muted-foreground">
                           Total Runs: {generatedPlan.plan.length}
+                          <span> • Fraction: 1/{Math.pow(2,generatedPlan.p)}</span>
                         </p>
                         <div className="flex flex-wrap gap-2 mt-2">
                           <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800" data-testid="badge-replicates">
@@ -1075,12 +1086,12 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                         <Label htmlFor="uncoded-toggle">Coded</Label>
                         <Switch
                           id="uncoded-toggle"
-                          checked={showUncoded}
+                          checked={!allFactorsHaveValidLevels() ? false : showUncoded}
                           onCheckedChange={setShowUncoded}
                           disabled={!allFactorsHaveValidLevels()}
                           data-testid="switch-uncoded-toggle"
                         />
-                        <Label htmlFor="uncoded-toggle">Uncoded</Label>
+                        <Label htmlFor="uncoded-toggle">Uncoded {!allFactorsHaveValidLevels() && ' switch is disabled due to some factor levels not defined'}</Label>
                       </div>
                       
                       <div className="border rounded-lg overflow-x-auto">
@@ -1193,17 +1204,48 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
             </Card>
           ) : (
             <>
+              <div className="space-y-2">
+                <h3 className="text-lg font-semibold">2<sup>({factors.length}-{generatedPlan.p})</sup> {generatedPlan.designType}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {generatedPlan.definingRelation && (
+                    <>
+                      Defining Relation: {generatedPlan.definingRelation}
+                      {generatedPlan.generators && generatedPlan.generators.length > 0 && (
+                        <> • Generators: {generatedPlan.generators.join(', ')}</>
+                      )}
+                      {generatedPlan.aliases && generatedPlan.aliases.length > 0 && (
+                        <> • Aliases: {generatedPlan.aliases.join(', ')}</>
+                      )}
+                    </>
+                  )}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Total Runs: {generatedPlan.plan.length}
+                  <span> • Fraction: 1/{Math.pow(2,generatedPlan.p)}</span>
+                </p>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800" data-testid="badge-replicates">
+                    Replicates: {numberOfReplicates}
+                  </Badge>
+                  <Badge variant="outline" className={randomizeRuns ? "bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800" : "bg-gray-50 dark:bg-gray-950 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-800"} data-testid="badge-randomization">
+                    Randomization: {randomizeRuns ? "ON" : "OFF"}
+                  </Badge>
+                  <Badge variant="outline" className="bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800" data-testid="badge-center-points">
+                    Center Points: {includeCenterPoints ? numberOfCenterPoints : 0}
+                  </Badge>
+                </div>
+              </div>
               {/* Toggle for Coded/Uncoded Values */}
               <div className="flex items-center space-x-2">
                 <Label htmlFor="chart-uncoded-toggle">Coded</Label>
                 <Switch
                   id="chart-uncoded-toggle"
-                  checked={showUncoded}
+                  checked={!allFactorsHaveValidLevels() ? false : showUncoded}
                   onCheckedChange={setShowUncoded}
                   disabled={!allFactorsHaveValidLevels()}
                   data-testid="switch-chart-uncoded-toggle"
                 />
-                <Label htmlFor="chart-uncoded-toggle">Uncoded</Label>
+                <Label htmlFor="chart-uncoded-toggle">Uncoded {!allFactorsHaveValidLevels() && ' switch is disabled due to some factor levels not defined'}</Label>
               </div>
 
               {(() => {
@@ -1375,7 +1417,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                               ? `Center point: ${(decoded as number).toFixed(2)}${factor.units ? ' ' + factor.units : ''}`
                               : String(decoded);
                           })()
-                        : 'Center (0)';
+                        : 'Center point (0)';
 
                       plotData.push({
                         x: [0],
@@ -1626,7 +1668,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                           ? `Center point: ${(decoded as number).toFixed(2)}${factorB.units ? ' ' + factorB.units : ''}`
                                           : String(decoded);
                                       })()
-                                    : 'Center (0)';
+                                    : 'Center point (0)';
                                   
                                   const centerLabel = `Center w. ${Object.entries(combo.labels).map(([f, l]) => `${f}<br>=${l}`).join(', ')}`;
                                   
@@ -1720,17 +1762,48 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
             </Card>
           ) : (
             <>
+              <div className="space-y-2">
+                <h3 className="text-lg font-semibold">2<sup>({factors.length}-{generatedPlan.p})</sup> {generatedPlan.designType}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {generatedPlan.definingRelation && (
+                    <>
+                      Defining Relation: {generatedPlan.definingRelation}
+                      {generatedPlan.generators && generatedPlan.generators.length > 0 && (
+                        <> • Generators: {generatedPlan.generators.join(', ')}</>
+                      )}
+                      {generatedPlan.aliases && generatedPlan.aliases.length > 0 && (
+                        <> • Aliases: {generatedPlan.aliases.join(', ')}</>
+                      )}
+                    </>
+                  )}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Total Runs: {generatedPlan.plan.length}
+                  <span> • Fraction: 1/{Math.pow(2,generatedPlan.p)}</span>
+                </p>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800" data-testid="badge-replicates">
+                    Replicates: {numberOfReplicates}
+                  </Badge>
+                  <Badge variant="outline" className={randomizeRuns ? "bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800" : "bg-gray-50 dark:bg-gray-950 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-800"} data-testid="badge-randomization">
+                    Randomization: {randomizeRuns ? "ON" : "OFF"}
+                  </Badge>
+                  <Badge variant="outline" className="bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800" data-testid="badge-center-points">
+                    Center Points: {includeCenterPoints ? numberOfCenterPoints : 0}
+                  </Badge>
+                </div>
+              </div>
               {/* Toggle for Coded/Uncoded Analysis */}
               <div className="flex items-center space-x-2">
                 <Label htmlFor="analysis-uncoded-toggle">Coded</Label>
                 <Switch
                   id="analysis-uncoded-toggle"
-                  checked={showUncoded}
+                  checked={!allFactorsHaveValidLevels() ? false : showUncoded}
                   onCheckedChange={setShowUncoded}
                   disabled={!allFactorsHaveValidLevels()}
                   data-testid="switch-analysis-uncoded-toggle"
                 />
-                <Label htmlFor="analysis-uncoded-toggle">Uncoded</Label>
+                <Label htmlFor="analysis-uncoded-toggle">Uncoded {!allFactorsHaveValidLevels() && ' switch is disabled due to some factor levels not defined'}</Label>
               </div>
 
               {(() => {
@@ -2177,11 +2250,11 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                   
                                   runData.forEach((row, rowIdx) => {
                                     if (row.response !== null && !isNaN(row.response)) {
-                                      const allBaseFactorsZero = Array.from({length: baseFactorCount}).every((_,i) => {
-                                        const level = generatedPlan.plan[rowIdx]?.[factors[i].name] ?? 0;
+                                      const allFactorsZero = factors.every(factor => {
+                                        const level = generatedPlan.plan[rowIdx]?.[factor.name] ?? 0;
                                         return Math.abs(level) < 0.01;
                                       });
-                                      if (allBaseFactorsZero) {
+                                      if (allFactorsZero) {
                                         centerPointIndices.push(rowIdx);
                                       } else {
                                         factorialPointIndices.push(rowIdx);
@@ -2405,11 +2478,11 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                   
                                   runData.forEach((row, rowIdx) => {
                                     if (row.response !== null && !isNaN(row.response)) {
-                                      const allBaseFactorsZero = Array.from({length: baseFactorCount}).every((_,i) => {
-                                        const level = generatedPlan.plan[rowIdx]?.[factors[i].name] ?? 0;
+                                      const allFactorsZero = factors.every(factor => {
+                                        const level = generatedPlan.plan[rowIdx]?.[factor.name] ?? 0;
                                         return Math.abs(level) < 0.01;
                                       });
-                                      if (allBaseFactorsZero) {
+                                      if (allFactorsZero) {
                                         centerPointIndices.push(rowIdx);
                                       } else {
                                         factorialPointIndices.push(rowIdx);
@@ -2425,14 +2498,15 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                   let curvatureTValue = 0;
                                   let curvaturePValue = 1;
                                   
-                                  if (n_c > 0 && n_f > 0) {
+                                  if (n_c > 0 && n_f > 0 && mse > 0) {
                                     const centerResponses = centerPointIndices.map(idx => runData[idx].response).filter((r): r is number => r !== null && !isNaN(r));
                                     const y_c_avg = centerResponses.length > 0 ? centerResponses.reduce((a, b) => a + b, 0) / centerResponses.length : 0;
                                     const y_f_at_center = displayBeta[0];
                                     curvatureCoeff = y_c_avg - y_f_at_center;
-                                    curvatureSE = Math.sqrt(mse * (1 / n_c + 1 / n_f));
+                                    const seCurvSquared = mse * (1 / n_c + 1 / n_f);
+                                    curvatureSE = Number.isFinite(seCurvSquared) && seCurvSquared >= 0 ? Math.sqrt(seCurvSquared) : 0;
                                     curvatureTValue = curvatureSE > 0 ? curvatureCoeff / curvatureSE : 0;
-                                    curvaturePValue = curvatureSE > 0 ? 2 * (1 - jStat.studentt.cdf(Math.abs(curvatureTValue), n - numCoefficients)) : 1;
+                                    curvaturePValue = curvatureSE > 0 && n_f - numCoefficients > 0 ? 2 * (1 - jStat.studentt.cdf(Math.abs(curvatureTValue), n_f - numCoefficients)) : 1;
                                   }
                                   
                                   return (
@@ -2634,11 +2708,11 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                   
                                   runData.forEach((row, rowIdx) => {
                                     if (row.response !== null && !isNaN(row.response)) {
-                                      const allBaseFactorsZero = Array.from({length: baseFactorCount}).every((_,i) => {
-                                        const level = generatedPlan.plan[rowIdx]?.[factors[i].name] ?? 0;
+                                      const allFactorsZero = factors.every(factor => {
+                                        const level = generatedPlan.plan[rowIdx]?.[factor.name] ?? 0;
                                         return Math.abs(level) < 0.01;
                                       });
-                                      if (allBaseFactorsZero) {
+                                      if (allFactorsZero) {
                                         centerPointIndices.push(rowIdx);
                                       } else {
                                         factorialPointIndices.push(rowIdx);
