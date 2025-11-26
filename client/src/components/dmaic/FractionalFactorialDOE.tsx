@@ -2250,11 +2250,11 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                   
                                   runData.forEach((row, rowIdx) => {
                                     if (row.response !== null && !isNaN(row.response)) {
-                                      const allBaseFactorsZero = Array.from({length: baseFactorCount}).every((_,i) => {
-                                        const level = generatedPlan.plan[rowIdx]?.[factors[i].name] ?? 0;
+                                      const allFactorsZero = factors.every(factor => {
+                                        const level = generatedPlan.plan[rowIdx]?.[factor.name] ?? 0;
                                         return Math.abs(level) < 0.01;
                                       });
-                                      if (allBaseFactorsZero) {
+                                      if (allFactorsZero) {
                                         centerPointIndices.push(rowIdx);
                                       } else {
                                         factorialPointIndices.push(rowIdx);
@@ -2478,11 +2478,11 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                   
                                   runData.forEach((row, rowIdx) => {
                                     if (row.response !== null && !isNaN(row.response)) {
-                                      const allBaseFactorsZero = Array.from({length: baseFactorCount}).every((_,i) => {
-                                        const level = generatedPlan.plan[rowIdx]?.[factors[i].name] ?? 0;
+                                      const allFactorsZero = factors.every(factor => {
+                                        const level = generatedPlan.plan[rowIdx]?.[factor.name] ?? 0;
                                         return Math.abs(level) < 0.01;
                                       });
-                                      if (allBaseFactorsZero) {
+                                      if (allFactorsZero) {
                                         centerPointIndices.push(rowIdx);
                                       } else {
                                         factorialPointIndices.push(rowIdx);
@@ -2708,11 +2708,11 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                   
                                   runData.forEach((row, rowIdx) => {
                                     if (row.response !== null && !isNaN(row.response)) {
-                                      const allBaseFactorsZero = Array.from({length: baseFactorCount}).every((_,i) => {
-                                        const level = generatedPlan.plan[rowIdx]?.[factors[i].name] ?? 0;
+                                      const allFactorsZero = factors.every(factor => {
+                                        const level = generatedPlan.plan[rowIdx]?.[factor.name] ?? 0;
                                         return Math.abs(level) < 0.01;
                                       });
-                                      if (allBaseFactorsZero) {
+                                      if (allFactorsZero) {
                                         centerPointIndices.push(rowIdx);
                                       } else {
                                         factorialPointIndices.push(rowIdx);
