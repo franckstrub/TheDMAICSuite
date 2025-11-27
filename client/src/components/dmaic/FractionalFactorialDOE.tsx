@@ -1470,7 +1470,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     {/* Interaction Plots */}
                     {factors.length >= 2 && (
                       <div className="space-y-4">
-                        <h3 className="text-lg font-semibold">Interaction Plots</h3>
+                        <h3 className="text-lg font-semibold">2-Way Interaction Plots</h3>
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                           {factors.slice(0, -1).map((factorA, idxA) =>
                             factors.slice(idxA + 1).map((factorB, idxB) => {
@@ -1822,9 +1822,9 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   );
                 }
 
-                // Get metadata from generatedPlan
+                // Get metadata from generatedPlan, but use current factors.length for accurate interaction generation
                 const ffMetadata = generatedPlan.metadata;
-                const k = ffMetadata?.k || factors.length;
+                const k = factors.length; // Always use current factor count, not stale metadata
                 const p = ffMetadata?.p || 0;
                 const resolution = ffMetadata?.resolution || 5;
                 const baseFactorCount = k - p;
@@ -2212,10 +2212,10 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                       <TableCell className="text-right">{termDF}</TableCell>
                                       <TableCell className="text-right">{termSS.toFixed(4)}</TableCell>
                                       <TableCell className="text-right">{termMS.toFixed(4)}</TableCell>
-                                      <TableCell className="text-right">{fRatio.toFixed(4)}</TableCell>
+                                      <TableCell className="text-right">{fRatio > 0 ? fRatio.toFixed(4) : '-'}</TableCell>
                                       <TableCell className="text-right">
                                         <span className={pValue < 0.05 ? "text-green-600 font-semibold" : ""}>
-                                          {pValue.toFixed(4)}
+                                          {pValue === 1 ? '-' : pValue.toFixed(4)}
                                         </span>
                                       </TableCell>
                                     </TableRow>
@@ -2240,10 +2240,10 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                       <TableCell className="text-right">{termDF}</TableCell>
                                       <TableCell className="text-right">{termSS.toFixed(4)}</TableCell>
                                       <TableCell className="text-right">{termMS.toFixed(4)}</TableCell>
-                                      <TableCell className="text-right">{fRatio.toFixed(4)}</TableCell>
+                                      <TableCell className="text-right">{fRatio > 0 ? fRatio.toFixed(4) : '-'}</TableCell>
                                       <TableCell className="text-right">
                                         <span className={pValue < 0.05 ? "text-green-600 font-semibold" : ""}>
-                                          {pValue.toFixed(4)}
+                                          {pValue === 1 ? '-' : pValue.toFixed(4)}
                                         </span>
                                       </TableCell>
                                     </TableRow>
@@ -2294,10 +2294,10 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                         <TableCell className="text-right">{curveDF}</TableCell>
                                         <TableCell className="text-right">{curveSS.toFixed(4)}</TableCell>
                                         <TableCell className="text-right">{curveMS.toFixed(4)}</TableCell>
-                                        <TableCell className="text-right">{curveFRatio.toFixed(4)}</TableCell>
+                                        <TableCell className="text-right">{curveFRatio > 0 ? curveFRatio.toFixed(4) : '-'}</TableCell>
                                         <TableCell className="text-right">
                                           <span className={curvePValue < 0.05 ? "text-green-600 font-semibold" : ""}>
-                                            {curvePValue.toFixed(4)}
+                                            {curvePValue === 1 ? '-' : curvePValue.toFixed(4)}
                                           </span>
                                         </TableCell>
                                       </TableRow>
@@ -2322,10 +2322,10 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                     <TableCell className="text-right">{modelDF}</TableCell>
                                     <TableCell className="text-right">{(SS_tot - SS_res).toFixed(4)}</TableCell>
                                     <TableCell className="text-right">{modelMS.toFixed(4)}</TableCell>
-                                    <TableCell className="text-right">{modelFRatio.toFixed(4)}</TableCell>
+                                    <TableCell className="text-right">{modelFRatio >0 ? modelFRatio.toFixed(4) : '-'}</TableCell>
                                     <TableCell className="text-right">
                                       <span className={modelPValue < 0.05 ? "text-green-600 font-semibold" : ""}>
-                                        {modelPValue.toFixed(4)}
+                                        {modelPValue === 1 ? '-' : modelPValue.toFixed(4)}
                                       </span>
                                     </TableCell>
                                   </TableRow>
