@@ -144,9 +144,10 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
     localStorage.setItem(`doe-fractional-active-tab-${projectId}-${solutionId}`, activeTab);
   }, [activeTab, projectId, solutionId]);
   
-  // Auto-generate plan when switching to Data tab
+  // Auto-generate plan when factors change or when switching to Data tab
   useEffect(() => {
-    if (activeTab === 'data' && validateFractionalFactorCount(factors) && factors.length >= 3) {
+    // Regenerate plan when: (1) factors change OR (2) switching to data tab AND valid factor count
+    if (validateFractionalFactorCount(factors) && factors.length >= 3) {
       const centerPoints = includeCenterPoints ? numberOfCenterPoints : 0;
       const p = parseInt(designChoice);
       const plan = generateFractionalFactorialPlan(factors, p, centerPoints, randomizeRuns, numberOfReplicates);
@@ -155,8 +156,11 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
       
       // Responses are preserved automatically since they're keyed by run order
       // No need to rebuild - existing responses state remains valid
+    } else if (factors.length < 3) {
+      // Clear plan if factor count becomes invalid
+      setGeneratedPlan(null);
     }
-  }, [activeTab, factors, includeCenterPoints, numberOfCenterPoints, randomizeRuns, numberOfReplicates]);
+  }, [factors, includeCenterPoints, numberOfCenterPoints, randomizeRuns, numberOfReplicates, designChoice]);
   
   // Load config from API
   const configQuery = useQuery({
