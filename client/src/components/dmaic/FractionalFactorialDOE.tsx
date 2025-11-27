@@ -1829,11 +1829,26 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 const resolution = ffMetadata?.resolution || 5;
                 const baseFactorCount = k - p;
 
-                // Build interaction terms - only between base factors (unconfounded)
-                const interactionPairs: Array<{i: number, j: number, name: string}> = [];
-                for (let i = 0; i < baseFactorCount; i++) {
-                  for (let j = i + 1; j < baseFactorCount; j++) {
-                    interactionPairs.push({i, j, name: `${factors[i].name}×${factors[j].name}`});
+                // Build interaction terms - all N-way interactions between base factors (unconfounded)
+                // Helper to generate all combinations of indices
+                const getCombinations = (arr: number[], size: number): number[][] => {
+                  if (size === 0) return [[]];
+                  if (arr.length === 0) return [];
+                  const [first, ...rest] = arr;
+                  const withFirst = getCombinations(rest, size - 1).map(combo => [first, ...combo]);
+                  const withoutFirst = getCombinations(rest, size);
+                  return [...withFirst, ...withoutFirst];
+                };
+                
+                // Generate all interactions of size 2, 3, 4, ... up to baseFactorCount
+                const interactionPairs: Array<{indices: number[], name: string}> = [];
+                const baseIndices = Array.from({ length: baseFactorCount }, (_, i) => i);
+                for (let size = 2; size <= baseFactorCount; size++) {
+                  const combos = getCombinations(baseIndices, size);
+                  for (const combo of combos) {
+                    // Build name from factor names (e.g., "A×B×C")
+                    const name = combo.map(idx => factors[idx].name).join('×');
+                    interactionPairs.push({ indices: combo, name });
                   }
                 }
 
@@ -1850,9 +1865,14 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                       baseFactorValues.push(val);
                       row_vals.push(val);
                     }
-                    // Add interaction terms (only between base factors)
+                    // Add interaction terms (all N-way between base factors)
                     interactionPairs.forEach(pair => {
-                      row_vals.push(baseFactorValues[pair.i] * baseFactorValues[pair.j]);
+                      // Multiply all factor values in this interaction
+                      let product = 1;
+                      pair.indices.forEach(idx => {
+                        product *= baseFactorValues[idx];
+                      });
+                      row_vals.push(product);
                     });
                     X.push(row_vals);
                     y.push(row.response);
@@ -2016,32 +2036,39 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     }
                   }
                   
+                  // Transform N-way interaction coefficients
                   for (let i = 0; i < interactionPairs.length; i++) {
                     const pair = interactionPairs[i];
-                    const idx1 = pair.i;
-                    const idx2 = pair.j;
-                    const factor1 = factors[idx1];
-                    const factor2 = factors[idx2];
+                    const interactionCoeffIdx = factors.length + 1 + i;
                     
-                    if (factor1.type === 'continuous' && factor2.type === 'continuous' &&
-                        factor1.lowValue !== undefined && factor1.highValue !== undefined &&
-                        factor2.lowValue !== undefined && factor2.highValue !== undefined) {
-                      const low1 = parseFloat(String(factor1.lowValue));
-                      const high1 = parseFloat(String(factor1.highValue));
-                      const low2 = parseFloat(String(factor2.lowValue));
-                      const high2 = parseFloat(String(factor2.highValue));
+                    // Check all factors in this interaction are continuous with valid levels
+                    const allContinuousWithLevels = pair.indices.every(idx => {
+                      const factor = factors[idx];
+                      return factor.type === 'continuous' && 
+                             factor.lowValue !== undefined && 
+                             factor.highValue !== undefined;
+                    });
+                    
+                    if (allContinuousWithLevels) {
+                      // Calculate product of half-ranges for all factors in this interaction
+                      let halfRangeProduct = 1;
+                      let allValid = true;
                       
-                      if (!isNaN(low1) && !isNaN(high1) && !isNaN(low2) && !isNaN(high2)) {
-                        const halfRange1 = (high1 - low1) / 2;
-                        const halfRange2 = (high2 - low2) / 2;
-                        const interactionCoeffIdx = factors.length + 1 + i;
-                        if (Number.isFinite(beta[interactionCoeffIdx])) {
-                          transformed[interactionCoeffIdx] = beta[interactionCoeffIdx] / (halfRange1 * halfRange2);
-                          // SE_uncoded_interaction = SE_coded_interaction / (halfRange1 * halfRange2)
-                          if (transformedStats[interactionCoeffIdx]) {
-                            transformedStats[interactionCoeffIdx].stdError = coeffStats[interactionCoeffIdx].stdError / (halfRange1 * halfRange2);
-                            // t-value and p-value are INVARIANT
-                          }
+                      for (const idx of pair.indices) {
+                        const factor = factors[idx];
+                        const low = parseFloat(String(factor.lowValue));
+                        const high = parseFloat(String(factor.highValue));
+                        if (isNaN(low) || isNaN(high)) {
+                          allValid = false;
+                          break;
+                        }
+                        halfRangeProduct *= (high - low) / 2;
+                      }
+                      
+                      if (allValid && Number.isFinite(beta[interactionCoeffIdx])) {
+                        transformed[interactionCoeffIdx] = beta[interactionCoeffIdx] / halfRangeProduct;
+                        if (transformedStats[interactionCoeffIdx]) {
+                          transformedStats[interactionCoeffIdx].stdError = coeffStats[interactionCoeffIdx].stdError / halfRangeProduct;
                         }
                       }
                     }
@@ -2071,28 +2098,8 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                       }
                     }
                     
-                    // Add variance contributions from interactions
-                    for (let i = 0; i < interactionPairs.length; i++) {
-                      const pair = interactionPairs[i];
-                      const idx1 = pair.i;
-                      const idx2 = pair.j;
-                      const factor1 = factors[idx1];
-                      const factor2 = factors[idx2];
-                      
-                      if (factor1.type === 'continuous' && factor2.type === 'continuous' &&
-                          factor1.lowValue !== undefined && factor1.highValue !== undefined &&
-                          factor2.lowValue !== undefined && factor2.highValue !== undefined) {
-                        const low1 = parseFloat(String(factor1.lowValue));
-                        const high1 = parseFloat(String(factor1.highValue));
-                        const low2 = parseFloat(String(factor2.lowValue));
-                        const high2 = parseFloat(String(factor2.highValue));
-                        
-                        if (!isNaN(low1) && !isNaN(high1) && !isNaN(low2) && !isNaN(high2)) {
-                          // For interactions, the center term is 0 (no interaction centers in DOE)
-                          // So no variance contribution from interactions
-                        }
-                      }
-                    }
+                    // Note: For N-way interactions, the center term is 0 (no interaction centers in DOE)
+                    // So no variance contribution from interactions to intercept SE
                     
                     transformedStats[0].stdError = Math.sqrt(Math.max(0, interceptSESquared));
                     transformedStats[0].tValue = (beta[0] - interceptAdjustment) / transformedStats[0].stdError;
