@@ -2244,6 +2244,8 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                 });
 
                                 // Calculate curvature effect if center points exist AND are included in model
+                                const hasCurvature = (includeCenterPoints && selectedFactorsForModel['centerPoint'] !== false);
+                                let curveDF = 0;
                                 if (includeCenterPoints && selectedFactorsForModel['centerPoint'] !== false) {
                                   const centerPointIndices: number[] = [];
                                   const factorialPointIndices: number[] = [];
@@ -2271,7 +2273,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                     const y_f_at_center = beta[0];
                                     const curveEffect = y_c_avg - y_f_at_center;
                                     const curveSS = (n_c * n_f / (n_c + n_f)) * Math.pow(curveEffect, 2);
-                                    const curveDF = 1;
+                                    curveDF = 1;
                                     const curveMS = curveSS / curveDF;
                                     const errorMS = SS_res / (n - p);
                                     const curveFRatio = errorMS > 0 ? curveMS / errorMS : 0;
@@ -2297,10 +2299,11 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                 }
 
                                 // Add model row
-                                const numTerms = 1 + baseFactorCount + interactionPairs.length;
+                                const numTerms = 1 + baseFactorCount + interactionPairs.length + (hasCurvature ? curveDF : 0) ;
                                 const modelDF = numTerms - 1;
                                 const modelMS = (SS_tot - SS_res) / modelDF;
-                                const errorMS = SS_res / (n - numTerms);
+                                const errorDF = n>numTerms ? n - numTerms : 0 ;
+                                const errorMS = errorDF === 0 ? NaN : SS_res / errorDF;                                
                                 const modelFRatio = errorMS > 0 ? modelMS / errorMS : 0;
                                 const modelPValue = modelFRatio > 0 && (n - numTerms) > 0 
                                   ? 1 - jStat.centralF.cdf(modelFRatio, modelDF, n - numTerms) 
@@ -2322,15 +2325,13 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                 );
 
                                 // Add error row
-                                const errorDF = n - numTerms;
-                                const errorMSVal = SS_res / errorDF;
 
                                 rows.push(
                                   <TableRow key="error">
                                     <TableCell>Error</TableCell>
                                     <TableCell className="text-right">{errorDF}</TableCell>
                                     <TableCell className="text-right">{SS_res.toFixed(4)}</TableCell>
-                                    <TableCell className="text-right">{errorMSVal.toFixed(4)}</TableCell>
+                                    <TableCell className="text-right">{errorMS.toFixed(4)}</TableCell>
                                     <TableCell className="text-right">-</TableCell>
                                     <TableCell className="text-right">-</TableCell>
                                   </TableRow>
