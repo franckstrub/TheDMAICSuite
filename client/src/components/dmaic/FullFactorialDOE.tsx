@@ -126,9 +126,10 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
     localStorage.setItem(`doe-full-active-tab-${projectId}-${solutionId}`, activeTab);
   }, [activeTab, projectId, solutionId]);
   
-  // Auto-generate plan when switching to Data tab
+  // Auto-generate plan when factors change or when switching to Data tab
   useEffect(() => {
-    if (activeTab === 'data' && validateFactorCount(factors)) {
+    // Regenerate plan when: (1) factors change OR (2) switching to data tab AND valid factor count
+    if (validateFactorCount(factors)) {
       const centerPoints = includeCenterPoints ? numberOfCenterPoints : 0;
       const plan = generateFullFactorialPlan(factors, centerPoints, randomizeRuns, numberOfReplicates);
       
@@ -136,8 +137,11 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
       
       // Responses are preserved automatically since they're keyed by run order
       // No need to rebuild - existing responses state remains valid
+    } else {
+      // Clear plan if factor count becomes invalid
+      setGeneratedPlan(null);
     }
-  }, [activeTab, factors, includeCenterPoints, numberOfCenterPoints, randomizeRuns, numberOfReplicates]);
+  }, [factors, includeCenterPoints, numberOfCenterPoints, randomizeRuns, numberOfReplicates]);
 
   // Ref to store the solve function so it can be called by useEffect
   const solveRef = useRef<(() => void) | null>(null);
