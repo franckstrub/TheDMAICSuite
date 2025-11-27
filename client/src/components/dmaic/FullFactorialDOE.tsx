@@ -1582,22 +1582,34 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                             return <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground">No valid data</TableCell></TableRow>;
                           }
 
-                          // Build design matrix with factors and interactions
-                          const interactionPairs: Array<{i: number, j: number, name: string}> = [];
-                          for (let i = 0; i < factors.length; i++) {
-                            for (let j = i + 1; j < factors.length; j++) {
-                              interactionPairs.push({i, j, name: `${factors[i].name}×${factors[j].name}`});
-                            }
+                          // Build design matrix with factors and ALL interactions
+                          const interactions: Array<{indices: number[], name: string}> = [];
+                          // Generate all combinations of 2+ factors
+                          for (let size = 2; size <= factors.length; size++) {
+                            const generateCombinations = (arr: number[], r: number): number[][] => {
+                              if (r === 1) return arr.map(v => [v]);
+                              const result: number[][] = [];
+                              for (let i = 0; i <= arr.length - r; i++) {
+                                generateCombinations(arr.slice(i + 1), r - 1).forEach(combo => {
+                                  result.push([arr[i], ...combo]);
+                                });
+                              }
+                              return result;
+                            };
+                            generateCombinations(Array.from({length: factors.length}, (_, i) => i), size).forEach(combo => {
+                              const name = combo.map(i => factors[i].name).join('×');
+                              interactions.push({indices: combo, name});
+                            });
                           }
 
                           const X: number[][] = [];
                           const y: number[] = [];
-                          const termIndices: Array<{type: string, idx: number, name: string, i?: number, j?: number}> = [];
+                          const termIndices: Array<{type: string, idx: number, name: string, indices?: number[]}> = [];
                           
                           // Build term indices
                           termIndices.push({type: 'intercept', idx: 0, name: 'Intercept'});
-                          factors.forEach((f, i) => termIndices.push({type: 'factor', idx: termIndices.length, name: f.name, i}));
-                          interactionPairs.forEach((p, i) => termIndices.push({type: 'interaction', idx: termIndices.length, name: p.name, i: p.i, j: p.j}));
+                          factors.forEach((f, i) => termIndices.push({type: 'factor', idx: termIndices.length, name: f.name, indices: [i]}));
+                          interactions.forEach((p) => termIndices.push({type: 'interaction', idx: termIndices.length, name: p.name, indices: p.indices}));
 
                           runData.forEach((row, rowIdx) => {
                             if (row.response !== null && !isNaN(row.response)) {
@@ -1608,8 +1620,12 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                 factorValues.push(val);
                                 row_vals.push(val);
                               });
-                              interactionPairs.forEach(pair => {
-                                row_vals.push(factorValues[pair.i] * factorValues[pair.j]);
+                              interactions.forEach(inter => {
+                                let term = 1;
+                                inter.indices.forEach(idx => {
+                                  term *= factorValues[idx];
+                                });
+                                row_vals.push(term);
                               });
                               X.push(row_vals);
                               y.push(row.response);
@@ -1919,12 +1935,23 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                   );
                 }
 
-                // Build interaction terms
-                const interactionPairs: Array<{i: number, j: number, name: string}> = [];
-                for (let i = 0; i < factors.length; i++) {
-                  for (let j = i + 1; j < factors.length; j++) {
-                    interactionPairs.push({i, j, name: `${factors[i].name}×${factors[j].name}`});
-                  }
+                // Build ALL interaction terms (2-way, 3-way, etc.)
+                const interactionPairs: Array<{indices: number[], name: string}> = [];
+                for (let size = 2; size <= factors.length; size++) {
+                  const generateCombinations = (arr: number[], r: number): number[][] => {
+                    if (r === 1) return arr.map(v => [v]);
+                    const result: number[][] = [];
+                    for (let i = 0; i <= arr.length - r; i++) {
+                      generateCombinations(arr.slice(i + 1), r - 1).forEach(combo => {
+                        result.push([arr[i], ...combo]);
+                      });
+                    }
+                    return result;
+                  };
+                  generateCombinations(Array.from({length: factors.length}, (_, i) => i), size).forEach(combo => {
+                    const name = combo.map(i => factors[i].name).join('×');
+                    interactionPairs.push({indices: combo, name});
+                  });
                 }
 
                 const X: number[][] = [];
@@ -1941,7 +1968,11 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                     });
                     // Add interaction terms
                     interactionPairs.forEach(pair => {
-                      row_vals.push(factorValues[pair.i] * factorValues[pair.j]);
+                      let term = 1;
+                      pair.indices.forEach(idx => {
+                        term *= factorValues[idx];
+                      });
+                      row_vals.push(term);
                     });
                     X.push(row_vals);
                     y.push(row.response);
