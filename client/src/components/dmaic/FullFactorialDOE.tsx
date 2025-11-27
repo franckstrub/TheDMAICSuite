@@ -1586,11 +1586,22 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                             return <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground">No valid data</TableCell></TableRow>;
                           }
 
-                          // Build design matrix with factors and interactions
-                          const interactionPairs: Array<{i: number, j: number, name: string}> = [];
-                          for (let i = 0; i < factors.length; i++) {
-                            for (let j = i + 1; j < factors.length; j++) {
-                              interactionPairs.push({i, j, name: `${factors[i].name}×${factors[j].name}`});
+                          // Build N-way interaction terms
+                          const getCombinations = (arr: number[], size: number): number[][] => {
+                            if (size === 0) return [[]];
+                            if (arr.length === 0) return [];
+                            const [first, ...rest] = arr;
+                            const withFirst = getCombinations(rest, size - 1).map(combo => [first, ...combo]);
+                            const withoutFirst = getCombinations(rest, size);
+                            return [...withFirst, ...withoutFirst];
+                          };
+                          const interactionPairs: Array<{indices: number[], name: string}> = [];
+                          const factorIndices = Array.from({ length: factors.length }, (_, i) => i);
+                          for (let size = 2; size <= factors.length; size++) {
+                            const combos = getCombinations(factorIndices, size);
+                            for (const combo of combos) {
+                              const name = combo.map(idx => factors[idx].name).join('×');
+                              interactionPairs.push({ indices: combo, name });
                             }
                           }
 
@@ -1601,7 +1612,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                           // Build term indices
                           termIndices.push({type: 'intercept', idx: 0, name: 'Intercept'});
                           factors.forEach((f, i) => termIndices.push({type: 'factor', idx: termIndices.length, name: f.name, i}));
-                          interactionPairs.forEach((p, i) => termIndices.push({type: 'interaction', idx: termIndices.length, name: p.name, i: p.i, j: p.j}));
+                          interactionPairs.forEach((p, i) => termIndices.push({type: 'interaction', idx: termIndices.length, name: p.name}));
 
                           runData.forEach((row, rowIdx) => {
                             if (row.response !== null && !isNaN(row.response)) {
@@ -1613,7 +1624,11 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                 row_vals.push(val);
                               });
                               interactionPairs.forEach(pair => {
-                                row_vals.push(factorValues[pair.i] * factorValues[pair.j]);
+                                let product = 1;
+                                pair.indices.forEach(idx => {
+                                  product *= factorValues[idx];
+                                });
+                                row_vals.push(product);
                               });
                               X.push(row_vals);
                               y.push(row.response);
@@ -1923,11 +1938,24 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                   );
                 }
 
-                // Build interaction terms
-                const interactionPairs: Array<{i: number, j: number, name: string}> = [];
-                for (let i = 0; i < factors.length; i++) {
-                  for (let j = i + 1; j < factors.length; j++) {
-                    interactionPairs.push({i, j, name: `${factors[i].name}×${factors[j].name}`});
+                // Build N-way interaction terms - all combinations of size 2 and above
+                // Helper to generate all combinations of indices
+                const getCombinations = (arr: number[], size: number): number[][] => {
+                  if (size === 0) return [[]];
+                  if (arr.length === 0) return [];
+                  const [first, ...rest] = arr;
+                  const withFirst = getCombinations(rest, size - 1).map(combo => [first, ...combo]);
+                  const withoutFirst = getCombinations(rest, size);
+                  return [...withFirst, ...withoutFirst];
+                };
+                
+                const interactionPairs: Array<{indices: number[], name: string}> = [];
+                const factorIndices = Array.from({ length: factors.length }, (_, i) => i);
+                for (let size = 2; size <= factors.length; size++) {
+                  const combos = getCombinations(factorIndices, size);
+                  for (const combo of combos) {
+                    const name = combo.map(idx => factors[idx].name).join('×');
+                    interactionPairs.push({ indices: combo, name });
                   }
                 }
 
@@ -1943,9 +1971,13 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                       factorValues.push(val);
                       row_vals.push(val);
                     });
-                    // Add interaction terms
+                    // Add N-way interaction terms
                     interactionPairs.forEach(pair => {
-                      row_vals.push(factorValues[pair.i] * factorValues[pair.j]);
+                      let product = 1;
+                      pair.indices.forEach(idx => {
+                        product *= factorValues[idx];
+                      });
+                      row_vals.push(product);
                     });
                     X.push(row_vals);
                     y.push(row.response);
@@ -2255,34 +2287,40 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                     }
                   }
                   
-                  // Transform interactions
+                  // Transform N-way interactions
                   for (let i = 0; i < interactionPairs.length; i++) {
                     const pair = interactionPairs[i];
-                    const idx1 = pair.i;
-                    const idx2 = pair.j;
-                    const factor1 = factors[idx1];
-                    const factor2 = factors[idx2];
+                    const origInteractionIdx = factors.length + 1 + i;
+                    const reducedInteractionIdx = colMapReverse[origInteractionIdx];
                     
-                    if (factor1.type === 'continuous' && factor2.type === 'continuous' &&
-                        factor1.lowValue !== undefined && factor1.highValue !== undefined &&
-                        factor2.lowValue !== undefined && factor2.highValue !== undefined) {
-                      const low1 = parseFloat(String(factor1.lowValue));
-                      const high1 = parseFloat(String(factor1.highValue));
-                      const low2 = parseFloat(String(factor2.lowValue));
-                      const high2 = parseFloat(String(factor2.highValue));
+                    // Check all factors in this interaction are continuous with valid levels
+                    const allContinuousWithLevels = pair.indices.every(idx => {
+                      const factor = factors[idx];
+                      return factor.type === 'continuous' && 
+                             factor.lowValue !== undefined && 
+                             factor.highValue !== undefined;
+                    });
+                    
+                    if (allContinuousWithLevels) {
+                      // Calculate product of half-ranges for all factors in this interaction
+                      let halfRangeProduct = 1;
+                      let allValid = true;
                       
-                      if (!isNaN(low1) && !isNaN(high1) && !isNaN(low2) && !isNaN(high2)) {
-                        const halfRange1 = (high1 - low1) / 2;
-                        const halfRange2 = (high2 - low2) / 2;
-                        const origInteractionIdx = factors.length + 1 + i;
-                        const reducedInteractionIdx = colMapReverse[origInteractionIdx];
-                        if (reducedInteractionIdx !== undefined && beta_display[reducedInteractionIdx] !== undefined) {
-                          transformed[reducedInteractionIdx] = beta_display[reducedInteractionIdx] / (halfRange1 * halfRange2);
-                          // SE_uncoded_interaction = SE_coded_interaction / (halfRange1 * halfRange2)
-                          if (transformedStats[reducedInteractionIdx]) {
-                            transformedStats[reducedInteractionIdx].stdError = coeffStats[reducedInteractionIdx].stdError / (halfRange1 * halfRange2);
-                            // t-value and p-value are INVARIANT
-                          }
+                      for (const idx of pair.indices) {
+                        const factor = factors[idx];
+                        const low = parseFloat(String(factor.lowValue));
+                        const high = parseFloat(String(factor.highValue));
+                        if (isNaN(low) || isNaN(high)) {
+                          allValid = false;
+                          break;
+                        }
+                        halfRangeProduct *= (high - low) / 2;
+                      }
+                      
+                      if (allValid && reducedInteractionIdx !== undefined && beta_display[reducedInteractionIdx] !== undefined) {
+                        transformed[reducedInteractionIdx] = beta_display[reducedInteractionIdx] / halfRangeProduct;
+                        if (transformedStats[reducedInteractionIdx]) {
+                          transformedStats[reducedInteractionIdx].stdError = coeffStats[reducedInteractionIdx].stdError / halfRangeProduct;
                         }
                       }
                     }
@@ -2314,36 +2352,8 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                       }
                     }
                     
-                    // Add variance contributions from interactions
-                    for (let i = 0; i < interactionPairs.length; i++) {
-                      const pair = interactionPairs[i];
-                      const idx1 = pair.i;
-                      const idx2 = pair.j;
-                      const factor1 = factors[idx1];
-                      const factor2 = factors[idx2];
-                      
-                      if (factor1.type === 'continuous' && factor2.type === 'continuous' &&
-                          factor1.lowValue !== undefined && factor1.highValue !== undefined &&
-                          factor2.lowValue !== undefined && factor2.highValue !== undefined) {
-                        const low1 = parseFloat(String(factor1.lowValue));
-                        const high1 = parseFloat(String(factor1.highValue));
-                        const low2 = parseFloat(String(factor2.lowValue));
-                        const high2 = parseFloat(String(factor2.highValue));
-                        
-                        if (!isNaN(low1) && !isNaN(high1) && !isNaN(low2) && !isNaN(high2)) {
-                          const halfRange1 = (high1 - low1) / 2;
-                          const halfRange2 = (high2 - low2) / 2;
-                          const origInteractionIdx = factors.length + 1 + i;
-                          const reducedInteractionIdx = colMapReverse[origInteractionIdx];
-                          if (reducedInteractionIdx !== undefined && coeffStats[reducedInteractionIdx]) {
-                            // For interactions, the center term is 0 (we don't have interaction centers)
-                            // But interactions do affect the intercept through their coefficients
-                            // Actually, in a standard DOE, we don't adjust intercept for interactions
-                            // So no variance contribution from interactions
-                          }
-                        }
-                      }
-                    }
+                    // Note: For N-way interactions, the center term is 0 (no interaction centers in DOE)
+                    // So no variance contribution from interactions to intercept SE
                     
                     transformedStats[0].stdError = Math.sqrt(Math.max(0, interceptSESquared));
                     transformedStats[0].tValue = (beta_display[0] - interceptAdjustment) / transformedStats[0].stdError;
@@ -3451,13 +3461,18 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                               }
                             }
                             
-                            // Add interaction terms for included factor pairs
+                            // Add N-way interaction terms for included interactions
                             for (let i = 0; i < interactionPairs.length; i++) {
                               const pair = interactionPairs[i];
-                              if (selectedFactorsForModel[pair.i] !== false && selectedFactorsForModel[pair.j] !== false) {
-                                const val1 = pair.i === solveFactorIdx ? solverResult : (constraintValues[pair.i] ?? 0);
-                                const val2 = pair.j === solveFactorIdx ? solverResult : (constraintValues[pair.j] ?? 0);
-                                xRow.push(val1 * val2);
+                              // Check if all factors in this interaction are included in model
+                              const allIncluded = pair.indices.every(idx => selectedFactorsForModel[idx] !== false);
+                              if (allIncluded) {
+                                let product = 1;
+                                for (const idx of pair.indices) {
+                                  const val = idx === solveFactorIdx ? solverResult : (constraintValues[idx] ?? 0);
+                                  product *= val;
+                                }
+                                xRow.push(product);
                               }
                             }
                             
