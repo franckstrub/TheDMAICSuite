@@ -539,7 +539,7 @@ export function generateFractionalFactorialPlan(
 /**
  * Calculate aliases for a fractional factorial design
  */
-function calculateAliases(k: number, p: number, generators: string[], definingRelation: string): string[] {
+export function calculateAliases(k: number, p: number, generators: string[], definingRelation: string): string[] {
   const aliases: string[] = [];
   
   // Helper to multiply effect strings (product in GF(2))
