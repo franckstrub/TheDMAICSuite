@@ -57,6 +57,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
   const { toast } = useToast();
   const loadedRef = useRef(false);
   const lastLoadedKey = useRef<string>('');
+  const isInitialLoadRef = useRef(true);
   
   // State for Setup tab
   const [responseVariableName, setResponseVariableName] = useState("Y Response");
@@ -144,9 +145,15 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
     localStorage.setItem(`doe-fractional-active-tab-${projectId}-${solutionId}`, activeTab);
   }, [activeTab, projectId, solutionId]);
   
-  // Auto-generate plan when factors change or when switching to Data tab
+  // Auto-generate plan when factors change (but not during initial load)
   useEffect(() => {
-    // Regenerate plan when: (1) factors change OR (2) switching to data tab AND valid factor count
+    // Skip regeneration on first load - let config loading set it instead
+    if (isInitialLoadRef.current) {
+      isInitialLoadRef.current = false;
+      return;
+    }
+    
+    // Regenerate plan when: (1) factors change AND (2) valid factor count
     if (validateFractionalFactorCount(factors) && factors.length >= 3) {
       const centerPoints = includeCenterPoints ? numberOfCenterPoints : 0;
       const p = parseInt(designChoice);
@@ -204,6 +211,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
     if (lastLoadedKey.current !== currentKey) {
       loadedRef.current = false;
       lastLoadedKey.current = currentKey;
+      isInitialLoadRef.current = true; // Reset initial load flag when project/solution changes
     }
     
     if (configQuery.data && !loadedRef.current) {

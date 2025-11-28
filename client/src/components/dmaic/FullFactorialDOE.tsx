@@ -56,6 +56,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
   const { toast } = useToast();
   const loadedRef = useRef(false);
   const lastLoadedKey = useRef<string>('');
+  const isInitialLoadRef = useRef(true);
   
   // State for Setup tab
   const [responseVariableName, setResponseVariableName] = useState("Y Response");
@@ -126,9 +127,15 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
     localStorage.setItem(`doe-full-active-tab-${projectId}-${solutionId}`, activeTab);
   }, [activeTab, projectId, solutionId]);
   
-  // Auto-generate plan when factors change or when switching to Data tab
+  // Auto-generate plan when factors change (but not during initial load)
   useEffect(() => {
-    // Regenerate plan when: (1) factors change OR (2) switching to data tab AND valid factor count
+    // Skip regeneration on first load - let config loading set it instead
+    if (isInitialLoadRef.current) {
+      isInitialLoadRef.current = false;
+      return;
+    }
+    
+    // Regenerate plan when: (1) factors change AND (2) valid factor count
     if (validateFactorCount(factors)) {
       const centerPoints = includeCenterPoints ? numberOfCenterPoints : 0;
       const plan = generateFullFactorialPlan(factors, centerPoints, randomizeRuns, numberOfReplicates);
@@ -195,6 +202,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
     if (lastLoadedKey.current !== currentKey) {
       loadedRef.current = false;
       lastLoadedKey.current = currentKey;
+      isInitialLoadRef.current = true; // Reset initial load flag when project/solution changes
     }
     
     if (configQuery.data && !loadedRef.current) {
