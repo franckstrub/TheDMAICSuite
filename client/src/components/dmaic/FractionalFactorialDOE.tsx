@@ -577,6 +577,18 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
       }
     });
   };
+
+  // Get generator for a factor if it's on the left side (e.g., "C=AB" -> C has generator "=AB")
+  const getFactorGenerator = (factorName: string): string | null => {
+    if (!generatedPlan || !generatedPlan.generators) return null;
+    for (const gen of generatedPlan.generators) {
+      const [lhs] = gen.split('=');
+      if (lhs.trim() === factorName) {
+        return gen;
+      }
+    }
+    return null;
+  };
   
   const handleGeneratePlan = () => {
     if (!validateFractionalFactorCount(factors)) {
@@ -1112,11 +1124,15 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                             <TableRow>
                               <TableHead className="w-[100px]">Std Order</TableHead>
                               <TableHead className="w-[100px]">Run Order</TableHead>
-                              {factors.map((factor, index) => (
-                                <TableHead key={index} className="w-[150px]">
-                                  {getFactorDisplayName(factor, index)}
-                                </TableHead>
-                              ))}
+                              {factors.map((factor, index) => {
+                                const generator = getFactorGenerator(factor.name);
+                                const displayName = generator ? `${factor.name}${generator.substring(factor.name.length)}` : getFactorDisplayName(factor, index);
+                                return (
+                                  <TableHead key={index} className="w-[150px]">
+                                    {displayName}
+                                  </TableHead>
+                                );
+                              })}
                               <TableHead className="w-[150px]">{responseVariableName.trim() || "Y Response"}</TableHead>
                             </TableRow>
                           </TableHeader>

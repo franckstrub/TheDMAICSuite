@@ -587,7 +587,7 @@ function calculateAliases(k: number, p: number, generators: string[], definingRe
   // Format aliases
   for (const [effect, alias] of Object.entries(aliasMap)) {
     if (alias && alias !== 'I') {
-      aliases.push(`${effect} + ${alias}`);
+      aliases.push(`${effect} = ${alias}`);
     }
   }
   
