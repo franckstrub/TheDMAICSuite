@@ -414,12 +414,13 @@ export function generateFractionalFactorialPlan(
       const generatorRHS = generatorParts.length > 1 ? generatorParts[1] : generator;
       
       let product = 1;
-      // For each base factor, check if its name appears in the generator RHS
+      // For each base factor, check if its letter appears in the generator RHS
       for (let j = 0; j < baseFactors; j++) {
         const baseFactorName = factors[j].name;
-        // Use word boundary matching to avoid partial matches
-        // Check if the factor name appears as a substring in the RHS
-        if (generatorRHS.includes(baseFactorName)) {
+        // Convert factor index to letter (j=0 -> 'A', j=1 -> 'B', etc.)
+        const factorLetter = String.fromCharCode(65 + j);
+        // Check if the factor letter appears in the RHS (e.g., "A" in "ABC")
+        if (generatorRHS.includes(factorLetter)) {
           product *= row[baseFactorName] as number;
         }
       }
