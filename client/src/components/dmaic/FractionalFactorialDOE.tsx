@@ -580,10 +580,15 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
 
   // Get generator for a factor if it's on the left side (e.g., "C=AB" -> C has generator "=AB")
   const getFactorGenerator = (factorName: string): string | null => {
-    if (!generatedPlan || !generatedPlan.generators) return null;
+    if (!generatedPlan || !generatedPlan.generators || generatedPlan.generators.length === 0) {
+      return null;
+    }
+    
     for (const gen of generatedPlan.generators) {
       const [lhs] = gen.split('=');
-      if (lhs.trim() === factorName) {
+      const trimmedLhs = lhs.trim();
+      // Match by factor name - be flexible with matching
+      if (trimmedLhs === factorName || trimmedLhs === factorName.replace('Factor ', '')) {
         return gen;
       }
     }
