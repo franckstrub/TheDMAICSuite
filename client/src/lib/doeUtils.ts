@@ -409,10 +409,17 @@ export function generateFractionalFactorialPlan(
       const generator = generators[g];
       
       // Parse generator (e.g., "D=ABC" means D = A*B*C)
+      // Split on '=' to get the right-hand side
+      const generatorParts = generator.split('=');
+      const generatorRHS = generatorParts.length > 1 ? generatorParts[1] : generator;
+      
       let product = 1;
+      // For each base factor, check if its name appears in the generator RHS
       for (let j = 0; j < baseFactors; j++) {
         const baseFactorName = factors[j].name;
-        if (generator.includes(baseFactorName)) {
+        // Use word boundary matching to avoid partial matches
+        // Check if the factor name appears as a substring in the RHS
+        if (generatorRHS.includes(baseFactorName)) {
           product *= row[baseFactorName] as number;
         }
       }
