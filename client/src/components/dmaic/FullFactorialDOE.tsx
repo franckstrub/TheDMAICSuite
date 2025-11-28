@@ -195,6 +195,16 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
     },
   });
   
+  // After config is loaded, if no plan was loaded, generate a fresh one
+  useEffect(() => {
+    // Only run if we've loaded config and still don't have a plan
+    if (loadedRef.current && !generatedPlan && validateFactorCount(factors)) {
+      const centerPoints = includeCenterPoints ? numberOfCenterPoints : 0;
+      const plan = generateFullFactorialPlan(factors, centerPoints, randomizeRuns, numberOfReplicates);
+      setGeneratedPlan(plan);
+    }
+  }, [loadedRef, generatedPlan, factors, includeCenterPoints, numberOfCenterPoints, randomizeRuns, numberOfReplicates]);
+
   // Load data when config is fetched
   useEffect(() => {
     const currentKey = `${projectId}-${solutionId}`;
