@@ -577,23 +577,6 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
       }
     });
   };
-
-  // Get generator for a factor if it's on the left side (e.g., "C=AB" -> C has generator "=AB")
-  const getFactorGenerator = (factorName: string): string | null => {
-    if (!generatedPlan || !generatedPlan.generators || generatedPlan.generators.length === 0) {
-      return null;
-    }
-    
-    for (const gen of generatedPlan.generators) {
-      const [lhs] = gen.split('=');
-      const trimmedLhs = lhs.trim();
-      // Match by factor name - be flexible with matching
-      if (trimmedLhs === factorName || trimmedLhs === factorName.replace('Factor ', '')) {
-        return gen;
-      }
-    }
-    return null;
-  };
   
   const handleGeneratePlan = () => {
     if (!validateFractionalFactorCount(factors)) {
@@ -1129,15 +1112,11 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                             <TableRow>
                               <TableHead className="w-[100px]">Std Order</TableHead>
                               <TableHead className="w-[100px]">Run Order</TableHead>
-                              {factors.map((factor, index) => {
-                                const generator = getFactorGenerator(factor.name);
-                                const displayName = generator ? `${factor.name}${generator.substring(factor.name.length)}` : getFactorDisplayName(factor, index);
-                                return (
-                                  <TableHead key={index} className="w-[150px]">
-                                    {displayName}
-                                  </TableHead>
-                                );
-                              })}
+                              {factors.map((factor, index) => (
+                                <TableHead key={index} className="w-[150px]">
+                                  {getFactorDisplayName(factor, index)}
+                                </TableHead>
+                              ))}
                               <TableHead className="w-[150px]">{responseVariableName.trim() || "Y Response"}</TableHead>
                             </TableRow>
                           </TableHeader>
