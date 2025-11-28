@@ -40,6 +40,7 @@ export function transformGeneratedPlanForSaving(generatedPlan: any, factors: DOE
     k: generatedPlan.k || 0,
     p: generatedPlan.p || 0,
     generators: generatedPlan.generators || [],
+    aliases: generatedPlan.aliases || [],
   };
 }
 
@@ -69,6 +70,7 @@ export function reconstructGeneratedPlanFromPersisted(
       k: persistedData.k || 0,
       p: persistedData.p || 0,
       generators: persistedData.generators || [],
+      aliases: persistedData.aliases || [],
     };
   } else {
     return null;
