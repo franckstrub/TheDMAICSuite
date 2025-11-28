@@ -152,12 +152,48 @@ export function getDefaultFactor(index: number): DOEFactor {
   };
 }
 
-// Helper to get factor display name (shows default if name is empty)
-export function getFactorDisplayName(factor: DOEFactor, index: number): string {
-  if (factor.name && factor.name.trim() !== '') {
-    return factor.name;
-  }
-  return `Factor ${String.fromCharCode(65 + index)}`; // A=65, B=66, C=67, etc.
+// Detect whether a factor given its index in factors list is a generator based on a generators list like ["D=ABC", "E=AB"]
+// Returns all generator relations where factorName is the LHS (e.g., "D=ABC")
+export function getGeneratorsForFactor(
+  index: number,
+  generators?: string[]
+): string[] {
+  if (!generators || generators.length === 0) return [];
+  if (index <0) return [];
+
+  const baseName = `${String.fromCharCode(65 + index)}`;  // A=65, B=66, C=67, etc.
+  const key = baseName.replace(/\s+/g, "").toUpperCase();
+
+  return generators.filter(gen => {
+    if (!gen || typeof gen !== "string") return false;
+
+    const [lhsRaw] = gen.split("=");
+    if (!lhsRaw) return false;
+
+    const lhs = lhsRaw.replace(/\s+/g, "").toUpperCase();
+
+    return lhs === key;
+  });
+}
+
+ export function getFactorDisplayName(
+  factor: DOEFactor,
+  index: number,
+  generators?: string[]
+): string {
+  const baseName =
+    factor.name && factor.name.trim() !== ""
+      ? factor.name.trim()
+      : `Factor ${String.fromCharCode(65 + index)}`;
+
+  const matching = getGeneratorsForFactor(index, generators);
+
+  if (matching.length === 0) return baseName;
+
+  // join multiple relations if needed
+  const relations = matching.join(" • ");
+
+  return `${baseName} (${relations})`;
 }
 
 // Helper to convert UI string input to number, handling French decimal format
