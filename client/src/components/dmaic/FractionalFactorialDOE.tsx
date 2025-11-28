@@ -76,6 +76,10 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
   const [numberOfCenterPoints, setNumberOfCenterPoints] = useState(3);
   const [significanceLevel, setSignificanceLevel] = useState(0.05);
   
+  // Track saved generators from loaded plan (to preserve when factors change)
+  const [savedGenerators, setSavedGenerators] = useState<string[] | null>(null);
+  const [savedDefiningRelation, setSavedDefiningRelation] = useState<string | null>(null);
+  
   // State for Data tab
   const [generatedPlan, setGeneratedPlan] = useState<any>(null);
   const [responses, setResponses] = useState<Record<string, number | null>>({});
@@ -322,6 +326,12 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
         if (reconstructedPlan) {
           // All metadata (k, p, resolution) comes from generatedPlan only
           setGeneratedPlan(reconstructedPlan);
+          
+          // Save generators and defining relation from loaded plan
+          if (reconstructedPlan.generators && reconstructedPlan.definingRelation) {
+            setSavedGenerators(reconstructedPlan.generators);
+            setSavedDefiningRelation(reconstructedPlan.definingRelation);
+          }
           
           // Extract responses from generatedPlan.plan[].runResponse
           if (reconstructedPlan.plan && Array.isArray(reconstructedPlan.plan)) {
@@ -1125,7 +1135,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                               <TableHead className="w-[100px]">Run Order</TableHead>
                               {factors.map((factor, index) => (
                                 <TableHead key={index} className="w-[150px]">
-                                  {getFactorDisplayName(factor, index)}
+                                  {getFactorDisplayName(factor, index, generatedPlan.generators)}
                                 </TableHead>
                               ))}
                               <TableHead className="w-[150px]">{responseVariableName.trim() || "Y Response"}</TableHead>
