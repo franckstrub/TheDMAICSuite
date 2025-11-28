@@ -204,6 +204,17 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
     },
   });
   
+  // After config is loaded, if no plan was loaded, generate a fresh one
+  useEffect(() => {
+    // Only run if we've loaded config and still don't have a plan
+    if (loadedRef.current && !generatedPlan && validateFractionalFactorCount(factors) && factors.length >= 3) {
+      const centerPoints = includeCenterPoints ? numberOfCenterPoints : 0;
+      const p = parseInt(designChoice);
+      const plan = generateFractionalFactorialPlan(factors, p, centerPoints, randomizeRuns, numberOfReplicates);
+      setGeneratedPlan(plan);
+    }
+  }, [loadedRef, generatedPlan, factors, includeCenterPoints, numberOfCenterPoints, randomizeRuns, numberOfReplicates, designChoice]);
+
   // Load data when config is fetched
   useEffect(() => {
     const currentKey = `${projectId}-${solutionId}`;
