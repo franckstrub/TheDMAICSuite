@@ -1913,8 +1913,25 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   }
                 });
 
-                const n = y.length;
-                const dfTotal = n - 1;
+                const interactionsTriples = 0; // Placeholder if needed for higher-order interactions
+                const n = y.length; // number of experiments
+                const dfTotal = n - 1; // total degrees of freedom
+                const hasCurvature = (includeCenterPoints && selectedFactorsForModel['centerPoint'] !== false);
+                const dfCurvature = hasCurvature ? 1 : 0;
+                const dfBasefactors = k;
+                //const dfInteractions = interactionPairs.length;
+                //Variable degrees of freedom for interactions: depend on resolution and selected factors and center point
+                let dfInteractions = resolution === 3 ? 0
+                                    : resolution === 4 ? interactionPairs.length/2
+                                    : resolution === 5 ? interactionPairs.length
+                                    : resolution === 6 ? interactionPairs.length + interactionsTriples/2
+                                    : interactionPairs.length + interactionsTriples // No interactions estimable in R3 designs
+                let dfModel = dfBasefactors + dfInteractions + dfCurvature;
+                if (dfModel > dfTotal) {
+                  dfModel = dfTotal;
+                }
+                let dfResidual = dfTotal - dfModel;
+
                 const numCoefficients = X[0].length;
                 const mean_y = y.reduce((a, b) => a + b, 0) / n;
                 const SS_tot = y.reduce((sum, val) => sum + Math.pow(val - mean_y, 2), 0);
@@ -2006,7 +2023,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
 
                 const predictions = X.map(row => row.reduce((sum, val, i) => sum + val * beta[i], 0));
                 const residuals = y.map((val, i) => val - predictions[i]);
-                const SS_res = residuals.reduce((sum, val) => sum + Math.pow(val, 2), 0);
+                const SS_res = dfResidual === 0 ? 0 : residuals.reduce((sum, val) => sum + Math.pow(val, 2), 0);
                 const R_sq = 1 - SS_res / SS_tot;
                 const adj_R_sq = 1 - (1 - R_sq) * (n - 1) / (n - numCoefficients);
                 const rmse = Math.sqrt(SS_res / (n - numCoefficients));
@@ -2227,11 +2244,10 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                             <TableBody>
                               {(() => {
                                 let rows: React.ReactNode[] = [];
-                                const hasCurvature = (includeCenterPoints && selectedFactorsForModel['centerPoint'] !== false);
-                                const dfCurvature = hasCurvature ? 1 : 0;
+                                
                                 let  dfBasefactors = 0;
                                 // Add base factor rows only (not confounded)
-                                for (let i = 0; i < baseFactorCount; i++) {
+                                for (let i = 0; i < factors.length; i++) {
                                   const factor = factors[i];
                                   const termIdx = i + 1;
                                   const termDF = dfTotal - dfCurvature - termIdx < 0 ? 0 : 1;
@@ -2261,10 +2277,9 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                 }
 
                                 // Add interaction rows (only between base factors)
-                                let dfInteractions = 0;
                                 interactionPairs.forEach((pair, pairIdx) => {
                                   const termIdx = baseFactorCount + 1 + pairIdx;                                  
-                                  const termDF = dfTotal - dfCurvature - dfBasefactors - (pairIdx + 1) < 0 ? 0 : 1;
+                                  const termDF = dfTotal - dfCurvature - dfBasefactors - (pairIdx + 1) <= 0 ? 0 : 1;
                                   dfInteractions += termDF;
                                   //const termDF = 1;
                                   const termSS = termDF === 0 ? 0 : Math.pow(beta[termIdx], 2) * XtX[termIdx][termIdx];
@@ -2274,26 +2289,27 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                   const pValue = fRatio > 0 && (n - p) > 0 
                                     ? 1 - jStat.centralF.cdf(fRatio, termDF, n - p) 
                                     : 1;
-
-                                  rows.push(
-                                    <TableRow key={`interaction-${pairIdx}`}>
-                                      <TableCell className="font-medium">{pair.name}</TableCell>
-                                      <TableCell className="text-right">{termDF}</TableCell>
-                                      <TableCell className="text-right">{termSS.toFixed(4)}</TableCell>
-                                      <TableCell className="text-right">{termMS.toFixed(4)}</TableCell>
-                                      <TableCell className="text-right">{fRatio > 0 ? fRatio.toFixed(4) : '-'}</TableCell>
-                                      <TableCell className="text-right">
-                                        <span className={pValue < 0.05 ? "text-green-600 font-semibold" : ""}>
-                                          {pValue === 1 ? '-' : pValue.toFixed(4)}
-                                        </span>
-                                      </TableCell>
-                                    </TableRow>
-                                  );
+                                  if (termDF === 1) {
+                                    rows.push(
+                                      <TableRow key={`interaction-${pairIdx}`}>
+                                        <TableCell className="font-medium">{pair.name}</TableCell>
+                                        <TableCell className="text-right">{termDF}</TableCell>
+                                        <TableCell className="text-right">{termSS.toFixed(4)}</TableCell>
+                                        <TableCell className="text-right">{termMS.toFixed(4)}</TableCell>
+                                        <TableCell className="text-right">{fRatio > 0 ? fRatio.toFixed(4) : '-'}</TableCell>
+                                        <TableCell className="text-right">
+                                          <span className={pValue < 0.05 ? "text-green-600 font-semibold" : ""}>
+                                            {pValue === 1 ? '-' : pValue.toFixed(4)}
+                                          </span>
+                                        </TableCell>
+                                      </TableRow>
+                                    );
+                                  }
                                 });
 
                                 // Calculate curvature effect if center points exist AND are included in model
                                 //const hasCurvature = (includeCenterPoints && selectedFactorsForModel['centerPoint'] !== false);
-                                let curveDF = 0;
+                                //let dfCurvature = 0;
                                 if (hasCurvature) {
                                   const centerPointIndices: number[] = [];
                                   const factorialPointIndices: number[] = [];
@@ -2321,18 +2337,17 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                     const y_f_at_center = beta[0];
                                     const curveEffect = y_c_avg - y_f_at_center;
                                     const curveSS = (n_c * n_f / (n_c + n_f)) * Math.pow(curveEffect, 2);
-                                    curveDF = 1;
-                                    const curveMS = curveSS / curveDF;
-                                    const errorMS = dfTotal > dfBasefactors + dfInteractions + curveDF ? SS_res / (n - p) : 0;
+                                    const curveMS = curveSS / dfCurvature;
+                                    const errorMS = dfTotal > dfBasefactors + dfInteractions + dfCurvature ? SS_res / (n - p) : 0;
                                     const curveFRatio = errorMS > 0 ? curveMS / errorMS : 0;
                                     const curvePValue = curveFRatio > 0 && (n - p) > 0 
-                                      ? 1 - jStat.centralF.cdf(curveFRatio, curveDF, n - p) 
+                                      ? 1 - jStat.centralF.cdf(curveFRatio, dfCurvature, n - p) 
                                       : 1;
 
                                     rows.push(
                                       <TableRow key="curvature">
                                         <TableCell className="font-medium">Curvature</TableCell>
-                                        <TableCell className="text-right">{curveDF}</TableCell>
+                                        <TableCell className="text-right">{dfCurvature}</TableCell>
                                         <TableCell className="text-right">{curveSS.toFixed(4)}</TableCell>
                                         <TableCell className="text-right">{curveMS.toFixed(4)}</TableCell>
                                         <TableCell className="text-right">{curveFRatio > 0.0000001 ? curveFRatio.toFixed(4) : '-'}</TableCell>
@@ -2347,21 +2362,21 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                 }
 
                                 // Add model row
-                                const numTerms = 1 + baseFactorCount + interactionPairs.length + (hasCurvature ? curveDF : 0) ;
+                                const numTerms = 1 + dfModel;
                                 //const modelDF = numTerms - 1;
-                                const modelDF = dfBasefactors + dfInteractions + curveDF;
-                                const modelMS = (SS_tot - SS_res) / modelDF;
-                                const errorDF = n > numTerms ? n - numTerms : 0 ;
-                                const errorMS = errorDF === 0 ? NaN : SS_res / errorDF;                                
-                                const modelFRatio = errorMS > 0 ? modelMS / errorMS : 0;
-                                const modelPValue = modelFRatio > 0 && (n - numTerms) > 0 
-                                  ? 1 - jStat.centralF.cdf(modelFRatio, modelDF, n - numTerms) 
+                                dfModel = dfBasefactors + dfInteractions + dfCurvature;
+                                const modelMS = (SS_tot - SS_res) / dfModel;
+                                dfResidual = dfTotal - dfModel;
+                                const errorMS = dfResidual === 0 ? NaN : SS_res / dfResidual;                                
+                                const modelFRatio = dfResidual === 0 ? NaN : errorMS > 0 ? modelMS / errorMS : 0;
+                                const modelPValue = dfResidual === 0 ? NaN : modelFRatio > 0 && (n - numTerms) > 0 
+                                  ? 1 - jStat.centralF.cdf(modelFRatio, dfModel, n - numTerms) 
                                   : 1;
 
                                 rows.push(
                                   <TableRow key="model" className="font-semibold">
                                     <TableCell>Model</TableCell>
-                                    <TableCell className="text-right">{modelDF}</TableCell>
+                                    <TableCell className="text-right">{dfModel}</TableCell>
                                     <TableCell className="text-right">{(SS_tot - SS_res).toFixed(4)}</TableCell>
                                     <TableCell className="text-right">{modelMS.toFixed(4)}</TableCell>
                                     <TableCell className="text-right">{modelFRatio >0 ? modelFRatio.toFixed(4) : '-'}</TableCell>
@@ -2378,7 +2393,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                 rows.push(
                                   <TableRow key="error">
                                     <TableCell>Error</TableCell>
-                                    <TableCell className="text-right">{errorDF}</TableCell>
+                                    <TableCell className="text-right">{dfResidual}</TableCell>
                                     <TableCell className="text-right">{SS_res.toFixed(4)}</TableCell>
                                     <TableCell className="text-right">{errorMS.toFixed(4)}</TableCell>
                                     <TableCell className="text-right">-</TableCell>
@@ -2390,7 +2405,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                 rows.push(
                                   <TableRow key="total" className="font-semibold">
                                     <TableCell>Total</TableCell>
-                                    <TableCell className="text-right">{n - 1}</TableCell>
+                                    <TableCell className="text-right">{dfTotal}</TableCell>
                                     <TableCell className="text-right">{SS_tot.toFixed(4)}</TableCell>
                                     <TableCell className="text-right">-</TableCell>
                                     <TableCell className="text-right">-</TableCell>
@@ -2487,37 +2502,39 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                 );
                               })}
                               {interactionPairs.map((pair, i) => {
-                                const vif = (() => {
-                                  try {
-                                    return calculateDOEVIF(X, factors.length + i);
-                                  } catch {
-                                    return null;
-                                  }
-                                })();
-                                const isHighVIF = vif !== null && vif > 5;
-                                const isModerateVIF = vif !== null && vif > 1 && vif <= 5;
-                                return (
-                                <TableRow key={`int-${i}`}>
-                                  <TableCell className="font-medium">{pair.name}</TableCell>
-                                  <TableCell className="text-right">{displayBeta[factors.length + 1 + i]?.toFixed(6)}</TableCell>
-                                  <TableCell className="text-right">{displayCoeffStats[factors.length + 1 + i]?.stdError.toFixed(4)}</TableCell>
-                                  <TableCell className="text-right">{displayCoeffStats[factors.length + 1 + i]?.tValue.toFixed(4)}</TableCell>
-                                  <TableCell className={`text-right ${(displayCoeffStats[factors.length + 1 + i]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{(Math.max(0, Math.min(1, displayCoeffStats[factors.length + 1 + i]?.pValue ?? 1))).toFixed(4)}</TableCell>
-                                  <TableCell className={`text-right ${isHighVIF ? 'text-red-600 font-semibold' : isModerateVIF ? 'text-yellow-400 font-semibold' : ''}`}>{vif !== null ? vif.toFixed(2) : '-'}</TableCell>
-                                  <TableCell className="text-center">
-                                    <Checkbox
-                                      checked={selectedFactorsForModel[`int-${i}`] ?? true}
-                                      onCheckedChange={(checked) => {
-                                        setSelectedFactorsForModel(prev => ({
-                                          ...prev,
-                                          [`int-${i}`]: !!checked
-                                        }));
-                                      }}
-                                      data-testid={`checkbox-interaction-${i}`}
-                                    />
-                                  </TableCell>
-                                </TableRow>
-                                );
+                                if (dfInteractions > 0 && dfInteractions > i) {
+                                  const vif = (() => {
+                                    try {
+                                      return calculateDOEVIF(X, factors.length + i);
+                                    } catch {
+                                      return null;
+                                    }
+                                  })();
+                                  const isHighVIF = vif !== null && vif > 5;
+                                  const isModerateVIF = vif !== null && vif > 1 && vif <= 5;
+                                  return (
+                                  <TableRow key={`int-${i}`}>
+                                    <TableCell className="font-medium">{pair.name}</TableCell>
+                                    <TableCell className="text-right">{displayBeta[factors.length + 1 + i]?.toFixed(6)}</TableCell>
+                                    <TableCell className="text-right">{displayCoeffStats[factors.length + 1 + i]?.stdError.toFixed(4)}</TableCell>
+                                    <TableCell className="text-right">{displayCoeffStats[factors.length + 1 + i]?.tValue.toFixed(4)}</TableCell>
+                                    <TableCell className={`text-right ${(displayCoeffStats[factors.length + 1 + i]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{(Math.max(0, Math.min(1, displayCoeffStats[factors.length + 1 + i]?.pValue ?? 1))).toFixed(4)}</TableCell>
+                                    <TableCell className={`text-right ${isHighVIF ? 'text-red-600 font-semibold' : isModerateVIF ? 'text-yellow-400 font-semibold' : ''}`}>{vif !== null ? vif.toFixed(2) : '-'}</TableCell>
+                                    <TableCell className="text-center">
+                                      <Checkbox
+                                        checked={selectedFactorsForModel[`int-${i}`] ?? true}
+                                        onCheckedChange={(checked) => {
+                                          setSelectedFactorsForModel(prev => ({
+                                            ...prev,
+                                            [`int-${i}`]: !!checked
+                                          }));
+                                        }}
+                                        data-testid={`checkbox-interaction-${i}`}
+                                      />
+                                    </TableCell>
+                                  </TableRow>
+                                  );
+                                }
                               })}
                               {includeCenterPoints && (() => {
                                 const isIncluded = selectedFactorsForModel['centerPoint'] !== false;
@@ -2779,18 +2796,18 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                     const y_f_at_center = beta[0];
                                     const curveEffect = y_c_avg - y_f_at_center;
                                     const curveSS = (n_c * n_f / (n_c + n_f)) * Math.pow(curveEffect, 2);
-                                    const curveDF = 1;
-                                    const curveMS = curveSS / curveDF;
+                                    const dfCurvature = 1;
+                                    const curveMS = curveSS / dfCurvature;
                                     const errorMS = SS_res / (n - p);
                                     const curveFRatio = errorMS > 0 ? curveMS / errorMS : 0;
                                     const curvePValue = curveFRatio > 0 && (n - p) > 0 
-                                      ? 1 - jStat.centralF.cdf(curveFRatio, curveDF, n - p) 
+                                      ? 1 - jStat.centralF.cdf(curveFRatio, dfCurvature, n - p) 
                                       : 1;
 
                                     rows.push(
                                       <TableRow key="curvature">
                                         <TableCell className="font-medium">Curvature</TableCell>
-                                        <TableCell className="text-right">{curveDF}</TableCell>
+                                        <TableCell className="text-right">{dfCurvature}</TableCell>
                                         <TableCell className="text-right">{curveSS.toFixed(4)}</TableCell>
                                         <TableCell className="text-right">{curveMS.toFixed(4)}</TableCell>
                                         <TableCell className="text-right">{curveFRatio.toFixed(4)}</TableCell>
@@ -2806,18 +2823,18 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
 
                                 // Add model row
                                 const numTerms = 1 + baseFactorCount + interactionPairs.length;
-                                const modelDF = numTerms - 1;
-                                const modelMS = (SS_tot - SS_res) / modelDF;
+                                const dfModel = numTerms - 1;
+                                const modelMS = (SS_tot - SS_res) / dfModel;
                                 const errorMS = SS_res / (n - numTerms);
                                 const modelFRatio = errorMS > 0 ? modelMS / errorMS : 0;
                                 const modelPValue = modelFRatio > 0 && (n - numTerms) > 0 
-                                  ? 1 - jStat.centralF.cdf(modelFRatio, modelDF, n - numTerms) 
+                                  ? 1 - jStat.centralF.cdf(modelFRatio, dfModel, n - numTerms) 
                                   : 1;
 
                                 rows.push(
                                   <TableRow key="model" className="font-semibold">
                                     <TableCell>Model</TableCell>
-                                    <TableCell className="text-right">{modelDF}</TableCell>
+                                    <TableCell className="text-right">{dfModel}</TableCell>
                                     <TableCell className="text-right">{(SS_tot - SS_res).toFixed(4)}</TableCell>
                                     <TableCell className="text-right">{modelMS.toFixed(4)}</TableCell>
                                     <TableCell className="text-right">{modelFRatio.toFixed(4)}</TableCell>
@@ -2830,13 +2847,13 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                 );
 
                                 // Add error row
-                                const errorDF = n - numTerms;
-                                const errorMSVal = SS_res / errorDF;
+                                const dfResidual = n - numTerms;
+                                const errorMSVal = SS_res / dfResidual;
 
                                 rows.push(
                                   <TableRow key="error">
                                     <TableCell>Error</TableCell>
-                                    <TableCell className="text-right">{errorDF}</TableCell>
+                                    <TableCell className="text-right">{dfResidual}</TableCell>
                                     <TableCell className="text-right">{SS_res.toFixed(4)}</TableCell>
                                     <TableCell className="text-right">{errorMSVal.toFixed(4)}</TableCell>
                                     <TableCell className="text-right">-</TableCell>
