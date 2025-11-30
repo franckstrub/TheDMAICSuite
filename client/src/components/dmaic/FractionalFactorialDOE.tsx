@@ -1924,6 +1924,8 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 // Parse aliases to get confounded interactions
                 const getAliasedInteractions = (): Set<string> => {
                   const aliased = new Set<string>();
+                  
+                  // Parse aliases list
                   if (generatedPlan.aliases && Array.isArray(generatedPlan.aliases)) {
                     for (const alias of generatedPlan.aliases) {
                       // Aliases are like "A + BC" - parse both sides
@@ -1936,6 +1938,19 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                       }
                     }
                   }
+                  
+                  // Also parse Defining Relation to exclude its interaction terms
+                  if (generatedPlan.definingRelation) {
+                    // Defining Relation format: "I = ABC = BCD = ..."
+                    const terms = generatedPlan.definingRelation.split('=').map((t: string) => t.trim());
+                    for (const term of terms) {
+                      // Skip the identity element "I"
+                      if (term !== 'I' && term.length > 1) {
+                        aliased.add(term);
+                      }
+                    }
+                  }
+                  
                   return aliased;
                 };
                 
