@@ -2072,7 +2072,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 // SS_tot accounts for variation from the grand mean across all observations including center points
                 const SS_tot = y.reduce((sum, val) => sum + Math.pow(val - mean_y, 2), 0);
                 
-                // Calculate sum of squares for curvature (if center points are included)
+                // Calculate sum of squares for center points (if center points are included)
                 let SS_curvature = 0;
                 if (includeCenterPoints) {
                   // Find factorial vs center point indices
@@ -2098,13 +2098,11 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     }
                   });
                   
-                  if (factorialIndices.length > 0 && centerIndices.length > 0) {
-                    const meanFactorial = factorialIndices.reduce((sum, idx) => sum + runData[idx].response!, 0) / factorialIndices.length;
+                  if (centerIndices.length > 0) {
+                    // Calculate mean of center point responses
                     const meanCenter = centerIndices.reduce((sum, idx) => sum + runData[idx].response!, 0) / centerIndices.length;
-                    const n_f = factorialIndices.length;
-                    const n_c = centerIndices.length;
-                    // SS_curvature = (n_f * n_c) / (n_f + n_c) * (mean_factorial - mean_center)^2
-                    SS_curvature = (n_f * n_c) / (n_f + n_c) * Math.pow(meanFactorial - meanCenter, 2);
+                    // SS_center = sum of squared deviations of center points from their mean
+                    SS_curvature = centerIndices.reduce((sum, idx) => sum + Math.pow(runData[idx].response! - meanCenter, 2), 0);
                   }
                 }
 
