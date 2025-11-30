@@ -2022,6 +2022,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 const X: number[][] = [];
                 const y: number[] = [];
                 
+                // Collect all responses including center points
                 runData.forEach((row, idx) => {
                   if (row.response !== null && !isNaN(row.response)) {
                     const row_vals = [1]; // intercept = grand mean
@@ -2047,7 +2048,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 });
 
                 const interactionsTriples = 0; // Placeholder if needed for higher-order interactions
-                const n = y.length; // number of experiments
+                const n = y.length; // total number of observations including center points
                 const dfTotal = n - 1; // total degrees of freedom
                 const hasCurvature = (includeCenterPoints && selectedFactorsForModel['centerPoint'] !== false);
                 const dfCurvature = hasCurvature ? 1 : 0;
@@ -2066,7 +2067,9 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 let dfResidual = dfTotal - dfModel;
 
                 const numCoefficients = X[0].length;
+                // Calculate grand mean across ALL observations (main design + center points)
                 const mean_y = y.reduce((a, b) => a + b, 0) / n;
+                // SS_tot accounts for variation from the grand mean across all observations including center points
                 const SS_tot = y.reduce((sum, val) => sum + Math.pow(val - mean_y, 2), 0);
 
                 // Calculate X'X and X'y
@@ -2486,7 +2489,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                         <TableCell className="text-right">{curveFRatio > 0.0000001 ? curveFRatio.toFixed(4) : '-'}</TableCell>
                                         <TableCell className="text-right">
                                           <span className={curvePValue < 0.05 ? "text-green-600 font-semibold" : ""}>
-                                            {curvePValue > 0.99999 ? '-' : curvePValue.toFixed(24)}
+                                            {curvePValue > 0.99999 ? '-' : curvePValue.toFixed(4)}
                                           </span>
                                         </TableCell>
                                       </TableRow>
