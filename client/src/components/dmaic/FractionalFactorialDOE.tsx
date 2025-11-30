@@ -2071,6 +2071,42 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 const mean_y = y.reduce((a, b) => a + b, 0) / n;
                 // SS_tot accounts for variation from the grand mean across all observations including center points
                 const SS_tot = y.reduce((sum, val) => sum + Math.pow(val - mean_y, 2), 0);
+                
+                // Calculate sum of squares for curvature (if center points are included)
+                let SS_curvature = 0;
+                if (includeCenterPoints) {
+                  // Find factorial vs center point indices
+                  const factorialIndices: number[] = [];
+                  const centerIndices: number[] = [];
+                  
+                  runData.forEach((row, idx) => {
+                    if (row.response !== null && !isNaN(row.response)) {
+                      // Check if all base factors are -1 or +1 (factorial point)
+                      let isFactorial = true;
+                      for (let i = 0; i < baseFactorCount; i++) {
+                        const val = generatedPlan.plan[idx]?.[factors[i].name];
+                        if (val !== -1 && val !== 1) {
+                          isFactorial = false;
+                          break;
+                        }
+                      }
+                      if (isFactorial) {
+                        factorialIndices.push(idx);
+                      } else {
+                        centerIndices.push(idx);
+                      }
+                    }
+                  });
+                  
+                  if (factorialIndices.length > 0 && centerIndices.length > 0) {
+                    const meanFactorial = factorialIndices.reduce((sum, idx) => sum + runData[idx].response!, 0) / factorialIndices.length;
+                    const meanCenter = centerIndices.reduce((sum, idx) => sum + runData[idx].response!, 0) / centerIndices.length;
+                    const n_f = factorialIndices.length;
+                    const n_c = centerIndices.length;
+                    // SS_curvature = (n_f * n_c) / (n_f + n_c) * (mean_factorial - mean_center)^2
+                    SS_curvature = (n_f * n_c) / (n_f + n_c) * Math.pow(meanFactorial - meanCenter, 2);
+                  }
+                }
 
                 // Calculate X'X and X'y
                 let XtX: number[][] = Array(numCoefficients).fill(null).map(() => Array(numCoefficients).fill(0));
