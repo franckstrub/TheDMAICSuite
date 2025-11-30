@@ -2104,7 +2104,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     const n_f = factorialIndices.length;
                     const n_c = centerIndices.length;
                     // SS_curvature = (n_f * n_c) / (n_f + n_c) * (mean_factorial - mean_center)^2
-                    SS_curvature = (n_f * n_c) / (n_f + n_c) * Math.pow(meanFactorial - meanCenter, 2);
+                    SS_curvature = ((n_f * n_c) / (n_f + n_c)) * Math.pow(meanFactorial - meanCenter, 2);
                   }
                 }
 
@@ -2193,7 +2193,10 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   beta[0] = mean_y;
                 }
 
+                // Calculate predictions for all observations (factorial points and center points)
+                // Center points have factor values = 0, so prediction = intercept + 0*other_terms = beta[0]
                 const predictions = X.map(row => row.reduce((sum, val, i) => sum + val * beta[i], 0));
+                // Calculate residuals for all observations including center points
                 const residuals = y.map((val, i) => val - predictions[i]);
                 const SS_res = dfResidual === 0 ? 0 : residuals.reduce((sum, val) => sum + Math.pow(val, 2), 0);
                 const R_sq = 1 - SS_res / SS_tot;
@@ -2507,9 +2510,10 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                     const centerResponses = centerPointIndices.map(idx => runData[idx].response).filter((r): r is number => r !== null && !isNaN(r));
                                     const y_c_avg = centerResponses.length > 0 ? centerResponses.reduce((a, b) => a + b, 0) / centerResponses.length : 0;
                                     const y_f_at_center = beta[0];
-                                    const curveEffect = y_c_avg - y_f_at_center;
-                                    const curveSS = (n_c * n_f / (n_c + n_f)) * Math.pow(curveEffect, 2);
-                                    const curveMS = curveSS / dfCurvature;
+                                    //const curveEffect = y_c_avg - y_f_at_center;
+                                    //const curveSS = (n_c * n_f / (n_c + n_f)) * Math.pow(curveEffect, 2);
+                                    //const curveMS = curveSS / dfCurvature;
+                                    const curveMS = SS_curvature / dfCurvature;
                                     const errorMS = dfTotal > dfBasefactors + dfInteractions + dfCurvature ? SS_res / (n - p) : 0;
                                     const curveFRatio = errorMS > 0 ? curveMS / errorMS : 0;
                                     const curvePValue = curveFRatio > 0 && (n - p) > 0 
@@ -2520,7 +2524,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                       <TableRow key="curvature">
                                         <TableCell className="font-medium">Curvature</TableCell>
                                         <TableCell className="text-right">{dfCurvature}</TableCell>
-                                        <TableCell className="text-right">{curveSS.toFixed(4)}</TableCell>
+                                        <TableCell className="text-right">{SS_curvature.toFixed(4)}</TableCell>
                                         <TableCell className="text-right">{curveMS.toFixed(4)}</TableCell>
                                         <TableCell className="text-right">{curveFRatio > 0.0000001 ? curveFRatio.toFixed(4) : '-'}</TableCell>
                                         <TableCell className="text-right">
