@@ -18,6 +18,7 @@ import { ANOVATwoWay } from "@/components/dmaic/ANOVATwoWay";
 import { MultipleRegression } from "@/components/dmaic/MultipleRegression";
 import { FullFactorialDOE } from "@/components/dmaic/FullFactorialDOE";
 import { FractionalFactorialDOE } from "@/components/dmaic/FractionalFactorialDOE";
+import { LogisticRegression } from "@/components/dmaic/LogisticRegression";
 
 interface SolutionDesignProps {
   projectId: number;
@@ -786,6 +787,20 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
                   {currentState.transferFunction && transferFunctionConfigs[solution.solutionId]?.tfDoeFractionalFactorial && (
                     <div className="mt-6">
                       <FractionalFactorialDOE key={`${projectId}-${solution.solutionId}`} projectId={projectId} solutionId={solution.solutionId} />
+                    </div>
+                  )}
+
+                  {/* Logistic Regression - Show when tfLogisticRegression is checked */}
+                  {currentState.transferFunction && transferFunctionConfigs[solution.solutionId]?.tfLogisticRegression && (
+                    <div className="mt-6">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Logistic Regression Analysis - {solution.solutionId}</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <LogisticRegression key={`${projectId}-${solution.solutionId}`} projectId={projectId} solutionId={solution.solutionId} />
+                        </CardContent>
+                      </Card>
                     </div>
                   )}
 
