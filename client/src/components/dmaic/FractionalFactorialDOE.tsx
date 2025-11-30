@@ -1543,22 +1543,68 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     </div>
 
                     {/* Interaction Plots */}
-                    {factors.length >= 2 && (
-                      <div className="space-y-4">
-                        <h3 className="text-lg font-semibold">2-Way Interaction Plots</h3>
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                          {factors.slice(0, -1).map((factorA, idxA) =>
-                            factors.slice(idxA + 1).map((factorB, idxB) => {
-                              // Check if interaction is confounded FIRST - before building any traces
-                              // Use k and p from plan if available, otherwise assume full factorial
-                              let numBaseFactors = factors.length;
-                              if (generatedPlan && generatedPlan.k !== undefined && generatedPlan.p !== undefined) {
-                                numBaseFactors = generatedPlan.k - generatedPlan.p;
+                    {factors.length >= 2 && (() => {
+                      // Helper to get aliased interactions from Defining Relation and Aliases
+                      const getAliasedInteractionsForChart = (): Set<string> => {
+                        const aliased = new Set<string>();
+                        
+                        // Parse aliases list
+                        if (generatedPlan.aliases && Array.isArray(generatedPlan.aliases)) {
+                          for (const alias of generatedPlan.aliases) {
+                            // Aliases are like "A + BC" - parse both sides
+                            const parts = alias.split('+').map(p => p.trim());
+                            for (const part of parts) {
+                              // Only include interactions (2+ letters), exclude main effects
+                              if (part.length > 1) {
+                                aliased.add(part);
                               }
-                              
-                              const factorAIdx = factors.indexOf(factorA);
-                              const factorBIdx = factors.indexOf(factorB);
-                              const isInteractionConfounded = factorAIdx >= numBaseFactors || factorBIdx >= numBaseFactors;
+                            }
+                          }
+                        }
+                        
+                        // Also parse Defining Relation to exclude its interaction terms
+                        if (generatedPlan.definingRelation) {
+                          // Defining Relation format: "I = ABC = BCD = ..."
+                          const terms = generatedPlan.definingRelation.split('=').map((t: string) => t.trim());
+                          for (const term of terms) {
+                            // Skip the identity element "I"
+                            if (term !== 'I' && term.length > 1) {
+                              aliased.add(term);
+                            }
+                          }
+                        }
+                        
+                        return aliased;
+                      };
+                      
+                      const aliasedInteractionsChart = getAliasedInteractionsForChart();
+                      
+                      // Helper to convert factor indices to interaction letter string
+                      const indicesToLettersChart = (idxA: number, idxB: number): string => {
+                        const letterA = String.fromCharCode(65 + idxA);
+                        const letterB = String.fromCharCode(65 + idxB);
+                        return letterA + letterB;
+                      };
+                      
+                      return (
+                        <div className="space-y-4">
+                          <h3 className="text-lg font-semibold">2-Way Interaction Plots</h3>
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            {factors.slice(0, -1).map((factorA, idxA) =>
+                              factors.slice(idxA + 1).map((factorB, idxB) => {
+                                // Check if interaction is aliased/confounded
+                                const factorAIdx = factors.indexOf(factorA);
+                                const factorBIdx = factors.indexOf(factorB);
+                                const interactionLetters = indicesToLettersChart(factorAIdx, factorBIdx);
+                                const isAliased = aliasedInteractionsChart.has(interactionLetters);
+                                
+                                // Check if interaction is confounded based on base factors - Use k and p from plan if available, otherwise assume full factorial
+                                let numBaseFactors = factors.length;
+                                if (generatedPlan && generatedPlan.k !== undefined && generatedPlan.p !== undefined) {
+                                  numBaseFactors = generatedPlan.k - generatedPlan.p;
+                                }
+                                
+                                const isInteractionConfounded = factorAIdx >= numBaseFactors || factorBIdx >= numBaseFactors || isAliased;
                               
                               // Get unique levels for both factors
                               const factorAUniqueLevels = getFactorLevels(factorA.name);
@@ -1814,12 +1860,13 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                     />
                                   </CardContent>
                                 </Card>
-                              );
-                            })
-                          )}
-                        </div>
-                      </div>
-                    )}
+                                );
+                              })
+                            )}
+                            </div>
+                          </div>
+                        );
+                      })()}
                   </>
                 );
               })()}
