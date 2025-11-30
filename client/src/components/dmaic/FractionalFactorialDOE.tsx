@@ -1180,6 +1180,67 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                   {getFactorDisplayName(factor, index, generatedPlan.generators)}
                                 </TableHead>
                               ))}
+                              {(() => {
+                                // Generate non-aliased interactions for Data tab
+                                const getCombinations = (arr: number[], size: number): number[][] => {
+                                  if (size === 0) return [[]];
+                                  if (arr.length === 0) return [];
+                                  const [first, ...rest] = arr;
+                                  const withFirst = getCombinations(rest, size - 1).map(combo => [first, ...combo]);
+                                  const withoutFirst = getCombinations(rest, size);
+                                  return [...withFirst, ...withoutFirst];
+                                };
+                                
+                                const indicesToLetters = (indices: number[]): string => {
+                                  return indices.map(idx => String.fromCharCode(65 + idx)).join('');
+                                };
+                                
+                                const getAliasedInteractions = (): Set<string> => {
+                                  const aliased = new Set<string>();
+                                  if (generatedPlan.aliases && Array.isArray(generatedPlan.aliases)) {
+                                    for (const alias of generatedPlan.aliases) {
+                                      const parts = alias.split('+').map(p => p.trim());
+                                      for (const part of parts) {
+                                        if (part.length > 1) {
+                                          aliased.add(part);
+                                        }
+                                      }
+                                    }
+                                  }
+                                  if (generatedPlan.definingRelation) {
+                                    const terms = generatedPlan.definingRelation.split('=').map((t: string) => t.trim());
+                                    for (const term of terms) {
+                                      if (term !== 'I' && term.length > 1) {
+                                        aliased.add(term);
+                                      }
+                                    }
+                                  }
+                                  return aliased;
+                                };
+                                
+                                const ffMetadata = generatedPlan.metadata || {};
+                                const k = factors.length;
+                                const p = ffMetadata?.p || 0;
+                                const baseFactorCount = k - p;
+                                const aliasedInteractions = getAliasedInteractions();
+                                const baseIndices = Array.from({ length: baseFactorCount }, (_, i) => i);
+                                const interactionPairs: Array<{indices: number[], name: string}> = [];
+                                
+                                for (let size = 2; size <= baseFactorCount; size++) {
+                                  const combos = getCombinations(baseIndices, size);
+                                  for (const combo of combos) {
+                                    const letterString = indicesToLetters(combo);
+                                    if (!aliasedInteractions.has(letterString)) {
+                                      const name = combo.map(idx => factors[idx].name).join('×');
+                                      interactionPairs.push({ indices: combo, name });
+                                    }
+                                  }
+                                }
+                                
+                                return interactionPairs.map((pair, i) => (
+                                  <TableHead key={`int-${i}`} className="w-[120px]">{pair.name}</TableHead>
+                                ));
+                              })()}
                               <TableHead className="w-[150px]">{responseVariableName.trim() || "Y Response"}</TableHead>
                             </TableRow>
                           </TableHeader>
@@ -1195,7 +1256,6 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                     const decodedValue = decodeValue(codedValue, factor);
                                     
                                     if (factor.type === 'categorical') {
-                                      // For categorical: show coded value or actual level based on toggle
                                       const codedDisplay = codedValue === 0 ? '0' : codedValue === 1 ? '+1' : '-1';
                                       return (
                                         <TableCell key={factorIndex}>
@@ -1203,7 +1263,6 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                         </TableCell>
                                       );
                                     } else {
-                                      // For continuous: show coded or uncoded based on toggle
                                       const hasValidLevels = factor.lowValue !== null && !isNaN(factor.lowValue) && 
                                                             factor.highValue !== null && !isNaN(factor.highValue);
                                       const codedDisplay = codedValue === 0 ? '0' : codedValue === 1 ? '+1' : '-1';
@@ -1218,6 +1277,75 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                       );
                                     }
                                   })}
+                                  {(() => {
+                                    // Compute interactions for this row
+                                    const getCombinations = (arr: number[], size: number): number[][] => {
+                                      if (size === 0) return [[]];
+                                      if (arr.length === 0) return [];
+                                      const [first, ...rest] = arr;
+                                      const withFirst = getCombinations(rest, size - 1).map(combo => [first, ...combo]);
+                                      const withoutFirst = getCombinations(rest, size);
+                                      return [...withFirst, ...withoutFirst];
+                                    };
+                                    
+                                    const indicesToLetters = (indices: number[]): string => {
+                                      return indices.map(idx => String.fromCharCode(65 + idx)).join('');
+                                    };
+                                    
+                                    const getAliasedInteractions = (): Set<string> => {
+                                      const aliased = new Set<string>();
+                                      if (generatedPlan.aliases && Array.isArray(generatedPlan.aliases)) {
+                                        for (const alias of generatedPlan.aliases) {
+                                          const parts = alias.split('+').map(p => p.trim());
+                                          for (const part of parts) {
+                                            if (part.length > 1) {
+                                              aliased.add(part);
+                                            }
+                                          }
+                                        }
+                                      }
+                                      if (generatedPlan.definingRelation) {
+                                        const terms = generatedPlan.definingRelation.split('=').map((t: string) => t.trim());
+                                        for (const term of terms) {
+                                          if (term !== 'I' && term.length > 1) {
+                                            aliased.add(term);
+                                          }
+                                        }
+                                      }
+                                      return aliased;
+                                    };
+                                    
+                                    const ffMetadata = generatedPlan.metadata || {};
+                                    const k = factors.length;
+                                    const p = ffMetadata?.p || 0;
+                                    const baseFactorCount = k - p;
+                                    const aliasedInteractions = getAliasedInteractions();
+                                    const baseIndices = Array.from({ length: baseFactorCount }, (_, i) => i);
+                                    const interactionPairs: Array<{indices: number[]}> = [];
+                                    
+                                    for (let size = 2; size <= baseFactorCount; size++) {
+                                      const combos = getCombinations(baseIndices, size);
+                                      for (const combo of combos) {
+                                        const letterString = indicesToLetters(combo);
+                                        if (!aliasedInteractions.has(letterString)) {
+                                          interactionPairs.push({ indices: combo });
+                                        }
+                                      }
+                                    }
+                                    
+                                    return interactionPairs.map((pair, i) => {
+                                      let product = 1;
+                                      pair.indices.forEach(idx => {
+                                        product *= planRow[factors[idx].name] as number;
+                                      });
+                                      const codedDisplay = product === 0 ? '0' : product === 1 ? '+1' : '-1';
+                                      return (
+                                        <TableCell key={`int-${i}`} className="text-center text-sm">
+                                          {codedDisplay}
+                                        </TableCell>
+                                      );
+                                    });
+                                  })()}
                                   <TableCell>
                                     <Input
                                       type="text"
@@ -2448,9 +2576,10 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                 }
 
                                 // Add model row
-                                const numTerms = 1 + dfModel;
+                                
                                 //const modelDF = numTerms - 1;
                                 dfModel = dfBasefactors + dfInteractions + dfCurvature;
+                                const numTerms = 1 + dfModel;
                                 const modelMS = (SS_tot - SS_res) / dfModel;
                                 dfResidual = dfTotal - dfModel;
                                 const errorMS = dfResidual === 0 ? NaN : SS_res / dfResidual;                                
