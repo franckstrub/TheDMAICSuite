@@ -2921,7 +2921,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                         <div className="space-y-4">
                           <div className="border-t pt-4">
                             {(() => {
-                              const adTest = performNormalityTest(residuals, residualMean, residualStd);
+                              const adTest = performNormalityTest(residuals_red, residualMean, residualStd);
                               
                               return (
                                 <div className="space-y-4">
@@ -2934,7 +2934,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                       </div>
                                       <div>
                                         <p className="text-sm text-muted-foreground">Max Residual</p>
-                                        <p className="text-lg font-bold">{Math.max(...residuals.map(Math.abs)).toFixed(4)}</p>
+                                        <p className="text-lg font-bold">{Math.max(...residuals_red.map(Math.abs)).toFixed(4)}</p>
                                       </div>
                                     </div>
                                   </div>
@@ -2997,7 +2997,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                           {(showResidualsVsFits || showResidualsVsOrder || showNormalProbPlot) && (
                             <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                               {(() => {
-                                const validResiduals = residuals.filter(r => typeof r === 'number' && isFinite(r));
+                                const validResiduals = residuals_red.filter(r => typeof r === 'number' && isFinite(r));
                                 const minResidual = Math.min(...validResiduals);
                                 const maxResidual = Math.max(...validResiduals);
                                 const range = maxResidual - minResidual;
@@ -3014,15 +3014,15 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                       {
                                         type: 'scatter',
                                         mode: 'markers',
-                                        x: predictions,
-                                        y: residuals,
+                                        x: predictions_red,
+                                        y: residuals_red,
                                         marker: { color: 'rgb(59, 130, 246)', size: 6 },
                                       } as any,
                                       {
                                         type: 'scatter',
                                         mode: 'lines',
-                                        x: predictions,
-                                        y: Array(predictions.length).fill(0),
+                                        x: predictions_red,
+                                        y: Array(predictions_red.length).fill(0),
                                         line: { color: 'red', dash: 'dash' },
                                       } as any,
                                     ]}
@@ -3051,15 +3051,15 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                       {
                                         type: 'scatter',
                                         mode: 'lines+markers',
-                                        x: Array.from({ length: residuals.length }, (_, i) => i + 1),
-                                        y: residuals,
+                                        x: Array.from({ length: residuals_red.length }, (_, i) => i + 1),
+                                        y: residuals_red,
                                         marker: { color: 'rgb(59, 130, 246)', size: 6 },
                                         line: { color: 'rgb(59, 130, 246)' },
                                       } as any,
                                       {
                                         type: 'scatter',
                                         mode: 'lines',
-                                        x: [1, residuals.length],
+                                        x: [1, residuals_red.length],
                                         y: [0, 0],
                                         line: { color: 'red', dash: 'dash' },
                                       } as any,
@@ -3086,7 +3086,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                               })()}
 
                               {showNormalProbPlot && (() => {
-                                const sorted = [...residuals].sort((a, b) => a - b);
+                                const sorted = [...residuals_red].sort((a, b) => a - b);
                                 const n_res = sorted.length;
                                 const theoreticalQuantiles = sorted.map((_, i) => {
                                   const p = (i + 0.5) / n_res;
