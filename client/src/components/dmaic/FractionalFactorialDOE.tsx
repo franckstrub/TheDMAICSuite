@@ -2193,56 +2193,95 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   beta[0] = mean_y;
                 }
 
-                // Calculate predictions for all observations (factorial points and center points)
-                // Center points have factor values = 0, so prediction = intercept + 0*other_terms = beta[0]
-                const predictions = X.map(row => row.reduce((sum, val, i) => sum + val * beta[i], 0));
-                // Calculate residuals for all observations including center points
-                const residuals = y.map((val, i) => val - predictions[i]);
-                const SS_res = dfResidual === 0 ? 0 : residuals.reduce((sum, val) => sum + Math.pow(val, 2), 0) - SS_curvature;
-                const errorMS = dfResidual > 0 ? SS_res / dfResidual : 0;
-                const R_sq = 1 - SS_res / SS_tot;
-                const adj_R_sq = 1 - (1 - R_sq) * (n - 1) / (n - numCoefficients);
-                const rmse = Math.sqrt(SS_res / (n - numCoefficients));
-                const residualMean = residuals.reduce((a, b) => a + b, 0) / residuals.length;
-                const residualStd = Math.sqrt(residuals.reduce((sum, r) => sum + Math.pow(r - residualMean, 2), 0) / (residuals.length - 1));
-                const mse = SS_res / (n - numCoefficients);
+                // Build reduced design matrix with only selected terms
+                const selectedColumns: number[] = [0]; // Always include intercept
+                Array.from({length: baseFactorCount}).forEach((_, idx) => {
+                  if (selectedFactorsForModel[idx] !== false) {
+                    selectedColumns.push(idx + 1);
+                  }
+                });
+                interactionPairs.forEach((_, pairIdx) => {
+                  if (selectedFactorsForModel[`int-${pairIdx}`] !== false) {
+                    selectedColumns.push(baseFactorCount + 1 + pairIdx);
+                  }
+                });
                 
-                // Calculate standard errors and t-values for all coefficients
-                const coeffStats = beta.map((b, idx) => {
-                  // Get the diagonal element of (X'X)^-1
+                // Build reduced X matrix with only selected columns
+                const X_reduced = X.map(row => selectedColumns.map(col => row[col]));
+                const p_reduced = X_reduced[0].length;
+                
+                // Calculate X'X and X'y for reduced model
+                let XtX_red: number[][] = Array(p_reduced).fill(null).map(() => Array(p_reduced).fill(0));
+                let Xty_red: number[] = Array(p_reduced).fill(0);
+                
+                for (let i = 0; i < n; i++) {
+                  for (let j = 0; j < p_reduced; j++) {
+                    Xty_red[j] += X_reduced[i][j] * y[i];
+                    for (let k = 0; k < p_reduced; k++) {
+                      XtX_red[j][k] += X_reduced[i][j] * X_reduced[i][k];
+                    }
+                  }
+                }
+                
+                // Solve reduced model
+                let beta_red: number[] = [];
+                try {
+                  beta_red = solveNormalEquations(XtX_red, Xty_red);
+                } catch (e) {
+                  console.warn('Gaussian elimination error for reduced model:', e);
+                  beta_red = Xty_red.map(v => v / (XtX_red[0][0] || 1));
+                }
+
+                // Calculate predictions and residuals for reduced model
+                const predictions_red = X_reduced.map(row => row.reduce((sum, val, i) => sum + val * beta_red[i], 0));
+                const residuals_red = y.map((val, i) => val - predictions_red[i]);
+                const residualSS_red = residuals_red.reduce((sum, res) => sum + Math.pow(res, 2), 0);
+                const SS_res = residualSS_red - SS_curvature;
+                const errorDF_red = n - p_reduced;
+                const errorMS = errorDF_red > 0 ? SS_res / errorDF_red : 0;
+                const R_sq = 1 - SS_res / SS_tot;
+                const adj_R_sq = 1 - (1 - R_sq) * (n - 1) / (n - p_reduced);
+                const rmse = Math.sqrt(SS_res / (n - p_reduced));
+                const residualMean = residuals_red.reduce((a, b) => a + b, 0) / residuals_red.length;
+                const residualStd = Math.sqrt(residuals_red.reduce((sum, r) => sum + Math.pow(r - residualMean, 2), 0) / (residuals_red.length - 1));
+                const mse = SS_res / (n - p_reduced);
+                
+                // Calculate standard errors and t-values for selected coefficients using reduced model
+                const coeffStats = beta_red.map((b, redIdx) => {
                   let xxtInvDiag = 0;
-                  if (idx === 0) {
-                    xxtInvDiag = 1 / XtX[0][0];
+                  if (redIdx === 0) {
+                    xxtInvDiag = 1 / XtX_red[0][0];
                   } else {
-                    // Simple approximation for diagonal elements
-                    const denom = XtX[idx][idx] - (idx > 0 ? XtX[idx].slice(0, idx).reduce((sum, v, i) => sum + v * v / (XtX[i][i] || 1), 0) : 0);
-                    xxtInvDiag = Math.abs(denom) > 1e-10 ? 1 / denom : 1 / XtX[idx][idx];
+                    const denom = XtX_red[redIdx][redIdx] - (redIdx > 0 ? XtX_red[redIdx].slice(0, redIdx).reduce((sum, v, i) => sum + v * v / (XtX_red[i][i] || 1), 0) : 0);
+                    xxtInvDiag = Math.abs(denom) > 1e-10 ? 1 / denom : 1 / XtX_red[redIdx][redIdx];
                   }
                   const stdError = Math.sqrt(mse * Math.max(0, xxtInvDiag));
                   const tValue = stdError > 0 ? b / stdError : 0;
                   let pValue = 1;
                   if (stdError > 0 && Number.isFinite(tValue)) {
-                    const df = n - numCoefficients;
+                    const df = errorDF_red;
                     const cdfVal = jStat.studentt.cdf(Math.abs(tValue), df);
                     pValue = Number.isFinite(cdfVal) ? 2 * (1 - cdfVal) : 1;
-                    // Clamp p-value to [0, 1]
                     pValue = Math.max(0, Math.min(1, pValue));
                   }
                   return { stdError: Number.isFinite(stdError) ? stdError : 0, tValue: Number.isFinite(tValue) ? tValue : 0, pValue };
                 });
 
-                // Transform coefficients and standard errors from coded to uncoded if needed
-                // Note: For fractional DOE, beta and beta_display are the same (no model reduction by coefficient selection)
+                // Transform coefficients using beta_red and selected columns mapping
                 const transformCoefficientsAndSE = () => {
                   if (!showUncoded || !allFactorsHaveValidLevels()) {
-                    return { displayBeta: beta, displayCoeffStats: coeffStats };
+                    return { displayBeta: beta_red, displayCoeffStats: coeffStats };
                   }
                   
-                  const transformed = [...beta];
+                  const transformed = [...beta_red];
                   const transformedStats = coeffStats.map(s => ({ ...s }));
                   let interceptAdjustment = 0;
                   
-                  for (let i = 0; i < factors.length; i++) {
+                  // Only transform factors that are in selectedColumns
+                  for (let i = 0; i < baseFactorCount; i++) {
+                    const colIdx = selectedColumns.indexOf(i + 1);
+                    if (colIdx === -1 || selectedFactorsForModel[i] === false) continue;
+                    
                     const factor = factors[i];
                     if (factor.type === 'continuous' && factor.lowValue !== undefined && factor.highValue !== undefined) {
                       const low = parseFloat(String(factor.lowValue));
@@ -2251,14 +2290,12 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                         const center = (low + high) / 2;
                         const halfRange = (high - low) / 2;
                         
-                        if (Number.isFinite(beta[i + 1])) {
-                          transformed[i + 1] = beta[i + 1] / halfRange;
-                          // SE_uncoded = SE_coded / halfRange
-                          if (transformedStats[i + 1]) {
-                            transformedStats[i + 1].stdError = coeffStats[i + 1].stdError / halfRange;
-                            // t-value and p-value are INVARIANT: t = β/SE = (β_coded/hr) / (SE_coded/hr) = β_coded/SE_coded
+                        if (Number.isFinite(beta_red[colIdx])) {
+                          transformed[colIdx] = beta_red[colIdx] / halfRange;
+                          if (transformedStats[colIdx]) {
+                            transformedStats[colIdx].stdError = coeffStats[colIdx].stdError / halfRange;
                           }
-                          interceptAdjustment += beta[i + 1] * center / halfRange;
+                          interceptAdjustment += beta_red[colIdx] * center / halfRange;
                         }
                       }
                     }
@@ -2266,8 +2303,12 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   
                   // Transform N-way interaction coefficients
                   for (let i = 0; i < interactionPairs.length; i++) {
+                    if (selectedFactorsForModel[`int-${i}`] === false) continue;
+                    
+                    const colIdx = selectedColumns.indexOf(baseFactorCount + 1 + i);
+                    if (colIdx === -1) continue;
+                    
                     const pair = interactionPairs[i];
-                    const interactionCoeffIdx = factors.length + 1 + i;
                     
                     // Check all factors in this interaction are continuous with valid levels
                     const allContinuousWithLevels = pair.indices.every(idx => {
