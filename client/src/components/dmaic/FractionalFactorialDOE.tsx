@@ -2198,7 +2198,8 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 const predictions = X.map(row => row.reduce((sum, val, i) => sum + val * beta[i], 0));
                 // Calculate residuals for all observations including center points
                 const residuals = y.map((val, i) => val - predictions[i]);
-                const SS_res = dfResidual === 0 ? 0 : residuals.reduce((sum, val) => sum + Math.pow(val, 2), 0);
+                const SS_res = dfResidual === 0 ? 0 : residuals.reduce((sum, val) => sum + Math.pow(val, 2), 0) - SS_curvature;
+                const errorMS = dfResidual > 0 ? SS_res / dfResidual : 0;
                 const R_sq = 1 - SS_res / SS_tot;
                 const adj_R_sq = 1 - (1 - R_sq) * (n - 1) / (n - numCoefficients);
                 const rmse = Math.sqrt(SS_res / (n - numCoefficients));
@@ -2429,7 +2430,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                   dfBasefactors += termDF;
                                   const termSS = termDF === 0 ? 0 : Math.pow(beta[termIdx], 2) * XtX[termIdx][termIdx];
                                   const termMS = termDF === 0 ? 0 : termSS / termDF;
-                                  const errorMS = termDF === 0 ? 0 : SS_res / (n - p);
+                                  //const errorMS = termDF === 0 ? 0 : SS_res / (n - p);
                                   const fRatio = errorMS > 0 ? termMS / errorMS : 0;
                                   const pValue = fRatio > 0 && (n - p) > 0 
                                     ? 1 - jStat.centralF.cdf(fRatio, termDF, n - p) 
@@ -2459,7 +2460,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                   //const termDF = 1;
                                   const termSS = termDF === 0 ? 0 : Math.pow(beta[termIdx], 2) * XtX[termIdx][termIdx];
                                   const termMS = termDF === 0 ? 0 : termSS / termDF;
-                                  const errorMS = termDF === 0 ? 0 : SS_res / (n - p);
+                                  //const errorMS = termDF === 0 ? 0 : SS_res / (n - p);
                                   const fRatio = errorMS > 0 ? termMS / errorMS : 0;
                                   const pValue = fRatio > 0 && (n - p) > 0 
                                     ? 1 - jStat.centralF.cdf(fRatio, termDF, n - p) 
@@ -2514,7 +2515,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                     //const curveSS = (n_c * n_f / (n_c + n_f)) * Math.pow(curveEffect, 2);
                                     //const curveMS = curveSS / dfCurvature;
                                     const curveMS = SS_curvature / dfCurvature;
-                                    const errorMS = dfTotal > dfBasefactors + dfInteractions + dfCurvature ? SS_res / (n - p) : 0;
+                                    //const errorMS = dfTotal > dfBasefactors + dfInteractions + dfCurvature ? SS_res / (n - p) : 0;
                                     const curveFRatio = errorMS > 0 ? curveMS / errorMS : 0;
                                     const curvePValue = curveFRatio > 0 && (n - p) > 0 
                                       ? 1 - jStat.centralF.cdf(curveFRatio, dfCurvature, n - p) 
@@ -2543,7 +2544,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                 dfModel = dfBasefactors + dfInteractions + dfCurvature;
                                 const modelMS = (SS_tot - SS_res) / dfModel;
                                 dfResidual = dfTotal - dfModel;
-                                const errorMS = dfResidual === 0 ? NaN : SS_res / dfResidual;                                
+                                //const errorMS = dfResidual === 0 ? NaN : SS_res / dfResidual;                                
                                 const modelFRatio = dfResidual === 0 ? NaN : errorMS > 0 ? modelMS / errorMS : 0;
                                 const modelPValue = dfResidual === 0 ? NaN : modelFRatio > 0 && (n - numTerms) > 0 
                                   ? 1 - jStat.centralF.cdf(modelFRatio, dfModel, n - numTerms) 
@@ -2828,6 +2829,11 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                               </p>
                             )
                           ))}
+                          {includeCenterPoints && hasCurvature && SS_curvature > 0 && (
+                            <p>
+                              &nbsp;&nbsp;&nbsp;&nbsp;{(SS_curvature / (baseFactorCount > 0 ? baseFactorCount : 1)) >= 0 ? '+' : ''} {(SS_curvature / (baseFactorCount > 0 ? baseFactorCount : 1)).toFixed(4)} × Curvature
+                            </p>
+                          )}
                           {displayBeta.every(v => !Number.isFinite(v)) && (
                             <p className="text-muted-foreground">Unable to compute regression equation. Check data validity.</p>
                           )}
