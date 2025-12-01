@@ -67,7 +67,10 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
   const { toast } = useToast();
   const storageKey = `solutionDesignTab-${projectId}`;
   const [activeTab, setActiveTab] = useState<string>(() => {
-    return localStorage.getItem(storageKey) || "";
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem(storageKey) || "";
+    }
+    return "";
   });
   const [checkboxStates, setCheckboxStates] = useState<Record<string, CheckboxState>>({});
   const [transferFunctionConfigs, setTransferFunctionConfigs] = useState<Record<string, TransferFunctionConfig>>({});
@@ -112,34 +115,56 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
 
   // Initialize checkbox states and explanations from tracking data
   useEffect(() => {
-    if (tracking.length > 0) {
-      const states: Record<string, CheckboxState> = {};
-      const tfConfigs: Record<string, TransferFunctionConfig> = {};
-      const explanations: Record<string, string> = {};
-      tracking.forEach((t) => {
-        states[t.solutionId] = {
-          toBeProcessMap: t.toBeProcessMap || false,
-          toBeProcessRaci: t.toBeProcessRaci || false,
-          transferFunction: t.transferFunction || false,
-          otherDesign: t.otherDesign || false,
-          solutionNotPursued: t.solutionNotPursued || false,
-        };
-        tfConfigs[t.solutionId] = {
-          tfSimpleRegression: t.tfSimpleRegression || false,
-          tfAnovaTwoWay: t.tfAnovaTwoWay || false,
-          tfMultipleRegression: t.tfMultipleRegression || false,
-          tfDoe: t.tfDoe || false,
-          tfDoeFullFactorial: t.tfDoeFullFactorial || false,
-          tfDoeFractionalFactorial: t.tfDoeFractionalFactorial || false,
-          tfLogisticRegression: t.tfLogisticRegression || false,
-        };
-        explanations[t.solutionId] = t.otherDesignExplanation || "";
-      });
-      setCheckboxStates(states);
-      setTransferFunctionConfigs(tfConfigs);
-      setOtherDesignExplanations(explanations);
-    }
-  }, [tracking]);
+    const states: Record<string, CheckboxState> = {};
+    const tfConfigs: Record<string, TransferFunctionConfig> = {};
+    const explanations: Record<string, string> = {};
+    
+    // Initialize all solutions with default values
+    solutions.forEach((solution) => {
+      states[solution.solutionId] = {
+        toBeProcessMap: false,
+        toBeProcessRaci: false,
+        transferFunction: false,
+        otherDesign: false,
+        solutionNotPursued: false,
+      };
+      tfConfigs[solution.solutionId] = {
+        tfSimpleRegression: false,
+        tfAnovaTwoWay: false,
+        tfMultipleRegression: false,
+        tfDoe: false,
+        tfDoeFullFactorial: false,
+        tfDoeFractionalFactorial: false,
+        tfLogisticRegression: false,
+      };
+      explanations[solution.solutionId] = "";
+    });
+    
+    // Override with tracking data if available
+    tracking.forEach((t) => {
+      states[t.solutionId] = {
+        toBeProcessMap: t.toBeProcessMap || false,
+        toBeProcessRaci: t.toBeProcessRaci || false,
+        transferFunction: t.transferFunction || false,
+        otherDesign: t.otherDesign || false,
+        solutionNotPursued: t.solutionNotPursued || false,
+      };
+      tfConfigs[t.solutionId] = {
+        tfSimpleRegression: t.tfSimpleRegression || false,
+        tfAnovaTwoWay: t.tfAnovaTwoWay || false,
+        tfMultipleRegression: t.tfMultipleRegression || false,
+        tfDoe: t.tfDoe || false,
+        tfDoeFullFactorial: t.tfDoeFullFactorial || false,
+        tfDoeFractionalFactorial: t.tfDoeFractionalFactorial || false,
+        tfLogisticRegression: t.tfLogisticRegression || false,
+      };
+      explanations[t.solutionId] = t.otherDesignExplanation || "";
+    });
+    
+    setCheckboxStates(states);
+    setTransferFunctionConfigs(tfConfigs);
+    setOtherDesignExplanations(explanations);
+  }, [tracking, solutions]);
 
   // Cleanup object URLs on unmount
   useEffect(() => {
