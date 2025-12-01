@@ -2870,11 +2870,38 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                               </p>
                             )
                           ))}
-                          {includeCenterPoints && hasCurvature && SS_curvature > 0 && (
-                            <p>
-                              &nbsp;&nbsp;&nbsp;&nbsp;{(SS_curvature / (baseFactorCount > 0 ? baseFactorCount : 1)) >= 0 ? '+' : ''} {(SS_curvature / (baseFactorCount > 0 ? baseFactorCount : 1)).toFixed(4)} × Curvature
-                            </p>
-                          )}
+                          {includeCenterPoints && hasCurvature && SS_curvature > 0 && (() => {
+                            // Calculate curvature coefficient: y_center_avg - y_factorial_at_center_predicted
+                            let curveCoeff = 0;
+                            const factorialIndices: number[] = [];
+                            const centerIndices: number[] = [];
+                            
+                            runData.forEach((row, idx) => {
+                              if (row.response !== null && !isNaN(row.response)) {
+                                let isFactorial = true;
+                                for (let i = 0; i < baseFactorCount; i++) {
+                                  const val = generatedPlan.plan[idx]?.[factors[i].name];
+                                  if (val !== -1 && val !== 1) {
+                                    isFactorial = false;
+                                    break;
+                                  }
+                                }
+                                if (isFactorial) factorialIndices.push(idx);
+                                else centerIndices.push(idx);
+                              }
+                            });
+                            
+                            if (factorialIndices.length > 0 && centerIndices.length > 0) {
+                              const y_c_avg = centerIndices.reduce((sum, idx) => sum + runData[idx].response!, 0) / centerIndices.length;
+                              curveCoeff = y_c_avg - displayBeta[0];
+                            }
+                            
+                            return (
+                              <p>
+                                &nbsp;&nbsp;&nbsp;&nbsp;{curveCoeff >= 0 ? '+' : ''} {curveCoeff.toFixed(4)} × Curvature
+                              </p>
+                            );
+                          })()}
                           {displayBeta.every(v => !Number.isFinite(v)) && (
                             <p className="text-muted-foreground">Unable to compute regression equation. Check data validity.</p>
                           )}
