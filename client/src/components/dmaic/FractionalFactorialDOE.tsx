@@ -2463,8 +2463,11 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                 let rows: React.ReactNode[] = [];
                                 
                                 let  dfBasefactors = 0;
-                                // Add base factor rows only (not confounded)
+                                // Add base factor rows only (not confounded) - AND only if selected in model
                                 for (let i = 0; i < factors.length; i++) {
+                                  // Skip if this factor is not selected in the model
+                                  if (selectedFactorsForModel[i] === false) continue;
+                                  
                                   const factor = factors[i];
                                   const termIdx = i + 1;
                                   const termDF = dfTotal - dfCurvature - termIdx < 0 ? 0 : 1;
@@ -2493,8 +2496,11 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                   );
                                 }
 
-                                // Add interaction rows (only between base factors)
+                                // Add interaction rows (only between base factors) - AND only if selected in model
                                 interactionPairs.forEach((pair, pairIdx) => {
+                                  // Skip if this interaction is not selected in the model
+                                  if (selectedFactorsForModel[`int-${pairIdx}`] === false) return;
+                                  
                                   const termIdx = baseFactorCount + 1 + pairIdx;                                  
                                   const termDF = dfTotal - dfCurvature - dfBasefactors - (pairIdx + 1) <= 0 ? 0 : 1;
                                   dfInteractions += termDF;
@@ -2524,10 +2530,10 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                   }
                                 });
 
-                                // Calculate curvature effect if center points exist AND are included in model
+                                // Calculate curvature effect if center points exist AND are included in model AND selected
                                 //const hasCurvature = (includeCenterPoints && selectedFactorsForModel['centerPoint'] !== false);
                                 //let dfCurvature = 0;
-                                if (hasCurvature) {
+                                if (hasCurvature && selectedFactorsForModel['centerPoint'] !== false) {
                                   const centerPointIndices: number[] = [];
                                   const factorialPointIndices: number[] = [];
                                   
