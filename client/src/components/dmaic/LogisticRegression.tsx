@@ -120,10 +120,10 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
     for (let iter = 0; iter < 20; iter++) {
       const predictions = xs.map(x => 1 / (1 + Math.exp(-(b0 + b1 * x))));
       
-      const firstDeriv = xs.reduce((sum, x, i) => sum + x * (ys[i] - predictions[i]), 0);
-      const secondDeriv = xs.reduce((sum, x, i) => sum - x * x * predictions[i] * (1 - predictions[i]), 0);
+      const firstDeriv = xs.reduce((sum: number, x, i) => sum + x * (ys[i] - predictions[i]), 0);
+      const secondDeriv = xs.reduce((sum: number, x, i) => sum - x * x * predictions[i] * (1 - predictions[i]), 0);
       
-      const delta0 = ys.reduce((sum, y, i) => sum + (y - predictions[i]), 0);
+      const delta0 = ys.reduce((sum: number, y, i) => sum + (y - predictions[i]), 0);
       const delta1 = firstDeriv;
       
       if (Math.abs(delta0) < 1e-6 && Math.abs(delta1) < 1e-6) break;
@@ -143,12 +143,13 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
       else return -Math.sqrt(-2 * Math.log(1 - p));
     });
 
-    const deviance = devianceResiduals.reduce((sum, r) => sum + r * r, 0);
-    const nullDeviance = ys.map(y => {
-      const p0 = ys.reduce((a, b) => a + b, 0) / ys.length;
-      if (y === 1) return -2 * Math.log(p0);
-      else return -2 * Math.log(1 - p0);
-    }).reduce((a, b) => a + b, 0);
+    const deviance = devianceResiduals.reduce((sum: number, r) => sum + r * r, 0);
+    const ySum = ys.reduce((a: number, b: number) => a + b, 0);
+    const p0 = ySum / ys.length;
+    const nullDeviance = ys.reduce((sum: number, y) => {
+      if (y === 1) return sum - 2 * Math.log(p0);
+      else return sum - 2 * Math.log(1 - p0);
+    }, 0);
 
     const mcFaddenR2 = 1 - deviance / nullDeviance;
 
@@ -213,13 +214,17 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
     e.preventDefault();
     const text = e.clipboardData.getData('text');
     try {
-      const [xs, ys] = parseTwoColumnPaste(text);
-      const newPoints: DataPoint[] = xs.map((x, i) => ({
-        x,
-        y: (ys[i] === 1 ? 1 : 0) as 0 | 1,
-      }));
-      setDataPointsHistory([...dataPointsHistory, dataPoints]);
-      setDataPoints(newPoints);
+      const result = parseTwoColumnPaste(text);
+      if (result.success && result.columnX && result.columnY) {
+        const newPoints: DataPoint[] = result.columnX.map((x, i) => ({
+          x,
+          y: (result.columnY![i] === 1 ? 1 : 0) as 0 | 1,
+        }));
+        setDataPointsHistory([...dataPointsHistory, dataPoints]);
+        setDataPoints(newPoints);
+      } else {
+        throw new Error(result.errors?.join(', ') || 'Failed to parse data');
+      }
     } catch (error: any) {
       toast({
         title: "Paste error",
@@ -426,35 +431,37 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
                     <Plot
                       data={[
                         ...(showScatterPlot ? [{
-                          x: dataPoints.filter(p => !isNaN(p.x)).map(p => p.x),
-                          y: dataPoints.filter(p => !isNaN(p.x)).map(p => p.y),
+                          x: dataPoints.filter(p => !isNaN(p.x)).map(p => p.x) as any,
+                          y: dataPoints.filter(p => !isNaN(p.x)).map(p => p.y) as any,
                           mode: 'markers',
-                          type: 'scatter',
+                          type: 'scatter' as any,
                           marker: { color: 'rgba(99, 102, 241, 0.7)', size: 8 },
                           name: 'Data Points'
                         }] : []),
                         ...(showFittedCurve ? [{
                           x: Array.from({ length: 100 }, (_, i) => {
-                            const xMin = Math.min(...dataPoints.filter(p => !isNaN(p.x)).map(p => p.x));
-                            const xMax = Math.max(...dataPoints.filter(p => !isNaN(p.x)).map(p => p.x));
+                            const validPoints = dataPoints.filter(p => !isNaN(p.x)).map(p => p.x);
+                            const xMin = Math.min(...validPoints);
+                            const xMax = Math.max(...validPoints);
                             return xMin + (xMax - xMin) * i / 99;
-                          }),
+                          }) as any,
                           y: Array.from({ length: 100 }, (_, i) => {
-                            const xMin = Math.min(...dataPoints.filter(p => !isNaN(p.x)).map(p => p.x));
-                            const xMax = Math.max(...dataPoints.filter(p => !isNaN(p.x)).map(p => p.x));
+                            const validPoints = dataPoints.filter(p => !isNaN(p.x)).map(p => p.x);
+                            const xMin = Math.min(...validPoints);
+                            const xMax = Math.max(...validPoints);
                             const xVal = xMin + (xMax - xMin) * i / 99;
                             return 1 / (1 + Math.exp(-(logisticResult.intercept + logisticResult.slope * xVal)));
-                          }),
+                          }) as any,
                           mode: 'lines',
-                          type: 'scatter',
+                          type: 'scatter' as any,
                           line: { color: 'rgba(239, 68, 68, 1)', width: 2 },
                           name: 'Fitted Curve'
                         }] : [])
-                      ]}
+                      ] as any}
                       layout={{
-                        title: 'Logistic Regression',
-                        xaxis: { title: datasetXDescription },
-                        yaxis: { title: 'Probability', range: [-0.1, 1.1] },
+                        title: { text: 'Logistic Regression' },
+                        xaxis: { title: { text: datasetXDescription } },
+                        yaxis: { title: { text: 'Probability' }, range: [-0.1, 1.1] },
                         hovermode: 'closest',
                         margin: { l: 60, r: 40, t: 40, b: 60 },
                       }}
