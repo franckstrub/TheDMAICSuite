@@ -275,21 +275,33 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
   };
 
   const handleTransferFunctionChange = (solutionId: string, key: keyof TransferFunctionConfig, checked: boolean) => {
-    setTransferFunctionConfigs((prev) => ({
-      ...prev,
-      [solutionId]: {
-        ...(prev[solutionId] || {
-          tfSimpleRegression: false,
-          tfAnovaTwoWay: false,
-          tfMultipleRegression: false,
-          tfDoe: false,
-          tfDoeFullFactorial: false,
-          tfDoeFractionalFactorial: false,
-          tfLogisticRegression: false,
-        }),
+    setTransferFunctionConfigs((prev) => {
+      const currentConfig = prev[solutionId] || {
+        tfSimpleRegression: false,
+        tfAnovaTwoWay: false,
+        tfMultipleRegression: false,
+        tfDoe: false,
+        tfDoeFullFactorial: false,
+        tfDoeFractionalFactorial: false,
+        tfLogisticRegression: false,
+      };
+      
+      const newConfig = {
+        ...currentConfig,
         [key]: checked,
-      },
-    }));
+      };
+      
+      // If unchecking tfDoe, also uncheck both factorial options
+      if (key === 'tfDoe' && !checked) {
+        newConfig.tfDoeFullFactorial = false;
+        newConfig.tfDoeFractionalFactorial = false;
+      }
+      
+      return {
+        ...prev,
+        [solutionId]: newConfig,
+      };
+    });
   };
 
   const handleClearTransferFunction = (solutionId: string) => {
