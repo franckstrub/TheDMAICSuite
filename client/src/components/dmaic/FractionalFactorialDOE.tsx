@@ -132,6 +132,9 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
   
   // Ref to store the solve function so it can be called by useEffect
   const solveRef = useRef<(() => void) | null>(null);
+  
+  // Ref to store the latest displayBeta so handleSolve can always access fresh values
+  const displayBetaRef = useRef<number[]>([]);
 
   // Auto-solve when solver dependencies change or when returning to Analysis tab
   useEffect(() => {
@@ -2387,7 +2390,13 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 
                 const { displayBeta, displayCoeffStats } = transformCoefficientsAndSE();
                 
+                // Store displayBeta in ref so handleSolve always uses fresh values
+                displayBetaRef.current = displayBeta;
+                
                 const handleSolve = () => {
+                  // Always read from ref to get the latest uncoded coefficients
+                  const currentDisplayBeta = displayBetaRef.current;
+                  
                   // Check if solve factor is included in the model
                   if (selectedFactorsForModel[solveFactorIdx] === false || baseFactorCount < 1) {
                     setSolverResult(null);
@@ -2400,7 +2409,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     return;
                   }
                   
-                  if (displayBeta[solveFactorIdx + 1] === 0) {
+                  if (!currentDisplayBeta || currentDisplayBeta.length === 0 || currentDisplayBeta[solveFactorIdx + 1] === 0) {
                     setSolverResult(null);
                     return;
                   }
@@ -2423,15 +2432,15 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     if (i !== solveFactorIdx && selectedFactorsForModel[i] !== false) {
                       const constraintVal = constraintValues[i];
                       if (Number.isFinite(constraintVal)) {
-                        // Use displayBeta (uncoded coefficients)
-                        constraintSum += displayBeta[i + 1] * constraintVal;
+                        // Use currentDisplayBeta (uncoded coefficients from ref)
+                        constraintSum += currentDisplayBeta[i + 1] * constraintVal;
                       }
                     }
                   }
                   // Solve using UNCODED equation: targetY = β0_uncoded + Σ_{j≠i} βj_uncoded * constraint_j + βi_uncoded * Xi
                   // Therefore: Xi = (targetY - β0_uncoded - constraintSum) / βi_uncoded
                   // User enters target and constraints in uncoded space, result is also uncoded
-                  let result = (targetY - displayBeta[0] - constraintSum) / displayBeta[solveFactorIdx + 1];
+                  let result = (targetY - currentDisplayBeta[0] - constraintSum) / currentDisplayBeta[solveFactorIdx + 1];
                   setSolverResult(result);
                 };
 
