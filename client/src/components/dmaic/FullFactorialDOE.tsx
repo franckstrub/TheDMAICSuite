@@ -3206,9 +3206,9 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                 // Only show included factors that are NOT the solve factor
                                 if (idx !== solveFactorIdx && selectedFactorsForModel[idx] !== false) {
                                   const constraintVal = constraintValues[idx];
-                                  const factorLow = parseFloat(String(factor.lowValue));
-                                  const factorHigh = parseFloat(String(factor.highValue));
-                                  const isOutsideRange = constraintVal !== null && constraintVal !== undefined && (
+                                  const factorLow = factor.type === 'continuous' ? parseFloat(String(factor.lowValue)) : NaN;
+                                  const factorHigh = factor.type === 'continuous' ? parseFloat(String(factor.highValue)) : NaN;
+                                  const isOutsideRange = constraintVal !== null && constraintVal !== undefined && !isNaN(factorLow) && !isNaN(factorHigh) && (
                                     constraintVal < factorLow || 
                                     constraintVal > factorHigh
                                   );
@@ -3270,8 +3270,8 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                             
                             // Check if solution is outside the solve factor's range
                             const solveFactor = factors[solveFactorIdx];
-                            const solveFactorLow = parseFloat(String(solveFactor.lowValue));
-                            const solveFactorHigh = parseFloat(String(solveFactor.highValue));
+                            const solveFactorLow = solveFactor.type === 'continuous' ? parseFloat(String(solveFactor.lowValue)) : NaN;
+                            const solveFactorHigh = solveFactor.type === 'continuous' ? parseFloat(String(solveFactor.highValue)) : NaN;
                             const solverOutsideRange = !isNaN(solveFactorLow) && !isNaN(solveFactorHigh) && 
                               (solverResult < solveFactorLow || solverResult > solveFactorHigh);
                             const solveFactorRangeStr = `[${solveFactorLow.toFixed(4)}, ${solveFactorHigh.toFixed(4)}]`;
