@@ -2206,6 +2206,12 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   }
                 });
                 
+                // Create reverse mapping: original column index -> reduced column index
+                const colMapReverse: Record<number, number> = {};
+                selectedColumns.forEach((origCol, reducedIdx) => {
+                  colMapReverse[origCol] = reducedIdx;
+                });
+                
                 // Build reduced X matrix with only selected columns
                 const X_reduced = X.map(row => selectedColumns.map(col => row[col]));
                 const p_reduced = X_reduced[0].length;
@@ -2400,7 +2406,15 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     return;
                   }
                   
-                  if (displayBeta[solveFactorIdx + 1] === 0) {
+                  // Get the reduced column index for the solve factor
+                  const solveOrigCol = solveFactorIdx + 1;
+                  const solveReducedCol = colMapReverse[solveOrigCol];
+                  if (solveReducedCol === undefined) {
+                    setSolverResult(null);
+                    return;
+                  }
+                  
+                  if (displayBeta[solveReducedCol] === 0) {
                     setSolverResult(null);
                     return;
                   }
@@ -2423,15 +2437,19 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     if (i !== solveFactorIdx && selectedFactorsForModel[i] !== false) {
                       const constraintVal = constraintValues[i];
                       if (Number.isFinite(constraintVal)) {
-                        // Use displayBeta (uncoded coefficients)
-                        constraintSum += displayBeta[i + 1] * constraintVal;
+                        const origCol = i + 1;
+                        const redCol = colMapReverse[origCol];
+                        if (redCol !== undefined) {
+                          // Use displayBeta (uncoded coefficients)
+                          constraintSum += displayBeta[redCol] * constraintVal;
+                        }
                       }
                     }
                   }
                   // Solve using UNCODED equation: targetY = β0_uncoded + Σ_{j≠i} βj_uncoded * constraint_j + βi_uncoded * Xi
                   // Therefore: Xi = (targetY - β0_uncoded - constraintSum) / βi_uncoded
                   // User enters target and constraints in uncoded space, result is also uncoded
-                  let result = (targetY - displayBeta[0] - constraintSum) / displayBeta[solveFactorIdx + 1];
+                  let result = (targetY - displayBeta[0] - constraintSum) / displayBeta[solveReducedCol];
                   setSolverResult(result);
                 };
 
@@ -2821,25 +2839,42 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     {/* Regression Equation */}
                     <Card>
                       <CardHeader>
-                        <CardTitle>Regression Model {showUncoded && allFactorsHaveValidLevels() ? '(Uncoded)' : '(Coded)'}</CardTitle>
+                        <CardTitle>
+                          Regression Model {showUncoded && allFactorsHaveValidLevels() ? '(Uncoded)' : '(Coded)'}
+                          {Object.values(selectedFactorsForModel).some(v => v === false) && (
+                            <span className="p-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-xl ml-24 text-sm font-normal justify-right">Reduced Model</span>
+                          )}
+                        </CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded font-mono text-sm">
                           <p>Y = {Number.isFinite(displayBeta[0]) ? displayBeta[0].toFixed(4) : 'N/A'}</p>
-                          {Array.from({length: baseFactorCount}).map((_, i) => (
-                            Number.isFinite(displayBeta[i + 1]) && (
-                              <p key={i}>
-                                &nbsp;&nbsp;&nbsp;&nbsp;{displayBeta[i + 1] >= 0 ? '+' : ''} {displayBeta[i + 1].toFixed(4)} × {factors[i].name}{factors[i].type === 'continuous' && factors[i].units ? ` (${factors[i].units})` : ''}
-                              </p>
-                            )
-                          ))}
-                          {interactionPairs.map((pair, i) => (
-                            Number.isFinite(displayBeta[baseFactorCount + 1 + i]) && (
-                              <p key={`int-${i}`}>
-                                &nbsp;&nbsp;&nbsp;&nbsp;{displayBeta[baseFactorCount + 1 + i] >= 0 ? '+' : ''} {displayBeta[baseFactorCount + 1 + i].toFixed(4)} × {pair.name}
-                              </p>
-                            )
-                          ))}
+                          {Array.from({length: baseFactorCount}).map((_, i) => {
+                            if (selectedFactorsForModel[i] === false) return null;
+                            const origColIdx = i + 1;
+                            const reducedColIdx = colMapReverse[origColIdx];
+                            if (reducedColIdx === undefined) return null;
+                            return (
+                              Number.isFinite(displayBeta[reducedColIdx]) && (
+                                <p key={i}>
+                                  &nbsp;&nbsp;&nbsp;&nbsp;{displayBeta[reducedColIdx] >= 0 ? '+' : ''} {displayBeta[reducedColIdx].toFixed(4)} × {factors[i].name}{factors[i].type === 'continuous' && factors[i].units ? ` (${factors[i].units})` : ''}
+                                </p>
+                              )
+                            );
+                          })}
+                          {interactionPairs.map((pair, i) => {
+                            if (selectedFactorsForModel[`int-${i}`] === false) return null;
+                            const origColIdx = baseFactorCount + 1 + i;
+                            const reducedColIdx = colMapReverse[origColIdx];
+                            if (reducedColIdx === undefined) return null;
+                            return (
+                              Number.isFinite(displayBeta[reducedColIdx]) && (
+                                <p key={`int-${i}`}>
+                                  &nbsp;&nbsp;&nbsp;&nbsp;{displayBeta[reducedColIdx] >= 0 ? '+' : ''} {displayBeta[reducedColIdx].toFixed(4)} × {pair.name}
+                                </p>
+                              )
+                            );
+                          })}
                           {displayBeta.every(v => !Number.isFinite(v)) && (
                             <p className="text-muted-foreground">Unable to compute regression equation. Check data validity.</p>
                           )}
@@ -2853,7 +2888,12 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     {/* Goodness of Fit */}
                     <Card>
                       <CardHeader>
-                        <CardTitle>Goodness of Fit</CardTitle>
+                        <CardTitle>
+                          Goodness of Fit
+                          {Object.values(selectedFactorsForModel).some(v => v === false) && (
+                            <span className="p-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-xl ml-24 text-sm font-normal justify-right">Reduced Model</span>
+                          )}
+                        </CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="grid grid-cols-2 gap-4">
@@ -2880,7 +2920,12 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     {/* Residual Analysis */}
                     <Card>
                       <CardHeader>
-                        <CardTitle>Residual Analysis</CardTitle>
+                        <CardTitle>
+                          Residual Analysis
+                          {Object.values(selectedFactorsForModel).some(v => v === false) && (
+                            <span className="p-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-xl ml-24 text-sm font-normal justify-right">Reduced Model</span>
+                          )}
+                        </CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-4">
@@ -3104,7 +3149,12 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     {/* Solver */}
                     <Card>
                       <CardHeader>
-                        <CardTitle>Solve for Target Response</CardTitle>
+                        <CardTitle>
+                          Solve for Target Response
+                          {Object.values(selectedFactorsForModel).some(v => v === false) && (
+                            <span className="p-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-xl ml-24 text-sm font-normal justify-right">Reduced Model</span>
+                          )}
+                        </CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-4">
@@ -3208,7 +3258,11 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                             Save Setup
                           </Button>
 
-                          {targetYDisplay !== '' && Number.isFinite(targetY) && displayBeta[solveFactorIdx + 1] === 0 && (
+                          {targetYDisplay !== '' && Number.isFinite(targetY) && (() => {
+                            const solveOrigCol = solveFactorIdx + 1;
+                            const solveRedCol = colMapReverse[solveOrigCol];
+                            return solveRedCol !== undefined && displayBeta[solveRedCol] === 0;
+                          })() && (
                             <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded border border-amber-200 dark:border-amber-800">
                               <p className="text-sm text-amber-600 dark:text-amber-400">
                                 ⚠️ Cannot solve for {factors[solveFactorIdx].name}: This factor has a coefficient of 0 in the model, meaning it has no significant effect on the response in this design.
