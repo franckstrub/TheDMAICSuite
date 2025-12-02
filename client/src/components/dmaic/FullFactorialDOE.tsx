@@ -2663,15 +2663,6 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                               </p>
                             );
                           })}
-                          {includeCenterPoints && (() => {
-                            if (selectedFactorsForModel['centerPoint'] === false) return null;
-                            const displayedCenterCoeff = getCenterPointCoeff(displayBeta[0]);
-                            return displayedCenterCoeff !== 0 ? (
-                              <p key="center-point">
-                                &nbsp;&nbsp;&nbsp;&nbsp;{displayedCenterCoeff >= 0 ? '+' : ''} {displayedCenterCoeff?.toFixed(4)} × Center Point
-                              </p>
-                            ) : null;
-                          })()}
                         </div>
                       </CardContent>
                     </Card>
