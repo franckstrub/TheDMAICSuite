@@ -133,7 +133,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
   // Ref to store the solve function so it can be called by useEffect
   const solveRef = useRef<(() => void) | null>(null);
 
-  // Auto-solve when solver dependencies change
+  // Auto-solve when solver dependencies change or when returning to Analysis tab
   useEffect(() => {
     // Use setTimeout to ensure solveRef.current is updated first
     const timeoutId = setTimeout(() => {
@@ -142,7 +142,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
       }
     }, 0);
     return () => clearTimeout(timeoutId);
-  }, [solveFactorIdx, targetY, constraintValues, selectedFactorsForModel]);
+  }, [solveFactorIdx, targetY, constraintValues, selectedFactorsForModel, activeTab]);
   
   // Update localStorage when tab changes
   useEffect(() => {
@@ -2239,12 +2239,12 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 const SS_res = residualSS_red - SS_curvature;
                 const errorDF_red = n - p_reduced - dfCurvature;
                 const errorMS = errorDF_red > 0 ? SS_res / errorDF_red : 0;
-                const R_sq = 1 - SS_res / SS_tot;
-                const adj_R_sq = 1 - (1 - R_sq) * (n - 1) / (n - p_reduced - dfCurvature);
-                const rmse = Math.sqrt(SS_res / (n - p_reduced- dfCurvature));
+                const R_sq = SS_tot > 0 ? 1 - SS_res / SS_tot : 1;
+                const adj_R_sq = (n - p_reduced - dfCurvature) > 0 ? 1 - (1 - R_sq) * (n - 1) / (n - p_reduced - dfCurvature) : R_sq;
+                const rmse = (n - p_reduced - dfCurvature) > 0 ? Math.sqrt(SS_res / (n - p_reduced- dfCurvature)) : 0;
                 const residualMean = residuals_red.reduce((a, b) => a + b, 0) / residuals_red.length;
                 const residualStd = Math.sqrt(residuals_red.reduce((sum, r) => sum + Math.pow(r - residualMean, 2), 0) / (residuals_red.length - 1));
-                const mse = SS_res / (n - p_reduced - dfCurvature);
+                const mse = (n - p_reduced - dfCurvature) > 0 ? SS_res / (n - p_reduced - dfCurvature) : 0;
                 
                 // Calculate standard errors and t-values for selected coefficients using reduced model
                 const coeffStats = beta_red.map((b, redIdx) => {
@@ -2264,7 +2264,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     pValue = Number.isFinite(cdfVal) ? 2 * (1 - cdfVal) : 1;
                     pValue = Math.max(0, Math.min(1, pValue));
                   }
-                  return { stdError: Number.isFinite(stdError) ? stdError : 0, tValue: Number.isFinite(tValue) ? tValue : NaN, pValue };
+                  return { stdError: Number.isFinite(stdError) ? stdError : 0, tValue: Number.isFinite(tValue) ? tValue : +Infinity, pValue };
                 });
 
                 // Transform coefficients using beta_red and selected columns mapping
@@ -2371,7 +2371,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     // So no variance contribution from interactions to intercept SE
                     
                     transformedStats[0].stdError = Math.sqrt(Math.max(0, interceptSESquared));
-                    transformedStats[0].tValue = transformedStats[0].stdError > 0 ?(beta[0] - interceptAdjustment) / transformedStats[0].stdError : NaN;
+                    transformedStats[0].tValue = transformedStats[0].stdError > 0 ?(beta[0] - interceptAdjustment) / transformedStats[0].stdError : +Infinity;
                     // Recalculate p-value for intercept since its t-value changes (SE is recalculated via variance propagation)
                     transformedStats[0].pValue = transformedStats[0].stdError > 0 ? 2 * (1 - jStat.studentt.cdf(Math.abs(transformedStats[0].tValue), n - numCoefficients)) : 0;
                   }
