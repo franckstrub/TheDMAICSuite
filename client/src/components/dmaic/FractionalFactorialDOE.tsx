@@ -2237,14 +2237,14 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 const residuals_red = y.map((val, i) => val - predictions_red[i]);
                 const residualSS_red = residuals_red.reduce((sum, res) => sum + Math.pow(res, 2), 0);
                 const SS_res = residualSS_red - SS_curvature;
-                const errorDF_red = n - p_reduced;
+                const errorDF_red = n - p_reduced - dfCurvature;
                 const errorMS = errorDF_red > 0 ? SS_res / errorDF_red : 0;
                 const R_sq = 1 - SS_res / SS_tot;
-                const adj_R_sq = 1 - (1 - R_sq) * (n - 1) / (n - p_reduced);
-                const rmse = Math.sqrt(SS_res / (n - p_reduced));
+                const adj_R_sq = 1 - (1 - R_sq) * (n - 1) / (n - p_reduced - dfCurvature);
+                const rmse = Math.sqrt(SS_res / (n - p_reduced- dfCurvature));
                 const residualMean = residuals_red.reduce((a, b) => a + b, 0) / residuals_red.length;
                 const residualStd = Math.sqrt(residuals_red.reduce((sum, r) => sum + Math.pow(r - residualMean, 2), 0) / (residuals_red.length - 1));
-                const mse = SS_res / (n - p_reduced);
+                const mse = SS_res / (n - p_reduced - dfCurvature);
                 
                 // Calculate standard errors and t-values for selected coefficients using reduced model
                 const coeffStats = beta_red.map((b, redIdx) => {
@@ -2256,15 +2256,15 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     xxtInvDiag = Math.abs(denom) > 1e-10 ? 1 / denom : 1 / XtX_red[redIdx][redIdx];
                   }
                   const stdError = Math.sqrt(mse * Math.max(0, xxtInvDiag));
-                  const tValue = stdError > 0 ? b / stdError : 0;
-                  let pValue = 1;
+                  const tValue = stdError > 0 ? b / stdError : NaN;
+                  let pValue = 0;
                   if (stdError > 0 && Number.isFinite(tValue)) {
                     const df = errorDF_red;
                     const cdfVal = jStat.studentt.cdf(Math.abs(tValue), df);
                     pValue = Number.isFinite(cdfVal) ? 2 * (1 - cdfVal) : 1;
                     pValue = Math.max(0, Math.min(1, pValue));
                   }
-                  return { stdError: Number.isFinite(stdError) ? stdError : 0, tValue: Number.isFinite(tValue) ? tValue : 0, pValue };
+                  return { stdError: Number.isFinite(stdError) ? stdError : 0, tValue: Number.isFinite(tValue) ? tValue : NaN, pValue };
                 });
 
                 // Transform coefficients using beta_red and selected columns mapping
@@ -2371,9 +2371,9 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     // So no variance contribution from interactions to intercept SE
                     
                     transformedStats[0].stdError = Math.sqrt(Math.max(0, interceptSESquared));
-                    transformedStats[0].tValue = (beta[0] - interceptAdjustment) / transformedStats[0].stdError;
+                    transformedStats[0].tValue = transformedStats[0].stdError > 0 ?(beta[0] - interceptAdjustment) / transformedStats[0].stdError : NaN;
                     // Recalculate p-value for intercept since its t-value changes (SE is recalculated via variance propagation)
-                    transformedStats[0].pValue = transformedStats[0].stdError > 0 ? 2 * (1 - jStat.studentt.cdf(Math.abs(transformedStats[0].tValue), n - numCoefficients)) : 1;
+                    transformedStats[0].pValue = transformedStats[0].stdError > 0 ? 2 * (1 - jStat.studentt.cdf(Math.abs(transformedStats[0].tValue), n - numCoefficients)) : 0;
                   }
                   
                   transformed[0] = beta[0] - interceptAdjustment;
@@ -2476,8 +2476,8 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                   const termMS = termDF === 0 ? 0 : termSS / termDF;
                                   //const errorMS = termDF === 0 ? 0 : SS_res / (n - p);
                                   const fRatio = errorMS > 0 ? termMS / errorMS : 0;
-                                  const pValue = fRatio > 0 && (n - p) > 0 
-                                    ? 1 - jStat.centralF.cdf(fRatio, termDF, n - p) 
+                                  const pValue = fRatio > 0 && (n - p_reduced - dfCurvature) > 0 
+                                    ? 1 - jStat.centralF.cdf(fRatio, termDF, n - p_reduced - dfCurvature) 
                                     : 1;
 
                                   rows.push(
@@ -2510,7 +2510,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                   //const errorMS = termDF === 0 ? 0 : SS_res / (n - p);
                                   const fRatio = errorMS > 0 ? termMS / errorMS : 0;
                                   const pValue = fRatio > 0 && (n - p) > 0 
-                                    ? 1 - jStat.centralF.cdf(fRatio, termDF, n - p) 
+                                    ? 1 - jStat.centralF.cdf(fRatio, termDF, n - p_reduced - dfCurvature) 
                                     : 1;
                                   if (termDF === 1) {
                                     rows.push(
@@ -2564,8 +2564,8 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                     const curveMS = SS_curvature / dfCurvature;
                                     //const errorMS = dfTotal > dfBasefactors + dfInteractions + dfCurvature ? SS_res / (n - p) : 0;
                                     const curveFRatio = errorMS > 0 ? curveMS / errorMS : 0;
-                                    const curvePValue = curveFRatio > 0 && (n - p) > 0 
-                                      ? 1 - jStat.centralF.cdf(curveFRatio, dfCurvature, n - p) 
+                                    const curvePValue = curveFRatio > 0 && (n - p_reduced - dfCurvature) > 0 
+                                      ? 1 - jStat.centralF.cdf(curveFRatio, dfCurvature, n - p_reduced -dfCurvature) 
                                       : 1;
 
                                     rows.push(
@@ -2606,7 +2606,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                     <TableCell className="text-right">{modelFRatio >0 ? modelFRatio.toFixed(4) : '-'}</TableCell>
                                     <TableCell className="text-right">
                                       <span className={modelPValue < 0.05 ? "text-green-600 font-semibold" : ""}>
-                                        {modelPValue === 1 ? '-' : modelPValue.toFixed(4)}
+                                        {modelPValue === 1 || isNaN(modelPValue) ? '-' : modelPValue.toFixed(4)}
                                       </span>
                                     </TableCell>
                                   </TableRow>
@@ -2693,43 +2693,12 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                 <TableCell className="text-center"><Checkbox disabled checked /></TableCell>
                               </TableRow>
                               {factors.map((factor, i) => {
-                                const vif = (() => {
-                                  try {
-                                    return calculateDOEVIF(X, i);
-                                  } catch {
-                                    return null;
-                                  }
-                                })();
-                                const isHighVIF = vif !== null && vif > 5;
-                                const isModerateVIF = vif !== null && vif > 1 && vif <= 5;
-                                return (
-                                <TableRow key={i}>
-                                  <TableCell className="font-medium">{factor.name}</TableCell>
-                                  <TableCell className="text-right">{displayBeta[i + 1]?.toFixed(6)}</TableCell>
-                                  <TableCell className="text-right">{displayCoeffStats[i + 1]?.stdError.toFixed(4)}</TableCell>
-                                  <TableCell className="text-right">{displayCoeffStats[i + 1]?.tValue.toFixed(4)}</TableCell>
-                                  <TableCell className={`text-right ${(displayCoeffStats[i + 1]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{(Math.max(0, Math.min(1, displayCoeffStats[i + 1]?.pValue ?? 1))).toFixed(4)}</TableCell>
-                                  <TableCell className={`text-right ${isHighVIF ? 'text-red-600 font-semibold' : isModerateVIF ? 'text-yellow-400 font-semibold' : ''}`}>{vif !== null ? vif.toFixed(2) : '-'}</TableCell>
-                                  <TableCell className="text-center">
-                                    <Checkbox
-                                      checked={selectedFactorsForModel[i] ?? true}
-                                      onCheckedChange={(checked) => {
-                                        setSelectedFactorsForModel(prev => ({
-                                          ...prev,
-                                          [i]: !!checked
-                                        }));
-                                      }}
-                                      data-testid={`checkbox-factor-${i}`}
-                                    />
-                                  </TableCell>
-                                </TableRow>
-                                );
-                              })}
-                              {interactionPairs.map((pair, i) => {
-                                if (dfInteractions > 0 && dfInteractions > i) {
+                                const isIncluded = selectedFactorsForModel[i] !== false;
+                                
+                                if (isIncluded) {
                                   const vif = (() => {
                                     try {
-                                      return calculateDOEVIF(X, factors.length + i);
+                                      return calculateDOEVIF(X, i);
                                     } catch {
                                       return null;
                                     }
@@ -2737,28 +2706,106 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                   const isHighVIF = vif !== null && vif > 5;
                                   const isModerateVIF = vif !== null && vif > 1 && vif <= 5;
                                   return (
-                                  <TableRow key={`int-${i}`}>
-                                    <TableCell className="font-medium">{pair.name}</TableCell>
-                                    <TableCell className="text-right">{displayBeta[factors.length + 1 + i]?.toFixed(6)}</TableCell>
-                                    <TableCell className="text-right">{displayCoeffStats[factors.length + 1 + i]?.stdError.toFixed(4)}</TableCell>
-                                    <TableCell className="text-right">{displayCoeffStats[factors.length + 1 + i]?.tValue.toFixed(4)}</TableCell>
-                                    <TableCell className={`text-right ${(displayCoeffStats[factors.length + 1 + i]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{(Math.max(0, Math.min(1, displayCoeffStats[factors.length + 1 + i]?.pValue ?? 1))).toFixed(4)}</TableCell>
+                                  <TableRow key={i}>
+                                    <TableCell className="font-medium">{factor.name}</TableCell>
+                                    <TableCell className="text-right">{displayBeta[i + 1]?.toFixed(6)}</TableCell>
+                                    <TableCell className="text-right">{displayCoeffStats[i + 1]?.stdError.toFixed(4)}</TableCell>
+                                    <TableCell className="text-right">{displayCoeffStats[i + 1]?.tValue.toFixed(4)}</TableCell>
+                                    <TableCell className={`text-right ${(displayCoeffStats[i + 1]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{(Math.max(0, Math.min(1, displayCoeffStats[i + 1]?.pValue ?? 1))).toFixed(4)}</TableCell>
                                     <TableCell className={`text-right ${isHighVIF ? 'text-red-600 font-semibold' : isModerateVIF ? 'text-yellow-400 font-semibold' : ''}`}>{vif !== null ? vif.toFixed(2) : '-'}</TableCell>
                                     <TableCell className="text-center">
                                       <Checkbox
-                                        checked={selectedFactorsForModel[`int-${i}`] ?? true}
+                                        checked={true}
                                         onCheckedChange={(checked) => {
                                           setSelectedFactorsForModel(prev => ({
                                             ...prev,
-                                            [`int-${i}`]: !!checked
+                                            [i]: !!checked
                                           }));
                                         }}
-                                        data-testid={`checkbox-interaction-${i}`}
+                                        data-testid={`checkbox-factor-${i}`}
+                                      />
+                                    </TableCell>
+                                  </TableRow>
+                                  );
+                                } else {
+                                  return (
+                                  <TableRow key={i} className="opacity-50">
+                                    <TableCell className="font-medium text-muted-foreground">{factor.name}</TableCell>
+                                    <TableCell colSpan={5} className="text-muted-foreground">Term not included in model</TableCell>
+                                    <TableCell className="text-center">
+                                      <Checkbox
+                                        checked={false}
+                                        onCheckedChange={(checked) => {
+                                          setSelectedFactorsForModel(prev => ({
+                                            ...prev,
+                                            [i]: !!checked
+                                          }));
+                                        }}
+                                        data-testid={`checkbox-factor-${i}`}
                                       />
                                     </TableCell>
                                   </TableRow>
                                   );
                                 }
+                              })}
+                              {interactionPairs.map((pair, i) => {
+                                if (dfInteractions > 0 && dfInteractions > i) {
+                                  const isIncluded = selectedFactorsForModel[`int-${i}`] !== false;
+                                  
+                                  if (isIncluded) {
+                                    const vif = (() => {
+                                      try {
+                                        return calculateDOEVIF(X, factors.length + i);
+                                      } catch {
+                                        return null;
+                                      }
+                                    })();
+                                    const isHighVIF = vif !== null && vif > 5;
+                                    const isModerateVIF = vif !== null && vif > 1 && vif <= 5;
+                                    return (
+                                    <TableRow key={`int-${i}`}>
+                                      <TableCell className="font-medium">{pair.name}</TableCell>
+                                      <TableCell className="text-right">{displayBeta[factors.length + 1 + i]?.toFixed(6)}</TableCell>
+                                      <TableCell className="text-right">{displayCoeffStats[factors.length + 1 + i]?.stdError.toFixed(4)}</TableCell>
+                                      <TableCell className="text-right">{displayCoeffStats[factors.length + 1 + i]?.tValue.toFixed(4)}</TableCell>
+                                      <TableCell className={`text-right ${(displayCoeffStats[factors.length + 1 + i]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{(Math.max(0, Math.min(1, displayCoeffStats[factors.length + 1 + i]?.pValue ?? 1))).toFixed(4)}</TableCell>
+                                      <TableCell className={`text-right ${isHighVIF ? 'text-red-600 font-semibold' : isModerateVIF ? 'text-yellow-400 font-semibold' : ''}`}>{vif !== null ? vif.toFixed(2) : '-'}</TableCell>
+                                      <TableCell className="text-center">
+                                        <Checkbox
+                                          checked={true}
+                                          onCheckedChange={(checked) => {
+                                            setSelectedFactorsForModel(prev => ({
+                                              ...prev,
+                                              [`int-${i}`]: !!checked
+                                            }));
+                                          }}
+                                          data-testid={`checkbox-interaction-${i}`}
+                                        />
+                                      </TableCell>
+                                    </TableRow>
+                                    );
+                                  } else {
+                                    return (
+                                    <TableRow key={`int-${i}`} className="opacity-50">
+                                      <TableCell className="font-medium text-muted-foreground">{pair.name}</TableCell>
+                                      <TableCell colSpan={5} className="text-muted-foreground">Term not included in model</TableCell>
+                                      <TableCell className="text-center">
+                                        <Checkbox
+                                          checked={false}
+                                          onCheckedChange={(checked) => {
+                                            setSelectedFactorsForModel(prev => ({
+                                              ...prev,
+                                              [`int-${i}`]: !!checked
+                                            }));
+                                          }}
+                                          data-testid={`checkbox-interaction-${i}`}
+                                        />
+                                      </TableCell>
+                                    </TableRow>
+                                    );
+                                  }
+                                }
+                                return null;
                               })}
                               {includeCenterPoints && (() => {
                                 const isIncluded = selectedFactorsForModel['centerPoint'] !== false;
