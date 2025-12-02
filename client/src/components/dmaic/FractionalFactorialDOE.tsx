@@ -2400,7 +2400,8 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     return;
                   }
                   
-                  if (displayBeta[solveFactorIdx + 1] === 0) {
+                  // Use CODED coefficients (beta) for solving
+                  if (beta[solveFactorIdx + 1] === 0) {
                     setSolverResult(null);
                     return;
                   }
@@ -2417,22 +2418,58 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     }
                   }
                   
+                  // Helper to convert uncoded value to coded value
+                  const encodeValue = (factorIdx: number, uncodedVal: number): number => {
+                    const factor = factors[factorIdx];
+                    if (factor.type === 'continuous' && factor.lowValue !== undefined && factor.highValue !== undefined) {
+                      const low = parseFloat(String(factor.lowValue));
+                      const high = parseFloat(String(factor.highValue));
+                      if (!isNaN(low) && !isNaN(high) && high !== low) {
+                        const center = (low + high) / 2;
+                        const halfRange = (high - low) / 2;
+                        return (uncodedVal - center) / halfRange;
+                      }
+                    }
+                    return uncodedVal; // Return as-is if can't encode
+                  };
+                  
+                  // Helper to convert coded value to uncoded value
+                  const decodeValue = (factorIdx: number, codedVal: number): number => {
+                    const factor = factors[factorIdx];
+                    if (factor.type === 'continuous' && factor.lowValue !== undefined && factor.highValue !== undefined) {
+                      const low = parseFloat(String(factor.lowValue));
+                      const high = parseFloat(String(factor.highValue));
+                      if (!isNaN(low) && !isNaN(high)) {
+                        const center = (low + high) / 2;
+                        const halfRange = (high - low) / 2;
+                        return center + codedVal * halfRange;
+                      }
+                    }
+                    return codedVal; // Return as-is if can't decode
+                  };
+                  
+                  // Calculate constraint sum using CODED equation
+                  // Coded equation: Y = β0 + Σ βi * Xi_coded
                   let constraintSum = 0;
-                  for (let i = 0; i < factors.length; i++) {
+                  for (let i = 0; i < baseFactorCount; i++) {
                     // Only include constraints for factors that are NOT the solve factor and ARE included in the model
                     if (i !== solveFactorIdx && selectedFactorsForModel[i] !== false) {
                       const constraintVal = constraintValues[i];
                       if (Number.isFinite(constraintVal)) {
-                        // Use displayBeta (uncoded coefficients)
-                        constraintSum += displayBeta[i + 1] * constraintVal;
+                        // Convert constraint from uncoded to coded, then multiply by coded coefficient
+                        const codedConstraint = encodeValue(i, constraintVal);
+                        constraintSum += beta[i + 1] * codedConstraint;
                       }
                     }
                   }
-                  // Solve using UNCODED equation: targetY = β0_uncoded + Σ_{j≠i} βj_uncoded * constraint_j + βi_uncoded * Xi
-                  // Therefore: Xi = (targetY - β0_uncoded - constraintSum) / βi_uncoded
-                  // User enters target and constraints in uncoded space, result is also uncoded
-                  let result = (targetY - displayBeta[0] - constraintSum) / displayBeta[solveFactorIdx + 1];
-                  setSolverResult(result);
+                  
+                  // Solve using CODED equation: targetY = β0 + Σ_{j≠i} βj * Xj_coded + βi * Xi_coded
+                  // Therefore: Xi_coded = (targetY - β0 - constraintSum) / βi
+                  const codedResult = (targetY - beta[0] - constraintSum) / beta[solveFactorIdx + 1];
+                  
+                  // Convert coded result back to uncoded for display
+                  const uncodedResult = decodeValue(solveFactorIdx, codedResult);
+                  setSolverResult(uncodedResult);
                 };
 
                 // Store solve function in ref so top-level useEffect can call it
