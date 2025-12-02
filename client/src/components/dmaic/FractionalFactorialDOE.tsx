@@ -132,28 +132,15 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
   
   // Ref to store the solve function so it can be called by useEffect
   const solveRef = useRef<(() => void) | null>(null);
-  
-  // Ref to track if Analysis tab has rendered at least once (displayBeta is ready)
-  const analysisRenderedRef = useRef(false);
 
-  // Auto-solve when solver dependencies change (only when on Analysis tab and displayBeta is ready)
+  // Auto-solve when solver dependencies change or when returning to Analysis tab
   useEffect(() => {
-    // Only run when on the Analysis tab where displayBeta is computed
-    if (activeTab !== 'analysis') {
-      // Reset the ref when leaving Analysis tab so we re-trigger on return
-      analysisRenderedRef.current = false;
-      return;
-    }
-    
-    // Skip if Analysis hasn't rendered yet (solveRef won't have fresh displayBeta)
-    if (!analysisRenderedRef.current) return;
-    
-    // Use setTimeout to ensure solveRef.current is updated first
+    // Use timeout to ensure solveRef.current is set after Analysis renders
     const timeoutId = setTimeout(() => {
       if (solveRef.current) {
         solveRef.current();
       }
-    }, 0);
+    }, 50);
     return () => clearTimeout(timeoutId);
   }, [solveFactorIdx, targetY, constraintValues, selectedFactorsForModel, activeTab]);
   
@@ -2450,17 +2437,6 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
 
                 // Store solve function in ref so top-level useEffect can call it
                 solveRef.current = handleSolve;
-                
-                // Mark Analysis as rendered and trigger solve on first render with fresh displayBeta
-                if (!analysisRenderedRef.current) {
-                  analysisRenderedRef.current = true;
-                  // Schedule solve for next tick to use fresh uncoded coefficients
-                  setTimeout(() => {
-                    if (solveRef.current) {
-                      solveRef.current();
-                    }
-                  }, 0);
-                }
 
                 return (
                   <>
