@@ -2331,19 +2331,21 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                       
                       for (const idx of pair.indices) {
                         const factor = factors[idx];
-                        const low = parseFloat(String(factor.lowValue));
-                        const high = parseFloat(String(factor.highValue));
-                        if (isNaN(low) || isNaN(high)) {
-                          allValid = false;
-                          break;
+                        if (factor.type === 'continuous' && factor.lowValue !== undefined && factor.highValue !== undefined) {
+                          const low = parseFloat(String(factor.lowValue));
+                          const high = parseFloat(String(factor.highValue));
+                          if (isNaN(low) || isNaN(high)) {
+                            allValid = false;
+                            break;
+                          }
+                          halfRangeProduct *= (high - low) / 2;
                         }
-                        halfRangeProduct *= (high - low) / 2;
                       }
                       
-                      if (allValid && Number.isFinite(beta[interactionCoeffIdx])) {
-                        transformed[interactionCoeffIdx] = beta[interactionCoeffIdx] / halfRangeProduct;
-                        if (transformedStats[interactionCoeffIdx]) {
-                          transformedStats[interactionCoeffIdx].stdError = coeffStats[interactionCoeffIdx].stdError / halfRangeProduct;
+                      if (allValid && Number.isFinite(beta_red[colIdx])) {
+                        transformed[colIdx] = beta_red[colIdx] / halfRangeProduct;
+                        if (transformedStats[colIdx]) {
+                          transformedStats[colIdx].stdError = coeffStats[colIdx].stdError / halfRangeProduct;
                         }
                       }
                     }
@@ -3207,9 +3209,9 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                 // Only show included factors that are NOT the solve factor
                                 if (idx !== solveFactorIdx && selectedFactorsForModel[idx] !== false) {
                                   const constraintVal = constraintValues[idx];
-                                  const factorLow = parseFloat(String(factor.lowValue));
-                                  const factorHigh = parseFloat(String(factor.highValue));
-                                  const isOutsideRange = constraintVal !== null && constraintVal !== undefined && (
+                                  const factorLow = factor.type === 'continuous' ? parseFloat(String(factor.lowValue)) : NaN;
+                                  const factorHigh = factor.type === 'continuous' ? parseFloat(String(factor.highValue)) : NaN;
+                                  const isOutsideRange = constraintVal !== null && constraintVal !== undefined && !isNaN(factorLow) && !isNaN(factorHigh) && (
                                     constraintVal < factorLow || 
                                     constraintVal > factorHigh
                                   );
@@ -3283,8 +3285,8 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                             
                             // Check if solution is outside the solve factor's range
                             const solveFactor = factors[solveFactorIdx];
-                            const solveFactorLow = parseFloat(String(solveFactor.lowValue));
-                            const solveFactorHigh = parseFloat(String(solveFactor.highValue));
+                            const solveFactorLow = solveFactor.type === 'continuous' ? parseFloat(String(solveFactor.lowValue)) : NaN;
+                            const solveFactorHigh = solveFactor.type === 'continuous' ? parseFloat(String(solveFactor.highValue)) : NaN;
                             const solverOutsideRange = !isNaN(solveFactorLow) && !isNaN(solveFactorHigh) && 
                               (solverResult < solveFactorLow || solverResult > solveFactorHigh);
                             const solveFactorRangeStr = `[${solveFactorLow.toFixed(4)}, ${solveFactorHigh.toFixed(4)}]`;
