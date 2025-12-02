@@ -132,20 +132,17 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
   
   // Ref to store the solve function so it can be called by useEffect
   const solveRef = useRef<(() => void) | null>(null);
-  
-  // Ref to store the latest displayBeta so handleSolve can always access fresh values
-  const displayBetaRef = useRef<number[]>([]);
 
-  // Auto-solve when solver dependencies change or when returning to Analysis tab
+  // Auto-solve when solver dependencies change
   useEffect(() => {
-    // Use timeout to ensure solveRef.current is set after Analysis renders
+    // Use setTimeout to ensure solveRef.current is updated first
     const timeoutId = setTimeout(() => {
       if (solveRef.current) {
         solveRef.current();
       }
-    }, 50);
+    }, 0);
     return () => clearTimeout(timeoutId);
-  }, [solveFactorIdx, targetY, constraintValues, selectedFactorsForModel, activeTab]);
+  }, [solveFactorIdx, targetY, constraintValues, selectedFactorsForModel]);
   
   // Update localStorage when tab changes
   useEffect(() => {
@@ -2242,12 +2239,12 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 const SS_res = residualSS_red - SS_curvature;
                 const errorDF_red = n - p_reduced - dfCurvature;
                 const errorMS = errorDF_red > 0 ? SS_res / errorDF_red : 0;
-                const R_sq = SS_tot > 0 ? 1 - SS_res / SS_tot : 1;
-                const adj_R_sq = (n - p_reduced - dfCurvature) > 0 ? 1 - (1 - R_sq) * (n - 1) / (n - p_reduced - dfCurvature) : R_sq;
-                const rmse = (n - p_reduced - dfCurvature) > 0 ? Math.sqrt(SS_res / (n - p_reduced- dfCurvature)) : 0;
+                const R_sq = 1 - SS_res / SS_tot;
+                const adj_R_sq = 1 - (1 - R_sq) * (n - 1) / (n - p_reduced - dfCurvature);
+                const rmse = Math.sqrt(SS_res / (n - p_reduced- dfCurvature));
                 const residualMean = residuals_red.reduce((a, b) => a + b, 0) / residuals_red.length;
                 const residualStd = Math.sqrt(residuals_red.reduce((sum, r) => sum + Math.pow(r - residualMean, 2), 0) / (residuals_red.length - 1));
-                const mse = (n - p_reduced - dfCurvature) > 0 ? SS_res / (n - p_reduced - dfCurvature) : 0;
+                const mse = SS_res / (n - p_reduced - dfCurvature);
                 
                 // Calculate standard errors and t-values for selected coefficients using reduced model
                 const coeffStats = beta_red.map((b, redIdx) => {
@@ -2267,7 +2264,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     pValue = Number.isFinite(cdfVal) ? 2 * (1 - cdfVal) : 1;
                     pValue = Math.max(0, Math.min(1, pValue));
                   }
-                  return { stdError: Number.isFinite(stdError) ? stdError : 0, tValue: Number.isFinite(tValue) ? tValue : +Infinity, pValue };
+                  return { stdError: Number.isFinite(stdError) ? stdError : 0, tValue: Number.isFinite(tValue) ? tValue : NaN, pValue };
                 });
 
                 // Transform coefficients using beta_red and selected columns mapping
@@ -2374,7 +2371,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     // So no variance contribution from interactions to intercept SE
                     
                     transformedStats[0].stdError = Math.sqrt(Math.max(0, interceptSESquared));
-                    transformedStats[0].tValue = transformedStats[0].stdError > 0 ?(beta[0] - interceptAdjustment) / transformedStats[0].stdError : +Infinity;
+                    transformedStats[0].tValue = transformedStats[0].stdError > 0 ?(beta[0] - interceptAdjustment) / transformedStats[0].stdError : NaN;
                     // Recalculate p-value for intercept since its t-value changes (SE is recalculated via variance propagation)
                     transformedStats[0].pValue = transformedStats[0].stdError > 0 ? 2 * (1 - jStat.studentt.cdf(Math.abs(transformedStats[0].tValue), n - numCoefficients)) : 0;
                   }
@@ -2390,13 +2387,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 
                 const { displayBeta, displayCoeffStats } = transformCoefficientsAndSE();
                 
-                // Store displayBeta in ref so handleSolve always uses fresh values
-                displayBetaRef.current = displayBeta;
-                
                 const handleSolve = () => {
-                  // Always read from ref to get the latest uncoded coefficients
-                  const currentDisplayBeta = displayBetaRef.current;
-                  
                   // Check if solve factor is included in the model
                   if (selectedFactorsForModel[solveFactorIdx] === false || baseFactorCount < 1) {
                     setSolverResult(null);
@@ -2409,7 +2400,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     return;
                   }
                   
-                  if (!currentDisplayBeta || currentDisplayBeta.length === 0 || currentDisplayBeta[solveFactorIdx + 1] === 0) {
+                  if (displayBeta[solveFactorIdx + 1] === 0) {
                     setSolverResult(null);
                     return;
                   }
@@ -2432,15 +2423,15 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     if (i !== solveFactorIdx && selectedFactorsForModel[i] !== false) {
                       const constraintVal = constraintValues[i];
                       if (Number.isFinite(constraintVal)) {
-                        // Use currentDisplayBeta (uncoded coefficients from ref)
-                        constraintSum += currentDisplayBeta[i + 1] * constraintVal;
+                        // Use displayBeta (uncoded coefficients)
+                        constraintSum += displayBeta[i + 1] * constraintVal;
                       }
                     }
                   }
                   // Solve using UNCODED equation: targetY = β0_uncoded + Σ_{j≠i} βj_uncoded * constraint_j + βi_uncoded * Xi
                   // Therefore: Xi = (targetY - β0_uncoded - constraintSum) / βi_uncoded
                   // User enters target and constraints in uncoded space, result is also uncoded
-                  let result = (targetY - currentDisplayBeta[0] - constraintSum) / currentDisplayBeta[solveFactorIdx + 1];
+                  let result = (targetY - displayBeta[0] - constraintSum) / displayBeta[solveFactorIdx + 1];
                   setSolverResult(result);
                 };
 
