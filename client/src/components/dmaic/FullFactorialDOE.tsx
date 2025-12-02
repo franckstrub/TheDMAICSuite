@@ -2326,13 +2326,15 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                       
                       for (const idx of pair.indices) {
                         const factor = factors[idx];
-                        const low = parseFloat(String(factor.lowValue));
-                        const high = parseFloat(String(factor.highValue));
-                        if (isNaN(low) || isNaN(high)) {
-                          allValid = false;
-                          break;
+                        if (factor.type === 'continuous' && factor.lowValue !== undefined && factor.highValue !== undefined) {
+                          const low = parseFloat(String(factor.lowValue));
+                          const high = parseFloat(String(factor.highValue));
+                          if (isNaN(low) || isNaN(high)) {
+                            allValid = false;
+                            break;
+                          }
+                          halfRangeProduct *= (high - low) / 2;
                         }
-                        halfRangeProduct *= (high - low) / 2;
                       }
                       
                       if (allValid && reducedInteractionIdx !== undefined && beta_display[reducedInteractionIdx] !== undefined) {
