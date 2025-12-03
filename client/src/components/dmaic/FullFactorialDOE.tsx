@@ -2002,12 +2002,6 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                 
                 const y_c_avg = centerResponses.reduce((a, b) => a + b, 0) / centerResponses.length;
                 const y_f_avg = factorialResponses.reduce((a, b) => a + b, 0) / factorialResponses.length;
-                const curveDiff = y_c_avg - y_f_avg;
-                
-                // Curvature SS using same formula as ANOVA table: (n_f * n_c) / (n_f + n_c) * (meanF - meanC)^2
-                const SS_curvature = ((n_f * n_c) / (n_f + n_c)) * Math.pow(y_f_avg - y_c_avg, 2);
-                const curvatureDF = 1;
-                const curveMS = SS_curvature / curvatureDF;
                 
                 // Build full design matrix with interactions (same as ANOVA table)
                 const getCombinations = (arr: number[], size: number): number[][] => {
@@ -2073,15 +2067,22 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                 if (XtX_inv_full) {
                   beta_full = Xty_full.map((_, j) => Xty_full.reduce((sum, val, k) => sum + XtX_inv_full[j][k] * val, 0));
                 }
+                // Curvature effect: center point mean - predicted at center (intercept)
+                const y_f_at_center = beta_full[0] || y_f_avg;
+                const curveEffect = y_c_avg - y_f_at_center;
+                const curveDiff = y_c_avg - y_f_avg; // For display
                 
-                // Calculate residual SS from full model, then subtract curvature SS (same as ANOVA table)
+                // Curvature SS using standard formula
+                const curvatureSS = (n_f * n_c) / (n_f + n_c) * Math.pow(curveEffect, 2);
+                const curvatureDF = 1;
+                
+                // Calculate residual SS from full model
                 const predictions_full = X_full.map(row => row.reduce((sum, val, i) => sum + val * (beta_full[i] || 0), 0));
                 const residualSS_full = y_full.reduce((sum, yi, i) => sum + Math.pow(yi - predictions_full[i], 2), 0);
-                const SS_res = residualSS_full - SS_curvature;
-                const errorDF = n - p_full - curvatureDF;
-                const errorMS = errorDF > 0 ? SS_res / errorDF : 0;
+                const errorDF = n - p_full;
+                const errorMS = errorDF > 0 ? residualSS_full / errorDF : 0;
                 
-                const curveFRatio = errorMS > 0 ? curveMS / errorMS : 0;
+                const curveFRatio = errorMS > 0 ? (curvatureSS / curvatureDF) / errorMS : 0;
                 const curvePValue = curveFRatio > 0 && errorDF > 0
                   ? 1 - jStat.centralF.cdf(curveFRatio, curvatureDF, errorDF)
                   : 1;
@@ -2098,14 +2099,14 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                         <div className="space-y-3">
                           <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
                             <span className="text-sm font-medium">Factorial Points Mean (ȳ_F):</span>
-                            <span className="font-mono font-semibold">{y_f_avg.toFixed(4)} {responseVariableName}</span>
+                            <span className="font-mono font-semibold">{y_f_avg.toFixed(4)}</span>
                           </div>
                           <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
                             <span className="text-sm font-medium">Center Points Mean (ȳ_C):</span>
-                            <span className="font-mono font-semibold">{y_c_avg.toFixed(4)} {responseVariableName}</span>
+                            <span className="font-mono font-semibold">{y_c_avg.toFixed(4)}</span>
                           </div>
                           <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
-                            <span className="text-sm font-medium">Difference (ȳ_C - ȳ_F):</span>
+                            <span className="text-sm font-medium">Curvature Effect (ȳ_C - ȳ_F):</span>
                             <span className="font-mono font-semibold">{curveDiff >= 0 ? '+' : ''}{curveDiff.toFixed(4)}</span>
                           </div>
                         </div>
@@ -2126,14 +2127,14 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                 <>
                                   <AlertTriangle className="h-5 w-5 text-green-600" />
                                   <span className="text-sm font-medium text-green-700 dark:text-green-400">
-                                    Significant curvature detected (p &lt; α). Non-linear relationship exists.
+                                    Significant curvature detected (p-value ({curvePValue.toFixed(4)}) &lt; α). Non-linear relationship exists. Model with quadratic term is recommended.
                                   </span>
                                 </>
                               ) : (
                                 <>
                                   <Info className="h-5 w-5 text-amber-600" />
                                   <span className="text-sm font-medium text-amber-700 dark:text-amber-400">
-                                    No significant curvature (p ≥ α). Linear model is adequate.
+                                    No significant curvature (p-value ({curvePValue.toFixed(4)}) ≥ α). Linear model is adequate.
                                   </span>
                                 </>
                               )}
@@ -2828,6 +2829,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                             </TableBody>
                           </Table>
                         </div>
+                        <div className="text-sm">Grand Mean = {mean_y.toFixed(4)}</div>
                         <div className="mt-2 text-sm text-muted-foreground">
                           VIF &gt; 5 indicates problematic multicollinearity (high correlation between terms - shown in red)<br></br>
                           &gt; 1 VIF &le; 5 indicates moderate multicollinearity (correlation between terms - shown in yellow)<br></br>
@@ -3147,6 +3149,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                       </tr>
                                     </tbody>
                                   </table>
+                                  {/*
                                   <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
                                     <p className="text-sm font-semibold mb-3">Normality Test (Anderson-Darling):</p>
                                     <div className="grid grid-cols-3 gap-4">
@@ -3165,7 +3168,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                         </p>
                                       </div>
                                     </div>
-                                  </div>
+                                  </div> */}
                                 </>
                               );
                             })()}

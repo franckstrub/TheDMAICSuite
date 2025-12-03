@@ -2025,7 +2025,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 // Collect all responses including center points
                 runData.forEach((row, idx) => {
                   if (row.response !== null && !isNaN(row.response)) {
-                    const row_vals = [1]; // intercept = grand mean
+                    const row_vals = [1]; // intercept = grand mean in coded view
                     const baseFactorValues: number[] = [];
                     // Only use base factors (first k-p factors)
                     for (let i = 0; i < baseFactorCount; i++) {
@@ -2767,14 +2767,14 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                               <div className="space-y-3">
                                 <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
                                   <span className="text-sm font-medium">Factorial Points Mean (ȳ_F):</span>
-                                  <span className="font-mono font-semibold">{y_f_avg.toFixed(4)} {responseVariableName}</span>
+                                  <span className="font-mono font-semibold">{y_f_avg.toFixed(4)}</span>
                                 </div>
                                 <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
                                   <span className="text-sm font-medium">Center Points Mean (ȳ_C):</span>
-                                  <span className="font-mono font-semibold">{y_c_avg.toFixed(4)} {responseVariableName}</span>
+                                  <span className="font-mono font-semibold">{y_c_avg.toFixed(4)}</span>
                                 </div>
                                 <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
-                                  <span className="text-sm font-medium">Difference (ȳ_C - ȳ_F):</span>
+                                  <span className="text-sm font-medium">Curvature Effect (ȳ_C - ȳ_F):</span>
                                   <span className="font-mono font-semibold">{curveDiff >= 0 ? '+' : ''}{curveDiff.toFixed(4)}</span>
                                 </div>
                               </div>
@@ -2795,14 +2795,14 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                       <>
                                         <AlertTriangle className="h-5 w-5 text-green-600" />
                                         <span className="text-sm font-medium text-green-700 dark:text-green-400">
-                                          Significant curvature detected (p &lt; α). Non-linear relationship exists.
+                                          Significant curvature detected (p-value ({curvePValue.toFixed(4)}) &lt; α). Non-linear relationship exists. Model with quadratic term is recommended.
                                         </span>
                                       </>
                                     ) : (
                                       <>
                                         <Info className="h-5 w-5 text-amber-600" />
                                         <span className="text-sm font-medium text-amber-700 dark:text-amber-400">
-                                          No significant curvature (p ≥ α). Linear model is adequate.
+                                          No significant curvature (p-value ({curvePValue.toFixed(4)}) ≥ α). Linear model is adequate.
                                         </span>
                                       </>
                                     )}
@@ -2980,6 +2980,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                             </TableBody>
                           </Table>
                         </div>
+                        <div className="text-sm">Grand Mean = {mean_y.toFixed(4)}</div>
                         <div className="mt-2 text-sm text-muted-foreground">
                           VIF &gt; 5 indicates problematic multicollinearity (high correlation between terms - shown in red)<br></br>
                           &gt; 1 VIF &le; 5 indicates moderate multicollinearity (correlation between terms - shown in yellow)<br></br>
