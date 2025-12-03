@@ -614,6 +614,8 @@ export function performNormalityTest(values: number[], meanval: number, stdeviat
       }
   }
 
+  if (isNaN(AD_value)) {AD_value = + Infinity}
+  if (isNaN(p_value)) {p_value = 0}
   const Threshold = 0.05;
   let isNormal = true;
   if (isNaN(p_value)) {

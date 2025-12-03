@@ -2246,11 +2246,11 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 const errorDF_red = n - p_reduced - dfCurvature;
                 const errorMS = errorDF_red > 0 ? SS_res / errorDF_red : 0;
                 const R_sq = 1 - SS_res / SS_tot;
-                const adj_R_sq = 1 - (1 - R_sq) * (n - 1) / (n - p_reduced - dfCurvature);
-                const rmse = Math.sqrt(SS_res / (n - p_reduced- dfCurvature));
+                const adj_R_sq = errorDF_red > 0 ? 1 - (1 - R_sq) * (n - 1) / (n - p_reduced - dfCurvature) : R_sq;
+                const rmse = errorDF_red > 0 ?  Math.sqrt(SS_res / (n - p_reduced- dfCurvature)) : 0;
                 const residualMean = residuals_red.reduce((a, b) => a + b, 0) / residuals_red.length;
                 const residualStd = Math.sqrt(residuals_red.reduce((sum, r) => sum + Math.pow(r - residualMean, 2), 0) / (residuals_red.length - 1));
-                const mse = SS_res / (n - p_reduced - dfCurvature);
+                const mse = errorDF_red > 0 ? SS_res / (n - p_reduced - dfCurvature) : 0;
                 
                 // Calculate standard errors and t-values for selected coefficients using reduced model
                 const coeffStats = beta_red.map((b, redIdx) => {
@@ -2270,12 +2270,12 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     pValue = Number.isFinite(cdfVal) ? 2 * (1 - cdfVal) : 1;
                     pValue = Math.max(0, Math.min(1, pValue));
                   }
-                  return { stdError: Number.isFinite(stdError) ? stdError : 0, tValue: Number.isFinite(tValue) ? tValue : NaN, pValue };
+                  return { stdError: Number.isFinite(stdError) ? stdError : 0, tValue: Number.isFinite(tValue) ? tValue : +Infinity, pValue };
                 });
 
                 // Transform coefficients using beta_red and selected columns mapping
                 const transformCoefficientsAndSE = () => {
-                  if (!showUncoded || !allFactorsHaveValidLevels()) {
+                  if (!allFactorsHaveValidLevels()) {
                     return { displayBeta: beta_red, displayCoeffStats: coeffStats };
                   }
                   
@@ -2379,7 +2379,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     // So no variance contribution from interactions to intercept SE
                     
                     transformedStats[0].stdError = Math.sqrt(Math.max(0, interceptSESquared));
-                    transformedStats[0].tValue = transformedStats[0].stdError > 0 ?(beta[0] - interceptAdjustment) / transformedStats[0].stdError : NaN;
+                    transformedStats[0].tValue = transformedStats[0].stdError > 0 ?(beta[0] - interceptAdjustment) / transformedStats[0].stdError : +Infinity;
                     // Recalculate p-value for intercept since its t-value changes (SE is recalculated via variance propagation)
                     transformedStats[0].pValue = transformedStats[0].stdError > 0 ? 2 * (1 - jStat.studentt.cdf(Math.abs(transformedStats[0].tValue), n - numCoefficients)) : 0;
                   }
@@ -3105,7 +3105,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                   return jStat.normal.inv(p, 0, 1);
                                 });
                                 const lineX = [residualMean - 3 * residualStd, residualMean + 3 * residualStd];
-                                const lineY = [-3, 3];
+                                const lineY = residualStd > 0 ? [-3, 3] : [-0,0];
                                 return (
                                   <div>
                                     <Plot
