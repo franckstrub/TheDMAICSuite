@@ -1973,59 +1973,87 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                 
                 const y_c_avg = centerResponses.reduce((a, b) => a + b, 0) / centerResponses.length;
                 const y_f_avg = factorialResponses.reduce((a, b) => a + b, 0) / factorialResponses.length;
-                const curveDiff = y_c_avg - y_f_avg;
                 
-                // Calculate curvature p-value
-                const curvatureSS = (n_f * n_c) / (n_f + n_c) * Math.pow(curveDiff, 2);
-                const curvatureDF = 1;
+                // Build full design matrix with interactions (same as ANOVA table)
+                const getCombinations = (arr: number[], size: number): number[][] => {
+                  if (size === 0) return [[]];
+                  if (arr.length === 0) return [];
+                  const [first, ...rest] = arr;
+                  const withFirst = getCombinations(rest, size - 1).map(combo => [first, ...combo]);
+                  const withoutFirst = getCombinations(rest, size);
+                  return [...withFirst, ...withoutFirst];
+                };
                 
-                // Calculate error MS from residuals (factorial points only)
-                const responses = runData.map(r => r.response).filter((r): r is number => r !== null && !isNaN(r));
-                const n = responses.length;
-                const mean_y = responses.reduce((a, b) => a + b, 0) / n;
+                const interactionPairs: Array<{indices: number[], name: string}> = [];
+                const factorIndices = Array.from({ length: factors.length }, (_, i) => i);
+                for (let size = 2; size <= factors.length; size++) {
+                  const combos = getCombinations(factorIndices, size);
+                  for (const combo of combos) {
+                    const name = combo.map(idx => factors[idx].name).join('×');
+                    interactionPairs.push({ indices: combo, name });
+                  }
+                }
+
+                const X_full: number[][] = [];
+                const y_full: number[] = [];
                 
-                // Build design matrix for regression
-                const X_temp: number[][] = [];
-                const y_temp: number[] = [];
                 runData.forEach((row, idx) => {
                   if (row.response !== null && !isNaN(row.response)) {
-                    const row_vals = [1];
+                    const row_vals = [1]; // intercept
+                    const factorValues: number[] = [];
                     factors.forEach(factor => {
-                      row_vals.push(generatedPlan.plan[idx]?.[factor.name] ?? 0);
+                      const val = generatedPlan.plan[idx]?.[factor.name] ?? 0;
+                      factorValues.push(val);
+                      row_vals.push(val);
                     });
-                    X_temp.push(row_vals);
-                    y_temp.push(row.response);
+                    // Add interaction terms
+                    interactionPairs.forEach(pair => {
+                      let product = 1;
+                      pair.indices.forEach(i => { product *= factorValues[i]; });
+                      row_vals.push(product);
+                    });
+                    X_full.push(row_vals);
+                    y_full.push(row.response);
                   }
                 });
+
+                const n = y_full.length;
+                const p_full = X_full[0]?.length || 1;
                 
-                // Simple regression to get residual SS
-                const p = X_temp[0]?.length || 1;
-                let residualSS = 0;
-                try {
-                  const XtX = Array(p).fill(null).map(() => Array(p).fill(0));
-                  const Xty = Array(p).fill(0);
-                  for (let i = 0; i < n; i++) {
-                    for (let j = 0; j < p; j++) {
-                      Xty[j] += X_temp[i][j] * y_temp[i];
-                      for (let k = 0; k < p; k++) {
-                        XtX[j][k] += X_temp[i][j] * X_temp[i][k];
-                      }
+                // Calculate full model coefficients
+                let XtX_full: number[][] = Array(p_full).fill(null).map(() => Array(p_full).fill(0));
+                let Xty_full: number[] = Array(p_full).fill(0);
+                
+                for (let i = 0; i < n; i++) {
+                  for (let j = 0; j < p_full; j++) {
+                    Xty_full[j] += X_full[i][j] * y_full[i];
+                    for (let k = 0; k < p_full; k++) {
+                      XtX_full[j][k] += X_full[i][j] * X_full[i][k];
                     }
                   }
-                  const XtX_inv = invertMatrix(XtX);
-                  if (XtX_inv) {
-                    const beta = Xty.map((_, j) => Xty.reduce((sum, val, k) => sum + XtX_inv[j][k] * val, 0));
-                    const y_pred = X_temp.map(row => row.reduce((sum, val, idx) => sum + val * beta[idx], 0));
-                    residualSS = y_temp.reduce((sum, yi, i) => sum + Math.pow(yi - y_pred[i], 2), 0);
-                  } else {
-                    residualSS = y_temp.reduce((sum, yi) => sum + Math.pow(yi - mean_y, 2), 0);
-                  }
-                } catch {
-                  residualSS = y_temp.reduce((sum, yi) => sum + Math.pow(yi - mean_y, 2), 0);
                 }
                 
-                const errorDF = n - p;
-                const errorMS = errorDF > 0 ? residualSS / errorDF : 0;
+                let beta_full: number[] = [];
+                const XtX_inv_full = invertMatrix(XtX_full);
+                if (XtX_inv_full) {
+                  beta_full = Xty_full.map((_, j) => Xty_full.reduce((sum, val, k) => sum + XtX_inv_full[j][k] * val, 0));
+                }
+                
+                // Curvature effect: center point mean - predicted at center (intercept)
+                const y_f_at_center = beta_full[0] || y_f_avg;
+                const curveEffect = y_c_avg - y_f_at_center;
+                const curveDiff = y_c_avg - y_f_avg; // For display
+                
+                // Curvature SS using standard formula
+                const curvatureSS = (n_f * n_c) / (n_f + n_c) * Math.pow(curveEffect, 2);
+                const curvatureDF = 1;
+                
+                // Calculate residual SS from full model
+                const predictions_full = X_full.map(row => row.reduce((sum, val, i) => sum + val * (beta_full[i] || 0), 0));
+                const residualSS_full = y_full.reduce((sum, yi, i) => sum + Math.pow(yi - predictions_full[i], 2), 0);
+                const errorDF = n - p_full;
+                const errorMS = errorDF > 0 ? residualSS_full / errorDF : 0;
+                
                 const curveFRatio = errorMS > 0 ? (curvatureSS / curvatureDF) / errorMS : 0;
                 const curvePValue = curveFRatio > 0 && errorDF > 0
                   ? 1 - jStat.centralF.cdf(curveFRatio, curvatureDF, errorDF)
