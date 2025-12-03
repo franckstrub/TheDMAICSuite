@@ -2695,55 +2695,16 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                       
                       const y_c_avg = centerResponses.reduce((a, b) => a + b, 0) / centerResponses.length;
                       const y_f_avg = factorialResponses.reduce((a, b) => a + b, 0) / factorialResponses.length;
+                      const curveDiff = y_c_avg - y_f_avg;
                       
-                      // Build full design matrix with interactions (same as ANOVA table)
-                      const getCombinations = (arr: number[], size: number): number[][] => {
-                        if (size === 0) return [[]];
-                        if (arr.length === 0) return [];
-                        const [first, ...rest] = arr;
-                        const withFirst = getCombinations(rest, size - 1).map(combo => [first, ...combo]);
-                        const withoutFirst = getCombinations(rest, size);
-                        return [...withFirst, ...withoutFirst];
-                      };
+                      // Curvature SS using same formula as ANOVA table: (n_f * n_c) / (n_f + n_c) * (meanF - meanC)^2
+                      const SS_curvature = ((n_f * n_c) / (n_f + n_c)) * Math.pow(y_f_avg - y_c_avg, 2);
+                      const curvatureDF = 1;
+                      const curveMS = SS_curvature / curvatureDF;
                       
-                      const interactionPairs_curv: Array<{indices: number[], name: string}> = [];
-                      const factorIndices_curv = Array.from({ length: factors.length }, (_, i) => i);
-                      for (let size = 2; size <= factors.length; size++) {
-                        const combos = getCombinations(factorIndices_curv, size);
-                        for (const combo of combos) {
-                          const name = combo.map(idx => factors[idx].name).join('×');
-                          interactionPairs_curv.push({ indices: combo, name });
-                        }
-                      }
-
-                      const X_full: number[][] = [];
-                      const y_full: number[] = [];
-                      
-                      runData.forEach((row, idx) => {
-                        if (row.response !== null && !isNaN(row.response)) {
-                          const row_vals = [1]; // intercept
-                          const factorValues: number[] = [];
-                          factors.forEach(factor => {
-                            const val = generatedPlan.plan[idx]?.[factor.name] ?? 0;
-                            factorValues.push(val);
-                            row_vals.push(val);
-                          });
-                          // Add interaction terms
-                          interactionPairs_curv.forEach(pair => {
-                            let product = 1;
-                            pair.indices.forEach(i => { product *= factorValues[i]; });
-                            row_vals.push(product);
-                          });
-                          X_full.push(row_vals);
-                          y_full.push(row.response);
-                        }
-                      });
-
-                      const n_curv = y_full.length;
-                      
-                      // For fractional factorial, use main effects only model to avoid singular matrix
-                      // (full model with all interactions leads to aliasing/singularity)
+                      // Build main effects model to get error MS (same as ANOVA reduced model)
                       const X_main: number[][] = [];
+                      const y_all: number[] = [];
                       runData.forEach((row, idx) => {
                         if (row.response !== null && !isNaN(row.response)) {
                           const row_vals = [1]; // intercept
@@ -2751,18 +2712,20 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                             row_vals.push(generatedPlan.plan[idx]?.[factor.name] ?? 0);
                           });
                           X_main.push(row_vals);
+                          y_all.push(row.response);
                         }
                       });
                       
+                      const n_total = y_all.length;
                       const p_main = X_main[0]?.length || 1;
                       
                       // Calculate main effects model coefficients
                       let XtX_main: number[][] = Array(p_main).fill(null).map(() => Array(p_main).fill(0));
                       let Xty_main: number[] = Array(p_main).fill(0);
                       
-                      for (let i = 0; i < n_curv; i++) {
+                      for (let i = 0; i < n_total; i++) {
                         for (let j = 0; j < p_main; j++) {
-                          Xty_main[j] += X_main[i][j] * y_full[i];
+                          Xty_main[j] += X_main[i][j] * y_all[i];
                           for (let k = 0; k < p_main; k++) {
                             XtX_main[j][k] += X_main[i][j] * X_main[i][k];
                           }
@@ -2777,26 +2740,17 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                           beta_main = Xty_main.map((_, j) => Xty_main.reduce((sum, val, k) => sum + XtX_inv_main![j][k] * val, 0));
                         }
                       } catch {
-                        // Fall back to simple average
-                        beta_main = [y_f_avg];
+                        beta_main = [y_all.reduce((a, b) => a + b, 0) / n_total];
                       }
                       
-                      // Curvature effect: center point mean - predicted at center (intercept)
-                      const y_f_at_center = beta_main[0] || y_f_avg;
-                      const curveEffect = y_c_avg - y_f_at_center;
-                      const curveDiff = y_c_avg - y_f_avg; // For display
-                      
-                      // Curvature SS using standard formula
-                      const curvatureSS = (n_f * n_c) / (n_f + n_c) * Math.pow(curveEffect, 2);
-                      const curvatureDF = 1;
-                      
-                      // Calculate residual SS from main effects model
+                      // Calculate residual SS, then subtract curvature SS (same as ANOVA table)
                       const predictions_main = X_main.map(row => row.reduce((sum, val, i) => sum + val * (beta_main[i] || 0), 0));
-                      const residualSS_main = y_full.reduce((sum, yi, i) => sum + Math.pow(yi - predictions_main[i], 2), 0);
-                      const errorDF_curv = n_curv - p_main;
-                      const errorMS_curv = errorDF_curv > 0 ? residualSS_main / errorDF_curv : 0;
+                      const residualSS_main = y_all.reduce((sum, yi, i) => sum + Math.pow(yi - predictions_main[i], 2), 0);
+                      const SS_res = residualSS_main - SS_curvature;
+                      const errorDF_curv = n_total - p_main - curvatureDF;
+                      const errorMS_curv = errorDF_curv > 0 ? SS_res / errorDF_curv : 0;
                       
-                      const curveFRatio = errorMS_curv > 0 ? (curvatureSS / curvatureDF) / errorMS_curv : 0;
+                      const curveFRatio = errorMS_curv > 0 ? curveMS / errorMS_curv : 0;
                       const curvePValue = curveFRatio > 0 && errorDF_curv > 0
                         ? 1 - jStat.centralF.cdf(curveFRatio, curvatureDF, errorDF_curv)
                         : 1;

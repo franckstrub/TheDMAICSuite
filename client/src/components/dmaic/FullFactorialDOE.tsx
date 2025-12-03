@@ -1973,6 +1973,12 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                 
                 const y_c_avg = centerResponses.reduce((a, b) => a + b, 0) / centerResponses.length;
                 const y_f_avg = factorialResponses.reduce((a, b) => a + b, 0) / factorialResponses.length;
+                const curveDiff = y_c_avg - y_f_avg;
+                
+                // Curvature SS using same formula as ANOVA table: (n_f * n_c) / (n_f + n_c) * (meanF - meanC)^2
+                const SS_curvature = ((n_f * n_c) / (n_f + n_c)) * Math.pow(y_f_avg - y_c_avg, 2);
+                const curvatureDF = 1;
+                const curveMS = SS_curvature / curvatureDF;
                 
                 // Build full design matrix with interactions (same as ANOVA table)
                 const getCombinations = (arr: number[], size: number): number[][] => {
@@ -2039,22 +2045,14 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                   beta_full = Xty_full.map((_, j) => Xty_full.reduce((sum, val, k) => sum + XtX_inv_full[j][k] * val, 0));
                 }
                 
-                // Curvature effect: center point mean - predicted at center (intercept)
-                const y_f_at_center = beta_full[0] || y_f_avg;
-                const curveEffect = y_c_avg - y_f_at_center;
-                const curveDiff = y_c_avg - y_f_avg; // For display
-                
-                // Curvature SS using standard formula
-                const curvatureSS = (n_f * n_c) / (n_f + n_c) * Math.pow(curveEffect, 2);
-                const curvatureDF = 1;
-                
-                // Calculate residual SS from full model
+                // Calculate residual SS from full model, then subtract curvature SS (same as ANOVA table)
                 const predictions_full = X_full.map(row => row.reduce((sum, val, i) => sum + val * (beta_full[i] || 0), 0));
                 const residualSS_full = y_full.reduce((sum, yi, i) => sum + Math.pow(yi - predictions_full[i], 2), 0);
-                const errorDF = n - p_full;
-                const errorMS = errorDF > 0 ? residualSS_full / errorDF : 0;
+                const SS_res = residualSS_full - SS_curvature;
+                const errorDF = n - p_full - curvatureDF;
+                const errorMS = errorDF > 0 ? SS_res / errorDF : 0;
                 
-                const curveFRatio = errorMS > 0 ? (curvatureSS / curvatureDF) / errorMS : 0;
+                const curveFRatio = errorMS > 0 ? curveMS / errorMS : 0;
                 const curvePValue = curveFRatio > 0 && errorDF > 0
                   ? 1 - jStat.centralF.cdf(curveFRatio, curvatureDF, errorDF)
                   : 1;
