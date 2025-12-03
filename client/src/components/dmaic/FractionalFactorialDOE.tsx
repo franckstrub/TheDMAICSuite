@@ -2740,29 +2740,49 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                       });
 
                       const n_curv = y_full.length;
-                      const p_full = X_full[0]?.length || 1;
                       
-                      // Calculate full model coefficients
-                      let XtX_full: number[][] = Array(p_full).fill(null).map(() => Array(p_full).fill(0));
-                      let Xty_full: number[] = Array(p_full).fill(0);
+                      // For fractional factorial, use main effects only model to avoid singular matrix
+                      // (full model with all interactions leads to aliasing/singularity)
+                      const X_main: number[][] = [];
+                      runData.forEach((row, idx) => {
+                        if (row.response !== null && !isNaN(row.response)) {
+                          const row_vals = [1]; // intercept
+                          factors.forEach(factor => {
+                            row_vals.push(generatedPlan.plan[idx]?.[factor.name] ?? 0);
+                          });
+                          X_main.push(row_vals);
+                        }
+                      });
+                      
+                      const p_main = X_main[0]?.length || 1;
+                      
+                      // Calculate main effects model coefficients
+                      let XtX_main: number[][] = Array(p_main).fill(null).map(() => Array(p_main).fill(0));
+                      let Xty_main: number[] = Array(p_main).fill(0);
                       
                       for (let i = 0; i < n_curv; i++) {
-                        for (let j = 0; j < p_full; j++) {
-                          Xty_full[j] += X_full[i][j] * y_full[i];
-                          for (let k = 0; k < p_full; k++) {
-                            XtX_full[j][k] += X_full[i][j] * X_full[i][k];
+                        for (let j = 0; j < p_main; j++) {
+                          Xty_main[j] += X_main[i][j] * y_full[i];
+                          for (let k = 0; k < p_main; k++) {
+                            XtX_main[j][k] += X_main[i][j] * X_main[i][k];
                           }
                         }
                       }
                       
-                      let beta_full: number[] = [];
-                      const XtX_inv_full = invertMatrix(XtX_full);
-                      if (XtX_inv_full) {
-                        beta_full = Xty_full.map((_, j) => Xty_full.reduce((sum, val, k) => sum + XtX_inv_full[j][k] * val, 0));
+                      let beta_main: number[] = [];
+                      let XtX_inv_main: number[][] | null = null;
+                      try {
+                        XtX_inv_main = invertMatrix(XtX_main);
+                        if (XtX_inv_main) {
+                          beta_main = Xty_main.map((_, j) => Xty_main.reduce((sum, val, k) => sum + XtX_inv_main![j][k] * val, 0));
+                        }
+                      } catch {
+                        // Fall back to simple average
+                        beta_main = [y_f_avg];
                       }
                       
                       // Curvature effect: center point mean - predicted at center (intercept)
-                      const y_f_at_center = beta_full[0] || y_f_avg;
+                      const y_f_at_center = beta_main[0] || y_f_avg;
                       const curveEffect = y_c_avg - y_f_at_center;
                       const curveDiff = y_c_avg - y_f_avg; // For display
                       
@@ -2770,11 +2790,11 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                       const curvatureSS = (n_f * n_c) / (n_f + n_c) * Math.pow(curveEffect, 2);
                       const curvatureDF = 1;
                       
-                      // Calculate residual SS from full model
-                      const predictions_full = X_full.map(row => row.reduce((sum, val, i) => sum + val * (beta_full[i] || 0), 0));
-                      const residualSS_full = y_full.reduce((sum, yi, i) => sum + Math.pow(yi - predictions_full[i], 2), 0);
-                      const errorDF_curv = n_curv - p_full;
-                      const errorMS_curv = errorDF_curv > 0 ? residualSS_full / errorDF_curv : 0;
+                      // Calculate residual SS from main effects model
+                      const predictions_main = X_main.map(row => row.reduce((sum, val, i) => sum + val * (beta_main[i] || 0), 0));
+                      const residualSS_main = y_full.reduce((sum, yi, i) => sum + Math.pow(yi - predictions_main[i], 2), 0);
+                      const errorDF_curv = n_curv - p_main;
+                      const errorMS_curv = errorDF_curv > 0 ? residualSS_main / errorDF_curv : 0;
                       
                       const curveFRatio = errorMS_curv > 0 ? (curvatureSS / curvatureDF) / errorMS_curv : 0;
                       const curvePValue = curveFRatio > 0 && errorDF_curv > 0
