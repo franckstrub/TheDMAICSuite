@@ -1917,26 +1917,26 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                           // Model DF = number of selected factors + number of selected interactions + curvature DF
                           const selectedFactorCount = factors.filter((_, idx) => selectedFactorsForModel[idx] !== false).length;
                           const selectedInteractionCount = interactionPairs.filter((_, pairIdx) => selectedFactorsForModel[`int-${pairIdx}`] !== false).length;
-                          const modelDF = selectedFactorCount + selectedInteractionCount + curvatureDF;
+                          const anovaModelDF = selectedFactorCount + selectedInteractionCount + curvatureDF;
                           
                           // Model SS = Total SS - Error SS
-                          const modelSS = totalSS - adjustedErrorSS;
-                          const modelMS = modelDF > 0 ? modelSS / modelDF : 0;
-                          const modelFRatio = errorMS > 0 ? modelMS / errorMS : 0;
-                          const modelPValue = modelFRatio > 0 && adjustedErrorDF > 0
-                            ? 1 - jStat.centralF.cdf(modelFRatio, modelDF, adjustedErrorDF)
+                          const anovaModelSS = totalSS - adjustedErrorSS;
+                          const anovaModelMS = anovaModelDF > 0 ? anovaModelSS / anovaModelDF : 0;
+                          const anovaModelFRatio = errorMS > 0 ? anovaModelMS / errorMS : 0;
+                          const anovaModelPValue = anovaModelFRatio > 0 && adjustedErrorDF > 0
+                            ? 1 - jStat.centralF.cdf(anovaModelFRatio, anovaModelDF, adjustedErrorDF)
                             : 1;
 
                           rows.push(
                             <TableRow key="model" className="font-semibold">
                               <TableCell>Model</TableCell>
-                              <TableCell className="text-right">{modelDF}</TableCell>
-                              <TableCell className="text-right">{modelSS.toFixed(4)}</TableCell>
-                              <TableCell className="text-right">{modelMS.toFixed(4)}</TableCell>
-                              <TableCell className="text-right">{modelFRatio > 0 ? modelFRatio.toFixed(4) : '-'}</TableCell>
+                              <TableCell className="text-right">{anovaModelDF}</TableCell>
+                              <TableCell className="text-right">{anovaModelSS.toFixed(4)}</TableCell>
+                              <TableCell className="text-right">{anovaModelMS.toFixed(4)}</TableCell>
+                              <TableCell className="text-right">{anovaModelFRatio > 0 ? anovaModelFRatio.toFixed(4) : '-'}</TableCell>
                               <TableCell className="text-right">
-                                <span className={modelPValue < 0.05 ? "text-green-600 font-semibold" : ""}>
-                                  {modelPValue === 1 || isNaN(modelPValue) ? '-' : modelPValue.toFixed(4)}
+                                <span className={anovaModelPValue < 0.05 ? "text-green-600 font-semibold" : ""}>
+                                  {anovaModelPValue === 1 || isNaN(anovaModelPValue) ? '-' : anovaModelPValue.toFixed(4)}
                                 </span>
                               </TableCell>
                             </TableRow>
