@@ -2665,6 +2665,154 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                       </CardContent>
                     </Card>
 
+                    {/* Curvature Analysis Card */}
+                    {(() => {
+                      // Calculate factorial vs center points statistics
+                      const centerPointIndices: number[] = [];
+                      const factorialPointIndices: number[] = [];
+                      
+                      runData.forEach((row, rowIdx) => {
+                        if (row.response !== null && !isNaN(row.response)) {
+                          const allFactorsZero = factors.every(factor => {
+                            const level = generatedPlan.plan[rowIdx]?.[factor.name] ?? 0;
+                            return Math.abs(level) < 0.01;
+                          });
+                          if (allFactorsZero) {
+                            centerPointIndices.push(rowIdx);
+                          } else {
+                            factorialPointIndices.push(rowIdx);
+                          }
+                        }
+                      });
+
+                      const n_c = centerPointIndices.length;
+                      const n_f = factorialPointIndices.length;
+                      
+                      if (n_c === 0 || n_f === 0) return null;
+
+                      const centerResponses = centerPointIndices.map(idx => runData[idx].response).filter((r): r is number => r !== null && !isNaN(r));
+                      const factorialResponses = factorialPointIndices.map(idx => runData[idx].response).filter((r): r is number => r !== null && !isNaN(r));
+                      
+                      const y_c_avg = centerResponses.reduce((a, b) => a + b, 0) / centerResponses.length;
+                      const y_f_avg = factorialResponses.reduce((a, b) => a + b, 0) / factorialResponses.length;
+                      const curveDiff = y_c_avg - y_f_avg;
+                      
+                      // Calculate curvature p-value
+                      const curvatureSS = (n_f * n_c) / (n_f + n_c) * Math.pow(curveDiff, 2);
+                      const curvatureDF = 1;
+                      
+                      // Calculate error MS from residuals
+                      const responses_all = runData.map(r => r.response).filter((r): r is number => r !== null && !isNaN(r));
+                      const n_all = responses_all.length;
+                      const mean_y_all = responses_all.reduce((a, b) => a + b, 0) / n_all;
+                      
+                      // Build design matrix for regression
+                      const X_temp: number[][] = [];
+                      const y_temp: number[] = [];
+                      runData.forEach((row, idx) => {
+                        if (row.response !== null && !isNaN(row.response)) {
+                          const row_vals = [1];
+                          factors.forEach(factor => {
+                            row_vals.push(generatedPlan.plan[idx]?.[factor.name] ?? 0);
+                          });
+                          X_temp.push(row_vals);
+                          y_temp.push(row.response);
+                        }
+                      });
+                      
+                      // Simple regression to get residual SS
+                      const p_temp = X_temp[0]?.length || 1;
+                      let residualSS_curv = 0;
+                      try {
+                        const XtX_temp = Array(p_temp).fill(null).map(() => Array(p_temp).fill(0));
+                        const Xty_temp = Array(p_temp).fill(0);
+                        for (let i = 0; i < n_all; i++) {
+                          for (let j = 0; j < p_temp; j++) {
+                            Xty_temp[j] += X_temp[i][j] * y_temp[i];
+                            for (let k = 0; k < p_temp; k++) {
+                              XtX_temp[j][k] += X_temp[i][j] * X_temp[i][k];
+                            }
+                          }
+                        }
+                        const XtX_inv_temp = invertMatrix(XtX_temp);
+                        if (XtX_inv_temp) {
+                          const beta_temp = Xty_temp.map((_, j) => Xty_temp.reduce((sum, val, k) => sum + XtX_inv_temp[j][k] * val, 0));
+                          const y_pred_temp = X_temp.map(row => row.reduce((sum, val, idx) => sum + val * beta_temp[idx], 0));
+                          residualSS_curv = y_temp.reduce((sum, yi, i) => sum + Math.pow(yi - y_pred_temp[i], 2), 0);
+                        } else {
+                          residualSS_curv = y_temp.reduce((sum, yi) => sum + Math.pow(yi - mean_y_all, 2), 0);
+                        }
+                      } catch {
+                        residualSS_curv = y_temp.reduce((sum, yi) => sum + Math.pow(yi - mean_y_all, 2), 0);
+                      }
+                      
+                      const errorDF_curv = n_all - p_temp;
+                      const errorMS_curv = errorDF_curv > 0 ? residualSS_curv / errorDF_curv : 0;
+                      const curveFRatio = errorMS_curv > 0 ? (curvatureSS / curvatureDF) / errorMS_curv : 0;
+                      const curvePValue = curveFRatio > 0 && errorDF_curv > 0
+                        ? 1 - jStat.centralF.cdf(curveFRatio, curvatureDF, errorDF_curv)
+                        : 1;
+                      
+                      const isSignificant = curvePValue < significanceLevel;
+                      
+                      return (
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="text-lg">Curvature Analysis (Center Points vs Factorial Points)</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-3">
+                                <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
+                                  <span className="text-sm font-medium">Factorial Points Mean (ȳ_F):</span>
+                                  <span className="font-mono font-semibold">{y_f_avg.toFixed(4)} {responseVariableName}</span>
+                                </div>
+                                <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
+                                  <span className="text-sm font-medium">Center Points Mean (ȳ_C):</span>
+                                  <span className="font-mono font-semibold">{y_c_avg.toFixed(4)} {responseVariableName}</span>
+                                </div>
+                                <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
+                                  <span className="text-sm font-medium">Difference (ȳ_C - ȳ_F):</span>
+                                  <span className="font-mono font-semibold">{curveDiff >= 0 ? '+' : ''}{curveDiff.toFixed(4)}</span>
+                                </div>
+                              </div>
+                              <div className="space-y-3">
+                                <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
+                                  <span className="text-sm font-medium">Curvature p-value:</span>
+                                  <span className={`font-mono font-semibold ${isSignificant ? 'text-green-600' : ''}`}>
+                                    {curvePValue.toFixed(4)}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
+                                  <span className="text-sm font-medium">Significance Level (α):</span>
+                                  <span className="font-mono font-semibold">{significanceLevel}</span>
+                                </div>
+                                <div className={`p-3 rounded-lg ${isSignificant ? 'bg-green-50 border border-green-200 dark:bg-green-950 dark:border-green-800' : 'bg-amber-50 border border-amber-200 dark:bg-amber-950 dark:border-amber-800'}`}>
+                                  <div className="flex items-center gap-2">
+                                    {isSignificant ? (
+                                      <>
+                                        <AlertTriangle className="h-5 w-5 text-green-600" />
+                                        <span className="text-sm font-medium text-green-700 dark:text-green-400">
+                                          Significant curvature detected (p &lt; α). Non-linear relationship exists.
+                                        </span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Info className="h-5 w-5 text-amber-600" />
+                                        <span className="text-sm font-medium text-amber-700 dark:text-amber-400">
+                                          No significant curvature (p ≥ α). Linear model is adequate.
+                                        </span>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })()}
+
                     {/* Coefficients Table with Model Selection */}
                     <Card>
                       <CardHeader className="flex flex-row items-center justify-between">
