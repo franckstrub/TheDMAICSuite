@@ -2694,9 +2694,6 @@ export const doeFullFactorialConfig = pgTable(
     projectId: integer("project_id").notNull(),
     solutionId: text("solution_id").notNull(),
     
-    // Design type selection
-    enableFullFactorial: boolean("enable_full_factorial").default(false),
-    
     // Response variable name
     responseVariableName: text("response_variable_name").default("Y Response"),
     
