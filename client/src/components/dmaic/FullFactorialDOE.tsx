@@ -1838,28 +1838,31 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                           let curvaturePValue = 1;
                           let curveEffect = 0;
                           
-                          if (includeCenterPoints && selectedFactorsForModel['centerPoint'] !== false) {
-                            // Separate center points from factorial points
-                            const centerPointIndices: number[] = [];
-                            const factorialPointIndices: number[] = [];
-                            
-                            runData.forEach((row, rowIdx) => {
-                              if (row.response !== null && !isNaN(row.response)) {
-                                const allFactorsZero = factors.every(factor => {
-                                  const level = generatedPlan.plan[rowIdx]?.[factor.name] ?? 0;
-                                  return Math.abs(level) < 0.01; // essentially 0
-                                });
-                                if (allFactorsZero) {
-                                  centerPointIndices.push(rowIdx);
-                                } else {
-                                  factorialPointIndices.push(rowIdx);
-                                }
+                          // Detect center points from actual data (not just state variable)
+                          // Separate center points from factorial points
+                          const centerPointIndices: number[] = [];
+                          const factorialPointIndices: number[] = [];
+                          
+                          runData.forEach((row, rowIdx) => {
+                            if (row.response !== null && !isNaN(row.response)) {
+                              const allFactorsZero = factors.every(factor => {
+                                const level = generatedPlan.plan[rowIdx]?.[factor.name] ?? 0;
+                                return Math.abs(level) < 0.01; // essentially 0
+                              });
+                              if (allFactorsZero) {
+                                centerPointIndices.push(rowIdx);
+                              } else {
+                                factorialPointIndices.push(rowIdx);
                               }
-                            });
+                            }
+                          });
 
-                            const n_c = centerPointIndices.length;
-                            const n_f = factorialPointIndices.length;
-                            
+                          const n_c = centerPointIndices.length;
+                          const n_f = factorialPointIndices.length;
+                          const hasCenterPointsInData = n_c > 0 && n_f > 0;
+                          
+                          // Show curvature if center points detected in data AND not explicitly excluded
+                          if (hasCenterPointsInData && selectedFactorsForModel['centerPoint'] !== false) {
                             if (n_c > 0 && n_f > 0) {
                               // Average response at center points
                               const centerResponses = centerPointIndices.map(idx => runData[idx].response).filter((r): r is number => r !== null && !isNaN(r));
@@ -1902,7 +1905,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                           let adjustedErrorSS = residualSS_red;
                           let adjustedErrorDF = errorDF_red;
                           
-                          if (includeCenterPoints && curvatureDF > 0) {
+                          if (hasCenterPointsInData && curvatureDF > 0) {
                             // When curvature is calculated, subtract it from error
                             adjustedErrorSS = Math.max(0, residualSS_red - curvatureSS);
                             adjustedErrorDF = errorDF_red - curvatureDF;
