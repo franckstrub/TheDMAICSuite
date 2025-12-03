@@ -3005,6 +3005,19 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                             return <div className="text-muted-foreground mt-4">No effects to display</div>;
                           }
                           
+                          // Calculate significance threshold for effects
+                          // Effect = 2 × coefficient, SE_effect = 2 × SE_coeff = 2 × sqrt(MSE/n)
+                          // Critical effect = t_crit × SE_effect = t_crit × 2 × sqrt(MSE/n)
+                          // Or using F: Critical effect = sqrt(F_crit × 4 × MSE / n)
+                          const errorDF = reducedModel.n - reducedModel.p;
+                          const mse = reducedModel.mse;
+                          const nObs = reducedModel.n;
+                          let criticalEffect = 0;
+                          if (errorDF > 0 && mse > 0 && nObs > 0) {
+                            const fCrit = jStat.centralF.inv(1 - significanceLevel, 1, errorDF);
+                            criticalEffect = Math.sqrt(fCrit * 4 * mse / nObs);
+                          }
+                          
                           // Prepare data for horizontal bar chart
                           const names = effectsData.map(d => d.name);
                           const effects = effectsData.map(d => d.effect);
@@ -3035,7 +3048,28 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                   margin: { l: 120, r: 60, t: 50, b: 50 },
                                   showlegend: false,
                                   paper_bgcolor: 'rgba(0,0,0,0)',
-                                  plot_bgcolor: 'rgba(0,0,0,0)'
+                                  plot_bgcolor: 'rgba(0,0,0,0)',
+                                  shapes: criticalEffect > 0 ? [{
+                                    type: 'line',
+                                    x0: criticalEffect,
+                                    x1: criticalEffect,
+                                    y0: -0.5,
+                                    y1: effectsData.length - 0.5,
+                                    line: {
+                                      color: '#dc2626',
+                                      width: 2,
+                                      dash: 'dash'
+                                    }
+                                  }] : [],
+                                  annotations: criticalEffect > 0 ? [{
+                                    x: criticalEffect,
+                                    y: -0.5,
+                                    xanchor: 'left',
+                                    yanchor: 'bottom',
+                                    text: ` α=${significanceLevel}`,
+                                    showarrow: false,
+                                    font: { size: 10, color: '#dc2626' }
+                                  }] : []
                                 }}
                                 config={{ displayModeBar: false, responsive: true }}
                                 style={{ width: '100%' }}
@@ -3043,6 +3077,12 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                               <div className="text-sm text-muted-foreground text-center mt-2">
                                 <span className="inline-block w-3 h-3 rounded mr-1" style={{ backgroundColor: '#3b82f6' }}></span> Positive effect
                                 <span className="inline-block w-3 h-3 rounded ml-4 mr-1" style={{ backgroundColor: '#ef4444' }}></span> Negative effect
+                                {criticalEffect > 0 && (
+                                  <>
+                                    <span className="ml-4 mr-1" style={{ borderLeft: '2px dashed #dc2626', height: '12px', display: 'inline-block' }}></span>
+                                    <span> Significance threshold ({criticalEffect.toFixed(4)})</span>
+                                  </>
+                                )}
                               </div>
                             </div>
                           );
