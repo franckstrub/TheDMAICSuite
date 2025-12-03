@@ -115,6 +115,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
   const [showResidualsVsFits, setShowResidualsVsFits] = useState(false);
   const [showResidualsVsOrder, setShowResidualsVsOrder] = useState(false);
   const [showNormalProbPlot, setShowNormalProbPlot] = useState(false);
+  const [showParetoOfEffects, setShowParetoOfEffects] = useState(false);
   
   // Tab persistence
   const [activeTab, setActiveTab] = useState<string>(() => {
@@ -2902,12 +2903,147 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                             </TableBody>
                           </Table>
                         </div>
-                        <div className="text-sm">Grand Mean = {mean_y.toFixed(4)}</div>
+                        <div className="text-sm"><b>Grand Mean = {mean_y.toFixed(4)}</b></div>
                         <div className="mt-2 text-sm text-muted-foreground">
                           VIF &gt; 5 indicates problematic multicollinearity (high correlation between terms - shown in red)<br></br>
                           &gt; 1 VIF &le; 5 indicates moderate multicollinearity (correlation between terms - shown in yellow)<br></br>
                           VIF &le; 1 indicates no multicollinearity (no correlation between terms - shown in black)
                         </div>
+                        
+                        {/* Pareto of Effects Checkbox */}
+                        <div className="flex items-center space-x-2 mt-4 pt-4 border-t">
+                          <Checkbox 
+                            id="pareto-effects"
+                            checked={showParetoOfEffects}
+                            onCheckedChange={(checked) => setShowParetoOfEffects(!!checked)}
+                            data-testid="checkbox-pareto-effects"
+                          />
+                          <Label htmlFor="pareto-effects" className="font-medium">Show Pareto of Effects</Label>
+                        </div>
+                        
+                        {/* Pareto of Effects Chart */}
+                        {showParetoOfEffects && (() => {
+                          // Build effects data from CODED coefficients (beta_display contains coded when showUncoded=false)
+                          // Use original coded beta for effects (reducedModel.beta)
+                          const codedBeta = reducedModel.beta;
+                          const effectsData: { name: string; effect: number; absEffect: number }[] = [];
+                          
+                          // Main effects
+                          factors.forEach((factor, i) => {
+                            if (selectedFactorsForModel[i] !== false) {
+                              const origColIdx = i + 1;
+                              const reducedColIdx = colMapReverse[origColIdx];
+                              if (reducedColIdx !== undefined && codedBeta[reducedColIdx] !== undefined) {
+                                effectsData.push({
+                                  name: factor.name,
+                                  effect: codedBeta[reducedColIdx],
+                                  absEffect: Math.abs(codedBeta[reducedColIdx])
+                                });
+                              }
+                            }
+                          });
+                          
+                          // Interaction effects
+                          interactionPairs.forEach((pair, i) => {
+                            if (selectedFactorsForModel[`int-${i}`] !== false) {
+                              const origColIdx = factors.length + 1 + i;
+                              const reducedColIdx = colMapReverse[origColIdx];
+                              if (reducedColIdx !== undefined && codedBeta[reducedColIdx] !== undefined) {
+                                effectsData.push({
+                                  name: pair.name,
+                                  effect: codedBeta[reducedColIdx],
+                                  absEffect: Math.abs(codedBeta[reducedColIdx])
+                                });
+                              }
+                            }
+                          });
+                          
+                          // Add curvature effect if center points exist and are selected
+                          const centerPointIndices: number[] = [];
+                          const factorialPointIndices: number[] = [];
+                          
+                          runData.forEach((row, rowIdx) => {
+                            if (row.response !== null && !isNaN(row.response)) {
+                              const allFactorsZero = factors.every(factor => {
+                                const level = generatedPlan.plan[rowIdx]?.[factor.name] ?? 0;
+                                return Math.abs(level) < 0.01;
+                              });
+                              if (allFactorsZero) {
+                                centerPointIndices.push(rowIdx);
+                              } else {
+                                factorialPointIndices.push(rowIdx);
+                              }
+                            }
+                          });
+                          
+                          const hasCenterPointsInData = centerPointIndices.length > 0 && factorialPointIndices.length > 0;
+                          
+                          if (hasCenterPointsInData && selectedFactorsForModel['centerPoint'] !== false) {
+                            const centerResponses = centerPointIndices.map(idx => runData[idx].response).filter((r): r is number => r !== null && !isNaN(r));
+                            const factorialResponses = factorialPointIndices.map(idx => runData[idx].response).filter((r): r is number => r !== null && !isNaN(r));
+                            
+                            if (centerResponses.length > 0 && factorialResponses.length > 0) {
+                              const y_c_avg = centerResponses.reduce((a, b) => a + b, 0) / centerResponses.length;
+                              const y_f_avg = factorialResponses.reduce((a, b) => a + b, 0) / factorialResponses.length;
+                              const curvatureEffect = y_c_avg - y_f_avg;
+                              
+                              effectsData.push({
+                                name: 'Curvature',
+                                effect: curvatureEffect,
+                                absEffect: Math.abs(curvatureEffect)
+                              });
+                            }
+                          }
+                          
+                          // Sort by absolute effect (descending for Pareto)
+                          effectsData.sort((a, b) => b.absEffect - a.absEffect);
+                          
+                          if (effectsData.length === 0) {
+                            return <div className="text-muted-foreground mt-4">No effects to display</div>;
+                          }
+                          
+                          // Prepare data for horizontal bar chart
+                          const names = effectsData.map(d => d.name);
+                          const effects = effectsData.map(d => d.effect);
+                          const colors = effects.map(e => e >= 0 ? '#3b82f6' : '#ef4444'); // blue for positive, red for negative
+                          
+                          return (
+                            <div className="mt-4">
+                              <Plot
+                                data={[{
+                                  type: 'bar',
+                                  y: names,
+                                  x: effects.map(e => Math.abs(e)),
+                                  orientation: 'h',
+                                  marker: { color: colors },
+                                  text: effects.map(e => e.toFixed(4)),
+                                  textposition: 'outside',
+                                  hovertemplate: '%{y}: %{text}<extra></extra>'
+                                }]}
+                                layout={{
+                                  title: 'Pareto of Effects (Coded)',
+                                  xaxis: { title: 'Absolute Effect', zeroline: true },
+                                  yaxis: { 
+                                    title: '',
+                                    autorange: 'reversed',
+                                    tickfont: { size: 11 }
+                                  },
+                                  height: Math.max(300, effectsData.length * 35 + 100),
+                                  margin: { l: 120, r: 60, t: 50, b: 50 },
+                                  showlegend: false,
+                                  paper_bgcolor: 'rgba(0,0,0,0)',
+                                  plot_bgcolor: 'rgba(0,0,0,0)'
+                                }}
+                                config={{ displayModeBar: false, responsive: true }}
+                                style={{ width: '100%' }}
+                              />
+                              <div className="text-sm text-muted-foreground text-center mt-2">
+                                <span className="inline-block w-3 h-3 rounded mr-1" style={{ backgroundColor: '#3b82f6' }}></span> Positive effect
+                                <span className="inline-block w-3 h-3 rounded ml-4 mr-1" style={{ backgroundColor: '#ef4444' }}></span> Negative effect
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </CardContent>
                     </Card>
 
