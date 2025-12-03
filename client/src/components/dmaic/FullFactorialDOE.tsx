@@ -2594,6 +2594,75 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                 
                 const { displayBeta, displayCoeffStats } = transformCoefficientsAndSE();
                 
+                // Always compute uncoded coefficients for solver (independent of display toggle)
+                const getUncodedCoefficientsForSolver = () => {
+                  if (!allFactorsHaveValidLevels()) {
+                    return beta_display; // Return coded if can't transform
+                  }
+                  
+                  const transformed = [...beta_display];
+                  let interceptAdjustment = 0;
+                  
+                  // Transform main effect coefficients
+                  for (let i = 0; i < factors.length; i++) {
+                    const factor = factors[i];
+                    if (factor.type === 'continuous' && factor.lowValue !== undefined && factor.highValue !== undefined) {
+                      const low = parseFloat(String(factor.lowValue));
+                      const high = parseFloat(String(factor.highValue));
+                      if (!isNaN(low) && !isNaN(high)) {
+                        const center = (low + high) / 2;
+                        const halfRange = (high - low) / 2;
+                        
+                        const origColIdx = i + 1;
+                        const reducedColIdx = colMapReverse[origColIdx];
+                        if (reducedColIdx !== undefined && beta_display[reducedColIdx] !== undefined) {
+                          transformed[reducedColIdx] = beta_display[reducedColIdx] / halfRange;
+                          interceptAdjustment += beta_display[reducedColIdx] * center / halfRange;
+                        }
+                      }
+                    }
+                  }
+                  
+                  // Transform N-way interactions
+                  for (let i = 0; i < interactionPairs.length; i++) {
+                    const pair = interactionPairs[i];
+                    const origInteractionIdx = factors.length + 1 + i;
+                    const reducedInteractionIdx = colMapReverse[origInteractionIdx];
+                    
+                    const allContinuousWithLevels = pair.indices.every(idx => {
+                      const factor = factors[idx];
+                      return factor.type === 'continuous' && 
+                             factor.lowValue !== undefined && 
+                             factor.highValue !== undefined;
+                    });
+                    
+                    if (allContinuousWithLevels) {
+                      let halfRangeProduct = 1;
+                      let allValid = true;
+                      
+                      for (const idx of pair.indices) {
+                        const factor = factors[idx];
+                        if (factor.type === 'continuous' && factor.lowValue !== undefined && factor.highValue !== undefined) {
+                          const low = parseFloat(String(factor.lowValue));
+                          const high = parseFloat(String(factor.highValue));
+                          if (isNaN(low) || isNaN(high)) {
+                            allValid = false;
+                            break;
+                          }
+                          halfRangeProduct *= (high - low) / 2;
+                        }
+                      }
+                      
+                      if (allValid && reducedInteractionIdx !== undefined && beta_display[reducedInteractionIdx] !== undefined) {
+                        transformed[reducedInteractionIdx] = beta_display[reducedInteractionIdx] / halfRangeProduct;
+                      }
+                    }
+                  }
+                  
+                  transformed[0] = beta_display[0] - interceptAdjustment;
+                  return transformed;
+                };
+                
                 const handleSolve = () => {
                   // Check if solve factor is included in the model
                   if (selectedFactorsForModel[solveFactorIdx] === false) {
@@ -2609,7 +2678,11 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                   
                   const origColIdx = solveFactorIdx + 1;
                   const reducedColIdx = colMapReverse[origColIdx];
-                  if (reducedColIdx === undefined || displayBeta[reducedColIdx] === 0) return;
+                  
+                  // Always use uncoded coefficients for solver
+                  const solverBeta = getUncodedCoefficientsForSolver();
+                  
+                  if (reducedColIdx === undefined || solverBeta[reducedColIdx] === 0) return;
                   
                   // Check that ALL non-solve factors have constraint values entered
                   for (let i = 0; i < factors.length; i++) {
@@ -2632,8 +2705,8 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                         const origCol = i + 1;
                         const redCol = colMapReverse[origCol];
                         if (redCol !== undefined) {
-                          // Use displayBeta (uncoded coefficients)
-                          constraintSum += displayBeta[redCol] * constraintVal;
+                          // Use solverBeta (always uncoded coefficients)
+                          constraintSum += solverBeta[redCol] * constraintVal;
                         }
                       }
                     }
@@ -2641,7 +2714,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                   // Solve using UNCODED equation: targetY = β0_uncoded + Σ_{j≠i} βj_uncoded * constraint_j + βi_uncoded * Xi
                   // Therefore: Xi = (targetY - β0_uncoded - constraintSum) / βi_uncoded
                   // User enters target and constraints in uncoded space, result is also uncoded
-                  let result = (targetY - displayBeta[0] - constraintSum) / displayBeta[reducedColIdx];
+                  let result = (targetY - solverBeta[0] - constraintSum) / solverBeta[reducedColIdx];
                   setSolverResult(result);
                 };
 
