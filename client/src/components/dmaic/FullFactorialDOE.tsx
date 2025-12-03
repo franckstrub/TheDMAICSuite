@@ -205,6 +205,44 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
     }
   }, [loadedRef, generatedPlan, factors, includeCenterPoints, numberOfCenterPoints, randomizeRuns, numberOfReplicates]);
 
+  // Initialize selectedFactorsForModel including centerPoint when analysis tab is first viewed
+  useEffect(() => {
+    if (activeTab === 'analysis' && Object.keys(selectedFactorsForModel).length === 0 && generatedPlan) {
+      const initialized: Record<number | string, boolean> = {};
+      // Initialize all factors
+      for (let i = 0; i < factors.length; i++) {
+        initialized[i] = true;
+      }
+      // Initialize all interactions
+      const factorIndices = Array.from({ length: factors.length }, (_, i) => i);
+      const getCombinations = (arr: number[], size: number): number[][] => {
+        if (size === 0) return [[]];
+        if (arr.length === 0) return [];
+        const [first, ...rest] = arr;
+        const withFirst = getCombinations(rest, size - 1).map(combo => [first, ...combo]);
+        const withoutFirst = getCombinations(rest, size);
+        return [...withFirst, ...withoutFirst];
+      };
+      
+      let interactionCount = 0;
+      for (let size = 2; size <= factors.length; size++) {
+        const combos = getCombinations(factorIndices, size);
+        interactionCount += combos.length;
+      }
+      
+      for (let i = 0; i < interactionCount; i++) {
+        initialized[`int-${i}`] = true;
+      }
+      
+      // Initialize centerPoint if center points are included
+      if (includeCenterPoints) {
+        initialized['centerPoint'] = true;
+      }
+      
+      setSelectedFactorsForModel(initialized);
+    }
+  }, [activeTab, generatedPlan, factors.length, includeCenterPoints, selectedFactorsForModel]);
+
   // Load data when config is fetched
   useEffect(() => {
     const currentKey = `${projectId}-${solutionId}`;
@@ -2066,11 +2104,11 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                 const residuals = y.map((val, i) => val - predictions[i]);
                 const SS_res = residuals.reduce((sum, val) => sum + Math.pow(val, 2), 0);
                 const R_sq = 1 - SS_res / SS_tot;
-                const adj_R_sq = 1 - (1 - R_sq) * (n - 1) / (n - p);
-                const rmse = Math.sqrt(SS_res / (n - p));
+                const adj_R_sq = (n - p) > 0 ? 1 - (1 - R_sq) * (n - 1) / (n - p) : R_sq;
+                const rmse = (n - p) > 0 ? Math.sqrt(SS_res / (n - p)) : 0;
                 const residualMean = residuals.reduce((a, b) => a + b, 0) / residuals.length;
                 const residualStd = Math.sqrt(residuals.reduce((sum, r) => sum + Math.pow(r - residualMean, 2), 0) / (residuals.length - 1));
-                const mse = SS_res / (n - p);
+                const mse = (n - p) > 0 ? SS_res / (n - p) : 0;
                 
                 // Calculate center point coefficient if center points exist
                 const getCenterPointCoeff = (interceptValue: number): number => {
@@ -2220,7 +2258,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                       xxtInvDiag = Math.abs(denom) > 1e-10 ? 1 / denom : 1 / XtX_red[idx][idx];
                     }
                     const stdError = Math.sqrt(mse_red * Math.max(0, xxtInvDiag));
-                    const tValue = stdError > 0 ? b / stdError : 0;
+                    const tValue = stdError > 0 ? b / stdError : NaN;
                     let pValue = 1;
                     if (stdError > 0 && Number.isFinite(tValue)) {
                       const df = n_reduced - p_reduced;
@@ -2228,7 +2266,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                       pValue = Number.isFinite(cdfVal) ? 2 * (1 - cdfVal) : 1;
                       pValue = Math.max(0, Math.min(1, pValue));
                     }
-                    return { stdError: Number.isFinite(stdError) ? stdError : 0, tValue: Number.isFinite(tValue) ? tValue : 0, pValue };
+                    return { stdError: Number.isFinite(stdError) ? stdError : 0, tValue: Number.isFinite(tValue) ? tValue : +Infinity, pValue };
                   });
                   
                   return {
@@ -2250,8 +2288,8 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                 
                 // Calculate goodness of fit metrics for reduced model
                 const R_sq_red = 1 - reducedModel.SS_res / reducedModel.SS_tot;
-                const adj_R_sq_red = 1 - (1 - R_sq_red) * (reducedModel.n - 1) / (reducedModel.n - reducedModel.p);
-                const rmse_red = Math.sqrt(reducedModel.SS_res / (reducedModel.n - reducedModel.p));
+                const adj_R_sq_red = (reducedModel.n - reducedModel.p) > 0 ? 1 - (1 - R_sq_red) * (reducedModel.n - 1) / (reducedModel.n - reducedModel.p) : R_sq_red;
+                const rmse_red = (reducedModel.n - reducedModel.p) > 0 ? Math.sqrt(reducedModel.SS_res / (reducedModel.n - reducedModel.p)) : 0;
                 
                 // Use reduced model stats
                 const coeffStats = reducedModel.coeffStats;
@@ -2268,7 +2306,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                 // Transform coefficients and standard errors from coded to uncoded if needed
                 // Transform the REDUCED model coefficients (what's actually displayed in table)
                 const transformCoefficientsAndSE = () => {
-                  if (!showUncoded || !allFactorsHaveValidLevels()) {
+                  if (!allFactorsHaveValidLevels()) {
                     return { displayBeta: beta_display, displayCoeffStats: coeffStats };
                   }
                   
@@ -2376,7 +2414,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                     // So no variance contribution from interactions to intercept SE
                     
                     transformedStats[0].stdError = Math.sqrt(Math.max(0, interceptSESquared));
-                    transformedStats[0].tValue = (beta_display[0] - interceptAdjustment) / transformedStats[0].stdError;
+                    transformedStats[0].tValue = transformedStats[0].stdError > 0 ?(beta[0] - interceptAdjustment) / transformedStats[0].stdError : +Infinity;
                     // Recalculate p-value for intercept since its t-value changes (SE is recalculated via variance propagation)
                     transformedStats[0].pValue = transformedStats[0].stdError > 0 ? 2 * (1 - jStat.studentt.cdf(Math.abs(transformedStats[0].tValue), reducedModel.n - reducedModel.p)) : 1;
                   }
@@ -2619,6 +2657,54 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                   );
                                 }
                               })}
+                              {/* Curvature row - only shown when center points are included */}
+                              {includeCenterPoints && (() => {
+                                const isIncluded = selectedFactorsForModel['centerPoint'] !== false;
+                                
+                                if (isIncluded) {
+                                  return (
+                                    <TableRow key="curvature">
+                                      <TableCell className="font-medium w-48">Curvature</TableCell>
+                                      <TableCell className="text-right w-24">-</TableCell>
+                                      <TableCell className="text-right w-24">-</TableCell>
+                                      <TableCell className="text-right w-20">-</TableCell>
+                                      <TableCell className="text-right w-20">-</TableCell>
+                                      <TableCell className="text-right w-16">-</TableCell>
+                                      <TableCell className="text-center w-16">
+                                        <Checkbox
+                                          checked={true}
+                                          onCheckedChange={(checked) => {
+                                            setSelectedFactorsForModel(prev => ({
+                                              ...prev,
+                                              ['centerPoint']: !!checked
+                                            }));
+                                          }}
+                                          data-testid="checkbox-curvature"
+                                        />
+                                      </TableCell>
+                                    </TableRow>
+                                  );
+                                } else {
+                                  return (
+                                    <TableRow key="curvature" className="opacity-50">
+                                      <TableCell className="font-medium text-muted-foreground w-48">Curvature</TableCell>
+                                      <TableCell colSpan={5} className="text-muted-foreground w-auto">Term not included in model</TableCell>
+                                      <TableCell className="text-center w-16">
+                                        <Checkbox
+                                          checked={false}
+                                          onCheckedChange={(checked) => {
+                                            setSelectedFactorsForModel(prev => ({
+                                              ...prev,
+                                              ['centerPoint']: !!checked
+                                            }));
+                                          }}
+                                          data-testid="checkbox-curvature"
+                                        />
+                                      </TableCell>
+                                    </TableRow>
+                                  );
+                                }
+                              })()}
                             </TableBody>
                           </Table>
                         </div>
@@ -3104,7 +3190,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                 return jStat.normal.inv(p, 0, 1);
                               });
                               const lineX = [residMean - 3 * residStd, residMean + 3 * residStd];
-                              const lineY = [-3, 3];
+                              const lineY = residualStd > 0 ? [-3, 3] : [-0,0]; // no line for mean=0, sigma=0 distribution whhich is a peak distribution 
                               return (
                                 <Plot
                                   data={[
