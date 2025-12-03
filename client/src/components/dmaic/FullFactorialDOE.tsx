@@ -2925,34 +2925,37 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                         {showParetoOfEffects && (() => {
                           // Build effects data from CODED coefficients (beta_display contains coded when showUncoded=false)
                           // Use original coded beta for effects (reducedModel.beta)
+                          // Effect = 2 × coefficient (because coded levels go from -1 to +1, so effect = change over 2 units)
                           const codedBeta = reducedModel.beta;
                           const effectsData: { name: string; effect: number; absEffect: number }[] = [];
                           
-                          // Main effects
+                          // Main effects (effect = 2 × coefficient)
                           factors.forEach((factor, i) => {
                             if (selectedFactorsForModel[i] !== false) {
                               const origColIdx = i + 1;
                               const reducedColIdx = colMapReverse[origColIdx];
                               if (reducedColIdx !== undefined && codedBeta[reducedColIdx] !== undefined) {
+                                const effect = 2 * codedBeta[reducedColIdx];
                                 effectsData.push({
                                   name: factor.name,
-                                  effect: codedBeta[reducedColIdx],
-                                  absEffect: Math.abs(codedBeta[reducedColIdx])
+                                  effect: effect,
+                                  absEffect: Math.abs(effect)
                                 });
                               }
                             }
                           });
                           
-                          // Interaction effects
+                          // Interaction effects (effect = 2 × coefficient)
                           interactionPairs.forEach((pair, i) => {
                             if (selectedFactorsForModel[`int-${i}`] !== false) {
                               const origColIdx = factors.length + 1 + i;
                               const reducedColIdx = colMapReverse[origColIdx];
                               if (reducedColIdx !== undefined && codedBeta[reducedColIdx] !== undefined) {
+                                const effect = 2 * codedBeta[reducedColIdx];
                                 effectsData.push({
                                   name: pair.name,
-                                  effect: codedBeta[reducedColIdx],
-                                  absEffect: Math.abs(codedBeta[reducedColIdx])
+                                  effect: effect,
+                                  absEffect: Math.abs(effect)
                                 });
                               }
                             }

@@ -3083,33 +3083,36 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                         {/* Pareto of Effects Chart */}
                         {showParetoOfEffects && (() => {
                           // Build effects data from CODED coefficients (beta_red)
+                          // Effect = 2 × coefficient (because coded levels go from -1 to +1, so effect = change over 2 units)
                           const effectsData: { name: string; effect: number; absEffect: number }[] = [];
                           
-                          // Main effects (only base factors, not confounded)
+                          // Main effects (only base factors, not confounded) - effect = 2 × coefficient
                           for (let i = 0; i < baseFactorCount; i++) {
                             if (selectedFactorsForModel[i] !== false) {
                               const origColIdx = i + 1;
                               const reducedColIdx = colMapReverse[origColIdx];
                               if (reducedColIdx !== undefined && beta_red[reducedColIdx] !== undefined && Number.isFinite(beta_red[reducedColIdx])) {
+                                const effect = 2 * beta_red[reducedColIdx];
                                 effectsData.push({
                                   name: factors[i].name,
-                                  effect: beta_red[reducedColIdx],
-                                  absEffect: Math.abs(beta_red[reducedColIdx])
+                                  effect: effect,
+                                  absEffect: Math.abs(effect)
                                 });
                               }
                             }
                           }
                           
-                          // Interaction effects
+                          // Interaction effects - effect = 2 × coefficient
                           interactionPairs.forEach((pair, i) => {
                             if (selectedFactorsForModel[`int-${i}`] !== false) {
                               const origColIdx = baseFactorCount + 1 + i;
                               const reducedColIdx = colMapReverse[origColIdx];
                               if (reducedColIdx !== undefined && beta_red[reducedColIdx] !== undefined && Number.isFinite(beta_red[reducedColIdx])) {
+                                const effect = 2 * beta_red[reducedColIdx];
                                 effectsData.push({
                                   name: pair.name,
-                                  effect: beta_red[reducedColIdx],
-                                  absEffect: Math.abs(beta_red[reducedColIdx])
+                                  effect: effect,
+                                  absEffect: Math.abs(effect)
                                 });
                               }
                             }
