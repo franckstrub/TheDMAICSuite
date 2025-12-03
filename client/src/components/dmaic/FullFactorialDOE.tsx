@@ -1913,6 +1913,35 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                           
                           const errorMS = adjustedErrorDF > 0 ? adjustedErrorSS / adjustedErrorDF : 0;
 
+                          // Calculate Model row (like in Fractional Factorial DOE)
+                          // Model DF = number of selected factors + number of selected interactions + curvature DF
+                          const selectedFactorCount = factors.filter((_, idx) => selectedFactorsForModel[idx] !== false).length;
+                          const selectedInteractionCount = interactionPairs.filter((_, pairIdx) => selectedFactorsForModel[`int-${pairIdx}`] !== false).length;
+                          const modelDF = selectedFactorCount + selectedInteractionCount + curvatureDF;
+                          
+                          // Model SS = Total SS - Error SS
+                          const modelSS = totalSS - adjustedErrorSS;
+                          const modelMS = modelDF > 0 ? modelSS / modelDF : 0;
+                          const modelFRatio = errorMS > 0 ? modelMS / errorMS : 0;
+                          const modelPValue = modelFRatio > 0 && adjustedErrorDF > 0
+                            ? 1 - jStat.centralF.cdf(modelFRatio, modelDF, adjustedErrorDF)
+                            : 1;
+
+                          rows.push(
+                            <TableRow key="model" className="font-semibold">
+                              <TableCell>Model</TableCell>
+                              <TableCell className="text-right">{modelDF}</TableCell>
+                              <TableCell className="text-right">{modelSS.toFixed(4)}</TableCell>
+                              <TableCell className="text-right">{modelMS.toFixed(4)}</TableCell>
+                              <TableCell className="text-right">{modelFRatio > 0 ? modelFRatio.toFixed(4) : '-'}</TableCell>
+                              <TableCell className="text-right">
+                                <span className={modelPValue < 0.05 ? "text-green-600 font-semibold" : ""}>
+                                  {modelPValue === 1 || isNaN(modelPValue) ? '-' : modelPValue.toFixed(4)}
+                                </span>
+                              </TableCell>
+                            </TableRow>
+                          );
+
                           rows.push(
                             <TableRow key="error">
                               <TableCell className="font-medium">Error</TableCell>
