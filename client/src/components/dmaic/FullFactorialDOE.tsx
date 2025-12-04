@@ -174,7 +174,8 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
         'PATCH',
         `/api/projects/${projectId}/solutions/${solutionId}/doe-full`,
         {
-          selectedFactorsForModel
+          selectedFactorsForModel,
+          showParetoOfEffects
         }
       );
     },
@@ -266,6 +267,9 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
       
       if (config.showUncoded !== undefined) {
         setShowUncoded(config.showUncoded);
+      }
+      if (config.showParetoOfEffects !== undefined) {
+        setShowParetoOfEffects(config.showParetoOfEffects);
       }
       
       // Load selected factors for model
@@ -3014,7 +3018,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                           const nObs = reducedModel.n;
                           let criticalEffect = 0;
                           if (errorDF > 0 && mse > 0 && nObs > 0) {
-                            const fCrit = jStat.centralF.inv(1 - significanceLevel, 1, errorDF);
+                            const fCrit = jStat.centralF.inv(1 - significanceLevel/2, 1, errorDF);
                             criticalEffect = Math.sqrt(fCrit * 4 * mse / nObs);
                           }
                           
