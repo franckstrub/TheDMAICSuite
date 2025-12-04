@@ -187,7 +187,8 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
         'PATCH',
         `/api/projects/${projectId}/solutions/${solutionId}/doe-fractional`,
         {
-          selectedFactorsForModel
+          selectedFactorsForModel,
+          showParetoOfEffects
         }
       );
     },
@@ -333,6 +334,9 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
       
       if (config.showUncoded !== undefined) {
         setShowUncoded(config.showUncoded);
+      }
+      if (config.showParetoOfEffects !== undefined) {
+        setShowParetoOfEffects(config.showParetoOfEffects);
       }
       
       // Load selected factors for model
@@ -3168,7 +3172,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                           // Or using F: Critical effect = sqrt(F_crit × 4 × MSE / n)
                           let criticalEffect = 0;
                           if (errorDF_red > 0 && errorMS > 0 && n > 0) {
-                            const fCrit = jStat.centralF.inv(1 - significanceLevel, 1, errorDF_red);
+                            const fCrit = jStat.centralF.inv(1 - significanceLevel/2, 1, errorDF_red);
                             criticalEffect = Math.sqrt(fCrit * 4 * errorMS / n);
                           }
                           
