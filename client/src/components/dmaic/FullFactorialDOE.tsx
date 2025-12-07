@@ -3038,7 +3038,8 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                 const y_c_avg = centerResponses.reduce((a, b) => a + b, 0) / centerResponses.length;
                                 const y_f_avg = factorialResponses.reduce((a, b) => a + b, 0) / factorialResponses.length;
                                 const curvatureEffect = y_c_avg - y_f_avg;
-                                const curvatureCoeff = curvatureEffect / 2;
+                                const numContinuousFactors = factors.filter(f => f.type === 'continuous').length;
+                                const curvatureCoeff = numContinuousFactors > 0 ? curvatureEffect / numContinuousFactors : curvatureEffect;
                                 
                                 const isIncluded = selectedFactorsForModel['centerPoint'] !== false;
                                 
