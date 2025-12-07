@@ -111,6 +111,15 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
     {}
   );
   
+  // Calculate actual center point count (doubled for each categorical factor)
+  const actualCenterPointCount = useMemo(() => {
+    if (!includeCenterPoints) return 0;
+    const categoricalFactorCount = factors.filter(f => f.type === 'categorical').length;
+    return categoricalFactorCount > 0 
+      ? numberOfCenterPoints * Math.pow(2, categoricalFactorCount)
+      : numberOfCenterPoints;
+  }, [includeCenterPoints, numberOfCenterPoints, factors]);
+  
   // Residual analysis plot visibility
   const [showResidualsVsFits, setShowResidualsVsFits] = useState(false);
   const [showResidualsVsOrder, setShowResidualsVsOrder] = useState(false);
@@ -928,7 +937,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                             Randomization: {randomizeRuns ? "ON" : "OFF"}
                           </Badge>
                           <Badge variant="outline" className="bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800" data-testid="badge-center-points">
-                            Center Points: {includeCenterPoints ? numberOfCenterPoints : 0}
+                            Center Points: {actualCenterPointCount}
                           </Badge>
                         </div>
                       </div>
@@ -1070,7 +1079,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                     Randomization: {randomizeRuns ? "ON" : "OFF"}
                   </Badge>
                   <Badge variant="outline" className="bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800" data-testid="badge-center-points">
-                    Center Points: {includeCenterPoints ? numberOfCenterPoints : 0}
+                    Center Points: {actualCenterPointCount}
                   </Badge>
                 </div>
               </div>
@@ -1559,7 +1568,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                     Randomization: {randomizeRuns ? "ON" : "OFF"}
                   </Badge>
                   <Badge variant="outline" className="bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800" data-testid="badge-center-points">
-                    Center Points: {includeCenterPoints ? numberOfCenterPoints : 0}
+                    Center Points: {actualCenterPointCount}
                   </Badge>
                 </div>
               </div>
