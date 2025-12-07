@@ -2549,7 +2549,11 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     {/* ANOVA Table */}
                     <Card>
                       <CardHeader>
-                        <CardTitle>ANOVA Analysis</CardTitle>
+                        <CardTitle>ANOVA Analysis
+                        {Object.values(selectedFactorsForModel).some(v => v === false) && (
+                          <span className="p-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-xl ml-24 text-sm font-normal justify-right">Reduced Model</span>
+                        )}
+                        </CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="overflow-x-auto">
@@ -2585,10 +2589,13 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                   const pValue = fRatio > 0 && (n - p_reduced - dfCurvature) > 0 
                                     ? 1 - jStat.centralF.cdf(fRatio, termDF, n - p_reduced - dfCurvature) 
                                     : 1;
+                                  const factorLabel = showUncoded && allFactorsHaveValidLevels()
+                                    ? `${factor.name}${factor.type === 'continuous' && factor.units ? ` (${factor.units})` : ''}`
+                                    : factor.name;
 
                                   rows.push(
                                     <TableRow key={`factor-${i}`}>
-                                      <TableCell className="font-medium">{factor.name}</TableCell>
+                                      <TableCell className="font-medium">{factorLabel}</TableCell>
                                       <TableCell className="text-right">{termDF}</TableCell>
                                       <TableCell className="text-right">{termSS.toFixed(4)}</TableCell>
                                       <TableCell className="text-right">{termMS.toFixed(4)}</TableCell>
@@ -2904,8 +2911,11 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     {/* Coefficients Table with Model Selection */}
                     <Card>
                       <CardHeader className="flex flex-row items-center justify-between">
-                        <CardTitle>Regression Coefficients <span className="text-xs"> (Uncheck to exclude from model)</span></CardTitle>
-                        <Button 
+                        <CardTitle>Regression Coefficients  {showUncoded && allFactorsHaveValidLevels() ? '(Uncoded)' : '(Coded)'} <span className="text-xs"> (Uncheck to exclude from model)</span></CardTitle>
+                        {Object.values(selectedFactorsForModel).some(v => v === false) && (
+                            <span className="p-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-xl ml-24 text-sm font-normal justify-right">Reduced Model</span>
+                          )}
+                          <Button 
                           onClick={() => saveSelectedCoefficientsMutation.mutate()} 
                           disabled={saveSelectedCoefficientsMutation.isPending}
                           //variant="outline"
@@ -2961,9 +2971,12 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                   })();
                                   const isHighVIF = vif !== null && vif > 5;
                                   const isModerateVIF = vif !== null && vif > 1 && vif <= 5;
+                                  const factorLabel = showUncoded && allFactorsHaveValidLevels()
+                                    ? `${factor.name}${factor.type === 'continuous' && factor.units ? ` (${factor.units})` : ''}`
+                                    : factor.name;
                                   return (
                                   <TableRow key={i}>
-                                    <TableCell className="font-medium">{factor.name}</TableCell>
+                                    <TableCell className="font-medium">{factorLabel}</TableCell>
                                     <TableCell className="text-right">{displayBeta[i + 1]?.toFixed(6)}</TableCell>
                                     <TableCell className="text-right">{displayCoeffStats[i + 1]?.stdError.toFixed(4)}</TableCell>
                                     <TableCell className="text-right">{displayCoeffStats[i + 1]?.tValue.toFixed(4)}</TableCell>
@@ -3562,7 +3575,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     <Card>
                       <CardHeader>
                         <CardTitle>
-                          Solve for Target Response
+                          Solve for Target Response (Uncoded)
                           {Object.values(selectedFactorsForModel).some(v => v === false) && (
                             <span className="p-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-xl ml-24 text-sm font-normal justify-right">Reduced Model</span>
                           )}
