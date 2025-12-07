@@ -3164,6 +3164,94 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                 }
                                 return null;
                               })}
+                              {/* Center Point Row */}
+                              {(() => {
+                                const centerPointIndices: number[] = [];
+                                const factorialPointIndices: number[] = [];
+                                
+                                runData.forEach((row, rowIdx) => {
+                                  if (row.response !== null && !isNaN(row.response)) {
+                                    const isCenterPoint = factors.every(factor => {
+                                      const level = generatedPlan.plan[rowIdx]?.[factor.name] ?? 0;
+                                      if (factor.type === 'categorical') {
+                                        return Math.abs(level) === 1;
+                                      } else {
+                                        return Math.abs(level) < 0.01;
+                                      }
+                                    });
+                                    
+                                    const hasAnyContinuousAtZero = factors.some(f => 
+                                      f.type === 'continuous' && Math.abs(generatedPlan.plan[rowIdx]?.[f.name] ?? 1) < 0.01
+                                    );
+                                    
+                                    if (isCenterPoint && hasAnyContinuousAtZero) {
+                                      centerPointIndices.push(rowIdx);
+                                    } else {
+                                      factorialPointIndices.push(rowIdx);
+                                    }
+                                  }
+                                });
+                                
+                                const n_c = centerPointIndices.length;
+                                const n_f = factorialPointIndices.length;
+                                
+                                if (n_c === 0 || n_f === 0) return null;
+                                
+                                const centerResponses = centerPointIndices.map(idx => runData[idx].response).filter((r): r is number => r !== null && !isNaN(r));
+                                const factorialResponses = factorialPointIndices.map(idx => runData[idx].response).filter((r): r is number => r !== null && !isNaN(r));
+                                
+                                const y_c_avg = centerResponses.reduce((a, b) => a + b, 0) / centerResponses.length;
+                                const y_f_avg = factorialResponses.reduce((a, b) => a + b, 0) / factorialResponses.length;
+                                const curvatureEffect = y_c_avg - y_f_avg;
+                                const curvatureCoeff = curvatureEffect / 2;
+                                
+                                const isIncluded = selectedFactorsForModel['centerPoint'] !== false;
+                                
+                                if (isIncluded) {
+                                  return (
+                                    <TableRow key="centerPoint">
+                                      <TableCell className="font-medium">Center Point</TableCell>
+                                      <TableCell className="text-right">{curvatureEffect.toFixed(6)}</TableCell>
+                                      <TableCell className="text-right">{curvatureCoeff.toFixed(6)}</TableCell>
+                                      <TableCell className="text-right">-</TableCell>
+                                      <TableCell className="text-right">-</TableCell>
+                                      <TableCell className="text-right">-</TableCell>
+                                      <TableCell className="text-right">-</TableCell>
+                                      <TableCell className="text-center">
+                                        <Checkbox
+                                          checked={true}
+                                          onCheckedChange={(checked) => {
+                                            setSelectedFactorsForModel(prev => ({
+                                              ...prev,
+                                              ['centerPoint']: !!checked
+                                            }));
+                                          }}
+                                          data-testid="checkbox-centerpoint"
+                                        />
+                                      </TableCell>
+                                    </TableRow>
+                                  );
+                                } else {
+                                  return (
+                                    <TableRow key="centerPoint" className="opacity-50">
+                                      <TableCell className="font-medium text-muted-foreground">Center Point</TableCell>
+                                      <TableCell colSpan={6} className="text-muted-foreground">Term not included in model</TableCell>
+                                      <TableCell className="text-center">
+                                        <Checkbox
+                                          checked={false}
+                                          onCheckedChange={(checked) => {
+                                            setSelectedFactorsForModel(prev => ({
+                                              ...prev,
+                                              ['centerPoint']: !!checked
+                                            }));
+                                          }}
+                                          data-testid="checkbox-centerpoint"
+                                        />
+                                      </TableCell>
+                                    </TableRow>
+                                  );
+                                }
+                              })()}
                             </TableBody>
                           </Table>
                         </div>
