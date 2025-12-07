@@ -1877,16 +1877,29 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                           
                           // Detect center points from actual data (not just state variable)
                           // Separate center points from factorial points
+                          // Center points: all CONTINUOUS factors at 0; categorical factors at ±1
                           const centerPointIndices: number[] = [];
                           const factorialPointIndices: number[] = [];
                           
                           runData.forEach((row, rowIdx) => {
                             if (row.response !== null && !isNaN(row.response)) {
-                              const allFactorsZero = factors.every(factor => {
+                              const isCenterPoint = factors.every(factor => {
                                 const level = generatedPlan.plan[rowIdx]?.[factor.name] ?? 0;
-                                return Math.abs(level) < 0.01; // essentially 0
+                                if (factor.type === 'categorical') {
+                                  // Categorical factors are at ±1 for center points (not 0)
+                                  return Math.abs(level) === 1;
+                                } else {
+                                  // Continuous factors must be at 0 for center points
+                                  return Math.abs(level) < 0.01;
+                                }
                               });
-                              if (allFactorsZero) {
+                              
+                              // Also check: this is only a center point if there's at least one continuous factor at 0
+                              const hasAnyContinuousAtZero = factors.some(f => 
+                                f.type === 'continuous' && Math.abs(generatedPlan.plan[rowIdx]?.[f.name] ?? 1) < 0.01
+                              );
+                              
+                              if (isCenterPoint && hasAnyContinuousAtZero) {
                                 centerPointIndices.push(rowIdx);
                               } else {
                                 factorialPointIndices.push(rowIdx);
@@ -2012,16 +2025,29 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
               {/* Curvature Analysis Card */}
               {(() => {
                 // Calculate factorial vs center points statistics
+                // Center points: all CONTINUOUS factors at 0; categorical factors at ±1
                 const centerPointIndices: number[] = [];
                 const factorialPointIndices: number[] = [];
                 
                 runData.forEach((row, rowIdx) => {
                   if (row.response !== null && !isNaN(row.response)) {
-                    const allFactorsZero = factors.every(factor => {
+                    const isCenterPoint = factors.every(factor => {
                       const level = generatedPlan.plan[rowIdx]?.[factor.name] ?? 0;
-                      return Math.abs(level) < 0.01;
+                      if (factor.type === 'categorical') {
+                        // Categorical factors are at ±1 for center points (not 0)
+                        return Math.abs(level) === 1;
+                      } else {
+                        // Continuous factors must be at 0 for center points
+                        return Math.abs(level) < 0.01;
+                      }
                     });
-                    if (allFactorsZero) {
+                    
+                    // Also check: this is only a center point if there's at least one continuous factor at 0
+                    const hasAnyContinuousAtZero = factors.some(f => 
+                      f.type === 'continuous' && Math.abs(generatedPlan.plan[rowIdx]?.[f.name] ?? 1) < 0.01
+                    );
+                    
+                    if (isCenterPoint && hasAnyContinuousAtZero) {
                       centerPointIndices.push(rowIdx);
                     } else {
                       factorialPointIndices.push(rowIdx);
@@ -2325,16 +2351,26 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                 const getCenterPointCoeff = (interceptValue: number): number => {
                   if (!includeCenterPoints) return 0;
                   
+                  // Center points: all CONTINUOUS factors at 0; categorical factors at ±1
                   const centerPointIndices: number[] = [];
                   const factorialPointIndices: number[] = [];
                   
                   runData.forEach((row, rowIdx) => {
                     if (row.response !== null && !isNaN(row.response)) {
-                      const allFactorsZero = factors.every(factor => {
+                      const isCenterPoint = factors.every(factor => {
                         const level = generatedPlan.plan[rowIdx]?.[factor.name] ?? 0;
-                        return Math.abs(level) < 0.01; // essentially 0
+                        if (factor.type === 'categorical') {
+                          return Math.abs(level) === 1;
+                        } else {
+                          return Math.abs(level) < 0.01;
+                        }
                       });
-                      if (allFactorsZero) {
+                      
+                      const hasAnyContinuousAtZero = factors.some(f => 
+                        f.type === 'continuous' && Math.abs(generatedPlan.plan[rowIdx]?.[f.name] ?? 1) < 0.01
+                      );
+                      
+                      if (isCenterPoint && hasAnyContinuousAtZero) {
                         centerPointIndices.push(rowIdx);
                       } else {
                         factorialPointIndices.push(rowIdx);
@@ -2373,11 +2409,20 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                   if (shouldExcludeCenterPoints && includeCenterPoints) {
                     runData.forEach((row, rowIdx) => {
                       if (row.response !== null && !isNaN(row.response)) {
-                        const allFactorsZero = factors.every(factor => {
+                        const isCenterPoint = factors.every(factor => {
                           const level = generatedPlan.plan[rowIdx]?.[factor.name] ?? 0;
-                          return Math.abs(level) < 0.01; // essentially 0
+                          if (factor.type === 'categorical') {
+                            return Math.abs(level) === 1;
+                          } else {
+                            return Math.abs(level) < 0.01;
+                          }
                         });
-                        if (allFactorsZero) {
+                        
+                        const hasAnyContinuousAtZero = factors.some(f => 
+                          f.type === 'continuous' && Math.abs(generatedPlan.plan[rowIdx]?.[f.name] ?? 1) < 0.01
+                        );
+                        
+                        if (isCenterPoint && hasAnyContinuousAtZero) {
                           centerPointIndices.push(rowIdx);
                         }
                       }
@@ -3006,16 +3051,26 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                           });
                           
                           // Add curvature effect if center points exist and are selected
+                          // Center points: all CONTINUOUS factors at 0; categorical factors at ±1
                           const centerPointIndices: number[] = [];
                           const factorialPointIndices: number[] = [];
                           
                           runData.forEach((row, rowIdx) => {
                             if (row.response !== null && !isNaN(row.response)) {
-                              const allFactorsZero = factors.every(factor => {
+                              const isCenterPoint = factors.every(factor => {
                                 const level = generatedPlan.plan[rowIdx]?.[factor.name] ?? 0;
-                                return Math.abs(level) < 0.01;
+                                if (factor.type === 'categorical') {
+                                  return Math.abs(level) === 1;
+                                } else {
+                                  return Math.abs(level) < 0.01;
+                                }
                               });
-                              if (allFactorsZero) {
+                              
+                              const hasAnyContinuousAtZero = factors.some(f => 
+                                f.type === 'continuous' && Math.abs(generatedPlan.plan[rowIdx]?.[f.name] ?? 1) < 0.01
+                              );
+                              
+                              if (isCenterPoint && hasAnyContinuousAtZero) {
                                 centerPointIndices.push(rowIdx);
                               } else {
                                 factorialPointIndices.push(rowIdx);
