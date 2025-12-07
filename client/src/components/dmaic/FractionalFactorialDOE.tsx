@@ -3203,9 +3203,8 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                 const y_c_avg = centerResponses.reduce((a, b) => a + b, 0) / centerResponses.length;
                                 const y_f_avg = factorialResponses.reduce((a, b) => a + b, 0) / factorialResponses.length;
                                 const curvatureEffect = y_c_avg - y_f_avg;
-                                // Center point coefficient = curvature effect (γ̂ = ȳ_center - ȳ_factorial)
-                                // In a factorial model with center point indicator Z, the coefficient is the raw curvature difference
-                                const curvatureCoeff = curvatureEffect;
+                                // Center point coefficient = curvature effect / number of main factors
+                                const curvatureCoeff = factors.length > 0 ? curvatureEffect / factors.length : curvatureEffect;
                                 
                                 // Calculate curvature statistics (same as Curvature Analysis Card)
                                 const curvatureSS = (n_f * n_c) / (n_f + n_c) * Math.pow(curvatureEffect, 2);
