@@ -2703,16 +2703,26 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                 //const hasCurvature = (includeCenterPoints && selectedFactorsForModel['centerPoint'] !== false);
                                 //let dfCurvature = 0;
                                 if (hasCurvature && selectedFactorsForModel['centerPoint'] !== false) {
+                                  // Center points: all CONTINUOUS factors at 0; categorical factors at ±1
                                   const centerPointIndices: number[] = [];
                                   const factorialPointIndices: number[] = [];
                                   
                                   runData.forEach((row, rowIdx) => {
                                     if (row.response !== null && !isNaN(row.response)) {
-                                      const allFactorsZero = factors.every(factor => {
+                                      const isCenterPoint = factors.every(factor => {
                                         const level = generatedPlan.plan[rowIdx]?.[factor.name] ?? 0;
-                                        return Math.abs(level) < 0.01;
+                                        if (factor.type === 'categorical') {
+                                          return Math.abs(level) === 1;
+                                        } else {
+                                          return Math.abs(level) < 0.01;
+                                        }
                                       });
-                                      if (allFactorsZero) {
+                                      
+                                      const hasAnyContinuousAtZero = factors.some(f => 
+                                        f.type === 'continuous' && Math.abs(generatedPlan.plan[rowIdx]?.[f.name] ?? 1) < 0.01
+                                      );
+                                      
+                                      if (isCenterPoint && hasAnyContinuousAtZero) {
                                         centerPointIndices.push(rowIdx);
                                       } else {
                                         factorialPointIndices.push(rowIdx);
@@ -2817,16 +2827,26 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     {/* Curvature Analysis Card */}
                     {(() => {
                       // Calculate factorial vs center points statistics
+                      // Center points: all CONTINUOUS factors at 0; categorical factors at ±1
                       const centerPointIndices: number[] = [];
                       const factorialPointIndices: number[] = [];
                       
                       runData.forEach((row, rowIdx) => {
                         if (row.response !== null && !isNaN(row.response)) {
-                          const allFactorsZero = factors.every(factor => {
+                          const isCenterPoint = factors.every(factor => {
                             const level = generatedPlan.plan[rowIdx]?.[factor.name] ?? 0;
-                            return Math.abs(level) < 0.01;
+                            if (factor.type === 'categorical') {
+                              return Math.abs(level) === 1;
+                            } else {
+                              return Math.abs(level) < 0.01;
+                            }
                           });
-                          if (allFactorsZero) {
+                          
+                          const hasAnyContinuousAtZero = factors.some(f => 
+                            f.type === 'continuous' && Math.abs(generatedPlan.plan[rowIdx]?.[f.name] ?? 1) < 0.01
+                          );
+                          
+                          if (isCenterPoint && hasAnyContinuousAtZero) {
                             centerPointIndices.push(rowIdx);
                           } else {
                             factorialPointIndices.push(rowIdx);
@@ -3192,16 +3212,26 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                           });
                           
                           // Add curvature effect if center points exist and are selected
+                          // Center points: all CONTINUOUS factors at 0; categorical factors at ±1
                           const centerPointIndices: number[] = [];
                           const factorialPointIndices: number[] = [];
                           
                           runData.forEach((row, rowIdx) => {
                             if (row.response !== null && !isNaN(row.response)) {
-                              const allFactorsZero = factors.every(factor => {
+                              const isCenterPoint = factors.every(factor => {
                                 const level = generatedPlan.plan[rowIdx]?.[factor.name] ?? 0;
-                                return Math.abs(level) < 0.01;
+                                if (factor.type === 'categorical') {
+                                  return Math.abs(level) === 1;
+                                } else {
+                                  return Math.abs(level) < 0.01;
+                                }
                               });
-                              if (allFactorsZero) {
+                              
+                              const hasAnyContinuousAtZero = factors.some(f => 
+                                f.type === 'continuous' && Math.abs(generatedPlan.plan[rowIdx]?.[f.name] ?? 1) < 0.01
+                              );
+                              
+                              if (isCenterPoint && hasAnyContinuousAtZero) {
                                 centerPointIndices.push(rowIdx);
                               } else {
                                 factorialPointIndices.push(rowIdx);
