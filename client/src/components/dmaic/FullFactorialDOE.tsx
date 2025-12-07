@@ -2068,9 +2068,14 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                 }
                 
                 let beta_full: number[] = [];
-                const XtX_inv_full = invertMatrix(XtX_full);
-                if (XtX_inv_full) {
-                  beta_full = Xty_full.map((_, j) => Xty_full.reduce((sum, val, k) => sum + XtX_inv_full[j][k] * val, 0));
+                try {
+                  const XtX_inv_full = invertMatrix(XtX_full);
+                  if (XtX_inv_full) {
+                    beta_full = Xty_full.map((_, j) => Xty_full.reduce((sum, val, k) => sum + XtX_inv_full[j][k] * val, 0));
+                  }
+                } catch (e) {
+                  // Matrix is singular - use simple average as fallback
+                  beta_full = [y_f_avg, ...Array(p_full - 1).fill(0)];
                 }
                 // Curvature effect: center point mean - predicted at center (intercept)
                 const y_f_at_center = beta_full[0] || y_f_avg;
@@ -2732,7 +2737,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                     <Card>
                       <CardHeader className="flex flex-row items-center justify-between">
                         <CardTitle>
-                          Regression Coefficients <span className="text-xs"> (Uncheck to exclude from model)</span>
+                          Regression Coefficients  {showUncoded && allFactorsHaveValidLevels() ? '(Uncoded)' : '(Coded)'} <span className="text-xs"> (Uncheck to exclude from model)</span>
                           {Object.values(selectedFactorsForModel).some(v => v === false) && (
                             <span className="p-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-xl ml-24 text-sm font-normal justify-right">Reduced Model</span>
                           )}
@@ -2798,10 +2803,13 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                   })();
                                   const isHighVIF = vif !== null && vif > 5;
                                   const isModerateVIF = vif !== null && vif > 1 && vif <= 5;
+                                  const factorLabel = showUncoded && allFactorsHaveValidLevels()
+                                    ? `${factor.name}${factor.type === 'continuous' && factor.units ? ` (${factor.units})` : ''}`
+                                    : factor.name;
                                   
                                   return (
                                   <TableRow key={i}>
-                                    <TableCell className="font-medium w-48">{factor.name}</TableCell>
+                                    <TableCell className="font-medium w-48">{factorLabel}</TableCell>
                                     <TableCell className="text-right w-24">{displayBeta[reducedColIdx]?.toFixed(6)}</TableCell>
                                     <TableCell className="text-right w-24">{displayCoeffStats[reducedColIdx]?.stdError.toFixed(4)}</TableCell>
                                     <TableCell className="text-right w-20">{displayCoeffStats[reducedColIdx]?.tValue.toFixed(4)}</TableCell>
@@ -3165,193 +3173,6 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                       </CardContent>
                     </Card>
 
-                    {/* Coefficients Table with Model Selection */}
-                    {/*<Card>
-                      <CardHeader className="flex flex-row items-center justify-between">
-                        <CardTitle>
-                          Regression Coefficients (uncheck to exclude from model)
-                          {Object.values(selectedFactorsForModel).some(v => v === false) && (
-                            <span className="p-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-xl ml-24 text-sm font-normal justify-right">Reduced Model</span>
-                          )}
-                        </CardTitle>
-                        <Button 
-                          onClick={() => saveSelectedCoefficientsMutation.mutate()} 
-                          disabled={saveSelectedCoefficientsMutation.isPending}
-                          variant="outline"
-                          size="sm"
-                        >
-                          {saveSelectedCoefficientsMutation.isPending ? (
-                            <>
-                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                              Saving...
-                            </>
-                          ) : (
-                            <>
-                              <Save className="w-4 h-4 mr-2" />
-                              Save Selected Coefficients
-                            </>
-                          )}
-                        </Button>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="overflow-x-auto">
-                          <Table>
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead>Term</TableHead>
-                                <TableHead className="text-right">Coefficient</TableHead>
-                                <TableHead className="text-right">Std. Error</TableHead>
-                                <TableHead className="text-right">T-value</TableHead>
-                                <TableHead className="text-right">p-value</TableHead>
-                                <TableHead className="text-right">VIF</TableHead>
-                                <TableHead className="text-center">Include</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              <TableRow>
-                                <TableCell className="font-medium">Intercept</TableCell>
-                                <TableCell className="text-right">{displayBeta[0]?.toFixed(6)}</TableCell>
-                                <TableCell className="text-right">{displayCoeffStats[0]?.stdError.toFixed(4)}</TableCell>
-                                <TableCell className="text-right">{displayCoeffStats[0]?.tValue.toFixed(4)}</TableCell>
-                                <TableCell className={`text-right ${(displayCoeffStats[0]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{(Math.max(0, Math.min(1, displayCoeffStats[0]?.pValue ?? 1))).toFixed(4)}</TableCell>
-                                <TableCell className="text-right">-</TableCell>
-                                <TableCell className="text-center"><Checkbox disabled checked /></TableCell>
-                              </TableRow>
-                              {factors.map((factor, i) => {
-                                const isIncluded = selectedFactorsForModel[i] !== false;
-                                
-                                if (isIncluded) {
-                                  const origColIdx = i + 1;
-                                  const reducedColIdx = colMapReverse[origColIdx];
-                                  
-                                  if (reducedColIdx === undefined) return null;
-                                  
-                                  const vif = (() => {
-                                    try {
-                                      return calculateDOEVIF(reducedModel.XtX, reducedColIdx);
-                                    } catch {
-                                      return null;
-                                    }
-                                  })();
-                                  const isHighVIF = vif !== null && vif > 5;
-                                  const isModerateVIF = vif !== null && vif > 1 && vif <= 5;
-                                  
-                                  return (
-                                  <TableRow key={i}>
-                                    <TableCell className="font-medium w-48">{factor.name}</TableCell>
-                                    <TableCell className="text-right w-24">{displayBeta[reducedColIdx]?.toFixed(6)}</TableCell>
-                                    <TableCell className="text-right w-24">{displayCoeffStats[reducedColIdx]?.stdError.toFixed(4)}</TableCell>
-                                    <TableCell className="text-right w-20">{displayCoeffStats[reducedColIdx]?.tValue.toFixed(4)}</TableCell>
-                                    <TableCell className={`text-right w-20 ${(displayCoeffStats[reducedColIdx]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{(Math.max(0, Math.min(1, displayCoeffStats[reducedColIdx]?.pValue ?? 1))).toFixed(4)}</TableCell>
-                                    <TableCell className={`text-right w-16 ${isHighVIF ? 'text-red-600 font-semibold' : isModerateVIF ? 'text-yellow-400 font-semibold' : ''}`}>{vif !== null ? vif.toFixed(2) : '-'}</TableCell>
-                                    <TableCell className="text-center w-16">
-                                      <Checkbox
-                                        checked={true}
-                                        onCheckedChange={(checked) => {
-                                          setSelectedFactorsForModel(prev => ({
-                                            ...prev,
-                                            [i]: !!checked
-                                          }));
-                                        }}
-                                        data-testid={`checkbox-factor-${i}`}
-                                      />
-                                    </TableCell>
-                                  </TableRow>
-                                  );
-                                } else {
-                                  return (
-                                  <TableRow key={i} className="opacity-50">
-                                    <TableCell className="font-medium text-muted-foreground w-48">{factor.name}</TableCell>
-                                    <TableCell colSpan={5} className="text-muted-foreground w-auto">Term not included in model</TableCell>
-                                    <TableCell className="text-center w-16">
-                                      <Checkbox
-                                        checked={false}
-                                        onCheckedChange={(checked) => {
-                                          setSelectedFactorsForModel(prev => ({
-                                            ...prev,
-                                            [i]: !!checked
-                                          }));
-                                        }}
-                                        data-testid={`checkbox-factor-${i}`}
-                                      />
-                                    </TableCell>
-                                  </TableRow>
-                                  );
-                                }
-                              })}
-                              {interactionPairs.map((pair, i) => {
-                                const isIncluded = selectedFactorsForModel[`int-${i}`] !== false;
-                                
-                                if (isIncluded) {
-                                  const origColIdx = factors.length + 1 + i;
-                                  const reducedColIdx = colMapReverse[origColIdx];
-                                  
-                                  if (reducedColIdx === undefined) return null;
-                                  
-                                  const vif = (() => {
-                                    try {
-                                      return calculateDOEVIF(reducedModel.XtX, reducedColIdx);
-                                    } catch {
-                                      return null;
-                                    }
-                                  })();
-                                  const isHighVIF = vif !== null && vif > 5;
-                                  const isModerateVIF = vif !== null && vif > 1 && vif <= 5;
-                                  
-                                  return (
-                                  <TableRow key={`int-${i}`}>
-                                    <TableCell className="font-medium w-48">{pair.name}</TableCell>
-                                    <TableCell className="text-right w-24">{displayBeta[reducedColIdx]?.toFixed(6)}</TableCell>
-                                    <TableCell className="text-right w-24">{displayCoeffStats[reducedColIdx]?.stdError.toFixed(4)}</TableCell>
-                                    <TableCell className="text-right w-20">{displayCoeffStats[reducedColIdx]?.tValue.toFixed(4)}</TableCell>
-                                    <TableCell className={`text-right w-20 ${(displayCoeffStats[reducedColIdx]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{(Math.max(0, Math.min(1, displayCoeffStats[reducedColIdx]?.pValue ?? 1))).toFixed(4)}</TableCell>
-                                    <TableCell className={`text-right w-16 ${isHighVIF ? 'text-red-600 font-semibold' : isModerateVIF ? 'text-yellow-400 font-semibold' : ''}`}>{vif !== null ? vif.toFixed(2) : '-'}</TableCell>
-                                    <TableCell className="text-center w-16">
-                                      <Checkbox
-                                        checked={true}
-                                        onCheckedChange={(checked) => {
-                                          setSelectedFactorsForModel(prev => ({
-                                            ...prev,
-                                            [`int-${i}`]: !!checked
-                                          }));
-                                        }}
-                                        data-testid={`checkbox-interaction-${i}`}
-                                      />
-                                    </TableCell>
-                                  </TableRow>
-                                  );
-                                } else {
-                                  return (
-                                  <TableRow key={`int-${i}`} className="opacity-50">
-                                    <TableCell className="font-medium text-muted-foreground w-48">{pair.name}</TableCell>
-                                    <TableCell colSpan={5} className="text-muted-foreground w-auto">Term not included in model</TableCell>
-                                    <TableCell className="text-center w-16">
-                                      <Checkbox
-                                        checked={false}
-                                        onCheckedChange={(checked) => {
-                                          setSelectedFactorsForModel(prev => ({
-                                            ...prev,
-                                            [`int-${i}`]: !!checked
-                                          }));
-                                        }}
-                                        data-testid={`checkbox-interaction-${i}`}
-                                      />
-                                    </TableCell>
-                                  </TableRow>
-                                  );
-                                }
-                              })}
-                            </TableBody>
-                          </Table>
-                        </div>
-                        <div className="mt-2 text-sm text-muted-foreground">
-                          VIF &gt; 5 indicates problematic multicollinearity (high correlation between terms - shown in red)<br></br>
-                          &gt; 1 VIF &le; 5 indicates moderate multicollinearity (correlation between terms - shown in yellow)<br></br>
-                          VIF &le; 1 indicates no multicollinearity (no correlation between terms - shown in black)
-                        </div>
-                      </CardContent>
-                    </Card> */}
-
                     {/* Residual Analysis */}
                     <Card>
                       <CardHeader>
@@ -3614,7 +3435,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                     <Card>
                       <CardHeader>
                         <CardTitle>
-                          Solve for Target Response
+                          Solve for Target Response (Uncoded)
                           {Object.values(selectedFactorsForModel).some(v => v === false) && (
                             <span className="p-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-xl ml-24 text-sm font-normal justify-right">Reduced Model</span>
                           )}
