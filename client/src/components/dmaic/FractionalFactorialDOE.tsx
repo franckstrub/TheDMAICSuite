@@ -3206,6 +3206,21 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                 const numContinuousFactors = factors.filter(f => f.type === 'continuous').length;
                                 const curvatureCoeff = numContinuousFactors > 0 ? curvatureEffect / numContinuousFactors : curvatureEffect;
                                 
+                                // Calculate curvature statistics (same as Curvature Analysis Card)
+                                const curvatureSS = (n_f * n_c) / (n_f + n_c) * Math.pow(curvatureEffect, 2);
+                                const curvatureDF = 1;
+                                
+                                // Get error MS from reduced model (errorMS is already computed)
+                                const curveErrorMS = errorMS || 0;
+                                const curveErrorDF = errorDF_red || 1;
+                                
+                                // Standard error of curvature effect: SE = sqrt(MSE * (1/n_c + 1/n_f))
+                                const curvStdError = curveErrorMS > 0 ? Math.sqrt(curveErrorMS * (1/n_c + 1/n_f)) : 0;
+                                const curvTValue = curvStdError > 0 ? curvatureEffect / curvStdError : 0;
+                                const curvPValue = curvTValue !== 0 && curveErrorDF > 0 
+                                  ? 2 * (1 - jStat.studentt.cdf(Math.abs(curvTValue), curveErrorDF))
+                                  : 1;
+                                
                                 const isIncluded = selectedFactorsForModel['centerPoint'] !== false;
                                 
                                 if (isIncluded) {
@@ -3214,10 +3229,10 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                       <TableCell className="font-medium">Center Point</TableCell>
                                       <TableCell className="text-right">{curvatureEffect.toFixed(6)}</TableCell>
                                       <TableCell className="text-right">{curvatureCoeff.toFixed(6)}</TableCell>
-                                      <TableCell className="text-right">-</TableCell>
-                                      <TableCell className="text-right">-</TableCell>
-                                      <TableCell className="text-right">-</TableCell>
-                                      <TableCell className="text-right">-</TableCell>
+                                      <TableCell className="text-right">{curvStdError > 0 ? curvStdError.toFixed(4) : '-'}</TableCell>
+                                      <TableCell className="text-right">{curvTValue !== 0 ? curvTValue.toFixed(4) : '-'}</TableCell>
+                                      <TableCell className={`text-right ${curvPValue < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{curvPValue < 1 ? curvPValue.toFixed(4) : '-'}</TableCell>
+                                      <TableCell className="text-right">1.00</TableCell>
                                       <TableCell className="text-center">
                                         <Checkbox
                                           checked={true}
