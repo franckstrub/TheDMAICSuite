@@ -3215,7 +3215,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                 const curveErrorDF = errorDF_red || 1;
                                 
                                 // Standard error of curvature effect: SE = sqrt(MSE * (1/n_c + 1/n_f))
-                                const curvStdError = curveErrorMS > 0 ? Math.sqrt(curveErrorMS * (1/n_c + 1/n_f)) : 0;
+                                const curvStdError = curveErrorMS > 0 ? Math.sqrt(curveErrorMS * (1/n_c + 1/n_f) / Math.pow(factors.length, 2)) : 0;
                                 const curvTValue = curvStdError > 0 ? curvatureEffect / curvStdError : 0;
                                 const curvPValue = curvTValue !== 0 && curveErrorDF > 0 
                                   ? 2 * (1 - jStat.studentt.cdf(Math.abs(curvTValue), curveErrorDF))
