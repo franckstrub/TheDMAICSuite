@@ -1372,17 +1372,12 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                           if (includeCenterPoints) {
                             const isFactorACategorical = factorA.type === 'categorical';
                             const isFactorBCategorical = factorB.type === 'categorical';
+                            const bothContinuous = !isFactorACategorical && !isFactorBCategorical;
                             
                             // Determine center point levels based on factor types
                             const otherFactors = factors.filter((f, idx) => idx !== factors.indexOf(factorA) && idx !== factors.indexOf(factorB));
                             
-                            // Collect all categorical factors that affect center point placement
-                            const categoricalFactorsForCenters: DOEFactor[] = [];
-                            if (isFactorACategorical) categoricalFactorsForCenters.push(factorA);
-                            if (isFactorBCategorical) categoricalFactorsForCenters.push(factorB);
-                            otherFactors.filter(f => f.type === 'categorical').forEach(f => categoricalFactorsForCenters.push(f));
-                            
-                            // Generate all center point combinations
+                            // Generate center point combinations
                             const centerPointCombinations: Array<{
                               factorALevel: number, 
                               factorBLevel: number, 
@@ -1390,76 +1385,65 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                               label: string
                             }> = [];
                             
-                            // Helper to generate combinations recursively
-                            const generateCenterCombinations = (
-                              catFactors: DOEFactor[], 
-                              idx: number, 
-                              current: Record<string, number>
-                            ): void => {
-                              if (idx === catFactors.length) {
-                                // Set continuous factors to 0
-                                factors.forEach(f => {
-                                  if (f.type === 'continuous' && current[f.name] === undefined) {
-                                    current[f.name] = 0;
-                                  }
-                                });
-                                
-                                const factorALevel = current[factorA.name];
-                                const factorBLevel = current[factorB.name];
-                                const otherLevels: Record<string, number> = {};
-                                otherFactors.forEach(f => {
-                                  otherLevels[f.name] = current[f.name];
-                                });
-                                
-                                // Build label from other factors (not A or B)
-                                const labelParts: string[] = [];
-                                otherFactors.forEach(f => {
-                                  if (f.type === 'categorical') {
-                                    const decoded = showUncoded && allFactorsHaveValidLevels() 
-                                      ? String(decodeValue(current[f.name], f))
-                                      : (current[f.name] === -1 ? 'Low' : 'High');
-                                    labelParts.push(`${f.name}=${decoded}`);
-                                  }
-                                });
-                                
-                                centerPointCombinations.push({
-                                  factorALevel,
-                                  factorBLevel,
-                                  otherLevels,
-                                  label: labelParts.length > 0 ? `Center w. ${labelParts.join(', ')}` : 'Center point'
-                                });
-                                return;
-                              }
-                              
-                              const catFactor = catFactors[idx];
-                              [-1, 1].forEach(level => {
-                                generateCenterCombinations(catFactors, idx + 1, { ...current, [catFactor.name]: level });
-                              });
-                            };
-                            
-                            if (categoricalFactorsForCenters.length === 0) {
-                              // No categorical factors: single center point at (0, 0)
+                            if (bothContinuous) {
+                              // BOTH factors are continuous: show exactly ONE center point at (0, 0)
+                              // Average across all center point runs (regardless of other categorical factors)
                               centerPointCombinations.push({
                                 factorALevel: 0,
                                 factorBLevel: 0,
-                                otherLevels: Object.fromEntries(otherFactors.map(f => [f.name, 0])),
+                                otherLevels: {}, // Will match any other factor levels
                                 label: 'Center point'
                               });
                             } else {
+                              // At least one of factorA or factorB is categorical
+                              // Only generate combinations for A and B (not other factors)
+                              const categoricalFactorsForCenters: DOEFactor[] = [];
+                              if (isFactorACategorical) categoricalFactorsForCenters.push(factorA);
+                              if (isFactorBCategorical) categoricalFactorsForCenters.push(factorB);
+                              
+                              const generateCenterCombinations = (
+                                catFactors: DOEFactor[], 
+                                idx: number, 
+                                current: Record<string, number>
+                              ): void => {
+                                if (idx === catFactors.length) {
+                                  const factorALevel = isFactorACategorical ? current[factorA.name] : 0;
+                                  const factorBLevel = isFactorBCategorical ? current[factorB.name] : 0;
+                                  
+                                  centerPointCombinations.push({
+                                    factorALevel,
+                                    factorBLevel,
+                                    otherLevels: {}, // Will match any other factor levels
+                                    label: 'Center point'
+                                  });
+                                  return;
+                                }
+                                
+                                const catFactor = catFactors[idx];
+                                [-1, 1].forEach(level => {
+                                  generateCenterCombinations(catFactors, idx + 1, { ...current, [catFactor.name]: level });
+                                });
+                              };
+                              
                               generateCenterCombinations(categoricalFactorsForCenters, 0, {});
                             }
                             
                             // Add center point markers for each combination
                             centerPointCombinations.forEach((combo) => {
-                              const filterCondition: Record<string, number> = {
-                                [factorA.name]: combo.factorALevel,
-                                [factorB.name]: combo.factorBLevel,
-                                ...combo.otherLevels
-                              };
-                              
+                              // Find all center point runs that match this combination
                               const matches = runData.filter((_, idx) => {
                                 const row = generatedPlan.plan[idx];
-                                return Object.entries(filterCondition).every(([fname, level]) => Math.abs(row?.[fname] - level) < 0.01);
+                                // Check factorA and factorB levels
+                                if (Math.abs(row?.[factorA.name] - combo.factorALevel) > 0.01) return false;
+                                if (Math.abs(row?.[factorB.name] - combo.factorBLevel) > 0.01) return false;
+                                // For continuous factors, they should be at 0 to be a center point
+                                // But we average across all categorical factor combinations
+                                const isCenterRun = factors.every(f => {
+                                  if (f.name === factorA.name || f.name === factorB.name) return true;
+                                  if (f.type === 'categorical') return true; // Any categorical level is ok
+                                  return Math.abs(row?.[f.name]) < 0.01; // Continuous must be at 0
+                                });
+                                return isCenterRun;
                               });
                               const responses = matches
                                 .map(m => m.response)
