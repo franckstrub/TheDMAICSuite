@@ -3016,6 +3016,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                             <TableHeader>
                               <TableRow>
                                 <TableHead>Term</TableHead>
+                                <TableHead className="text-right">Effect</TableHead>
                                 <TableHead className="text-right">Coefficient</TableHead>
                                 <TableHead className="text-right">Std. Error</TableHead>
                                 <TableHead className="text-right">T-value</TableHead>
@@ -3027,6 +3028,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                             <TableBody>
                               <TableRow>
                                 <TableCell className="font-medium">Intercept</TableCell>
+                                <TableCell className="text-right">-</TableCell>
                                 <TableCell className="text-right">{displayBeta[0]?.toFixed(6)}</TableCell>
                                 <TableCell className="text-right">{displayCoeffStats[0]?.stdError.toFixed(4)}</TableCell>
                                 <TableCell className="text-right">{displayCoeffStats[0]?.tValue.toFixed(4)}</TableCell>
@@ -3050,9 +3052,14 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                   const factorLabel = showUncoded && allFactorsHaveValidLevels()
                                     ? `${factor.name}${factor.type === 'continuous' && factor.units ? ` (${factor.units})` : ''}`
                                     : factor.name;
+                                  
+                                  const codedCoeff = beta_red[i + 1];
+                                  const effect = codedCoeff !== undefined ? 2 * codedCoeff : undefined;
+                                  
                                   return (
                                   <TableRow key={i}>
                                     <TableCell className="font-medium">{factorLabel}</TableCell>
+                                    <TableCell className="text-right">{effect?.toFixed(6) ?? '-'}</TableCell>
                                     <TableCell className="text-right">{displayBeta[i + 1]?.toFixed(6)}</TableCell>
                                     <TableCell className="text-right">{displayCoeffStats[i + 1]?.stdError.toFixed(4)}</TableCell>
                                     <TableCell className="text-right">{displayCoeffStats[i + 1]?.tValue.toFixed(4)}</TableCell>
@@ -3076,7 +3083,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                   return (
                                   <TableRow key={i} className="opacity-50">
                                     <TableCell className="font-medium text-muted-foreground">{factor.name}</TableCell>
-                                    <TableCell colSpan={5} className="text-muted-foreground">Term not included in model</TableCell>
+                                    <TableCell colSpan={6} className="text-muted-foreground">Term not included in model</TableCell>
                                     <TableCell className="text-center">
                                       <Checkbox
                                         checked={false}
@@ -3107,9 +3114,14 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                     })();
                                     const isHighVIF = vif !== null && vif > 5;
                                     const isModerateVIF = vif !== null && vif > 1 && vif <= 5;
+                                    
+                                    const codedCoeffInt = beta_red[factors.length + 1 + i];
+                                    const effectInt = codedCoeffInt !== undefined ? 2 * codedCoeffInt : undefined;
+                                    
                                     return (
                                     <TableRow key={`int-${i}`}>
                                       <TableCell className="font-medium">{pair.name}</TableCell>
+                                      <TableCell className="text-right">{effectInt?.toFixed(6) ?? '-'}</TableCell>
                                       <TableCell className="text-right">{displayBeta[factors.length + 1 + i]?.toFixed(6)}</TableCell>
                                       <TableCell className="text-right">{displayCoeffStats[factors.length + 1 + i]?.stdError.toFixed(4)}</TableCell>
                                       <TableCell className="text-right">{displayCoeffStats[factors.length + 1 + i]?.tValue.toFixed(4)}</TableCell>
@@ -3133,7 +3145,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                     return (
                                     <TableRow key={`int-${i}`} className="opacity-50">
                                       <TableCell className="font-medium text-muted-foreground">{pair.name}</TableCell>
-                                      <TableCell colSpan={5} className="text-muted-foreground">Term not included in model</TableCell>
+                                      <TableCell colSpan={6} className="text-muted-foreground">Term not included in model</TableCell>
                                       <TableCell className="text-center">
                                         <Checkbox
                                           checked={false}

@@ -2844,6 +2844,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                             <TableHeader>
                               <TableRow>
                                 <TableHead>Term</TableHead>
+                                <TableHead className="text-right">Effect</TableHead>
                                 <TableHead className="text-right">Coefficient</TableHead>
                                 <TableHead className="text-right">Std. Error</TableHead>
                                 <TableHead className="text-right">T-value</TableHead>
@@ -2855,6 +2856,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                             <TableBody>
                               <TableRow>
                                 <TableCell className="font-medium">Intercept</TableCell>
+                                <TableCell className="text-right">-</TableCell>
                                 <TableCell className="text-right">{displayBeta[0]?.toFixed(6)}</TableCell>
                                 <TableCell className="text-right">{displayCoeffStats[0]?.stdError.toFixed(4)}</TableCell>
                                 <TableCell className="text-right">{displayCoeffStats[0]?.tValue.toFixed(4)}</TableCell>
@@ -2884,9 +2886,13 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                     ? `${factor.name}${factor.type === 'continuous' && factor.units ? ` (${factor.units})` : ''}`
                                     : factor.name;
                                   
+                                  const codedCoeff = reducedModel.beta[reducedColIdx];
+                                  const effect = codedCoeff !== undefined ? 2 * codedCoeff : undefined;
+                                  
                                   return (
                                   <TableRow key={i}>
                                     <TableCell className="font-medium w-48">{factorLabel}</TableCell>
+                                    <TableCell className="text-right w-24">{effect?.toFixed(6) ?? '-'}</TableCell>
                                     <TableCell className="text-right w-24">{displayBeta[reducedColIdx]?.toFixed(6)}</TableCell>
                                     <TableCell className="text-right w-24">{displayCoeffStats[reducedColIdx]?.stdError.toFixed(4)}</TableCell>
                                     <TableCell className="text-right w-20">{displayCoeffStats[reducedColIdx]?.tValue.toFixed(4)}</TableCell>
@@ -2910,7 +2916,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                   return (
                                   <TableRow key={i} className="opacity-50">
                                     <TableCell className="font-medium text-muted-foreground w-48">{factor.name}</TableCell>
-                                    <TableCell colSpan={5} className="text-muted-foreground w-auto">Term not included in model</TableCell>
+                                    <TableCell colSpan={6} className="text-muted-foreground w-auto">Term not included in model</TableCell>
                                     <TableCell className="text-center w-16">
                                       <Checkbox
                                         checked={false}
@@ -2946,9 +2952,13 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                   const isHighVIF = vif !== null && vif > 5;
                                   const isModerateVIF = vif !== null && vif > 1 && vif <= 5;
                                   
+                                  const codedCoeffInt = reducedModel.beta[reducedColIdx];
+                                  const effectInt = codedCoeffInt !== undefined ? 2 * codedCoeffInt : undefined;
+                                  
                                   return (
                                   <TableRow key={`int-${i}`}>
                                     <TableCell className="font-medium w-48">{pair.name}</TableCell>
+                                    <TableCell className="text-right w-24">{effectInt?.toFixed(6) ?? '-'}</TableCell>
                                     <TableCell className="text-right w-24">{displayBeta[reducedColIdx]?.toFixed(6)}</TableCell>
                                     <TableCell className="text-right w-24">{displayCoeffStats[reducedColIdx]?.stdError.toFixed(4)}</TableCell>
                                     <TableCell className="text-right w-20">{displayCoeffStats[reducedColIdx]?.tValue.toFixed(4)}</TableCell>
@@ -2972,7 +2982,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                   return (
                                   <TableRow key={`int-${i}`} className="opacity-50">
                                     <TableCell className="font-medium text-muted-foreground w-48">{pair.name}</TableCell>
-                                    <TableCell colSpan={5} className="text-muted-foreground w-auto">Term not included in model</TableCell>
+                                    <TableCell colSpan={6} className="text-muted-foreground w-auto">Term not included in model</TableCell>
                                     <TableCell className="text-center w-16">
                                       <Checkbox
                                         checked={false}
