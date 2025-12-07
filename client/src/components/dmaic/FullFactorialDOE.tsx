@@ -3046,8 +3046,8 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                 const curvatureDF = 1;
                                 
                                 // Get error MS from reduced model
-                                const curveErrorMS = reducedModel.errorMS || 0;
-                                const curveErrorDF = reducedModel.errorDF || 1;
+                                const curveErrorMS = reducedModel.mse || 0;
+                                const curveErrorDF = reducedModel.n - reducedModel.p;
                                 
                                 // Standard error of curvature effect: SE = sqrt(MSE * (1/n_c + 1/n_f))
                                 const curvStdError = curveErrorMS > 0 ? Math.sqrt(curveErrorMS * (1/n_c + 1/n_f)) : 0;
