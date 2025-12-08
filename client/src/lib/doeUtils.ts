@@ -336,20 +336,20 @@ export function generateFractionalFactorialPlan(
     definingRelation = 'I = ABCDEH = ABCFGI = DEFGHI';
     }
     else if (p === 3) {
-    // 2^(9-3) design, Resolution IV
-    resolution = 4;
-    generators = ['G=ABC', 'H=BCD', 'I=ACD'];
-    definingRelation = 'I = ABCE = BCDF = ACDG';
+    // 2^(9-3) design, Resolution V
+    resolution = 5;
+    generators = ['G=ABCD', 'H=ABCE', 'I=ABDE'];
+    definingRelation = 'I = ABCDG = ABCEH = ABDEI';
     } else if (p === 4) {
     // 2^(9-4) design, Resolution IV
     resolution = 4;
-    generators = ['F=AB', 'G=AC', 'H=BC', 'I=AD'];
-    definingRelation = 'I = ABF = ACG = BCH = ADI';
+    generators = ['F=ABCD', 'G=ABCE', 'H=ABDE', 'I=ACDE'];
+    definingRelation = 'I = ABCDF = ABCEG = ABDEH = ACDEI';
     } else if (p === 5) {
-    // 2^(9-5) design, Resolution III
-    resolution = 3;
-    generators = ['E=AB', 'F=AC', 'G=BC', 'H=AD', 'I=AE'];
-    definingRelation = 'I = ABE = ACF = BCG = ADH = AEI';
+    // 2^(9-5) design, Resolution IV
+    resolution = 4;
+    generators = ['E=ABC', 'F=BCD', 'G=ACD', 'H=ABD', 'I=ABCD'];
+    definingRelation = 'I = ABCE = BCDF = ACDG = ABDH = ABCDI';
     }
   } else if (k === 10) {
     if (p === 3) {
@@ -412,10 +412,10 @@ export function generateFractionalFactorialPlan(
     generators = ['F=ABC', 'G=ABD', 'H=ACD', 'I=BCD', 'J=ABE', 'K=ACE', 'L=BCE'];
     definingRelation = 'I = ABCF = ABDG = ACDH = BCDI = ABEJ = ACEK = BCEL';
     } else if (p === 8) {
-    // 2^(12-8) design, Resolution III
-    resolution = 3;
-    generators = ['E=AB', 'F=AC', 'G=AD', 'H=BC', 'I=BD', 'J=CD', 'K=ABC', 'L=ABD'];
-    definingRelation = 'I = ABE = ACF = ADG = BCH = BDI = CDJ = ABCK = ABDL';
+    // 2^(12-8) design, Resolution IV
+    resolution = 4;
+    generators = ['E=ABC', 'F=ABD', 'G=ACD', 'H=BCD', 'I=ABCD', 'J=AB', 'K=AC', 'L=AD'];
+    definingRelation = 'I = ABCE = ABDF = ACDG = BCDH = ABCDI = ABJ = ACK = ADL';
     }
   } else {
     // For other cases, generate full factorial
