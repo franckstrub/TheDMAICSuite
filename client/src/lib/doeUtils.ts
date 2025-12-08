@@ -373,6 +373,50 @@ export function generateFractionalFactorialPlan(
     generators = ['E=AB', 'F=AC', 'G=BC', 'H=AD', 'I=AE', 'J=AF'];
     definingRelation = 'I = ABE = ACF = BCG = ADH = AEI = AFJ';
     }
+  } else if (k === 11) {
+    if (p === 4) {
+    // 2^(11-4) design, Resolution V
+    resolution = 5;
+    generators = ['H=ABCD', 'I=ABEF', 'J=ACEG', 'K=BCFG'];
+    definingRelation = 'I = ABCDH = ABEFI = ACEGJ = BCFGK';
+    } else if (p === 5) {
+    // 2^(11-5) design, Resolution IV
+    resolution = 4;
+    generators = ['G=ABCD', 'H=ABCE', 'I=ABDF', 'J=ACDF', 'K=BCDE'];
+    definingRelation = 'I = ABCDG = ABCEH = ABDFI = ACDFJ = BCDEK';
+    } else if (p === 6) {
+    // 2^(11-6) design, Resolution IV
+    resolution = 4;
+    generators = ['F=ABC', 'G=ABD', 'H=ACD', 'I=BCD', 'J=ABE', 'K=ACE'];
+    definingRelation = 'I = ABCF = ABDG = ACDH = BCDI = ABEJ = ACEK';
+    } else if (p === 7) {
+    // 2^(11-7) design, Resolution III
+    resolution = 3;
+    generators = ['E=AB', 'F=AC', 'G=AD', 'H=BC', 'I=BD', 'J=CD', 'K=ABC'];
+    definingRelation = 'I = ABE = ACF = ADG = BCH = BDI = CDJ = ABCK';
+    }
+  } else if (k === 12) {
+    if (p === 5) {
+    // 2^(12-5) design, Resolution V
+    resolution = 5;
+    generators = ['H=ABCDE', 'I=ABCFG', 'J=ABDFH', 'K=ACDFG', 'L=BCDEF'];
+    definingRelation = 'I = ABCDEH = ABCFGI = ABDFHJ = ACDFGK = BCDEFL';
+    } else if (p === 6) {
+    // 2^(12-6) design, Resolution IV
+    resolution = 4;
+    generators = ['G=ABCD', 'H=ABCE', 'I=ABDF', 'J=ACDF', 'K=BCDE', 'L=ABEF'];
+    definingRelation = 'I = ABCDG = ABCEH = ABDFI = ACDFJ = BCDEK = ABEFL';
+    } else if (p === 7) {
+    // 2^(12-7) design, Resolution IV
+    resolution = 4;
+    generators = ['F=ABC', 'G=ABD', 'H=ACD', 'I=BCD', 'J=ABE', 'K=ACE', 'L=BCE'];
+    definingRelation = 'I = ABCF = ABDG = ACDH = BCDI = ABEJ = ACEK = BCEL';
+    } else if (p === 8) {
+    // 2^(12-8) design, Resolution III
+    resolution = 3;
+    generators = ['E=AB', 'F=AC', 'G=AD', 'H=BC', 'I=BD', 'J=CD', 'K=ABC', 'L=ABD'];
+    definingRelation = 'I = ABE = ACF = ADG = BCH = BDI = CDJ = ABCK = ABDL';
+    }
   } else {
     // For other cases, generate full factorial
     return {
