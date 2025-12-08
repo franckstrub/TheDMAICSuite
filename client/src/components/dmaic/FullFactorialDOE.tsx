@@ -1570,7 +1570,8 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
         
         {/* Analysis Tab */}
         <TabsContent value="analysis" className="space-y-4">
-          {!generatedPlan || runData.length === 0 ? (
+          {!generatedPlan || runData.length === 0 || responses.length! < (includeCenterPoints ? Math.pow(2,generatedPlan.k) + actualCenterPointCount
+         : Math.pow(2, generatedPlan.k) )? (
             <Card>
               <CardContent className="p-8 text-center text-muted-foreground">
                 <p>Generate a plan and enter data to view analysis</p>
@@ -1607,614 +1608,6 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                 />
                 <Label htmlFor="analysis-uncoded-toggle">Uncoded {!allFactorsHaveValidLevels() && ' switch is disabled due to some factor levels not defined'}</Label>
               </div>
-
-              {/* ANOVA Table */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>
-                    ANOVA Analysis
-                    {Object.values(selectedFactorsForModel).some(v => v === false) && (
-                      <span className="p-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-xl ml-24 text-sm font-normal justify-right">Reduced Model</span>
-                    )}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Source</TableHead>
-                          <TableHead className="text-right">DF</TableHead>
-                          <TableHead className="text-right">Sum of Squares</TableHead>
-                          <TableHead className="text-right">Mean Square</TableHead>
-                          <TableHead className="text-right">F-Ratio</TableHead>
-                          <TableHead className="text-right">P-Value</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {(() => {
-                          const responses = runData
-                            .map(r => r.response)
-                            .filter((r): r is number => r !== null && !isNaN(r));
-                          
-                          if (responses.length === 0) {
-                            return <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground">No valid data</TableCell></TableRow>;
-                          }
-
-                          // Build N-way interaction terms
-                          const getCombinations = (arr: number[], size: number): number[][] => {
-                            if (size === 0) return [[]];
-                            if (arr.length === 0) return [];
-                            const [first, ...rest] = arr;
-                            const withFirst = getCombinations(rest, size - 1).map(combo => [first, ...combo]);
-                            const withoutFirst = getCombinations(rest, size);
-                            return [...withFirst, ...withoutFirst];
-                          };
-                          const interactionPairs: Array<{indices: number[], name: string}> = [];
-                          const factorIndices = Array.from({ length: factors.length }, (_, i) => i);
-                          for (let size = 2; size <= factors.length; size++) {
-                            const combos = getCombinations(factorIndices, size);
-                            for (const combo of combos) {
-                              const name = combo.map(idx => factors[idx].name).join('×');
-                              interactionPairs.push({ indices: combo, name });
-                            }
-                          }
-
-                          const X: number[][] = [];
-                          const y: number[] = [];
-                          const termIndices: Array<{type: string, idx: number, name: string, i?: number, j?: number}> = [];
-                          
-                          // Build term indices
-                          termIndices.push({type: 'intercept', idx: 0, name: 'Intercept'});
-                          factors.forEach((f, i) => termIndices.push({type: 'factor', idx: termIndices.length, name: f.name, i}));
-                          interactionPairs.forEach((p, i) => termIndices.push({type: 'interaction', idx: termIndices.length, name: p.name}));
-
-                          runData.forEach((row, rowIdx) => {
-                            if (row.response !== null && !isNaN(row.response)) {
-                              const row_vals = [1]; // intercept
-                              const factorValues: number[] = [];
-                              factors.forEach(factor => {
-                                const val = generatedPlan.plan[rowIdx]?.[factor.name] ?? 0;
-                                factorValues.push(val);
-                                row_vals.push(val);
-                              });
-                              interactionPairs.forEach(pair => {
-                                let product = 1;
-                                pair.indices.forEach(idx => {
-                                  product *= factorValues[idx];
-                                });
-                                row_vals.push(product);
-                              });
-                              X.push(row_vals);
-                              y.push(row.response);
-                            }
-                          });
-
-                          const n = y.length;
-                          const p = X[0].length;
-                          const grandMean = y.reduce((a, b) => a + b, 0) / n;
-                          const totalSS = y.reduce((sum, val) => sum + Math.pow(val - grandMean, 2), 0);
-                          const totalDF = n - 1;
-
-                          // Calculate regression using Gaussian elimination
-                          let XtX: number[][] = Array(p).fill(null).map(() => Array(p).fill(0));
-                          let Xty: number[] = Array(p).fill(0);
-
-                          for (let i = 0; i < n; i++) {
-                            for (let j = 0; j < p; j++) {
-                              Xty[j] += X[i][j] * y[i];
-                              for (let k = 0; k < p; k++) {
-                                XtX[j][k] += X[i][j] * X[i][k];
-                              }
-                            }
-                          }
-
-                          // Gaussian elimination
-                          const solveNormalEquations = (A: number[][], b: number[]): number[] => {
-                            const n = A.length;
-                            const aug = A.map((row, i) => [...row, b[i]]);
-                            
-                            for (let i = 0; i < n; i++) {
-                              let maxRow = i;
-                              for (let k = i + 1; k < n; k++) {
-                                if (Math.abs(aug[k][i]) > Math.abs(aug[maxRow][i])) maxRow = k;
-                              }
-                              [aug[i], aug[maxRow]] = [aug[maxRow], aug[i]];
-                              
-                              for (let k = i + 1; k < n; k++) {
-                                const factor = aug[k][i] / aug[i][i];
-                                for (let j = i; j <= n; j++) {
-                                  aug[k][j] -= factor * aug[i][j];
-                                }
-                              }
-                            }
-                            
-                            const x: number[] = Array(n).fill(0);
-                            for (let i = n - 1; i >= 0; i--) {
-                              x[i] = aug[i][n];
-                              for (let j = i + 1; j < n; j++) {
-                                x[i] -= aug[i][j] * x[j];
-                              }
-                              x[i] /= aug[i][i];
-                            }
-                            return x;
-                          };
-
-                          let beta: number[] = [];
-                          try {
-                            beta = solveNormalEquations(XtX, Xty);
-                          } catch {
-                            beta = Xty.map(v => v / (XtX[0][0] || 1));
-                          }
-
-                          // Calculate predictions and model SS
-                          const predictions = X.map(row => row.reduce((sum, val, i) => sum + val * beta[i], 0));
-                          const residuals = y.map((val, i) => val - predictions[i]);
-                          const modelSS = predictions.reduce((sum, pred) => sum + Math.pow(pred - grandMean, 2), 0);
-                          const residualSS = residuals.reduce((sum, res) => sum + Math.pow(res, 2), 0);
-
-                          let rows: React.ReactNode[] = [];
-                          
-                          // Build reduced design matrix with only selected terms
-                          const selectedColumns: number[] = [0]; // Always include intercept
-                          factors.forEach((_, idx) => {
-                            if (selectedFactorsForModel[idx] !== false) {
-                              selectedColumns.push(idx + 1);
-                            }
-                          });
-                          interactionPairs.forEach((_, pairIdx) => {
-                            if (selectedFactorsForModel[`int-${pairIdx}`] !== false) {
-                              selectedColumns.push(factors.length + 1 + pairIdx);
-                            }
-                          });
-                          
-                          // Build reduced X matrix
-                          const X_reduced = X.map(row => selectedColumns.map(col => row[col]));
-                          const p_reduced = X_reduced[0].length;
-                          
-                          // Calculate X'X and X'y for reduced model
-                          let XtX_red: number[][] = Array(p_reduced).fill(null).map(() => Array(p_reduced).fill(0));
-                          let Xty_red: number[] = Array(p_reduced).fill(0);
-                          
-                          for (let i = 0; i < n; i++) {
-                            for (let j = 0; j < p_reduced; j++) {
-                              Xty_red[j] += X_reduced[i][j] * y[i];
-                              for (let k = 0; k < p_reduced; k++) {
-                                XtX_red[j][k] += X_reduced[i][j] * X_reduced[i][k];
-                              }
-                            }
-                          }
-                          
-                          // Solve reduced model
-                          let beta_red: number[] = [];
-                          try {
-                            beta_red = solveNormalEquations(XtX_red, Xty_red);
-                          } catch {
-                            beta_red = Xty_red.map(v => v / (XtX_red[0][0] || 1));
-                          }
-                          
-                          // Calculate predictions and residuals for reduced model
-                          const predictions_red = X_reduced.map(row => row.reduce((sum, val, i) => sum + val * beta_red[i], 0));
-                          const residuals_red = y.map((val, i) => val - predictions_red[i]);
-                          const residualSS_red = residuals_red.reduce((sum, res) => sum + Math.pow(res, 2), 0);
-                          const errorDF_red = n - p_reduced;
-                          
-                          // Add factor rows (only if selected)
-                          factors.forEach((factor, idx) => {
-                            if (selectedFactorsForModel[idx] === false) return;
-                            
-                            const colIdx = selectedColumns.indexOf(idx + 1);
-                            if (colIdx === -1) return;
-                            
-                            const termSS = Math.pow(beta_red[colIdx], 2) * XtX_red[colIdx][colIdx];
-                            const termDF = 1;
-                            const termMS = termSS / termDF;
-                            const errorMS = residualSS_red / errorDF_red;
-                            const fRatio = errorMS > 0 ? termMS / errorMS : 0;
-                            const pValue = fRatio > 0 && errorDF_red > 0 
-                              ? 1 - jStat.centralF.cdf(fRatio, termDF, errorDF_red) 
-                              : 1;
-
-                            const factorLabel = showUncoded && allFactorsHaveValidLevels()
-                              ? `${factor.name}${factor.type === 'continuous' && factor.units ? ` (${factor.units})` : ''}`
-                              : factor.name;
-
-                            rows.push(
-                              <TableRow key={`factor-${idx}`}>
-                                <TableCell className="font-medium">{factorLabel}</TableCell>
-                                <TableCell className="text-right">{termDF}</TableCell>
-                                <TableCell className="text-right">{termSS.toFixed(4)}</TableCell>
-                                <TableCell className="text-right">{termMS.toFixed(4)}</TableCell>
-                                <TableCell className="text-right">{fRatio.toFixed(4)}</TableCell>
-                                <TableCell className="text-right">
-                                  <span className={pValue < 0.05 ? "text-green-600 font-semibold" : ""}>
-                                    {pValue.toFixed(4)}
-                                  </span>
-                                </TableCell>
-                              </TableRow>
-                            );
-                          });
-
-                          // Add interaction rows (only if selected)
-                          interactionPairs.forEach((pair, pairIdx) => {
-                            if (selectedFactorsForModel[`int-${pairIdx}`] === false) return;
-                            
-                            const colIdx = selectedColumns.indexOf(factors.length + 1 + pairIdx);
-                            if (colIdx === -1) return;
-                            
-                            const termSS = Math.pow(beta_red[colIdx], 2) * XtX_red[colIdx][colIdx];
-                            const termDF = 1;
-                            const termMS = termSS / termDF;
-                            const errorMS = residualSS_red / errorDF_red;
-                            const fRatio = errorMS > 0 ? termMS / errorMS : 0;
-                            const pValue = fRatio > 0 && errorDF_red > 0 
-                              ? 1 - jStat.centralF.cdf(fRatio, termDF, errorDF_red) 
-                              : 1;
-
-                            rows.push(
-                              <TableRow key={`interaction-${pairIdx}`}>
-                                <TableCell className="font-medium">{pair.name}</TableCell>
-                                <TableCell className="text-right">{termDF}</TableCell>
-                                <TableCell className="text-right">{termSS.toFixed(4)}</TableCell>
-                                <TableCell className="text-right">{termMS.toFixed(4)}</TableCell>
-                                <TableCell className="text-right">{fRatio.toFixed(4)}</TableCell>
-                                <TableCell className="text-right">
-                                  <span className={pValue < 0.05 ? "text-green-600 font-semibold" : ""}>
-                                    {pValue.toFixed(4)}
-                                  </span>
-                                </TableCell>
-                              </TableRow>
-                            );
-                          });
-
-                          // Calculate curvature if center points exist AND are included in model
-                          let curvatureSS = 0;
-                          let curvatureDF = 0;
-                          let curvatureMS = 0;
-                          let curvatureFRatio = 0;
-                          let curvaturePValue = 1;
-                          let curveEffect = 0;
-                          
-                          // Detect center points from actual data (not just state variable)
-                          // Separate center points from factorial points
-                          // Center points: all CONTINUOUS factors at 0; categorical factors at ±1
-                          const centerPointIndices: number[] = [];
-                          const factorialPointIndices: number[] = [];
-                          
-                          runData.forEach((row, rowIdx) => {
-                            if (row.response !== null && !isNaN(row.response)) {
-                              const isCenterPoint = factors.every(factor => {
-                                const level = generatedPlan.plan[rowIdx]?.[factor.name] ?? 0;
-                                if (factor.type === 'categorical') {
-                                  // Categorical factors are at ±1 for center points (not 0)
-                                  return Math.abs(level) === 1;
-                                } else {
-                                  // Continuous factors must be at 0 for center points
-                                  return Math.abs(level) < 0.01;
-                                }
-                              });
-                              
-                              // Also check: this is only a center point if there's at least one continuous factor at 0
-                              const hasAnyContinuousAtZero = factors.some(f => 
-                                f.type === 'continuous' && Math.abs(generatedPlan.plan[rowIdx]?.[f.name] ?? 1) < 0.01
-                              );
-                              
-                              if (isCenterPoint && hasAnyContinuousAtZero) {
-                                centerPointIndices.push(rowIdx);
-                              } else {
-                                factorialPointIndices.push(rowIdx);
-                              }
-                            }
-                          });
-
-                          const n_c = centerPointIndices.length;
-                          const n_f = factorialPointIndices.length;
-                          const hasCenterPointsInData = n_c > 0 && n_f > 0;
-                          
-                          // Show curvature if center points detected in data AND not explicitly excluded
-                          if (hasCenterPointsInData && selectedFactorsForModel['centerPoint'] !== false) {
-                            if (n_c > 0 && n_f > 0) {
-                              // Average response at center points
-                              const centerResponses = centerPointIndices.map(idx => runData[idx].response).filter((r): r is number => r !== null && !isNaN(r));
-                              const y_c_avg = centerResponses.length > 0 ? centerResponses.reduce((a, b) => a + b, 0) / centerResponses.length : 0;
-                              
-                              // Predicted response at center from factorial model (= intercept in coded)
-                              const y_f_at_center = beta[0];
-                              
-                              // Curvature effect
-                              curveEffect = y_c_avg - y_f_at_center;
-                              
-                              // Curvature SS = (n_f * n_c) / (n_f + n_c) * (curvature_effect)^2
-                              curvatureSS = (n_f * n_c) / (n_f + n_c) * Math.pow(curveEffect, 2);
-                              curvatureDF = 1;
-                              curvatureMS = curvatureSS / curvatureDF;
-                              const errorMS = residualSS / (n - p);
-                              curvatureFRatio = errorMS > 0 ? curvatureMS / errorMS : 0;
-                              curvaturePValue = curvatureFRatio > 0 && (n - p) > 0
-                                ? 1 - jStat.centralF.cdf(curvatureFRatio, curvatureDF, n - p)
-                                : 1;
-
-                              rows.push(
-                                <TableRow key="curvature">
-                                  <TableCell className="font-medium">Curvature</TableCell>
-                                  <TableCell className="text-right">{curvatureDF}</TableCell>
-                                  <TableCell className="text-right">{curvatureSS.toFixed(4)}</TableCell>
-                                  <TableCell className="text-right">{curvatureMS.toFixed(4)}</TableCell>
-                                  <TableCell className="text-right">{curvatureFRatio.toFixed(4)}</TableCell>
-                                  <TableCell className="text-right">
-                                    <span className={curvaturePValue < 0.05 ? "text-green-600 font-semibold" : ""}>
-                                      {curvaturePValue.toFixed(4)}
-                                    </span>
-                                  </TableCell>
-                                </TableRow>
-                              );
-                            }
-                          }
-
-                          // Adjust error SS and DF to account for curvature if center points exist
-                          let adjustedErrorSS = residualSS_red;
-                          let adjustedErrorDF = errorDF_red;
-                          
-                          if (hasCenterPointsInData && curvatureDF > 0) {
-                            // When curvature is calculated, subtract it from error
-                            adjustedErrorSS = Math.max(0, residualSS_red - curvatureSS);
-                            adjustedErrorDF = errorDF_red - curvatureDF;
-                          }
-                          
-                          const errorMS = adjustedErrorDF > 0 ? adjustedErrorSS / adjustedErrorDF : 0;
-
-                          // Calculate Model row (like in Fractional Factorial DOE)
-                          // Model DF = number of selected factors + number of selected interactions + curvature DF
-                          const selectedFactorCount = factors.filter((_, idx) => selectedFactorsForModel[idx] !== false).length;
-                          const selectedInteractionCount = interactionPairs.filter((_, pairIdx) => selectedFactorsForModel[`int-${pairIdx}`] !== false).length;
-                          const anovaModelDF = selectedFactorCount + selectedInteractionCount + curvatureDF;
-                          
-                          // Model SS = Total SS - Error SS
-                          const anovaModelSS = totalSS - adjustedErrorSS;
-                          const anovaModelMS = anovaModelDF > 0 ? anovaModelSS / anovaModelDF : 0;
-                          const anovaModelFRatio = errorMS > 0 ? anovaModelMS / errorMS : 0;
-                          const anovaModelPValue = anovaModelFRatio > 0 && adjustedErrorDF > 0
-                            ? 1 - jStat.centralF.cdf(anovaModelFRatio, anovaModelDF, adjustedErrorDF)
-                            : 1;
-
-                          rows.push(
-                            <TableRow key="model" className="font-semibold">
-                              <TableCell>Model</TableCell>
-                              <TableCell className="text-right">{anovaModelDF}</TableCell>
-                              <TableCell className="text-right">{anovaModelSS.toFixed(4)}</TableCell>
-                              <TableCell className="text-right">{anovaModelMS.toFixed(4)}</TableCell>
-                              <TableCell className="text-right">{anovaModelFRatio > 0 ? anovaModelFRatio.toFixed(4) : '-'}</TableCell>
-                              <TableCell className="text-right">
-                                <span className={anovaModelPValue < 0.05 ? "text-green-600 font-semibold" : ""}>
-                                  {anovaModelPValue === 1 || isNaN(anovaModelPValue) ? '-' : anovaModelPValue.toFixed(4)}
-                                </span>
-                              </TableCell>
-                            </TableRow>
-                          );
-
-                          rows.push(
-                            <TableRow key="error">
-                              <TableCell className="font-medium">Error</TableCell>
-                              <TableCell className="text-right">{adjustedErrorDF}</TableCell>
-                              <TableCell className="text-right">{adjustedErrorSS.toFixed(4)}</TableCell>
-                              <TableCell className="text-right">{errorMS.toFixed(4)}</TableCell>
-                              <TableCell className="text-right">-</TableCell>
-                              <TableCell className="text-right">-</TableCell>
-                            </TableRow>
-                          );
-
-                          rows.push(
-                            <TableRow key="total">
-                              <TableCell className="font-medium">Total</TableCell>
-                              <TableCell className="text-right">{totalDF}</TableCell>
-                              <TableCell className="text-right">{totalSS.toFixed(4)}</TableCell>
-                              <TableCell className="text-right">-</TableCell>
-                              <TableCell className="text-right">-</TableCell>
-                              <TableCell className="text-right">-</TableCell>
-                            </TableRow>
-                          );
-
-                          return rows;
-                        })()}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Curvature Analysis Card */}
-              {(() => {
-                // Calculate factorial vs center points statistics
-                // Center points: all CONTINUOUS factors at 0; categorical factors at ±1
-                const centerPointIndices: number[] = [];
-                const factorialPointIndices: number[] = [];
-                
-                runData.forEach((row, rowIdx) => {
-                  if (row.response !== null && !isNaN(row.response)) {
-                    const isCenterPoint = factors.every(factor => {
-                      const level = generatedPlan.plan[rowIdx]?.[factor.name] ?? 0;
-                      if (factor.type === 'categorical') {
-                        // Categorical factors are at ±1 for center points (not 0)
-                        return Math.abs(level) === 1;
-                      } else {
-                        // Continuous factors must be at 0 for center points
-                        return Math.abs(level) < 0.01;
-                      }
-                    });
-                    
-                    // Also check: this is only a center point if there's at least one continuous factor at 0
-                    const hasAnyContinuousAtZero = factors.some(f => 
-                      f.type === 'continuous' && Math.abs(generatedPlan.plan[rowIdx]?.[f.name] ?? 1) < 0.01
-                    );
-                    
-                    if (isCenterPoint && hasAnyContinuousAtZero) {
-                      centerPointIndices.push(rowIdx);
-                    } else {
-                      factorialPointIndices.push(rowIdx);
-                    }
-                  }
-                });
-
-                const n_c = centerPointIndices.length;
-                const n_f = factorialPointIndices.length;
-                
-                if (n_c === 0 || n_f === 0) return null;
-
-                const centerResponses = centerPointIndices.map(idx => runData[idx].response).filter((r): r is number => r !== null && !isNaN(r));
-                const factorialResponses = factorialPointIndices.map(idx => runData[idx].response).filter((r): r is number => r !== null && !isNaN(r));
-                
-                const y_c_avg = centerResponses.reduce((a, b) => a + b, 0) / centerResponses.length;
-                const y_f_avg = factorialResponses.reduce((a, b) => a + b, 0) / factorialResponses.length;
-                
-                // Build full design matrix with interactions (same as ANOVA table)
-                const getCombinations = (arr: number[], size: number): number[][] => {
-                  if (size === 0) return [[]];
-                  if (arr.length === 0) return [];
-                  const [first, ...rest] = arr;
-                  const withFirst = getCombinations(rest, size - 1).map(combo => [first, ...combo]);
-                  const withoutFirst = getCombinations(rest, size);
-                  return [...withFirst, ...withoutFirst];
-                };
-                
-                const interactionPairs: Array<{indices: number[], name: string}> = [];
-                const factorIndices = Array.from({ length: factors.length }, (_, i) => i);
-                for (let size = 2; size <= factors.length; size++) {
-                  const combos = getCombinations(factorIndices, size);
-                  for (const combo of combos) {
-                    const name = combo.map(idx => factors[idx].name).join('×');
-                    interactionPairs.push({ indices: combo, name });
-                  }
-                }
-
-                const X_full: number[][] = [];
-                const y_full: number[] = [];
-                
-                runData.forEach((row, idx) => {
-                  if (row.response !== null && !isNaN(row.response)) {
-                    const row_vals = [1]; // intercept
-                    const factorValues: number[] = [];
-                    factors.forEach(factor => {
-                      const val = generatedPlan.plan[idx]?.[factor.name] ?? 0;
-                      factorValues.push(val);
-                      row_vals.push(val);
-                    });
-                    // Add interaction terms
-                    interactionPairs.forEach(pair => {
-                      let product = 1;
-                      pair.indices.forEach(i => { product *= factorValues[i]; });
-                      row_vals.push(product);
-                    });
-                    X_full.push(row_vals);
-                    y_full.push(row.response);
-                  }
-                });
-
-                const n = y_full.length;
-                const p_full = X_full[0]?.length || 1;
-                
-                // Calculate full model coefficients
-                let XtX_full: number[][] = Array(p_full).fill(null).map(() => Array(p_full).fill(0));
-                let Xty_full: number[] = Array(p_full).fill(0);
-                
-                for (let i = 0; i < n; i++) {
-                  for (let j = 0; j < p_full; j++) {
-                    Xty_full[j] += X_full[i][j] * y_full[i];
-                    for (let k = 0; k < p_full; k++) {
-                      XtX_full[j][k] += X_full[i][j] * X_full[i][k];
-                    }
-                  }
-                }
-                
-                let beta_full: number[] = [];
-                try {
-                  const XtX_inv_full = invertMatrix(XtX_full);
-                  if (XtX_inv_full) {
-                    beta_full = Xty_full.map((_, j) => Xty_full.reduce((sum, val, k) => sum + XtX_inv_full[j][k] * val, 0));
-                  }
-                } catch (e) {
-                  // Matrix is singular - use simple average as fallback
-                  beta_full = [y_f_avg, ...Array(p_full - 1).fill(0)];
-                }
-                // Curvature effect: center point mean - predicted at center (intercept)
-                const y_f_at_center = beta_full[0] || y_f_avg;
-                const curveEffect = y_c_avg - y_f_at_center;
-                const curveDiff = y_c_avg - y_f_avg; // For display
-                
-                // Curvature SS using standard formula
-                const curvatureSS = (n_f * n_c) / (n_f + n_c) * Math.pow(curveEffect, 2);
-                const curvatureDF = 1;
-                
-                // Calculate residual SS from full model
-                const predictions_full = X_full.map(row => row.reduce((sum, val, i) => sum + val * (beta_full[i] || 0), 0));
-                const residualSS_full = y_full.reduce((sum, yi, i) => sum + Math.pow(yi - predictions_full[i], 2), 0);
-                const errorDF = n - p_full;
-                const errorMS = errorDF > 0 ? residualSS_full / errorDF : 0;
-                
-                const curveFRatio = errorMS > 0 ? (curvatureSS / curvatureDF) / errorMS : 0;
-                const curvePValue = curveFRatio > 0 && errorDF > 0
-                  ? 1 - jStat.centralF.cdf(curveFRatio, curvatureDF, errorDF)
-                  : 1;
-                
-                const isSignificant = curvePValue < significanceLevel;
-                
-                return (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg">Curvature Analysis (Center Points vs Factorial Points)</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-3">
-                          <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
-                            <span className="text-sm font-medium">Factorial Points Mean (ȳ_F):</span>
-                            <span className="font-mono font-semibold">{y_f_avg.toFixed(4)}</span>
-                          </div>
-                          <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
-                            <span className="text-sm font-medium">Center Points Mean (ȳ_C):</span>
-                            <span className="font-mono font-semibold">{y_c_avg.toFixed(4)}</span>
-                          </div>
-                          <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
-                            <span className="text-sm font-medium">Curvature Effect (ȳ_C - ȳ_F):</span>
-                            <span className="font-mono font-semibold">{curveDiff >= 0 ? '+' : ''}{curveDiff.toFixed(4)}</span>
-                          </div>
-                        </div>
-                        <div className="space-y-3">
-                          <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
-                            <span className="text-sm font-medium">Curvature p-value:</span>
-                            <span className={`font-mono font-semibold ${isSignificant ? 'text-green-600' : ''}`}>
-                              {curvePValue.toFixed(4)}
-                            </span>
-                          </div>
-                          <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
-                            <span className="text-sm font-medium">Significance Level (α):</span>
-                            <span className="font-mono font-semibold">{significanceLevel}</span>
-                          </div>
-                          <div className={`p-3 rounded-lg ${isSignificant ? 'bg-green-50 border border-green-200 dark:bg-green-950 dark:border-green-800' : 'bg-amber-50 border border-amber-200 dark:bg-amber-950 dark:border-amber-800'}`}>
-                            <div className="flex items-center gap-2">
-                              {isSignificant ? (
-                                <>
-                                  <AlertTriangle className="h-5 w-5 text-green-600" />
-                                  <span className="text-sm font-medium text-green-700 dark:text-green-400">
-                                    Significant curvature detected (p-value ({curvePValue.toFixed(4)}) &lt; α). Non-linear relationship exists. Model with quadratic term is recommended.
-                                  </span>
-                                </>
-                              ) : (
-                                <>
-                                  <Info className="h-5 w-5 text-amber-600" />
-                                  <span className="text-sm font-medium text-amber-700 dark:text-amber-400">
-                                    No significant curvature (p-value ({curvePValue.toFixed(4)}) ≥ α). Linear model is adequate.
-                                  </span>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })()}
-
               {(() => {
                 // Regression Analysis with Interactions
                 const responses = runData
@@ -2231,7 +1624,14 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                   );
                 }
 
-                // Build N-way interaction terms - all combinations of size 2 and above
+                // Get metadata from generatedPlan, but use current factors.length for accurate interaction generation
+                const ffMetadata = generatedPlan.metadata;
+                const k = factors.length; // Always use current factor count, not stale metadata
+                const p = ffMetadata?.p || 0;
+                const resolution = ffMetadata?.resolution || 0;
+                const baseFactorCount = k - p;
+
+                // Build interaction terms - all N-way interactions between base factors (unconfounded)
                 // Helper to generate all combinations of indices
                 const getCombinations = (arr: number[], size: number): number[][] => {
                   if (size === 0) return [[]];
@@ -2242,33 +1642,82 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                   return [...withFirst, ...withoutFirst];
                 };
                 
+                // Helper to convert factor indices to interaction letter string (e.g., [0,1] -> "AB")
+                const indicesToLetters = (indices: number[]): string => {
+                  return indices.map(idx => String.fromCharCode(65 + idx)).join('');
+                };
+                
+                // Parse aliases to get confounded interactions
+                const getAliasedInteractions = (): Set<string> => {
+                  const aliased = new Set<string>();
+                  
+                  // Parse aliases list
+                  if (generatedPlan.aliases && Array.isArray(generatedPlan.aliases)) {
+                    for (const alias of generatedPlan.aliases) {
+                      // Aliases are like "A + BC" - parse both sides
+                      const parts = alias.split('+').map(p => p.trim());
+                      for (const part of parts) {
+                        // Only include interactions (2+ letters), exclude main effects
+                        if (part.length > 1) {
+                          aliased.add(part);
+                        }
+                      }
+                    }
+                  }
+                  
+                  // Also parse Defining Relation to exclude its interaction terms
+                  if (generatedPlan.definingRelation) {
+                    // Defining Relation format: "I = ABC = BCD = ..."
+                    const terms = generatedPlan.definingRelation.split('=').map((t: string) => t.trim());
+                    for (const term of terms) {
+                      // Skip the identity element "I"
+                      if (term !== 'I' && term.length > 1) {
+                        aliased.add(term);
+                      }
+                    }
+                  }
+                  
+                  return aliased;
+                };
+                
+                const aliasedInteractions = getAliasedInteractions();
+                
+                // Generate all interactions of size 2, 3, 4, ... up to baseFactorCount
                 const interactionPairs: Array<{indices: number[], name: string}> = [];
-                const factorIndices = Array.from({ length: factors.length }, (_, i) => i);
-                for (let size = 2; size <= factors.length; size++) {
-                  const combos = getCombinations(factorIndices, size);
+                const baseIndices = Array.from({ length: baseFactorCount }, (_, i) => i);
+                for (let size = 2; size <= baseFactorCount; size++) {
+                  const combos = getCombinations(baseIndices, size);
                   for (const combo of combos) {
-                    const name = combo.map(idx => factors[idx].name).join('×');
-                    interactionPairs.push({ indices: combo, name });
+                    // Check if this interaction is aliased (confounded)
+                    const letterString = indicesToLetters(combo);
+                    if (!aliasedInteractions.has(letterString)) {
+                      // Build name from factor names (e.g., "A×B×C")
+                      const name = combo.map(idx => factors[idx].name).join('×');
+                      interactionPairs.push({ indices: combo, name });
+                    }
                   }
                 }
 
                 const X: number[][] = [];
                 const y: number[] = [];
                 
+                // Collect all responses including center points
                 runData.forEach((row, idx) => {
                   if (row.response !== null && !isNaN(row.response)) {
-                    const row_vals = [1]; // intercept
-                    const factorValues: number[] = [];
-                    factors.forEach(factor => {
-                      const val = generatedPlan.plan[idx]?.[factor.name] ?? 0;
-                      factorValues.push(val);
+                    const row_vals = [1]; // intercept = grand mean in coded view
+                    const baseFactorValues: number[] = [];
+                    // Only use base factors (first k-p factors)
+                    for (let i = 0; i < baseFactorCount; i++) {
+                      const val = generatedPlan.plan[idx]?.[factors[i].name] ?? 0;
+                      baseFactorValues.push(val);
                       row_vals.push(val);
-                    });
-                    // Add N-way interaction terms
+                    }
+                    // Add interaction terms (all N-way between base factors)
                     interactionPairs.forEach(pair => {
+                      // Multiply all factor values in this interaction
                       let product = 1;
                       pair.indices.forEach(idx => {
-                        product *= factorValues[idx];
+                        product *= baseFactorValues[idx];
                       });
                       row_vals.push(product);
                     });
@@ -2277,301 +1726,244 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                   }
                 });
 
-                const n = y.length;
-                const p = X[0].length;
+                //const interactionsTriples = k === 2 ? 0 : k === 3 ? 1 : k===4 ? 4 : 8 ; // Placeholder if needed for higher-order interactions
+                const n = y.length; // total number of observations including center points
+                const dfTotal = n - 1; // total degrees of freedom
+                const hasCurvature = (includeCenterPoints && selectedFactorsForModel['centerPoint'] !== false);
+                const dfCurvature = hasCurvature ? 1 : 0;
+                const dfBasefactors = k;
+                //const dfInteractions = interactionPairs.length;
+                //Variable degrees of freedom for interactions: depend on resolution and selected factors and center point
+                //let dfInteractions = interactionPairs.length + interactionsTriples // No interactions estimable in R3 designs
+                let dfInteractions = 2^k - k -1;
+                let dfModel = dfBasefactors + dfInteractions + dfCurvature;
+                if (dfModel > dfTotal) {
+                  dfModel = dfTotal;
+                }
+                let dfResidual = dfTotal - dfModel;
+
+                const numCoefficients = X[0].length;
+                // Calculate grand mean across ALL observations (main design + center points)
                 const mean_y = y.reduce((a, b) => a + b, 0) / n;
+                // SS_tot accounts for variation from the grand mean across all observations including center points
                 const SS_tot = y.reduce((sum, val) => sum + Math.pow(val - mean_y, 2), 0);
+                
+                // Calculate sum of squares for curvature (if center points are included)
+                let SS_curvature = 0;
+                if (includeCenterPoints) {
+                  // Find factorial vs center point indices
+                  const factorialIndices: number[] = [];
+                  const centerIndices: number[] = [];
+                  
+                  runData.forEach((row, idx) => {
+                    if (row.response !== null && !isNaN(row.response)) {
+                      // Check if all base factors are -1 or +1 (factorial point)
+                      let isFactorial = true;
+                      for (let i = 0; i < baseFactorCount; i++) {
+                        const val = generatedPlan.plan[idx]?.[factors[i].name];
+                        if (val !== -1 && val !== 1) {
+                          isFactorial = false;
+                          break;
+                        }
+                      }
+                      if (isFactorial) {
+                        factorialIndices.push(idx);
+                      } else {
+                        centerIndices.push(idx);
+                      }
+                    }
+                  });
+                  
+                  if (factorialIndices.length > 0 && centerIndices.length > 0) {
+                    const meanFactorial = factorialIndices.reduce((sum, idx) => sum + runData[idx].response!, 0) / factorialIndices.length;
+                    const meanCenter = centerIndices.reduce((sum, idx) => sum + runData[idx].response!, 0) / centerIndices.length;
+                    const n_f = factorialIndices.length;
+                    const n_c = centerIndices.length;
+                    // SS_curvature = (n_f * n_c) / (n_f + n_c) * (mean_factorial - mean_center)^2
+                    SS_curvature = ((n_f * n_c) / (n_f + n_c)) * Math.pow(meanFactorial - meanCenter, 2);
+                  }
+                }
 
                 // Calculate X'X and X'y
-                let XtX: number[][] = Array(p).fill(null).map(() => Array(p).fill(0));
-                let Xty: number[] = Array(p).fill(0);
+                let XtX: number[][] = Array(numCoefficients).fill(null).map(() => Array(numCoefficients).fill(0));
+                let Xty: number[] = Array(numCoefficients).fill(0);
 
                 for (let i = 0; i < n; i++) {
-                  for (let j = 0; j < p; j++) {
+                  for (let j = 0; j < numCoefficients; j++) {
                     Xty[j] += X[i][j] * y[i];
-                    for (let k = 0; k < p; k++) {
+                    for (let k = 0; k < numCoefficients; k++) {
                       XtX[j][k] += X[i][j] * X[i][k];
                     }
                   }
                 }
 
-                // Gaussian elimination for solving normal equations
+                // Solve using Gaussian elimination with better pivoting for near-singular matrices
                 const solveNormalEquations = (A: number[][], b: number[]): number[] => {
                   const n = A.length;
                   const aug = A.map((row, i) => [...row, b[i]]);
                   
-                  for (let i = 0; i < n; i++) {
-                    let maxRow = i;
-                    for (let k = i + 1; k < n; k++) {
-                      if (Math.abs(aug[k][i]) > Math.abs(aug[maxRow][i])) maxRow = k;
-                    }
-                    [aug[i], aug[maxRow]] = [aug[maxRow], aug[i]];
+                  // Forward elimination with complete pivoting for better numerical stability
+                  for (let col = 0; col < n; col++) {
+                    // Find the largest element in the remaining submatrix
+                    let maxRow = col;
+                    let maxVal = Math.abs(aug[col][col]);
                     
-                    for (let k = i + 1; k < n; k++) {
-                      const factor = aug[k][i] / aug[i][i];
-                      for (let j = i; j <= n; j++) {
-                        aug[k][j] -= factor * aug[i][j];
+                    for (let row = col + 1; row < n; row++) {
+                      if (Math.abs(aug[row][col]) > maxVal) {
+                        maxVal = Math.abs(aug[row][col]);
+                        maxRow = row;
+                      }
+                    }
+                    
+                    // If pivot is too small, we have rank deficiency - use whatever we have
+                    if (maxVal < 1e-10) {
+                      continue; // Skip this column
+                    }
+                    
+                    // Swap rows
+                    [aug[col], aug[maxRow]] = [aug[maxRow], aug[col]];
+                    
+                    // Eliminate below
+                    for (let row = col + 1; row < n; row++) {
+                      if (Math.abs(aug[col][col]) > 1e-15) {
+                        const factor = aug[row][col] / aug[col][col];
+                        for (let j = col; j <= n; j++) {
+                          aug[row][j] -= factor * aug[col][j];
+                        }
                       }
                     }
                   }
                   
+                  // Back substitution with careful handling of singular/near-singular systems
                   const x: number[] = Array(n).fill(0);
                   for (let i = n - 1; i >= 0; i--) {
                     x[i] = aug[i][n];
                     for (let j = i + 1; j < n; j++) {
                       x[i] -= aug[i][j] * x[j];
                     }
-                    x[i] /= aug[i][i];
+                    if (Math.abs(aug[i][i]) > 1e-12) {
+                      x[i] /= aug[i][i];
+                    } else {
+                      // If diagonal is too small, leave x[i] as computed sum (least squares solution)
+                      if (Math.abs(x[i]) < 1e-10) {
+                        x[i] = 0;
+                      }
+                    }
                   }
+                  
                   return x;
                 };
 
                 let beta: number[] = [];
-                if (Math.abs(XtX[0][0]) > 1e-10) {
-                  try {
-                    beta = solveNormalEquations(XtX, Xty);
-                  } catch (e) {
-                    beta = Xty.map(v => v / (XtX[0][0] || 1));
-                  }
-                } else {
-                  beta = Xty.map(v => v / (XtX[0][0] || 1));
+                try {
+                  beta = solveNormalEquations(XtX, Xty);
+                } catch (e) {
+                  console.warn('Gaussian elimination error:', e);
+                  beta = Array(numCoefficients).fill(0);
+                  beta[0] = mean_y;
+                }
+                
+                // Ensure beta contains valid numbers
+                if (!beta.every(b => Number.isFinite(b))) {
+                  beta = Array(numCoefficients).fill(0);
+                  beta[0] = mean_y;
                 }
 
-                const predictions = X.map(row => row.reduce((sum, val, i) => sum + val * beta[i], 0));
-                const residuals = y.map((val, i) => val - predictions[i]);
-                const SS_res = residuals.reduce((sum, val) => sum + Math.pow(val, 2), 0);
-                const R_sq = 1 - SS_res / SS_tot;
-                const adj_R_sq = 1 - (1 - R_sq) * (n - 1) / (n - p);
-                const rmse = Math.sqrt(SS_res / (n - p));
-                const residualMean = residuals.reduce((a, b) => a + b, 0) / residuals.length;
-                const residualStd = Math.sqrt(residuals.reduce((sum, r) => sum + Math.pow(r - residualMean, 2), 0) / (residuals.length - 1));
-                const mse = SS_res / (n - p);
-                
-                // Calculate center point coefficient if center points exist
-                const getCenterPointCoeff = (interceptValue: number): number => {
-                  if (!includeCenterPoints) return 0;
-                  
-                  // Center points: all CONTINUOUS factors at 0; categorical factors at ±1
-                  const centerPointIndices: number[] = [];
-                  const factorialPointIndices: number[] = [];
-                  
-                  runData.forEach((row, rowIdx) => {
-                    if (row.response !== null && !isNaN(row.response)) {
-                      const isCenterPoint = factors.every(factor => {
-                        const level = generatedPlan.plan[rowIdx]?.[factor.name] ?? 0;
-                        if (factor.type === 'categorical') {
-                          return Math.abs(level) === 1;
-                        } else {
-                          return Math.abs(level) < 0.01;
-                        }
-                      });
-                      
-                      const hasAnyContinuousAtZero = factors.some(f => 
-                        f.type === 'continuous' && Math.abs(generatedPlan.plan[rowIdx]?.[f.name] ?? 1) < 0.01
-                      );
-                      
-                      if (isCenterPoint && hasAnyContinuousAtZero) {
-                        centerPointIndices.push(rowIdx);
-                      } else {
-                        factorialPointIndices.push(rowIdx);
-                      }
-                    }
-                  });
-                  
-                  const n_c = centerPointIndices.length;
-                  const n_f = factorialPointIndices.length;
-                  
-                  if (n_c > 0 && n_f > 0) {
-                    const centerResponses = centerPointIndices.map(idx => runData[idx].response).filter((r): r is number => r !== null && !isNaN(r));
-                    const y_c_avg = centerResponses.length > 0 ? centerResponses.reduce((a, b) => a + b, 0) / centerResponses.length : 0;
-                    return y_c_avg - interceptValue;
+                // Build reduced design matrix with only selected terms
+                const selectedColumns: number[] = [0]; // Always include intercept
+                Array.from({length: baseFactorCount}).forEach((_, idx) => {
+                  if (selectedFactorsForModel[idx] !== false) {
+                    selectedColumns.push(idx + 1);
                   }
-                  return 0;
-                };
-                
-                const centerPointCoeff = getCenterPointCoeff(beta[0]);
-                
-                // Function to recalculate regression with selected terms only
-                const calculateReducedModel = () => {
-                  // Determine which columns to include (always include intercept and center point)
-                  const isIncluded = (type: string, idx: number): boolean => {
-                    if (type === 'intercept') return true;
-                    if (type === 'factor') return selectedFactorsForModel[idx] !== false;
-                    if (type === 'interaction') return selectedFactorsForModel[`int-${idx}`] !== false;
-                    if (type === 'centerPoint') return selectedFactorsForModel['centerPoint'] !== false;
-                    return true;
-                  };
-                  
-                  // Determine which rows to include (exclude center points if not selected)
-                  const shouldExcludeCenterPoints = selectedFactorsForModel['centerPoint'] === false;
-                  const centerPointIndices: number[] = [];
-                  
-                  if (shouldExcludeCenterPoints && includeCenterPoints) {
-                    runData.forEach((row, rowIdx) => {
-                      if (row.response !== null && !isNaN(row.response)) {
-                        const isCenterPoint = factors.every(factor => {
-                          const level = generatedPlan.plan[rowIdx]?.[factor.name] ?? 0;
-                          if (factor.type === 'categorical') {
-                            return Math.abs(level) === 1;
-                          } else {
-                            return Math.abs(level) < 0.01;
-                          }
-                        });
-                        
-                        const hasAnyContinuousAtZero = factors.some(f => 
-                          f.type === 'continuous' && Math.abs(generatedPlan.plan[rowIdx]?.[f.name] ?? 1) < 0.01
-                        );
-                        
-                        if (isCenterPoint && hasAnyContinuousAtZero) {
-                          centerPointIndices.push(rowIdx);
-                        }
-                      }
-                    });
+                });
+                interactionPairs.forEach((_, pairIdx) => {
+                  if (selectedFactorsForModel[`int-${pairIdx}`] !== false) {
+                    selectedColumns.push(baseFactorCount + 1 + pairIdx);
                   }
-                  
-                  // Build reduced X matrix with selected columns and rows
-                  const colMap: number[] = []; // Maps reduced column idx to original column idx
-                  const X_reduced: number[][] = [];
-                  const y_reduced: number[] = [];
-                  
-                  // Always include intercept
-                  colMap.push(0);
-                  
-                  // Add factor columns
-                  for (let i = 0; i < factors.length; i++) {
-                    if (isIncluded('factor', i)) {
-                      colMap.push(i + 1);
-                    }
-                  }
-                  
-                  // Add interaction columns
-                  for (let i = 0; i < interactionPairs.length; i++) {
-                    if (isIncluded('interaction', i)) {
-                      colMap.push(factors.length + 1 + i);
-                    }
-                  }
-                  
-                  // Build reduced X from selected columns and rows
-                  for (let row = 0; row < X.length; row++) {
-                    // Skip center points if they're excluded
-                    if (shouldExcludeCenterPoints && centerPointIndices.includes(row)) {
-                      continue;
-                    }
-                    
-                    const reducedRow: number[] = [];
-                    for (const col of colMap) {
-                      reducedRow.push(X[row][col]);
-                    }
-                    X_reduced.push(reducedRow);
-                    y_reduced.push(y[row]);
-                  }
-                  
-                  const n_reduced = y_reduced.length;
-                  const p_reduced = X_reduced[0].length;
-                  
-                  // Calculate total sum of squares for reduced data
-                  const mean_y_reduced = y_reduced.reduce((a, b) => a + b, 0) / n_reduced;
-                  const SS_tot_reduced = y_reduced.reduce((sum, val) => sum + Math.pow(val - mean_y_reduced, 2), 0);
-                  
-                  // Calculate X'X and X'y for reduced model
-                  let XtX_red: number[][] = Array(p_reduced).fill(null).map(() => Array(p_reduced).fill(0));
-                  let Xty_red: number[] = Array(p_reduced).fill(0);
-                  
-                  for (let i = 0; i < n_reduced; i++) {
-                    for (let j = 0; j < p_reduced; j++) {
-                      Xty_red[j] += X_reduced[i][j] * y_reduced[i];
-                      for (let k = 0; k < p_reduced; k++) {
-                        XtX_red[j][k] += X_reduced[i][j] * X_reduced[i][k];
-                      }
-                    }
-                  }
-                  
-                  // Solve reduced model
-                  let beta_red: number[] = [];
-                  if (Math.abs(XtX_red[0][0]) > 1e-10) {
-                    try {
-                      beta_red = solveNormalEquations(XtX_red, Xty_red);
-                    } catch (e) {
-                      beta_red = Xty_red.map(v => v / (XtX_red[0][0] || 1));
-                    }
-                  } else {
-                    beta_red = Xty_red.map(v => v / (XtX_red[0][0] || 1));
-                  }
-                  
-                  // Calculate predictions, residuals, and statistics for reduced model
-                  const predictions_red = X_reduced.map(row => row.reduce((sum, val, i) => sum + val * beta_red[i], 0));
-                  const residuals_red = y_reduced.map((val, i) => val - predictions_red[i]);
-                  const SS_res_red = residuals_red.reduce((sum, val) => sum + Math.pow(val, 2), 0);
-                  const mse_red = SS_res_red / Math.max(1, n_reduced - p_reduced);
-                  
-                  // Calculate coefficient stats for reduced model
-                  const coeffStats_red = beta_red.map((b, idx) => {
-                    let xxtInvDiag = 0;
-                    if (idx === 0) {
-                      xxtInvDiag = 1 / XtX_red[0][0];
-                    } else {
-                      const denom = XtX_red[idx][idx] - (idx > 0 ? XtX_red[idx].slice(0, idx).reduce((sum, v, i) => sum + v * v / (XtX_red[i][i] || 1), 0) : 0);
-                      xxtInvDiag = Math.abs(denom) > 1e-10 ? 1 / denom : 1 / XtX_red[idx][idx];
-                    }
-                    const stdError = Math.sqrt(mse_red * Math.max(0, xxtInvDiag));
-                    const tValue = stdError > 0 ? b / stdError : 0;
-                    let pValue = 1;
-                    if (stdError > 0 && Number.isFinite(tValue)) {
-                      const df = n_reduced - p_reduced;
-                      const cdfVal = jStat.studentt.cdf(Math.abs(tValue), df);
-                      pValue = Number.isFinite(cdfVal) ? 2 * (1 - cdfVal) : 1;
-                      pValue = Math.max(0, Math.min(1, pValue));
-                    }
-                    return { stdError: Number.isFinite(stdError) ? stdError : 0, tValue: Number.isFinite(tValue) ? tValue : 0, pValue };
-                  });
-                  
-                  return {
-                    beta: beta_red,
-                    coeffStats: coeffStats_red,
-                    colMap,
-                    XtX: XtX_red,
-                    predictions: predictions_red,
-                    residuals: residuals_red,
-                    SS_res: SS_res_red,
-                    SS_tot: SS_tot_reduced,
-                    mse: mse_red,
-                    p: p_reduced,
-                    n: n_reduced
-                  };
-                };
+                });
                 
-                const reducedModel = calculateReducedModel();
-                
-                // Calculate goodness of fit metrics for reduced model
-                const R_sq_red = 1 - reducedModel.SS_res / reducedModel.SS_tot;
-                const adj_R_sq_red = 1 - (1 - R_sq_red) * (reducedModel.n - 1) / (reducedModel.n - reducedModel.p);
-                const rmse_red = Math.sqrt(reducedModel.SS_res / (reducedModel.n - reducedModel.p));
-                
-                // Use reduced model stats
-                const coeffStats = reducedModel.coeffStats;
-                const beta_display = reducedModel.beta;
-                const mse_display = reducedModel.mse;
-                const colMap = reducedModel.colMap;
-                
-                // Create mapping: original column idx -> reduced column idx (or -1 if excluded)
+                // Create reverse mapping: original column index -> reduced column index
                 const colMapReverse: Record<number, number> = {};
-                colMap.forEach((origCol, reducedIdx) => {
+                selectedColumns.forEach((origCol, reducedIdx) => {
                   colMapReverse[origCol] = reducedIdx;
                 });
+                
+                // Build reduced X matrix with only selected columns
+                const X_reduced = X.map(row => selectedColumns.map(col => row[col]));
+                const p_reduced = X_reduced[0].length;
+                
+                // Calculate X'X and X'y for reduced model
+                let XtX_red: number[][] = Array(p_reduced).fill(null).map(() => Array(p_reduced).fill(0));
+                let Xty_red: number[] = Array(p_reduced).fill(0);
+                
+                for (let i = 0; i < n; i++) {
+                  for (let j = 0; j < p_reduced; j++) {
+                    Xty_red[j] += X_reduced[i][j] * y[i];
+                    for (let k = 0; k < p_reduced; k++) {
+                      XtX_red[j][k] += X_reduced[i][j] * X_reduced[i][k];
+                    }
+                  }
+                }
+                
+                // Solve reduced model
+                let beta_red: number[] = [];
+                try {
+                  beta_red = solveNormalEquations(XtX_red, Xty_red);
+                } catch (e) {
+                  console.warn('Gaussian elimination error for reduced model:', e);
+                  beta_red = Xty_red.map(v => v / (XtX_red[0][0] || 1));
+                }
 
-                // Transform coefficients and standard errors from coded to uncoded if needed
-                // Transform the REDUCED model coefficients (what's actually displayed in table)
+                // Calculate predictions and residuals for reduced model
+                const predictions_red = X_reduced.map(row => row.reduce((sum, val, i) => sum + val * beta_red[i], 0));
+                const residuals_red = y.map((val, i) => val - predictions_red[i]);
+                const residualSS_red = residuals_red.reduce((sum, res) => sum + Math.pow(res, 2), 0);
+                const SS_res = residualSS_red - SS_curvature;
+                const errorDF_red = n - p_reduced - dfCurvature;
+                const errorMS = errorDF_red > 0 ? SS_res / errorDF_red : 0;
+                const R_sq = 1 - SS_res / SS_tot;
+                const adj_R_sq = 1 - (1 - R_sq) * (n - 1) / (n - p_reduced - dfCurvature);
+                const rmse = Math.sqrt(SS_res / (n - p_reduced- dfCurvature));
+                const residualMean = residuals_red.reduce((a, b) => a + b, 0) / residuals_red.length;
+                const residualStd = Math.sqrt(residuals_red.reduce((sum, r) => sum + Math.pow(r - residualMean, 2), 0) / (residuals_red.length - 1));
+                const mse = SS_res / (n - p_reduced - dfCurvature);
+                
+                // Calculate standard errors and t-values for selected coefficients using reduced model
+                const coeffStats = beta_red.map((b, redIdx) => {
+                  let xxtInvDiag = 0;
+                  if (redIdx === 0) {
+                    xxtInvDiag = 1 / XtX_red[0][0];
+                  } else {
+                    const denom = XtX_red[redIdx][redIdx] - (redIdx > 0 ? XtX_red[redIdx].slice(0, redIdx).reduce((sum, v, i) => sum + v * v / (XtX_red[i][i] || 1), 0) : 0);
+                    xxtInvDiag = Math.abs(denom) > 1e-10 ? 1 / denom : 1 / XtX_red[redIdx][redIdx];
+                  }
+                  const stdError = Math.sqrt(mse * Math.max(0, xxtInvDiag));
+                  const tValue = stdError > 0 ? b / stdError : NaN;
+                  let pValue = 0;
+                  if (stdError > 0 && Number.isFinite(tValue)) {
+                    const df = errorDF_red;
+                    const cdfVal = jStat.studentt.cdf(Math.abs(tValue), df);
+                    pValue = Number.isFinite(cdfVal) ? 2 * (1 - cdfVal) : 1;
+                    pValue = Math.max(0, Math.min(1, pValue));
+                  }
+                  return { stdError: Number.isFinite(stdError) ? stdError : 0, tValue: Number.isFinite(tValue) ? tValue : NaN, pValue };
+                });
+
+                // Transform coefficients using beta_red and selected columns mapping
                 const transformCoefficientsAndSE = () => {
                   if (!showUncoded || !allFactorsHaveValidLevels()) {
-                    return { displayBeta: beta_display, displayCoeffStats: coeffStats };
+                    return { displayBeta: beta_red, displayCoeffStats: coeffStats };
                   }
                   
-                  const transformed = [...beta_display];
+                  const transformed = [...beta_red];
                   const transformedStats = coeffStats.map(s => ({ ...s }));
                   let interceptAdjustment = 0;
                   
-                  // For each factor in the original factors list
-                  for (let i = 0; i < factors.length; i++) {
+                  // Only transform factors that are in selectedColumns
+                  for (let i = 0; i < baseFactorCount; i++) {
+                    const colIdx = selectedColumns.indexOf(i + 1);
+                    if (colIdx === -1 || selectedFactorsForModel[i] === false) continue;
+                    
                     const factor = factors[i];
                     if (factor.type === 'continuous' && factor.lowValue !== undefined && factor.highValue !== undefined) {
                       const low = parseFloat(String(factor.lowValue));
@@ -2580,30 +1972,25 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                         const center = (low + high) / 2;
                         const halfRange = (high - low) / 2;
                         
-                        // Check if this factor is in the reduced model
-                        const origColIdx = i + 1;
-                        const reducedColIdx = colMapReverse[origColIdx];
-                        if (reducedColIdx !== undefined && beta_display[reducedColIdx] !== undefined) {
-                          // β_uncoded = β_coded / halfRange
-                          transformed[reducedColIdx] = beta_display[reducedColIdx] / halfRange;
-                          // SE_uncoded = SE_coded / halfRange
-                          if (transformedStats[reducedColIdx]) {
-                            transformedStats[reducedColIdx].stdError = coeffStats[reducedColIdx].stdError / halfRange;
-                            // t-value and p-value are INVARIANT: t = β/SE = (β_coded/hr) / (SE_coded/hr) = β_coded/SE_coded
-                            // So we keep them unchanged - no need to recalculate
+                        if (Number.isFinite(beta_red[colIdx])) {
+                          transformed[colIdx] = beta_red[colIdx] / halfRange;
+                          if (transformedStats[colIdx]) {
+                            transformedStats[colIdx].stdError = coeffStats[colIdx].stdError / halfRange;
                           }
-                          // Adjust intercept: β0_uncoded = β0_coded - Σ(β_coded * center / halfRange)
-                          interceptAdjustment += beta_display[reducedColIdx] * center / halfRange;
+                          interceptAdjustment += beta_red[colIdx] * center / halfRange;
                         }
                       }
                     }
                   }
                   
-                  // Transform N-way interactions
+                  // Transform N-way interaction coefficients
                   for (let i = 0; i < interactionPairs.length; i++) {
+                    if (selectedFactorsForModel[`int-${i}`] === false) continue;
+                    
+                    const colIdx = selectedColumns.indexOf(baseFactorCount + 1 + i);
+                    if (colIdx === -1) continue;
+                    
                     const pair = interactionPairs[i];
-                    const origInteractionIdx = factors.length + 1 + i;
-                    const reducedInteractionIdx = colMapReverse[origInteractionIdx];
                     
                     // Check all factors in this interaction are continuous with valid levels
                     const allContinuousWithLevels = pair.indices.every(idx => {
@@ -2631,10 +2018,10 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                         }
                       }
                       
-                      if (allValid && reducedInteractionIdx !== undefined && beta_display[reducedInteractionIdx] !== undefined) {
-                        transformed[reducedInteractionIdx] = beta_display[reducedInteractionIdx] / halfRangeProduct;
-                        if (transformedStats[reducedInteractionIdx]) {
-                          transformedStats[reducedInteractionIdx].stdError = coeffStats[reducedInteractionIdx].stdError / halfRangeProduct;
+                      if (allValid && Number.isFinite(beta_red[colIdx])) {
+                        transformed[colIdx] = beta_red[colIdx] / halfRangeProduct;
+                        if (transformedStats[colIdx]) {
+                          transformedStats[colIdx].stdError = coeffStats[colIdx].stdError / halfRangeProduct;
                         }
                       }
                     }
@@ -2656,11 +2043,9 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                           const center = (low + high) / 2;
                           const halfRange = (high - low) / 2;
                           
-                          const origColIdx = i + 1;
-                          const reducedColIdx = colMapReverse[origColIdx];
-                          if (reducedColIdx !== undefined && coeffStats[reducedColIdx]) {
+                          if (Number.isFinite(beta[i + 1]) && Number.isFinite(coeffStats[i + 1]?.stdError)) {
                             const weight = center / halfRange;
-                            interceptSESquared += (weight ** 2) * (coeffStats[reducedColIdx].stdError ** 2);
+                            interceptSESquared += (weight ** 2) * (coeffStats[i + 1].stdError ** 2);
                           }
                         }
                       }
@@ -2670,12 +2055,17 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                     // So no variance contribution from interactions to intercept SE
                     
                     transformedStats[0].stdError = Math.sqrt(Math.max(0, interceptSESquared));
-                    transformedStats[0].tValue = (beta_display[0] - interceptAdjustment) / transformedStats[0].stdError;
+                    transformedStats[0].tValue = transformedStats[0].stdError > 0 ?(beta[0] - interceptAdjustment) / transformedStats[0].stdError : NaN;
                     // Recalculate p-value for intercept since its t-value changes (SE is recalculated via variance propagation)
-                    transformedStats[0].pValue = transformedStats[0].stdError > 0 ? 2 * (1 - jStat.studentt.cdf(Math.abs(transformedStats[0].tValue), reducedModel.n - reducedModel.p)) : 1;
+                    transformedStats[0].pValue = transformedStats[0].stdError > 0 ? 2 * (1 - jStat.studentt.cdf(Math.abs(transformedStats[0].tValue), n - numCoefficients)) : 0;
                   }
                   
-                  transformed[0] = beta_display[0] - interceptAdjustment;
+                  transformed[0] = beta[0] - interceptAdjustment;
+                  
+                  // If transformation resulted in non-finite values, use coded instead
+                  if (!transformed.every(v => Number.isFinite(v))) {
+                    return { displayBeta: beta, displayCoeffStats: coeffStats };
+                  }
                   return { displayBeta: transformed, displayCoeffStats: transformedStats };
                 };
                 
@@ -2684,14 +2074,17 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                 // Always compute uncoded coefficients for solver (independent of display toggle)
                 const getUncodedCoefficientsForSolver = () => {
                   if (!allFactorsHaveValidLevels()) {
-                    return beta_display; // Return coded if can't transform
+                    return beta_red; // Return coded if can't transform
                   }
                   
-                  const transformed = [...beta_display];
+                  const transformed = [...beta_red];
                   let interceptAdjustment = 0;
                   
                   // Transform main effect coefficients
-                  for (let i = 0; i < factors.length; i++) {
+                  for (let i = 0; i < baseFactorCount; i++) {
+                    const colIdx = selectedColumns.indexOf(i + 1);
+                    if (colIdx === -1 || selectedFactorsForModel[i] === false) continue;
+                    
                     const factor = factors[i];
                     if (factor.type === 'continuous' && factor.lowValue !== undefined && factor.highValue !== undefined) {
                       const low = parseFloat(String(factor.lowValue));
@@ -2700,21 +2093,22 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                         const center = (low + high) / 2;
                         const halfRange = (high - low) / 2;
                         
-                        const origColIdx = i + 1;
-                        const reducedColIdx = colMapReverse[origColIdx];
-                        if (reducedColIdx !== undefined && beta_display[reducedColIdx] !== undefined) {
-                          transformed[reducedColIdx] = beta_display[reducedColIdx] / halfRange;
-                          interceptAdjustment += beta_display[reducedColIdx] * center / halfRange;
+                        if (Number.isFinite(beta_red[colIdx])) {
+                          transformed[colIdx] = beta_red[colIdx] / halfRange;
+                          interceptAdjustment += beta_red[colIdx] * center / halfRange;
                         }
                       }
                     }
                   }
                   
-                  // Transform N-way interactions
+                  // Transform N-way interaction coefficients
                   for (let i = 0; i < interactionPairs.length; i++) {
+                    if (selectedFactorsForModel[`int-${i}`] === false) continue;
+                    
+                    const colIdx = selectedColumns.indexOf(baseFactorCount + 1 + i);
+                    if (colIdx === -1) continue;
+                    
                     const pair = interactionPairs[i];
-                    const origInteractionIdx = factors.length + 1 + i;
-                    const reducedInteractionIdx = colMapReverse[origInteractionIdx];
                     
                     const allContinuousWithLevels = pair.indices.every(idx => {
                       const factor = factors[idx];
@@ -2740,19 +2134,24 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                         }
                       }
                       
-                      if (allValid && reducedInteractionIdx !== undefined && beta_display[reducedInteractionIdx] !== undefined) {
-                        transformed[reducedInteractionIdx] = beta_display[reducedInteractionIdx] / halfRangeProduct;
+                      if (allValid && Number.isFinite(beta_red[colIdx])) {
+                        transformed[colIdx] = beta_red[colIdx] / halfRangeProduct;
                       }
                     }
                   }
                   
-                  transformed[0] = beta_display[0] - interceptAdjustment;
+                  transformed[0] = beta_red[0] - interceptAdjustment;
+                  
+                  // If transformation resulted in non-finite values, use coded instead
+                  if (!transformed.every(v => Number.isFinite(v))) {
+                    return beta_red;
+                  }
                   return transformed;
                 };
                 
                 const handleSolve = () => {
                   // Check if solve factor is included in the model
-                  if (selectedFactorsForModel[solveFactorIdx] === false) {
+                  if (selectedFactorsForModel[solveFactorIdx] === false || baseFactorCount < 1) {
                     setSolverResult(null);
                     return;
                   }
@@ -2763,13 +2162,21 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                     return;
                   }
                   
-                  const origColIdx = solveFactorIdx + 1;
-                  const reducedColIdx = colMapReverse[origColIdx];
+                  // Get the reduced column index for the solve factor
+                  const solveOrigCol = solveFactorIdx + 1;
+                  const solveReducedCol = colMapReverse[solveOrigCol];
+                  if (solveReducedCol === undefined) {
+                    setSolverResult(null);
+                    return;
+                  }
                   
                   // Always use uncoded coefficients for solver
                   const solverBeta = getUncodedCoefficientsForSolver();
                   
-                  if (reducedColIdx === undefined || solverBeta[reducedColIdx] === 0) return;
+                  if (solverBeta[solveReducedCol] === 0) {
+                    setSolverResult(null);
+                    return;
+                  }
                   
                   // Check that ALL non-solve factors have constraint values entered
                   for (let i = 0; i < factors.length; i++) {
@@ -2783,9 +2190,9 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                     }
                   }
                   
-                  // Calculate constraint contribution: sum of (coefficient * constraint_value) for all non-target factors that are included
                   let constraintSum = 0;
                   for (let i = 0; i < factors.length; i++) {
+                    // Only include constraints for factors that are NOT the solve factor and ARE included in the model
                     if (i !== solveFactorIdx && selectedFactorsForModel[i] !== false) {
                       const constraintVal = constraintValues[i];
                       if (Number.isFinite(constraintVal)) {
@@ -2801,7 +2208,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                   // Solve using UNCODED equation: targetY = β0_uncoded + Σ_{j≠i} βj_uncoded * constraint_j + βi_uncoded * Xi
                   // Therefore: Xi = (targetY - β0_uncoded - constraintSum) / βi_uncoded
                   // User enters target and constraints in uncoded space, result is also uncoded
-                  let result = (targetY - solverBeta[0] - constraintSum) / solverBeta[reducedColIdx];
+                  let result = (targetY - solverBeta[0] - constraintSum) / solverBeta[solveReducedCol];
                   setSolverResult(result);
                 };
 
@@ -2810,16 +2217,400 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
 
                 return (
                   <>
+                    {/* ANOVA Table */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>ANOVA Analysis
+                        {Object.values(selectedFactorsForModel).some(v => v === false) && (
+                          <span className="p-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-xl ml-24 text-sm font-normal justify-right">Reduced Model</span>
+                        )}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="overflow-x-auto">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Source</TableHead>
+                                <TableHead className="text-right">DF</TableHead>
+                                <TableHead className="text-right">Sum of Squares</TableHead>
+                                <TableHead className="text-right">Mean Square</TableHead>
+                                <TableHead className="text-right">F-Ratio</TableHead>
+                                <TableHead className="text-right">P-Value</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {(() => {
+                                let rows: React.ReactNode[] = [];
+                                
+                                let  dfBasefactors = 0;
+                                // Add base factor rows only (not confounded) - AND only if selected in model
+                                for (let i = 0; i < factors.length; i++) {
+                                  // Skip if this factor is not selected in the model
+                                  if (selectedFactorsForModel[i] === false) continue;
+                                  
+                                  const factor = factors[i];
+                                  const termIdx = i + 1;
+                                  const termDF = dfTotal - dfCurvature - termIdx < 0 ? 0 : 1;
+                                  dfBasefactors += termDF;
+                                  const termSS = termDF === 0 ? 0 : Math.pow(beta[termIdx], 2) * XtX[termIdx][termIdx];
+                                  const termMS = termDF === 0 ? 0 : termSS / termDF;
+                                  //const errorMS = termDF === 0 ? 0 : SS_res / (n - p);
+                                  const fRatio = errorMS > 0 ? termMS / errorMS : 0;
+                                  const pValue = fRatio > 0 && (n - p_reduced - dfCurvature) > 0 
+                                    ? 1 - jStat.centralF.cdf(fRatio, termDF, n - p_reduced - dfCurvature) 
+                                    : 1;
+                                  const factorLabel = showUncoded && allFactorsHaveValidLevels()
+                                    ? `${factor.name}${factor.type === 'continuous' && factor.units ? ` (${factor.units})` : ''}`
+                                    : factor.name;
+
+                                  rows.push(
+                                    <TableRow key={`factor-${i}`}>
+                                      <TableCell className="font-medium">{factorLabel}</TableCell>
+                                      <TableCell className="text-right">{termDF}</TableCell>
+                                      <TableCell className="text-right">{termSS.toFixed(4)}</TableCell>
+                                      <TableCell className="text-right">{termMS.toFixed(4)}</TableCell>
+                                      <TableCell className="text-right">{fRatio > 0 ? fRatio.toFixed(4) : '-'}</TableCell>
+                                      <TableCell className="text-right">
+                                        <span className={pValue < 0.05 ? "text-green-600 font-semibold" : ""}>
+                                          {pValue === 1 ? '-' : pValue.toFixed(4)}
+                                        </span>
+                                      </TableCell>
+                                    </TableRow>
+                                  );
+                                }
+
+                                // Add interaction rows (only between base factors) - AND only if selected in model
+                                interactionPairs.forEach((pair, pairIdx) => {
+                                  // Skip if this interaction is not selected in the model
+                                  if (selectedFactorsForModel[`int-${pairIdx}`] === false) return;
+                                  
+                                  const termIdx = baseFactorCount + 1 + pairIdx;                                  
+                                  const termDF = dfTotal - dfCurvature - dfBasefactors - (pairIdx + 1) <= 0 ? 0 : 1;
+                                  dfInteractions += termDF;
+                                  //const termDF = 1;
+                                  const termSS = termDF === 0 ? 0 : Math.pow(beta[termIdx], 2) * XtX[termIdx][termIdx];
+                                  const termMS = termDF === 0 ? 0 : termSS / termDF;
+                                  //const errorMS = termDF === 0 ? 0 : SS_res / (n - p);
+                                  const fRatio = errorMS > 0 ? termMS / errorMS : 0;
+                                  const pValue = fRatio > 0 && (n - p) > 0 
+                                    ? 1 - jStat.centralF.cdf(fRatio, termDF, n - p_reduced - dfCurvature) 
+                                    : 1;
+                                  if (termDF === 1) {
+                                    rows.push(
+                                      <TableRow key={`interaction-${pairIdx}`}>
+                                        <TableCell className="font-medium">{pair.name}</TableCell>
+                                        <TableCell className="text-right">{termDF}</TableCell>
+                                        <TableCell className="text-right">{termSS.toFixed(4)}</TableCell>
+                                        <TableCell className="text-right">{termMS.toFixed(4)}</TableCell>
+                                        <TableCell className="text-right">{fRatio > 0 ? fRatio.toFixed(4) : '-'}</TableCell>
+                                        <TableCell className="text-right">
+                                          <span className={pValue < 0.05 ? "text-green-600 font-semibold" : ""}>
+                                            {pValue === 1 ? '-' : pValue.toFixed(4)}
+                                          </span>
+                                        </TableCell>
+                                      </TableRow>
+                                    );
+                                  }
+                                });
+
+                                // Calculate curvature effect if center points exist AND are included in model AND selected
+                                //const hasCurvature = (includeCenterPoints && selectedFactorsForModel['centerPoint'] !== false);
+                                //let dfCurvature = 0;
+                                if (hasCurvature && selectedFactorsForModel['centerPoint'] !== false) {
+                                  // Center points: all CONTINUOUS factors at 0; categorical factors at ±1
+                                  const centerPointIndices: number[] = [];
+                                  const factorialPointIndices: number[] = [];
+                                  
+                                  runData.forEach((row, rowIdx) => {
+                                    if (row.response !== null && !isNaN(row.response)) {
+                                      const isCenterPoint = factors.every(factor => {
+                                        const level = generatedPlan.plan[rowIdx]?.[factor.name] ?? 0;
+                                        if (factor.type === 'categorical') {
+                                          return Math.abs(level) === 1;
+                                        } else {
+                                          return Math.abs(level) < 0.01;
+                                        }
+                                      });
+                                      
+                                      const hasAnyContinuousAtZero = factors.some(f => 
+                                        f.type === 'continuous' && Math.abs(generatedPlan.plan[rowIdx]?.[f.name] ?? 1) < 0.01
+                                      );
+                                      
+                                      if (isCenterPoint && hasAnyContinuousAtZero) {
+                                        centerPointIndices.push(rowIdx);
+                                      } else {
+                                        factorialPointIndices.push(rowIdx);
+                                      }
+                                    }
+                                  });
+
+                                  const n_c = centerPointIndices.length;
+                                  const n_f = factorialPointIndices.length;
+                                  
+                                  if (n_c > 0 && n_f > 0) {
+                                    const centerResponses = centerPointIndices.map(idx => runData[idx].response).filter((r): r is number => r !== null && !isNaN(r));
+                                    const y_c_avg = centerResponses.length > 0 ? centerResponses.reduce((a, b) => a + b, 0) / centerResponses.length : 0;
+                                    const y_f_at_center = beta[0];
+                                    //const curveEffect = y_c_avg - y_f_at_center;
+                                    //const curveSS = (n_c * n_f / (n_c + n_f)) * Math.pow(curveEffect, 2);
+                                    //const curveMS = curveSS / dfCurvature;
+                                    const curveMS = SS_curvature / dfCurvature;
+                                    //const errorMS = dfTotal > dfBasefactors + dfInteractions + dfCurvature ? SS_res / (n - p) : 0;
+                                    const curveFRatio = errorMS > 0 ? curveMS / errorMS : 0;
+                                    const curvePValue = curveFRatio > 0 && (n - p_reduced - dfCurvature) > 0 
+                                      ? 1 - jStat.centralF.cdf(curveFRatio, dfCurvature, n - p_reduced -dfCurvature) 
+                                      : 1;
+
+                                    rows.push(
+                                      <TableRow key="curvature">
+                                        <TableCell className="font-medium">Curvature</TableCell>
+                                        <TableCell className="text-right">{dfCurvature}</TableCell>
+                                        <TableCell className="text-right">{SS_curvature.toFixed(4)}</TableCell>
+                                        <TableCell className="text-right">{curveMS.toFixed(4)}</TableCell>
+                                        <TableCell className="text-right">{curveFRatio > 0.0000001 ? curveFRatio.toFixed(4) : '-'}</TableCell>
+                                        <TableCell className="text-right">
+                                          <span className={curvePValue < 0.05 ? "text-green-600 font-semibold" : ""}>
+                                            {curvePValue > 0.99999 ? '-' : curvePValue.toFixed(4)}
+                                          </span>
+                                        </TableCell>
+                                      </TableRow>
+                                    );
+                                  }
+                                }
+
+                                // Add model row
+                                const numTerms = 1 + dfModel;
+                                //const modelDF = numTerms - 1;
+                                dfModel = dfBasefactors + dfInteractions + dfCurvature;
+                                const modelMS = (SS_tot - SS_res) / dfModel;
+                                dfResidual = dfTotal - dfModel;
+                                //const errorMS = dfResidual === 0 ? NaN : SS_res / dfResidual;                                
+                                const modelFRatio = dfResidual === 0 ? NaN : errorMS > 0 ? modelMS / errorMS : 0;
+                                const modelPValue = dfResidual === 0 ? NaN : modelFRatio > 0 && (n - numTerms) > 0 
+                                  ? 1 - jStat.centralF.cdf(modelFRatio, dfModel, n - numTerms) 
+                                  : 1;
+
+                                rows.push(
+                                  <TableRow key="model" className="font-semibold">
+                                    <TableCell>Model</TableCell>
+                                    <TableCell className="text-right">{dfModel}</TableCell>
+                                    <TableCell className="text-right">{(SS_tot - SS_res).toFixed(4)}</TableCell>
+                                    <TableCell className="text-right">{modelMS.toFixed(4)}</TableCell>
+                                    <TableCell className="text-right">{modelFRatio >0 ? modelFRatio.toFixed(4) : '-'}</TableCell>
+                                    <TableCell className="text-right">
+                                      <span className={modelPValue < 0.05 ? "text-green-600 font-semibold" : ""}>
+                                        {modelPValue === 1 || isNaN(modelPValue) ? '-' : modelPValue.toFixed(4)}
+                                      </span>
+                                    </TableCell>
+                                  </TableRow>
+                                );
+
+                                // Add error row
+
+                                rows.push(
+                                  <TableRow key="error">
+                                    <TableCell>Error</TableCell>
+                                    <TableCell className="text-right">{dfResidual}</TableCell>
+                                    <TableCell className="text-right">{SS_res.toFixed(4)}</TableCell>
+                                    <TableCell className="text-right">{errorMS.toFixed(4)}</TableCell>
+                                    <TableCell className="text-right">-</TableCell>
+                                    <TableCell className="text-right">-</TableCell>
+                                  </TableRow>
+                                );
+
+                                // Add total row
+                                rows.push(
+                                  <TableRow key="total" className="font-semibold">
+                                    <TableCell>Total</TableCell>
+                                    <TableCell className="text-right">{dfTotal}</TableCell>
+                                    <TableCell className="text-right">{SS_tot.toFixed(4)}</TableCell>
+                                    <TableCell className="text-right">-</TableCell>
+                                    <TableCell className="text-right">-</TableCell>
+                                    <TableCell className="text-right">-</TableCell>
+                                  </TableRow>
+                                );
+
+                                return rows;
+                              })()}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Curvature Analysis Card */}
+                    {(() => {
+                      // Calculate factorial vs center points statistics
+                      // Center points: all CONTINUOUS factors at 0; categorical factors at ±1
+                      const centerPointIndices: number[] = [];
+                      const factorialPointIndices: number[] = [];
+                      
+                      runData.forEach((row, rowIdx) => {
+                        if (row.response !== null && !isNaN(row.response)) {
+                          const isCenterPoint = factors.every(factor => {
+                            const level = generatedPlan.plan[rowIdx]?.[factor.name] ?? 0;
+                            if (factor.type === 'categorical') {
+                              return Math.abs(level) === 1;
+                            } else {
+                              return Math.abs(level) < 0.01;
+                            }
+                          });
+                          
+                          const hasAnyContinuousAtZero = factors.some(f => 
+                            f.type === 'continuous' && Math.abs(generatedPlan.plan[rowIdx]?.[f.name] ?? 1) < 0.01
+                          );
+                          
+                          if (isCenterPoint && hasAnyContinuousAtZero) {
+                            centerPointIndices.push(rowIdx);
+                          } else {
+                            factorialPointIndices.push(rowIdx);
+                          }
+                        }
+                      });
+
+                      const n_c = centerPointIndices.length;
+                      const n_f = factorialPointIndices.length;
+                      
+                      if (n_c === 0 || n_f === 0) return null;
+
+                      const centerResponses = centerPointIndices.map(idx => runData[idx].response).filter((r): r is number => r !== null && !isNaN(r));
+                      const factorialResponses = factorialPointIndices.map(idx => runData[idx].response).filter((r): r is number => r !== null && !isNaN(r));
+                      
+                      const y_c_avg = centerResponses.reduce((a, b) => a + b, 0) / centerResponses.length;
+                      const y_f_avg = factorialResponses.reduce((a, b) => a + b, 0) / factorialResponses.length;
+                      const curveDiff = y_c_avg - y_f_avg;
+                      
+                      // Curvature SS using same formula as ANOVA table: (n_f * n_c) / (n_f + n_c) * (meanF - meanC)^2
+                      const SS_curvature = ((n_f * n_c) / (n_f + n_c)) * Math.pow(y_f_avg - y_c_avg, 2);
+                      const curvatureDF = 1;
+                      const curveMS = SS_curvature / curvatureDF;
+                      
+                      // Build main effects model to get error MS (same as ANOVA reduced model)
+                      const X_main: number[][] = [];
+                      const y_all: number[] = [];
+                      runData.forEach((row, idx) => {
+                        if (row.response !== null && !isNaN(row.response)) {
+                          const row_vals = [1]; // intercept
+                          factors.forEach(factor => {
+                            row_vals.push(generatedPlan.plan[idx]?.[factor.name] ?? 0);
+                          });
+                          X_main.push(row_vals);
+                          y_all.push(row.response);
+                        }
+                      });
+                      
+                      const n_total = y_all.length;
+                      const p_main = X_main[0]?.length || 1;
+                      
+                      // Calculate main effects model coefficients
+                      let XtX_main: number[][] = Array(p_main).fill(null).map(() => Array(p_main).fill(0));
+                      let Xty_main: number[] = Array(p_main).fill(0);
+                      
+                      for (let i = 0; i < n_total; i++) {
+                        for (let j = 0; j < p_main; j++) {
+                          Xty_main[j] += X_main[i][j] * y_all[i];
+                          for (let k = 0; k < p_main; k++) {
+                            XtX_main[j][k] += X_main[i][j] * X_main[i][k];
+                          }
+                        }
+                      }
+                      
+                      let beta_main: number[] = [];
+                      let XtX_inv_main: number[][] | null = null;
+                      try {
+                        XtX_inv_main = invertMatrix(XtX_main);
+                        if (XtX_inv_main) {
+                          beta_main = Xty_main.map((_, j) => Xty_main.reduce((sum, val, k) => sum + XtX_inv_main![j][k] * val, 0));
+                        }
+                      } catch {
+                        beta_main = [y_all.reduce((a, b) => a + b, 0) / n_total];
+                      }
+                      
+                      // Calculate residual SS, then subtract curvature SS (same as ANOVA table)
+                      //const predictions_main = X_main.map(row => row.reduce((sum, val, i) => sum + val * (beta_main[i] || 0), 0));
+                      //const residualSS_main = y_all.reduce((sum, yi, i) => sum + Math.pow(yi - predictions_main[i], 2), 0);
+                      //const SS_res = residualSS_main - SS_curvature;
+                      //const errorDF_curv = n_total - p_main - curvatureDF;
+                      //const errorMS_curv = errorDF_curv > 0 ? SS_res / errorDF_curv : 0;
+                      //const curveFRatio = errorMS_curv > 0 ? curveMS / errorMS_curv : 0;
+                      //const curvePValue = curveFRatio > 0 && errorDF_curv > 0
+                        //? 1 - jStat.centralF.cdf(curveFRatio, curvatureDF, errorDF_curv)
+                        //: 1;
+                      //const curveMS = SS_curvature / dfCurvature;
+                      //const errorMS = dfTotal > dfBasefactors + dfInteractions + dfCurvature ? SS_res / (n - p) : 0;
+                      const curveFRatio = errorMS > 0 ? curveMS / errorMS : 0;
+                      const curvePValue = curveFRatio > 0 && (n - p_reduced - dfCurvature) > 0 
+                        ? 1 - jStat.centralF.cdf(curveFRatio, dfCurvature, n - p_reduced -dfCurvature) 
+                        : 1;
+                      const isSignificant = curvePValue < significanceLevel;
+                      
+                      return (
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="text-lg">Curvature Analysis (Center Points vs Factorial Points)</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-3">
+                                <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
+                                  <span className="text-sm font-medium">Factorial Points Mean (ȳ_F):</span>
+                                  <span className="font-mono font-semibold">{y_f_avg.toFixed(4)}</span>
+                                </div>
+                                <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
+                                  <span className="text-sm font-medium">Center Points Mean (ȳ_C):</span>
+                                  <span className="font-mono font-semibold">{y_c_avg.toFixed(4)}</span>
+                                </div>
+                                <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
+                                  <span className="text-sm font-medium">Curvature Effect (ȳ_C - ȳ_F):</span>
+                                  <span className="font-mono font-semibold">{curveDiff >= 0 ? '+' : ''}{curveDiff.toFixed(4)}</span>
+                                </div>
+                              </div>
+                              <div className="space-y-3">
+                                <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
+                                  <span className="text-sm font-medium">Curvature p-value:</span>
+                                  <span className={`font-mono font-semibold ${isSignificant ? 'text-green-600' : ''}`}>
+                                    {curvePValue.toFixed(4)}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
+                                  <span className="text-sm font-medium">Significance Level (α):</span>
+                                  <span className="font-mono font-semibold">{significanceLevel}</span>
+                                </div>
+                                <div className={`p-3 rounded-lg ${isSignificant ? 'bg-green-50 border border-green-200 dark:bg-green-950 dark:border-green-800' : 'bg-amber-50 border border-amber-200 dark:bg-amber-950 dark:border-amber-800'}`}>
+                                  <div className="flex items-center gap-2">
+                                    {isSignificant ? (
+                                      <>
+                                        <AlertTriangle className="h-5 w-5 text-green-600" />
+                                        <span className="text-sm font-medium text-green-700 dark:text-green-400">
+                                          Significant curvature detected (p-value ({curvePValue.toFixed(4)}) &lt; α). Non-linear relationship exists. Model with quadratic term is recommended.
+                                        </span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Info className="h-5 w-5 text-amber-600" />
+                                        <span className="text-sm font-medium text-amber-700 dark:text-amber-400">
+                                          No significant curvature (p-value ({curvePValue.toFixed(4)}) ≥ α). Linear model is adequate.
+                                        </span>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })()}
+
                     {/* Coefficients Table with Model Selection */}
                     <Card>
                       <CardHeader className="flex flex-row items-center justify-between">
-                        <CardTitle>
-                          Regression Coefficients  {showUncoded && allFactorsHaveValidLevels() ? '(Uncoded)' : '(Coded)'} <span className="text-xs"> (Uncheck to exclude from model)</span>
-                          {Object.values(selectedFactorsForModel).some(v => v === false) && (
+                        <CardTitle>Regression Coefficients  {showUncoded && allFactorsHaveValidLevels() ? '(Uncoded)' : '(Coded)'} <span className="text-xs"> (Uncheck to exclude from model)</span></CardTitle>
+                        {Object.values(selectedFactorsForModel).some(v => v === false) && (
                             <span className="p-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-xl ml-24 text-sm font-normal justify-right">Reduced Model</span>
                           )}
-                        </CardTitle>
-                        <Button 
+                          <Button 
                           onClick={() => saveSelectedCoefficientsMutation.mutate()} 
                           disabled={saveSelectedCoefficientsMutation.isPending}
                           //variant="outline"
@@ -2868,14 +2659,9 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                 const isIncluded = selectedFactorsForModel[i] !== false;
                                 
                                 if (isIncluded) {
-                                  const origColIdx = i + 1;
-                                  const reducedColIdx = colMapReverse[origColIdx];
-                                  
-                                  if (reducedColIdx === undefined) return null;
-                                  
                                   const vif = (() => {
                                     try {
-                                      return calculateDOEVIF(reducedModel.XtX, reducedColIdx);
+                                      return calculateDOEVIF(X, i);
                                     } catch {
                                       return null;
                                     }
@@ -2886,19 +2672,19 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                     ? `${factor.name}${factor.type === 'continuous' && factor.units ? ` (${factor.units})` : ''}`
                                     : factor.name;
                                   
-                                  const codedCoeff = reducedModel.beta[reducedColIdx];
+                                  const codedCoeff = beta_red[i + 1];
                                   const effect = codedCoeff !== undefined ? 2 * codedCoeff : undefined;
                                   
                                   return (
                                   <TableRow key={i}>
-                                    <TableCell className="font-medium w-48">{factorLabel}</TableCell>
-                                    <TableCell className="text-right w-24">{effect?.toFixed(6) ?? '-'}</TableCell>
-                                    <TableCell className="text-right w-24">{displayBeta[reducedColIdx]?.toFixed(6)}</TableCell>
-                                    <TableCell className="text-right w-24">{displayCoeffStats[reducedColIdx]?.stdError.toFixed(4)}</TableCell>
-                                    <TableCell className="text-right w-20">{displayCoeffStats[reducedColIdx]?.tValue.toFixed(4)}</TableCell>
-                                    <TableCell className={`text-right w-20 ${(displayCoeffStats[reducedColIdx]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{(Math.max(0, Math.min(1, displayCoeffStats[reducedColIdx]?.pValue ?? 1))).toFixed(4)}</TableCell>
-                                    <TableCell className={`text-right w-16 ${isHighVIF ? 'text-red-600 font-semibold' : isModerateVIF ? 'text-yellow-400 font-semibold' : ''}`}>{vif !== null ? vif.toFixed(2) : '-'}</TableCell>
-                                    <TableCell className="text-center w-16">
+                                    <TableCell className="font-medium">{factorLabel}</TableCell>
+                                    <TableCell className="text-right">{effect?.toFixed(6) ?? '-'}</TableCell>
+                                    <TableCell className="text-right">{displayBeta[i + 1]?.toFixed(6)}</TableCell>
+                                    <TableCell className="text-right">{displayCoeffStats[i + 1]?.stdError.toFixed(4)}</TableCell>
+                                    <TableCell className="text-right">{displayCoeffStats[i + 1]?.tValue.toFixed(4)}</TableCell>
+                                    <TableCell className={`text-right ${(displayCoeffStats[i + 1]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{(Math.max(0, Math.min(1, displayCoeffStats[i + 1]?.pValue ?? 1))).toFixed(4)}</TableCell>
+                                    <TableCell className={`text-right ${isHighVIF ? 'text-red-600 font-semibold' : isModerateVIF ? 'text-yellow-400 font-semibold' : ''}`}>{vif !== null ? vif.toFixed(2) : '-'}</TableCell>
+                                    <TableCell className="text-center">
                                       <Checkbox
                                         checked={true}
                                         onCheckedChange={(checked) => {
@@ -2915,9 +2701,9 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                 } else {
                                   return (
                                   <TableRow key={i} className="opacity-50">
-                                    <TableCell className="font-medium text-muted-foreground w-48">{factor.name}</TableCell>
-                                    <TableCell colSpan={6} className="text-muted-foreground w-auto">Term not included in model</TableCell>
-                                    <TableCell className="text-center w-16">
+                                    <TableCell className="font-medium text-muted-foreground">{factor.name}</TableCell>
+                                    <TableCell colSpan={6} className="text-muted-foreground">Term not included in model</TableCell>
+                                    <TableCell className="text-center">
                                       <Checkbox
                                         checked={false}
                                         onCheckedChange={(checked) => {
@@ -2934,70 +2720,68 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                 }
                               })}
                               {interactionPairs.map((pair, i) => {
-                                const isIncluded = selectedFactorsForModel[`int-${i}`] !== false;
-                                
-                                if (isIncluded) {
-                                  const origColIdx = factors.length + 1 + i;
-                                  const reducedColIdx = colMapReverse[origColIdx];
+                                if (dfInteractions > 0 && dfInteractions > i) {
+                                  const isIncluded = selectedFactorsForModel[`int-${i}`] !== false;
                                   
-                                  if (reducedColIdx === undefined) return null;
-                                  
-                                  const vif = (() => {
-                                    try {
-                                      return calculateDOEVIF(reducedModel.XtX, reducedColIdx);
-                                    } catch {
-                                      return null;
-                                    }
-                                  })();
-                                  const isHighVIF = vif !== null && vif > 5;
-                                  const isModerateVIF = vif !== null && vif > 1 && vif <= 5;
-                                  
-                                  const codedCoeffInt = reducedModel.beta[reducedColIdx];
-                                  const effectInt = codedCoeffInt !== undefined ? 2 * codedCoeffInt : undefined;
-                                  
-                                  return (
-                                  <TableRow key={`int-${i}`}>
-                                    <TableCell className="font-medium w-48">{pair.name}</TableCell>
-                                    <TableCell className="text-right w-24">{effectInt?.toFixed(6) ?? '-'}</TableCell>
-                                    <TableCell className="text-right w-24">{displayBeta[reducedColIdx]?.toFixed(6)}</TableCell>
-                                    <TableCell className="text-right w-24">{displayCoeffStats[reducedColIdx]?.stdError.toFixed(4)}</TableCell>
-                                    <TableCell className="text-right w-20">{displayCoeffStats[reducedColIdx]?.tValue.toFixed(4)}</TableCell>
-                                    <TableCell className={`text-right w-20 ${(displayCoeffStats[reducedColIdx]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{(Math.max(0, Math.min(1, displayCoeffStats[reducedColIdx]?.pValue ?? 1))).toFixed(4)}</TableCell>
-                                    <TableCell className={`text-right w-16 ${isHighVIF ? 'text-red-600 font-semibold' : isModerateVIF ? 'text-yellow-400 font-semibold' : ''}`}>{vif !== null ? vif.toFixed(2) : '-'}</TableCell>
-                                    <TableCell className="text-center w-16">
-                                      <Checkbox
-                                        checked={true}
-                                        onCheckedChange={(checked) => {
-                                          setSelectedFactorsForModel(prev => ({
-                                            ...prev,
-                                            [`int-${i}`]: !!checked
-                                          }));
-                                        }}
-                                        data-testid={`checkbox-interaction-${i}`}
-                                      />
-                                    </TableCell>
-                                  </TableRow>
-                                  );
-                                } else {
-                                  return (
-                                  <TableRow key={`int-${i}`} className="opacity-50">
-                                    <TableCell className="font-medium text-muted-foreground w-48">{pair.name}</TableCell>
-                                    <TableCell colSpan={6} className="text-muted-foreground w-auto">Term not included in model</TableCell>
-                                    <TableCell className="text-center w-16">
-                                      <Checkbox
-                                        checked={false}
-                                        onCheckedChange={(checked) => {
-                                          setSelectedFactorsForModel(prev => ({
-                                            ...prev,
-                                            [`int-${i}`]: !!checked
-                                          }));
-                                        }}
-                                        data-testid={`checkbox-interaction-${i}`}
-                                      />
-                                    </TableCell>
-                                  </TableRow>
-                                  );
+                                  if (isIncluded) {
+                                    const vif = (() => {
+                                      try {
+                                        return calculateDOEVIF(X, factors.length + i);
+                                      } catch {
+                                        return null;
+                                      }
+                                    })();
+                                    const isHighVIF = vif !== null && vif > 5;
+                                    const isModerateVIF = vif !== null && vif > 1 && vif <= 5;
+                                    
+                                    const codedCoeffInt = beta_red[factors.length + 1 + i];
+                                    const effectInt = codedCoeffInt !== undefined ? 2 * codedCoeffInt : undefined;
+                                    
+                                    return (
+                                    <TableRow key={`int-${i}`}>
+                                      <TableCell className="font-medium">{pair.name}</TableCell>
+                                      <TableCell className="text-right">{effectInt?.toFixed(6) ?? '-'}</TableCell>
+                                      <TableCell className="text-right">{displayBeta[factors.length + 1 + i]?.toFixed(6)}</TableCell>
+                                      <TableCell className="text-right">{displayCoeffStats[factors.length + 1 + i]?.stdError.toFixed(4)}</TableCell>
+                                      <TableCell className="text-right">{displayCoeffStats[factors.length + 1 + i]?.tValue.toFixed(4)}</TableCell>
+                                      <TableCell className={`text-right ${(displayCoeffStats[factors.length + 1 + i]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{(Math.max(0, Math.min(1, displayCoeffStats[factors.length + 1 + i]?.pValue ?? 1))).toFixed(4)}</TableCell>
+                                      <TableCell className={`text-right ${isHighVIF ? 'text-red-600 font-semibold' : isModerateVIF ? 'text-yellow-400 font-semibold' : ''}`}>{vif !== null ? vif.toFixed(2) : '-'}</TableCell>
+                                      <TableCell className="text-center">
+                                        <Checkbox
+                                          checked={true}
+                                          onCheckedChange={(checked) => {
+                                            setSelectedFactorsForModel(prev => ({
+                                              ...prev,
+                                              [`int-${i}`]: !!checked
+                                            }));
+                                          }}
+                                          data-testid={`checkbox-interaction-${i}`}
+                                        />
+                                      </TableCell>
+                                    </TableRow>
+                                    );
+                                  } else {
+                                    return (
+                                    <TableRow key={`int-${i}`} className="opacity-50">
+                                      <TableCell className="font-medium text-muted-foreground">{pair.name}</TableCell>
+                                      <TableCell colSpan={6} className="text-muted-foreground">Term not included in model</TableCell>
+                                      <TableCell className="text-center">
+                                        <Checkbox
+                                          checked={false}
+                                          onCheckedChange={(checked) => {
+                                            setSelectedFactorsForModel(prev => ({
+                                              ...prev,
+                                              [`int-${i}`]: !!checked
+                                            }));
+                                          }}
+                                          data-testid={`checkbox-interaction-${i}`}
+                                        />
+                                      </TableCell>
+                                    </TableRow>
+                                    );
+                                  }
                                 }
+                                return null;
                               })}
                               {/* Center Point Row */}
                               {(() => {
@@ -3045,11 +2829,12 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                 const curvatureSS = (n_f * n_c) / (n_f + n_c) * Math.pow(curvatureEffect, 2);
                                 const curvatureDF = 1;
                                 
-                                // Get error MS from reduced model
-                                const curveErrorMS = reducedModel.mse || 0;
-                                const curveErrorDF = reducedModel.n - reducedModel.p;
+                                // Get error MS from reduced model (errorMS is already computed)
+                                const curveErrorMS = errorMS || 0;
+                                const curveErrorDF = errorDF_red || 1;
                                 
                                 // Standard error of curvature effect: SE = sqrt(MSE * (1/n_c + 1/n_f))
+                                //const curvStdError = curveErrorMS > 0 ? Math.sqrt(curveErrorMS * (1/n_c + 1/n_f) / Math.pow(factors.length, 2)) : 0;
                                 const curvStdError = curveErrorMS > 0 ? Math.sqrt(curveErrorMS * (1/n_c + 1/n_f)) : 0;
                                 const curvTValue = curvStdError > 0 ? curvatureEffect / curvStdError : 0;
                                 const curvPValue = curvTValue !== 0 && curveErrorDF > 0 
@@ -3061,14 +2846,14 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                 if (isIncluded) {
                                   return (
                                     <TableRow key="centerPoint">
-                                      <TableCell className="font-medium w-48">Center Point</TableCell>
-                                      <TableCell className="text-right w-24">{curvatureEffect.toFixed(6)}</TableCell>
-                                      <TableCell className="text-right w-24">{curvatureCoeff.toFixed(6)}</TableCell>
-                                      <TableCell className="text-right w-24">{curvStdError > 0 ? curvStdError.toFixed(4) : '-'}</TableCell>
-                                      <TableCell className="text-right w-20">{curvTValue !== 0 ? curvTValue.toFixed(4) : '-'}</TableCell>
-                                      <TableCell className={`text-right w-20 ${curvPValue < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{curvPValue < 1 ? curvPValue.toFixed(4) : '-'}</TableCell>
-                                      <TableCell className="text-right w-16">1.00</TableCell>
-                                      <TableCell className="text-center w-16">
+                                      <TableCell className="font-medium">Center Point</TableCell>
+                                      <TableCell className="text-right">{curvatureEffect.toFixed(6)}</TableCell>
+                                      <TableCell className="text-right">{curvatureCoeff.toFixed(6)}</TableCell>
+                                      <TableCell className="text-right">{curvStdError > 0 ? curvStdError.toFixed(4) : '-'}</TableCell>
+                                      <TableCell className="text-right">{curvTValue !== 0 ? curvTValue.toFixed(4) : '-'}</TableCell>
+                                      <TableCell className={`text-right ${curvPValue < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{curvPValue < 1 ? curvPValue.toFixed(4) : '-'}</TableCell>
+                                      <TableCell className="text-right">1.00</TableCell>
+                                      <TableCell className="text-center">
                                         <Checkbox
                                           checked={true}
                                           onCheckedChange={(checked) => {
@@ -3085,9 +2870,9 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                 } else {
                                   return (
                                     <TableRow key="centerPoint" className="opacity-50">
-                                      <TableCell className="font-medium text-muted-foreground w-48">Center Point</TableCell>
-                                      <TableCell colSpan={6} className="text-muted-foreground w-auto">Term not included in model</TableCell>
-                                      <TableCell className="text-center w-16">
+                                      <TableCell className="font-medium text-muted-foreground">Center Point</TableCell>
+                                      <TableCell colSpan={6} className="text-muted-foreground">Term not included in model</TableCell>
+                                      <TableCell className="text-center">
                                         <Checkbox
                                           checked={false}
                                           onCheckedChange={(checked) => {
@@ -3126,35 +2911,33 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                         
                         {/* Pareto of Effects Chart */}
                         {showParetoOfEffects && (() => {
-                          // Build effects data from CODED coefficients (beta_display contains coded when showUncoded=false)
-                          // Use original coded beta for effects (reducedModel.beta)
+                          // Build effects data from CODED coefficients (beta_red)
                           // Effect = 2 × coefficient (because coded levels go from -1 to +1, so effect = change over 2 units)
-                          const codedBeta = reducedModel.beta;
                           const effectsData: { name: string; effect: number; absEffect: number }[] = [];
                           
-                          // Main effects (effect = 2 × coefficient)
-                          factors.forEach((factor, i) => {
+                          // Main effects (only base factors, not confounded) - effect = 2 × coefficient
+                          for (let i = 0; i < baseFactorCount; i++) {
                             if (selectedFactorsForModel[i] !== false) {
                               const origColIdx = i + 1;
                               const reducedColIdx = colMapReverse[origColIdx];
-                              if (reducedColIdx !== undefined && codedBeta[reducedColIdx] !== undefined) {
-                                const effect = 2 * codedBeta[reducedColIdx];
+                              if (reducedColIdx !== undefined && beta_red[reducedColIdx] !== undefined && Number.isFinite(beta_red[reducedColIdx])) {
+                                const effect = 2 * beta_red[reducedColIdx];
                                 effectsData.push({
-                                  name: factor.name,
+                                  name: factors[i].name,
                                   effect: effect,
                                   absEffect: Math.abs(effect)
                                 });
                               }
                             }
-                          });
+                          }
                           
-                          // Interaction effects (effect = 2 × coefficient)
+                          // Interaction effects - effect = 2 × coefficient
                           interactionPairs.forEach((pair, i) => {
                             if (selectedFactorsForModel[`int-${i}`] !== false) {
-                              const origColIdx = factors.length + 1 + i;
+                              const origColIdx = baseFactorCount + 1 + i;
                               const reducedColIdx = colMapReverse[origColIdx];
-                              if (reducedColIdx !== undefined && codedBeta[reducedColIdx] !== undefined) {
-                                const effect = 2 * codedBeta[reducedColIdx];
+                              if (reducedColIdx !== undefined && beta_red[reducedColIdx] !== undefined && Number.isFinite(beta_red[reducedColIdx])) {
+                                const effect = 2 * beta_red[reducedColIdx];
                                 effectsData.push({
                                   name: pair.name,
                                   effect: effect,
@@ -3222,13 +3005,10 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                           // Effect = 2 × coefficient, SE_effect = 2 × SE_coeff = 2 × sqrt(MSE/n)
                           // Critical effect = t_crit × SE_effect = t_crit × 2 × sqrt(MSE/n)
                           // Or using F: Critical effect = sqrt(F_crit × 4 × MSE / n)
-                          const errorDF = reducedModel.n - reducedModel.p;
-                          const mse = reducedModel.mse;
-                          const nObs = reducedModel.n;
                           let criticalEffect = 0;
-                          if (errorDF > 0 && mse > 0 && nObs > 0) {
-                            const fCrit = jStat.centralF.inv(1 - significanceLevel/2, 1, errorDF);
-                            criticalEffect = Math.sqrt(fCrit * 4 * mse / nObs);
+                          if (errorDF_red > 0 && errorMS > 0 && n > 0) {
+                            const fCrit = jStat.centralF.inv(1 - significanceLevel/2, 1, errorDF_red);
+                            criticalEffect = Math.sqrt(fCrit * 4 * errorMS / n);
                           }
                           
                           // Prepare data for horizontal bar chart
@@ -3315,29 +3095,39 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                       </CardHeader>
                       <CardContent>
                         <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded font-mono text-sm">
-                          <p>Y = {displayBeta[0]?.toFixed(4)}</p>
-                          {factors.map((factor, i) => {
+                          <p>Y = {Number.isFinite(displayBeta[0]) ? displayBeta[0].toFixed(4) : 'N/A'}</p>
+                          {Array.from({length: baseFactorCount}).map((_, i) => {
                             if (selectedFactorsForModel[i] === false) return null;
                             const origColIdx = i + 1;
                             const reducedColIdx = colMapReverse[origColIdx];
                             if (reducedColIdx === undefined) return null;
                             return (
-                              <p key={i}>
-                                &nbsp;&nbsp;&nbsp;&nbsp;{displayBeta[reducedColIdx] >= 0 ? '+' : ''} {displayBeta[reducedColIdx]?.toFixed(4)} × {factor.name}{factor.type === 'continuous' && factor.units ? ` (${factor.units})` : ''}
-                              </p>
+                              Number.isFinite(displayBeta[reducedColIdx]) && (
+                                <p key={i}>
+                                  &nbsp;&nbsp;&nbsp;&nbsp;{displayBeta[reducedColIdx] >= 0 ? '+' : ''} {displayBeta[reducedColIdx].toFixed(4)} × {factors[i].name}{factors[i].type === 'continuous' && factors[i].units ? ` (${factors[i].units})` : ''}
+                                </p>
+                              )
                             );
                           })}
                           {interactionPairs.map((pair, i) => {
                             if (selectedFactorsForModel[`int-${i}`] === false) return null;
-                            const origColIdx = factors.length + 1 + i;
+                            const origColIdx = baseFactorCount + 1 + i;
                             const reducedColIdx = colMapReverse[origColIdx];
                             if (reducedColIdx === undefined) return null;
                             return (
-                              <p key={`int-${i}`}>
-                                &nbsp;&nbsp;&nbsp;&nbsp;{displayBeta[reducedColIdx] >= 0 ? '+' : ''} {displayBeta[reducedColIdx]?.toFixed(4)} × {pair.name}
-                              </p>
+                              Number.isFinite(displayBeta[reducedColIdx]) && (
+                                <p key={`int-${i}`}>
+                                  &nbsp;&nbsp;&nbsp;&nbsp;{displayBeta[reducedColIdx] >= 0 ? '+' : ''} {displayBeta[reducedColIdx].toFixed(4)} × {pair.name}
+                                </p>
+                              )
                             );
                           })}
+                          {displayBeta.every(v => !Number.isFinite(v)) && (
+                            <p className="text-muted-foreground">Unable to compute regression equation. Check data validity.</p>
+                          )}
+                          {p > 0 && (
+                            <p className="text-xs text-muted-foreground mt-2">Note: Generated factors (last {p}) are confounded and not shown.</p>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
@@ -3356,19 +3146,19 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                         <div className="grid grid-cols-2 gap-4">
                           <div>
                             <p className="text-sm text-muted-foreground">R²</p>
-                            <p className="text-2xl font-bold">{(R_sq_red * 100).toFixed(2)}%</p>
+                            <p className="text-2xl font-bold">{(R_sq * 100).toFixed(2)}%</p>
                           </div>
                           <div>
                             <p className="text-sm text-muted-foreground">Adjusted R²</p>
-                            <p className="text-2xl font-bold">{(adj_R_sq_red * 100).toFixed(2)}%</p>
+                            <p className="text-2xl font-bold">{(adj_R_sq * 100).toFixed(2)}%</p>
                           </div>
                           <div>
                             <p className="text-sm text-muted-foreground">RMSE</p>
-                            <p className="text-2xl font-bold">{rmse_red.toFixed(4)}</p>
+                            <p className="text-2xl font-bold">{rmse.toFixed(4)}</p>
                           </div>
                           <div>
                             <p className="text-sm text-muted-foreground">N Observations</p>
-                            <p className="text-2xl font-bold">{reducedModel.n}</p>
+                            <p className="text-2xl font-bold">{n}</p>
                           </div>
                         </div>
                       </CardContent>
@@ -3387,49 +3177,27 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                       <CardContent>
                         <div className="space-y-4">
                           <div className="border-t pt-4">
-                            <p className="text-sm font-semibold mb-2">Residual Statistics</p>
                             {(() => {
-                              const residualsToUse = reducedModel.residuals;
-                              const validResiduals = residualsToUse.filter(r => typeof r === 'number' && isFinite(r));
-                              const residMean = validResiduals.length > 0 ? validResiduals.reduce((a, b) => a + b, 0) / validResiduals.length : 0;
-                              const residStd = validResiduals.length > 1 ? Math.sqrt(validResiduals.reduce((sum, val) => sum + Math.pow(val - residMean, 2), 0) / (validResiduals.length - 1)) : 0;
-                              const maxResidual = Math.max(...residualsToUse.map(Math.abs));
-                              const adTest = performNormalityTest(validResiduals, residMean, residStd);
+                              const adTest = performNormalityTest(residuals_red, residualMean, residualStd);
                               
                               return (
-                                <>
-                                  <table className="w-full border-collapse bg-gray-50 dark:bg-gray-900 rounded-lg">
-                                    <tbody>
-                                      <th className="text-sm text-muted-foreground py-2 pr-4 w-1/5">Standard Deviation:</th>
-                                      <th className="text-sm text-muted-foreground py-2 pr-4 w-1/5">Max Residual:</th>
-                                      <th className="text-sm text-muted-foreground py-2 pr-4 align-top w-3/5">Normality Test (Anderson-Darling):</th>
-                                      <tr>
-                                        <td className="font-medium text-center py-2">{residStd.toFixed(6)}</td>
-                                        <td className="font-medium text-center py-2">{maxResidual.toFixed(6)}</td>
-                                        <table className="w-full">
-                                          <tbody>                         
-                                            <th className="text-sm text-muted-foreground pb-1 w-1/5">AD Statistic:</th>
-                                            <th className="text-sm text-muted-foreground pb-1 w 1/5">p-value:</th>
-                                            <th className="text-sm text-muted-foreground pb-1 w-3/5">Conclusion (5% significance (α)):</th>
-                                            <tr>
-                                              <td className="font-medium pb-1 text-center">{adTest.adStatistic.toFixed(4)}</td>
-                                              <td className="font-medium pb-1 text-center">{adTest.pValue.toFixed(4)}</td>
-                                              <td className={`font-medium pb-1  text-center ${
-                                                adTest.isNormal ? 'text-green-600 dark:text-green-400' :
-                                                !adTest.isNormal ? 'text-red-600 dark:text-red-400' :
-                                                'text-yellow-600 dark:text-yellow-400'
-                                                }`}>
-                                                {adTest.isNormal ? 'Normal' : adTest.isNormal === false ? 'Not Normal' : 'Inconclusive'}
-                                              </td>
-                                            </tr>
-                                          </tbody>
-                                        </table>
-                                      </tr>
-                                    </tbody>
-                                  </table>
-                                  {/*
-                                  <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
-                                    <p className="text-sm font-semibold mb-3">Normality Test (Anderson-Darling):</p>
+                                <div className="space-y-4">
+                                  <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                                    <p className="text-sm font-semibold mb-3">Residual Statistics</p>
+                                    <div className="grid grid-cols-2 gap-4">
+                                      <div>
+                                        <p className="text-sm text-muted-foreground">Standard Deviation</p>
+                                        <p className="text-lg font-bold">{residualStd.toFixed(6)}</p>
+                                      </div>
+                                      <div>
+                                        <p className="text-sm text-muted-foreground">Max Residual</p>
+                                        <p className="text-lg font-bold">{Math.max(...residuals_red.map(Math.abs)).toFixed(4)}</p>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                                    <p className="text-sm font-semibold mb-3">Normality Test (Anderson-Darling)</p>
                                     <div className="grid grid-cols-3 gap-4">
                                       <div>
                                         <p className="text-sm text-muted-foreground">AD Statistic</p>
@@ -3446,11 +3214,12 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                         </p>
                                       </div>
                                     </div>
-                                  </div> */}
-                                </>
+                                  </div>
+                                </div>
                               );
                             })()}
                           </div>
+
 
                           <div className="flex items-center gap-4 flex-wrap">
                             <div className="flex items-center gap-2">
@@ -3485,18 +3254,13 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                           {(showResidualsVsFits || showResidualsVsOrder || showNormalProbPlot) && (
                             <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                               {(() => {
-                                const residualsToUse = reducedModel.residuals;
-                                const predictionsToUse = reducedModel.predictions;
-                                const validResiduals = residualsToUse.filter(r => typeof r === 'number' && isFinite(r));
+                                const validResiduals = residuals_red.filter(r => typeof r === 'number' && isFinite(r));
                                 const minResidual = Math.min(...validResiduals);
                                 const maxResidual = Math.max(...validResiduals);
                                 const range = maxResidual - minResidual;
                                 const padding = range > 0 ? range * 0.1 : 1;
                                 const yMin = minResidual - padding;
                                 const yMax = maxResidual + padding;
-                                
-                                const residMean = validResiduals.length > 0 ? validResiduals.reduce((a, b) => a + b, 0) / validResiduals.length : 0;
-                                const residStd = validResiduals.length > 1 ? Math.sqrt(validResiduals.reduce((sum, val) => sum + Math.pow(val - residMean, 2), 0) / (validResiduals.length - 1)) : 0;
                                 
                                 return (
                                   <>
@@ -3507,15 +3271,15 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                       {
                                         type: 'scatter',
                                         mode: 'markers',
-                                        x: predictionsToUse,
-                                        y: residualsToUse,
+                                        x: predictions_red,
+                                        y: residuals_red,
                                         marker: { color: 'rgb(59, 130, 246)', size: 6 },
                                       } as any,
                                       {
                                         type: 'scatter',
                                         mode: 'lines',
-                                        x: predictionsToUse,
-                                        y: Array(predictionsToUse.length).fill(0),
+                                        x: predictions_red,
+                                        y: Array(predictions_red.length).fill(0),
                                         line: { color: 'red', dash: 'dash' },
                                       } as any,
                                     ]}
@@ -3544,15 +3308,15 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                       {
                                         type: 'scatter',
                                         mode: 'lines+markers',
-                                        x: Array.from({ length: residualsToUse.length }, (_, i) => i + 1),
-                                        y: residualsToUse,
+                                        x: Array.from({ length: residuals_red.length }, (_, i) => i + 1),
+                                        y: residuals_red,
                                         marker: { color: 'rgb(59, 130, 246)', size: 6 },
                                         line: { color: 'rgb(59, 130, 246)' },
                                       } as any,
                                       {
                                         type: 'scatter',
                                         mode: 'lines',
-                                        x: [1, residualsToUse.length],
+                                        x: [1, residuals_red.length],
                                         y: [0, 0],
                                         line: { color: 'red', dash: 'dash' },
                                       } as any,
@@ -3579,21 +3343,17 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                               })()}
 
                               {showNormalProbPlot && (() => {
-                              const residualsToUse = reducedModel.residuals;
-                              const validResiduals = residualsToUse.filter(r => typeof r === 'number' && isFinite(r));
-                              const residMean = validResiduals.length > 0 ? validResiduals.reduce((a, b) => a + b, 0) / validResiduals.length : 0;
-                              const residStd = validResiduals.length > 1 ? Math.sqrt(validResiduals.reduce((sum, val) => sum + Math.pow(val - residMean, 2), 0) / (validResiduals.length - 1)) : 0;
-                              
-                              const sorted = [...residualsToUse].sort((a, b) => a - b);
-                              const n_res = sorted.length;
-                              const theoreticalQuantiles = sorted.map((_, i) => {
-                                const p = (i + 0.5) / n_res;
-                                return jStat.normal.inv(p, 0, 1);
-                              });
-                              const lineX = [residMean - 3 * residStd, residMean + 3 * residStd];
-                              const lineY = [-3, 3];
-                              return (
-                                <Plot
+                                const sorted = [...residuals_red].sort((a, b) => a - b);
+                                const n_res = sorted.length;
+                                const theoreticalQuantiles = sorted.map((_, i) => {
+                                  const p = (i + 0.5) / n_res;
+                                  return jStat.normal.inv(p, 0, 1);
+                                });
+                                const lineX = [residualMean - 3 * residualStd, residualMean + 3 * residualStd];
+                                const lineY = [-3, 3];
+                                return (
+                                  <div>
+                                    <Plot
                                   data={[
                                     {
                                       type: 'scatter',
@@ -3622,9 +3382,10 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                   useResizeHandler
                                   config={{ responsive: true, displayModeBar: true, displaylogo: false }}
                                   style={{ width: '100%', height: '400px' }}
-                                />
-                              );
-                            })()}
+                                    />
+                                  </div>
+                                );
+                              })()}
                             </div>
                           )}
 
@@ -3741,13 +3502,25 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                             className="w-full"
                           >
                             {saveSolvingSetupMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Save Solving Setup
+                            Save Setup
                           </Button>
+
+                          {targetYDisplay !== '' && Number.isFinite(targetY) && (() => {
+                            const solveOrigCol = solveFactorIdx + 1;
+                            const solveRedCol = colMapReverse[solveOrigCol];
+                            return solveRedCol !== undefined && displayBeta[solveRedCol] === 0;
+                          })() && (
+                            <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded border border-amber-200 dark:border-amber-800">
+                              <p className="text-sm text-amber-600 dark:text-amber-400">
+                                ⚠️ Cannot solve for {factors[solveFactorIdx].name}: This factor has a coefficient of 0 in the model, meaning it has no significant effect on the response in this design.
+                              </p>
+                            </div>
+                          )}
 
                           {solverResult !== null && (() => {
                             // Calculate confidence and prediction intervals for Y target
-                            const tValue = jStat.studentt.inv((1 - significanceLevel / 2), reducedModel.n - reducedModel.p);
-                            const s2 = reducedModel.mse; // Variance estimate
+                            const tValue = jStat.studentt.inv((1 - significanceLevel / 2), n - numCoefficients);
+                            const s2 = SS_res / (n - numCoefficients); // Variance estimate
                             
                             // Get observed Y range from responses
                             const observedYValues = Object.values(responses).filter(r => r !== null && typeof r === 'number' && isFinite(r)) as number[];
@@ -3763,46 +3536,43 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                               (solverResult < solveFactorLow || solverResult > solveFactorHigh);
                             const solveFactorRangeStr = `[${solveFactorLow.toFixed(4)}, ${solveFactorHigh.toFixed(4)}]`;
                             
-                            // Build prediction vector matching the reduced model structure
-                            // This must include: [1, main effects for selected factors, interactions for selected factor pairs]
+                            // Build prediction vector x for selected factors: [1, x1, x2, ..., xk]
                             const xRow: number[] = [1]; // Intercept
-                            
-                            // Get factor values
-                            const factorValues: Record<number, number> = {};
-                            for (let i = 0; i < factors.length; i++) {
+                            for (let i = 0; i < baseFactorCount; i++) {
                               if (selectedFactorsForModel[i] !== false) {
                                 const val = i === solveFactorIdx ? solverResult : (constraintValues[i] ?? 0);
-                                factorValues[i] = val;
                                 xRow.push(val);
                               }
                             }
                             
-                            // Add N-way interaction terms for included interactions
-                            for (let i = 0; i < interactionPairs.length; i++) {
-                              const pair = interactionPairs[i];
-                              // Check if all factors in this interaction are included in model
-                              const allIncluded = pair.indices.every(idx => selectedFactorsForModel[idx] !== false);
-                              if (allIncluded) {
-                                let product = 1;
-                                for (const idx of pair.indices) {
-                                  const val = idx === solveFactorIdx ? solverResult : (constraintValues[idx] ?? 0);
-                                  product *= val;
+                            // Calculate X'X matrix for selected base factors only
+                            const XtXForIntervals: number[][] = Array(xRow.length).fill(0).map(() => Array(xRow.length).fill(0));
+                            for (let row = 0; row < n; row++) {
+                              // Build row of X matrix for selected factors only
+                              const xRow_data = [1]; // intercept
+                              for (let i = 0; i < baseFactorCount; i++) {
+                                if (selectedFactorsForModel[i] !== false) {
+                                  xRow_data.push(X[row][i + 1]);
                                 }
-                                xRow.push(product);
+                              }
+                              // Accumulate X'X
+                              for (let i = 0; i < xRow_data.length; i++) {
+                                for (let j = 0; j < xRow_data.length; j++) {
+                                  XtXForIntervals[i][j] += xRow_data[i] * xRow_data[j];
+                                }
                               }
                             }
                             
-                            // Invert (X'X) from reduced model
+                            // Invert (X'X)
                             let XtXInv: number[][] | null = null;
                             try {
-                              XtXInv = invertMatrix(reducedModel.XtX);
+                              XtXInv = invertMatrix(XtXForIntervals);
                             } catch (e) {
                               // Matrix is singular, XtXInv stays null
                             }
                             
                             let varY = 0;
                             let ciLower = NaN, ciUpper = NaN, piLower = NaN, piUpper = NaN;
-                            
                             if (XtXInv && isFinite(s2) && s2 > 0 && isFinite(tValue)) {
                               try {
                                 // Calculate x'(X'X)^-1 x
@@ -3839,7 +3609,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                   <p className="text-sm text-orange-600 dark:text-orange-400 mb-2">⚠️ Outside inference space range: {solveFactorRangeStr}</p>
                                 )}
                                 {targetYOutsideRange && (
-                                  <p className="text-sm text-orange-600 dark:text-orange-400 mb-2">⚠️ Target Y outside the studied model range: [{minY.toFixed(4)} , {maxY.toFixed(4)}]</p>
+                                  <p className="text-sm text-orange-600 dark:text-orange-400 mb-2">⚠️ Target Y outside the studied model (range: {minY.toFixed(4)} - {maxY.toFixed(4)})</p>
                                 )}
                                 <div className="overflow-x-auto">
                                   <table className="text-xs w-full">

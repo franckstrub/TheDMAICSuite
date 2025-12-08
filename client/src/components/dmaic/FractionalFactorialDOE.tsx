@@ -47,6 +47,7 @@ import {
   calculateDOEVIF
 } from '@/lib/doeSharedUtils';
 import { performNormalityTest } from '@/lib/statisticsUtils';
+import { number } from 'zod';
 
 interface FractionalFactorialDOEProps {
   projectId: number;
@@ -557,22 +558,24 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
   
   const handleAddFactor = () => {
     const newFactorIndex = factors.length + 1;
-    if (newFactorIndex > 10) { 
+    if (newFactorIndex > 12) { 
       toast({ 
         title: "Cannot Add Factor",
-        description: "Fractional Factorial DOE supports a maximum of 10 factors.",
+        description: "Fractional Factorial DOE supports a maximum of 12 factors.",
         variant: "destructive",
       });
       return;
     }
 
-  if (newFactorIndex >= 12) {
-    setDesignChoice(String(5 + (newFactorIndex - 12)));
-  }
-  else if (newFactorIndex >= 9) {
-    setDesignChoice(String(newFactorIndex - 7));
-  }
-        const newFactor = getDefaultFactor(newFactorIndex);
+    /*if (newFactorIndex >= 12) {
+      designChoice = 5 + (newFactorIndex - 12);
+    }
+    else if (newFactorIndex >= 9) {
+      designChoice= newFactorIndex - 7;
+    }
+      */
+    
+    const newFactor = getDefaultFactor(newFactorIndex);
     setFactors([...factors, newFactor]);
   };
   
@@ -709,17 +712,198 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
     }));
   };
 
+    const getResolutionNum = (k: number, p: number) => {
+      
+      let resolution =3;
+      if (k === 3) {
+        resolution = 3;
+      }
+      else if (k === 4) {
+        resolution = 4;
+      }
+      else if (k === 5) {
+        switch (p) {
+          case 1:
+            resolution = 5;
+          case 2:
+            resolution = 3;
+        }
+      }
+      else if (k === 6) {
+        if (p === 1) {
+          resolution = 6;
+        }
+        else if (p === 2) {
+          resolution = 4;
+          }
+        else if (p === 3) {
+            resolution = 3;
+        }
+      }
+      else if (k === 7) {
+        if (p === 1) {          
+            resolution = 7;
+        }
+        else if (p === 2) {  
+            resolution = 4;
+          }
+        else if (p === 3) {  
+            resolution = 4;
+          }
+        else if (p === 4) {  
+            resolution = 3;
+        }
+      }
+      else if (k === 8) {
+       if (p === 1) {          
+            resolution = 8;
+       }
+       else if (p === 2) {
+            resolution = 5;
+       }
+       else if (p === 3) {
+            resolution = 4;
+       }
+       else if (p === 4) {
+            resolution = 4;
+       }
+      }
+      else if (k === 9) {
+       if (p === 2) {
+            resolution = 6;
+       }
+       else if (p === 3) {
+            resolution = 5;
+       }
+       else if (p === 4) {
+            resolution = 4;
+        }
+       else if (p === 5) {
+            resolution = 4;
+        }
+      }
+      else if (k === 10) {
+       if (p === 3) {
+            resolution = 5;
+       }
+       else if (p === 4) {
+            resolution = 4;
+       }
+       else if (p === 5) {
+            resolution = 4;
+            }
+       else if (p === 6) {
+            resolution = 3;
+        }
+      }
+      else if (k === 11) {
+        if (p === 4) {
+          resolution = 5;
+        }
+        else if (p === 5) {
+          resolution = 4;
+        }
+        else if (p === 6) {
+            resolution = 4;
+        }
+        else if (p === 7) {
+            resolution = 3;
+        }
+      }
+      else if (k === 12) {
+        if (p === 5) {          
+            resolution = 5;
+          }
+       else if (p === 6) {
+            resolution = 4;
+          }
+       else if (p === 7) {
+            resolution = 4;
+          }
+       else if (p === 8) {
+            resolution = 4;
+        }
+      }
+      else {
+            resolution = 4;
+      }
+      return(resolution)
+    }
+
   const getDesignChoices = (k: number) => {
-    if (k < 3 || k > 7) {
+    let minP = 1;
+    let maxP = 1;
+     
+     if (k < 3 || k > 12) {
       return [];
-    }      
-    const minP = k >= 5 ? 1 : 0;
-    const maxP = Math.min(k - 3, minP + 2);
+    }    
+
+    //const minP = k >= 5 ? 1 : 0;
+    //const maxP = Math.min(k - 3, minP + 2);
+
+     
+    /*
+    if (k >= 12) {
+      minP = 5 + (k - 12);
+    }
+    else if (k >= 9) {
+      minP= k - 7;
+    } */
+
+    //let maxP = minP+3;
+
     const items = [];
+
+    if (k === 3) {
+      
+        minP = 1;
+        maxP = 1;
+    }
+    else if (k === 4) {
+        minP = 1;
+        maxP = 1;
+    }
+    else if (k === 5) {
+        minP = 1;
+        maxP = 2;
+    }
+    else if (k === 6) {
+        minP=1;
+        maxP = 3;
+    }
+    else if (k === 7) {
+        minP = 1;
+        maxP = 4;
+    }
+     else if (k === 8) {
+        minP = 1;
+        maxP = 4;
+     }
+    else if (k === 9) {
+        minP = 2;
+        maxP = 5;
+    }
+    else if (k === 10) {
+        minP = 3;
+        maxP = 6;
+    }
+    else if (k === 11) {
+        minP = 4;
+        maxP = 7;
+    }
+    else if (k === 12) {
+        minP = 5;
+        maxP = 8;
+    }
+    else {
+        minP =  5 + (k - 12);
+        maxP = minP + 3;
+    }
 
     for (let p = minP; p <= maxP; p++) {
       const runs = 2 ** (k - p);
-      const resolutionNum = runs === 8 ? 3 : (runs === 16 ? 3 : 4);
+      //resolutionNum = runs === 8 ? 3 : (runs === 16 ? 3 : 4);
+      let resolutionNum = getResolutionNum(k, p);
       const resolutionRoman = toRoman(resolutionNum);
 
       items.push({
@@ -735,11 +919,12 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
     return items;
   };
 
-  const getResolutionRoman = (k: number, p: number) => {
+  /*const getResolutionRoman = (k: number, p: number) => {
     const runs = 2 ** (k - p);
     const resolutionNum = runs === 8 ? 3 : (runs === 16 ? 3 : 4);
     return toRoman(resolutionNum);
   };
+  */
 
   const toRoman = (num: number) => {
   const map = [
@@ -930,7 +1115,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   {/* Design Choice */}
                   {(() => {
                     const k = factors.length;
-                    //const choices = getDesignChoices(k);
+                    const choices = getDesignChoices(k);
                     return (
                       <div className="space-y-2">
                         <Label htmlFor="design-choice" className="text-lg font-semibold">Design Selection</Label>
@@ -938,9 +1123,9 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                           <SelectTrigger id="design-choice" data-testid="select-design-choice">
                             <SelectValue placeholder="Select design type" />
                           </SelectTrigger>
-                          {/*<SelectContent>
-                            <SelectItem value="auto" data-testid="option-design-auto">Auto-detect based on factors</SelectItem>
-                            {k >= 3 && k <= 7 && choices.length > 0 && (
+                          <SelectContent>
+                            {/*<SelectItem value="auto" data-testid="option-design-auto">Auto-detect based on factors</SelectItem>*/}
+                            {k >= 3 && k <= 12 && choices.length > 0 && (
                               <>
                                 {choices.map((item) => (
                                   <SelectItem 
@@ -948,13 +1133,14 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                     value={item.p.toString()} 
                                     data-testid={`option-design-p-${item.p}`}
                                   >
-                                    2<sup>({k}-{item.p})</sup> Resolution {toRoman(item.p === 0 ? (k === 3 ? 3 : 4) : (2 ** (k - item.p) === 8 ? 3 : 4))} ({2 ** (k - item.p)} runs)
+                                    {/*2<sup>({k}-{item.p})</sup> Resolution {toRoman(item.p === 0 ? (k === 3 ? 3 : 4) : (2 ** (k - item.p) === 8 ? 3 : 4))} ({2 ** (k - item.p)} runs) */}
+                                    {item.label}
                                   </SelectItem>
                                 ))}
                               </>
                             )}
-                          </SelectContent> */}
-                          <SelectContent>
+                          </SelectContent>
+                          {/*<SelectContent>
                             {k === 3 && <SelectItem value="1">2<sup>(3-1)</sup> Resolution III (4 runs)</SelectItem>}
                             {k === 4 && <SelectItem value="1">2<sup>(4-1)</sup> Resolution IV (8 runs)</SelectItem>}
                             {k === 5 && <SelectItem value="1">2<sup>(5-1)</sup> Resolution V (16 runs)</SelectItem>}
@@ -997,13 +1183,15 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                             {k === 15 && <SelectItem value="8">2<sup>(15-8)</sup> Resolution V (128 runs)</SelectItem>}
                             {k === 15 && <SelectItem value="9">2<sup>(15-9)</sup> Resolution IV (64 runs)</SelectItem>}
                             {k === 15 && <SelectItem value="10">2<sup>(15-10)</sup> Resolution IV (32 runs)</SelectItem>}
-                            {k === 15 && <SelectItem value="11">2<sup>(15-11)</sup> Resolution IV (16 runs)</SelectItem>} */}
+                            {k === 15 && <SelectItem value="11">2<sup>(15-11)</sup> Resolution IV (16 runs)</SelectItem>}
                             {k > 12 && getDesignChoices(k).map((opt) => (
                               <SelectItem key={opt.p} value={opt.p.toString()}>
                                 {opt.label}
                               </SelectItem>
+                              
                             ))}
                           </SelectContent>
+                          */}
                         </Select>
                       </div>
                     );
@@ -1937,7 +2125,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
         
         {/* Analysis Tab */}
         <TabsContent value="analysis" className="space-y-4">
-          {!generatedPlan || runData.length === 0 || responses.length! < (includeCenterPoints ? Math.pow(2,(generatedPlan.k - generatedPlan.p)) + 1
+          {!generatedPlan || runData.length === 0 || responses.length! < (includeCenterPoints ? Math.pow(2,(generatedPlan.k - generatedPlan.p)) + actualCenterPointCount
          : Math.pow(2, (generatedPlan.k - generatedPlan.p)) ) ? (
             <Card>
               <CardContent className="p-8 text-center text-muted-foreground">
@@ -2108,7 +2296,18 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   }
                 });
 
-                const interactionsTriples = 0; // Placeholder if needed for higher-order interactions
+                function combination(n: number, r: number): number {
+                  if (r > n) return 0;
+                  if (r === 0 || r === n) return 1;
+                  let result = 1;
+                  for (let i = 0; i < r; i++) {
+                    result = result * (n - i) / (i + 1);
+                  }
+                  return Math.floor(result);
+                }
+                const interactionsTriples = combination(k,3);
+                const interactionsQuadruples = combination(k,4);
+
                 const n = y.length; // total number of observations including center points
                 const dfTotal = n - 1; // total degrees of freedom
                 const hasCurvature = (includeCenterPoints && selectedFactorsForModel['centerPoint'] !== false);
@@ -2116,11 +2315,15 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 const dfBasefactors = k;
                 //const dfInteractions = interactionPairs.length;
                 //Variable degrees of freedom for interactions: depend on resolution and selected factors and center point
-                let dfInteractions = resolution === 3 ? 0
+                let dfInteractions = dfTotal - dfBasefactors;
+                //confounding aliases depends on resolution
+                dfInteractions = resolution === 3 ? 0
                                     : resolution === 4 ? interactionPairs.length/2
                                     : resolution === 5 ? interactionPairs.length
                                     : resolution === 6 ? interactionPairs.length + interactionsTriples/2
-                                    : interactionPairs.length + interactionsTriples // No interactions estimable in R3 designs
+                                    : resolution === 7 ? interactionPairs.length + interactionsTriples
+                                    : resolution === 8 ? interactionPairs.length + interactionsTriples + interactionsQuadruples/2
+                                    : interactionPairs.length + interactionsTriples + interactionsQuadruples// No interactions estimable in R3 designs
                 let dfModel = dfBasefactors + dfInteractions + dfCurvature;
                 if (dfModel > dfTotal) {
                   dfModel = dfTotal;
@@ -2913,15 +3116,15 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                       }
                       
                       // Calculate residual SS, then subtract curvature SS (same as ANOVA table)
-                      const predictions_main = X_main.map(row => row.reduce((sum, val, i) => sum + val * (beta_main[i] || 0), 0));
-                      const residualSS_main = y_all.reduce((sum, yi, i) => sum + Math.pow(yi - predictions_main[i], 2), 0);
-                      const SS_res = residualSS_main - SS_curvature;
-                      const errorDF_curv = n_total - p_main - curvatureDF;
-                      const errorMS_curv = errorDF_curv > 0 ? SS_res / errorDF_curv : 0;
+                      //const predictions_main = X_main.map(row => row.reduce((sum, val, i) => sum + val * (beta_main[i] || 0), 0));
+                      //const residualSS_main = y_all.reduce((sum, yi, i) => sum + Math.pow(yi - predictions_main[i], 2), 0);
+                      //const SS_res = residualSS_main - SS_curvature;
+                      //const errorDF_curv = n_total - p_main - curvatureDF;
+                      //const errorMS_curv = errorDF_curv > 0 ? SS_res / errorDF_curv : 0;
                       
-                      const curveFRatio = errorMS_curv > 0 ? curveMS / errorMS_curv : 0;
-                      const curvePValue = curveFRatio > 0 && errorDF_curv > 0
-                        ? 1 - jStat.centralF.cdf(curveFRatio, curvatureDF, errorDF_curv)
+                      const curveFRatio = errorMS > 0 ? curveMS / errorMS : 0;
+                      const curvePValue = curveFRatio > 0 && (n - p_reduced - dfCurvature) > 0 
+                        ? 1 - jStat.centralF.cdf(curveFRatio, dfCurvature, n - p_reduced -dfCurvature) 
                         : 1;
                       
                       const isSignificant = curvePValue < significanceLevel;
@@ -3215,7 +3418,8 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                 const curveErrorDF = errorDF_red || 1;
                                 
                                 // Standard error of curvature effect: SE = sqrt(MSE * (1/n_c + 1/n_f))
-                                const curvStdError = curveErrorMS > 0 ? Math.sqrt(curveErrorMS * (1/n_c + 1/n_f) / Math.pow(factors.length, 2)) : 0;
+                                //const curvStdError = curveErrorMS > 0 ? Math.sqrt(curveErrorMS * (1/n_c + 1/n_f) / Math.pow(factors.length, 2)) : 0;
+                                const curvStdError = curveErrorMS > 0 ? Math.sqrt(curveErrorMS * (1/n_c + 1/n_f)) : 0;
                                 const curvTValue = curvStdError > 0 ? curvatureEffect / curvStdError : 0;
                                 const curvPValue = curvTValue !== 0 && curveErrorDF > 0 
                                   ? 2 * (1 - jStat.studentt.cdf(Math.abs(curvTValue), curveErrorDF))
