@@ -426,6 +426,16 @@ export function generateFractionalFactorialPlan(
     };
   }
   
+  // Safety check: if generators is undefined or empty, fall back to full factorial
+  if (!generators || generators.length === 0 || generators.length < p) {
+    console.warn(`No generators defined for k=${k}, p=${p}. Falling back to full factorial.`);
+    return {
+      ...generateFullFactorialPlan(factors, centerPoints, randomize),
+      definingRelation: 'Full Factorial (fallback)',
+      resolution,
+    };
+  }
+  
   const baseFactors = k - p;
   const n = Math.pow(2, baseFactors); // Runs in fractional factorial
   
@@ -590,12 +600,12 @@ export function calculateAliases(k: number, p: number, generators: string[], def
   // Helper to multiply effect strings (product in GF(2))
   const multiplyEffects = (effect1: string, effect2: string): string => {
     let result = '';
-    const factors = new Set([...effect1, ...effect2]);
+    const factors = new Set([...effect1.split(''), ...effect2.split('')]);
     
     // Count each factor
     const factorCounts: { [key: string]: number } = {};
-    for (const f of effect1) factorCounts[f] = (factorCounts[f] || 0) + 1;
-    for (const f of effect2) factorCounts[f] = (factorCounts[f] || 0) + 1;
+    for (const f of effect1.split('')) factorCounts[f] = (factorCounts[f] || 0) + 1;
+    for (const f of effect2.split('')) factorCounts[f] = (factorCounts[f] || 0) + 1;
     
     // Keep factors with odd count (mod 2)
     for (const f of Array.from(factors).sort()) {
