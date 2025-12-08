@@ -160,6 +160,33 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
     localStorage.setItem(`doe-fractional-active-tab-${projectId}-${solutionId}`, activeTab);
   }, [activeTab, projectId, solutionId]);
   
+  // Clamp designChoice to valid range when k changes (e.g., k=9 requires minP=2)
+  useEffect(() => {
+    const k = factors.length;
+    if (k < 3 || k > 12) return;
+    
+    // Calculate minP/maxP for current k
+    let minP = 1, maxP = 1;
+    if (k === 3) { minP = 1; maxP = 1; }
+    else if (k === 4) { minP = 1; maxP = 1; }
+    else if (k === 5) { minP = 1; maxP = 2; }
+    else if (k === 6) { minP = 1; maxP = 3; }
+    else if (k === 7) { minP = 1; maxP = 4; }
+    else if (k === 8) { minP = 1; maxP = 4; }
+    else if (k === 9) { minP = 2; maxP = 5; }
+    else if (k === 10) { minP = 3; maxP = 6; }
+    else if (k === 11) { minP = 4; maxP = 7; }
+    else if (k === 12) { minP = 5; maxP = 8; }
+    else { minP = 5 + (k - 12); maxP = minP + 3; }
+    
+    const currentP = parseInt(designChoice) || minP;
+    const clampedP = Math.max(minP, Math.min(maxP, currentP));
+    
+    if (clampedP !== currentP) {
+      setDesignChoice(String(clampedP));
+    }
+  }, [factors.length]);
+  
   // Auto-generate plan when factors change (but not during initial load)
   useEffect(() => {
     // Skip regeneration on first load - let config loading set it instead
@@ -2252,10 +2279,12 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 
                 const aliasedInteractions = getAliasedInteractions();
                 
-                // Generate all interactions of size 2, 3, 4, ... up to baseFactorCount
+                // Generate all interactions of size 2, 3, 4 (limit to 4-way max for performance)
+                // Higher-order interactions are rarely meaningful in practice
                 const interactionPairs: Array<{indices: number[], name: string}> = [];
                 const baseIndices = Array.from({ length: baseFactorCount }, (_, i) => i);
-                for (let size = 2; size <= baseFactorCount; size++) {
+                const maxInteractionOrder = Math.min(4, baseFactorCount); // Limit to 4-way interactions max
+                for (let size = 2; size <= maxInteractionOrder; size++) {
                   const combos = getCombinations(baseIndices, size);
                   for (const combo of combos) {
                     // Check if this interaction is aliased (confounded)
