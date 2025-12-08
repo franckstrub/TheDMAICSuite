@@ -329,11 +329,16 @@ export function generateFractionalFactorialPlan(
     definingRelation = 'I = ABE = ACF = BCG = ADH';
     }
   } else if (k === 9) {
-    if (p === 2) {
+    if (p === 1) {
+    // 2^(9-1) design, Resolution IX
+    resolution = 9;
+    generators = ['I=ABCDEFGH'];
+    definingRelation = 'I = ABCDEFGHI';
+    } else if (p === 2) {
     // 2^(9-2) design, Resolution VI
     resolution = 6;
-    generators = ['H=ABCD', 'I=BCDE'];
-    definingRelation = 'I = ABCD = BCDE = AFGH';
+    generators = ['H=ABCDE', 'I=ABCFG'];
+    definingRelation = 'I = ABCDEH = ABCFGI = DEFGHI';
     }
     else if (p === 3) {
     // 2^(9-3) design, Resolution IV
