@@ -2152,14 +2152,22 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
         
         {/* Analysis Tab */}
         <TabsContent value="analysis" className="space-y-4">
-          {!generatedPlan || runData.length === 0 || responses.length! < (includeCenterPoints ? Math.pow(2,(generatedPlan.k - generatedPlan.p)) + actualCenterPointCount
-         : Math.pow(2, (generatedPlan.k - generatedPlan.p)) ) ? (
-            <Card>
-              <CardContent className="p-8 text-center text-muted-foreground">
-                <p>Generate a plan and enter all data to view analysis</p>
-              </CardContent>
-            </Card>
-          ) : (
+          {(() => {
+            // Count valid responses (non-null, non-NaN numbers)
+            const validResponseCount = runData.filter(r => r.response !== null && !isNaN(r.response)).length;
+            const planLength = generatedPlan?.plan?.length || 0;
+            const hasEnoughData = validResponseCount === planLength && planLength > 0;
+            
+            if (!generatedPlan || runData.length === 0 || !hasEnoughData) {
+              return (
+                <Card>
+                  <CardContent className="p-8 text-center text-muted-foreground">
+                    <p>Generate a plan and enter all data to view analysis ({validResponseCount}/{planLength} responses)</p>
+                  </CardContent>
+                </Card>
+              );
+            }
+            return (
             <>
               <div className="space-y-2">
                 <h3 className="text-lg font-semibold">2<sup>({factors.length}-{generatedPlan.p})</sup> {generatedPlan.designType}</h3>
@@ -4254,7 +4262,8 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 );
               })()}
             </>
-          )}
+            );
+          })()}
         </TabsContent>
       </Tabs>
     </div>
