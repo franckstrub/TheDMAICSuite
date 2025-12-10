@@ -267,9 +267,8 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
         initialized[i] = true;
       }
       // Initialize all interactions (will be filtered to non-aliased ones below)
-      const ffMetadata = generatedPlan.metadata;
       const k = factors.length;
-      const p = ffMetadata?.p || 0;
+      const p = generatedPlan.p || 0;
       const baseFactorCount = k - p;
       
       const baseIndices = Array.from({ length: baseFactorCount }, (_, i) => i);
@@ -2238,11 +2237,10 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   );
                 }
 
-                // Get metadata from generatedPlan, but use current factors.length for accurate interaction generation
-                const ffMetadata = generatedPlan.metadata;
-                const k = factors.length; // Always use current factor count, not stale metadata
-                const p = ffMetadata?.p || 0;
-                const resolution = ffMetadata?.resolution || 0;
+                // Get p and resolution from generatedPlan directly
+                const k = factors.length; // Always use current factor count
+                const p = generatedPlan.p || 0;
+                const resolution = generatedPlan.resolution || 0;
                 const baseFactorCount = k - p;
 
                 // Build interaction terms - all N-way interactions between base factors (unconfounded)
