@@ -2316,17 +2316,21 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 const y: number[] = [];
                 
                 // Collect all responses including center points
+                // In fractional factorial, ALL k main effects are estimable (not aliased)
+                // Only interactions may be aliased - use baseFactorCount for interaction calculations
                 runData.forEach((row, idx) => {
                   if (row.response !== null && !isNaN(row.response)) {
                     const row_vals = [1]; // intercept = grand mean in coded view
-                    const baseFactorValues: number[] = [];
-                    // Only use base factors (first k-p factors)
-                    for (let i = 0; i < baseFactorCount; i++) {
+                    const allFactorValues: number[] = [];
+                    // Include ALL k main effects (all are estimable in fractional factorial)
+                    for (let i = 0; i < k; i++) {
                       const val = generatedPlan.plan[idx]?.[factors[i].name] ?? 0;
-                      baseFactorValues.push(val);
+                      allFactorValues.push(val);
                       row_vals.push(val);
                     }
-                    // Add interaction terms (all N-way between base factors)
+                    // Add interaction terms (only between base factors, filtered for aliasing)
+                    // Use only base factor values for interactions to avoid singularity
+                    const baseFactorValues = allFactorValues.slice(0, baseFactorCount);
                     interactionPairs.forEach(pair => {
                       // Multiply all factor values in this interaction
                       let product = 1;
@@ -2349,25 +2353,52 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   }
                   return Math.floor(result);
                 }
-                const interactionsTriples = combination(k,3);
-                const interactionsQuadruples = combination(k,4);
+                const interactionDoubles = combination (k,2);
+                const interactionTriples = combination(k,3);
+                const interactionQuadruples = combination(k,4);
 
                 const n = y.length; // total number of observations including center points
                 const dfTotal = n - 1; // total degrees of freedom
                 const hasCurvature = (includeCenterPoints && selectedFactorsForModel['centerPoint'] !== false);
                 const dfCurvature = hasCurvature ? 1 : 0;
-                const dfBasefactors = k;
+                //const dfBasefactors = k;
+                let  dfBasefactors = 0;
+                // Add base factor rows only (not confounded) - AND only if selected in model
+                for (let i = 0; i < factors.length; i++) {
+                  // Skip if this factor is not selected in the model
+                  if (selectedFactorsForModel[i] === false) continue;
+                  const termIdx = i + 1;
+                  const termDF = dfTotal - dfCurvature - termIdx < 0 ? 0 : 1;
+                  dfBasefactors += termDF;
+                }
+                if (dfBasefactors > k) {
+                  dfBasefactors = k;
+                }
                 //const dfInteractions = interactionPairs.length;
                 //Variable degrees of freedom for interactions: depend on resolution and selected factors and center point
-                let dfInteractions = dfTotal - dfBasefactors;
-                //confounding aliases depends on resolution
+                //let dfInteractions = dfTotal - dfBasefactors;
+                const dfInteractionsMax = Math.floor((Math.pow(2, k) - k -1)/2);
+                // Add interaction rows (only between base factors) - AND only if selected in model
+                let dfInteractions = 0;
+                interactionPairs.forEach((pair, pairIdx) => {
+                  // Skip if this interaction is not selected in the model
+                  if (selectedFactorsForModel[`int-${pairIdx}`] === false) return;                                                 
+                  const termDF = dfTotal - dfCurvature - dfBasefactors - (pairIdx + 1) <= 0 ? 0 : 1;
+                  dfInteractions += termDF;              
+                });
+                if (dfInteractions > dfInteractionsMax) {
+                  dfInteractions = dfInteractionsMax;
+                }
+                //non confounding interactions depends on resolution
+                /*
                 dfInteractions = resolution === 3 ? 0
-                                    : resolution === 4 ? interactionPairs.length/2
-                                    : resolution === 5 ? interactionPairs.length
-                                    : resolution === 6 ? interactionPairs.length + interactionsTriples/2
-                                    : resolution === 7 ? interactionPairs.length + interactionsTriples
-                                    : resolution === 8 ? interactionPairs.length + interactionsTriples + interactionsQuadruples/2
-                                    : interactionPairs.length + interactionsTriples + interactionsQuadruples// No interactions estimable in R3 designs
+                                    : resolution === 4 ? Math.floor(interactionDoubles/2)
+                                    : resolution === 5 ? interactionDoubles
+                                    : resolution === 6 ? interactionDoubles + Math.floor(interactionTriples/2)
+                                    : resolution === 7 ? interactionDoubles + interactionTriples
+                                    : resolution === 8 ? interactionDoubles + interactionTriples + Math.floor(interactionQuadruples/2)
+                                    : interactionDoubles + interactionTriples + interactionQuadruples// No interactions estimable in R3 designs
+                */
                 let dfModel = dfBasefactors + dfInteractions + dfCurvature;
                 if (dfModel > dfTotal) {
                   dfModel = dfTotal;
@@ -2502,15 +2533,18 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 }
 
                 // Build reduced design matrix with only selected terms
+                // X matrix structure: [intercept, k main effects, non-aliased interactions]
                 const selectedColumns: number[] = [0]; // Always include intercept
-                Array.from({length: baseFactorCount}).forEach((_, idx) => {
+                // Include all k main effects (all are estimable in fractional factorial)
+                Array.from({length: k}).forEach((_, idx) => {
                   if (selectedFactorsForModel[idx] !== false) {
                     selectedColumns.push(idx + 1);
                   }
                 });
+                // Include only non-aliased interactions (interactionPairs already filtered)
                 interactionPairs.forEach((_, pairIdx) => {
                   if (selectedFactorsForModel[`int-${pairIdx}`] !== false) {
-                    selectedColumns.push(baseFactorCount + 1 + pairIdx);
+                    selectedColumns.push(k + 1 + pairIdx); // Offset by k main effects, not baseFactorCount
                   }
                 });
                 
@@ -2591,8 +2625,8 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   const transformedStats = coeffStats.map(s => ({ ...s }));
                   let interceptAdjustment = 0;
                   
-                  // Only transform factors that are in selectedColumns
-                  for (let i = 0; i < baseFactorCount; i++) {
+                  // Only transform factors that are in selectedColumns (all k main effects)
+                  for (let i = 0; i < k; i++) {
                     const colIdx = selectedColumns.indexOf(i + 1);
                     if (colIdx === -1 || selectedFactorsForModel[i] === false) continue;
                     
@@ -2615,11 +2649,11 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     }
                   }
                   
-                  // Transform N-way interaction coefficients
+                  // Transform N-way interaction coefficients (offset by k main effects)
                   for (let i = 0; i < interactionPairs.length; i++) {
                     if (selectedFactorsForModel[`int-${i}`] === false) continue;
                     
-                    const colIdx = selectedColumns.indexOf(baseFactorCount + 1 + i);
+                    const colIdx = selectedColumns.indexOf(k + 1 + i);
                     if (colIdx === -1) continue;
                     
                     const pair = interactionPairs[i];
@@ -2712,8 +2746,8 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   const transformed = [...beta_red];
                   let interceptAdjustment = 0;
                   
-                  // Transform main effect coefficients
-                  for (let i = 0; i < baseFactorCount; i++) {
+                  // Transform main effect coefficients (all k factors)
+                  for (let i = 0; i < k; i++) {
                     const colIdx = selectedColumns.indexOf(i + 1);
                     if (colIdx === -1 || selectedFactorsForModel[i] === false) continue;
                     
@@ -2733,11 +2767,11 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     }
                   }
                   
-                  // Transform N-way interaction coefficients
+                  // Transform N-way interaction coefficients (offset by k main effects)
                   for (let i = 0; i < interactionPairs.length; i++) {
                     if (selectedFactorsForModel[`int-${i}`] === false) continue;
                     
-                    const colIdx = selectedColumns.indexOf(baseFactorCount + 1 + i);
+                    const colIdx = selectedColumns.indexOf(k + 1 + i);
                     if (colIdx === -1) continue;
                     
                     const pair = interactionPairs[i];
@@ -2875,7 +2909,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                               {(() => {
                                 let rows: React.ReactNode[] = [];
                                 
-                                let  dfBasefactors = 0;
+                                //let  dfBasefactors = 0;
                                 // Add base factor rows only (not confounded) - AND only if selected in model
                                 for (let i = 0; i < factors.length; i++) {
                                   // Skip if this factor is not selected in the model
@@ -2884,7 +2918,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                   const factor = factors[i];
                                   const termIdx = i + 1;
                                   const termDF = dfTotal - dfCurvature - termIdx < 0 ? 0 : 1;
-                                  dfBasefactors += termDF;
+                                  //dfBasefactors += termDF;
                                   const termSS = termDF === 0 ? 0 : Math.pow(beta[termIdx], 2) * XtX[termIdx][termIdx];
                                   const termMS = termDF === 0 ? 0 : termSS / termDF;
                                   //const errorMS = termDF === 0 ? 0 : SS_res / (n - p);
@@ -2912,14 +2946,14 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                   );
                                 }
 
-                                // Add interaction rows (only between base factors) - AND only if selected in model
+                                // Add interaction rows (only non-aliased) - AND only if selected in model
                                 interactionPairs.forEach((pair, pairIdx) => {
                                   // Skip if this interaction is not selected in the model
                                   if (selectedFactorsForModel[`int-${pairIdx}`] === false) return;
                                   
-                                  const termIdx = baseFactorCount + 1 + pairIdx;                                  
+                                  const termIdx = k + 1 + pairIdx; // Offset by k main effects                                  
                                   const termDF = dfTotal - dfCurvature - dfBasefactors - (pairIdx + 1) <= 0 ? 0 : 1;
-                                  dfInteractions += termDF;
+                                  //dfInteractions += termDF;
                                   //const termDF = 1;
                                   const termSS = termDF === 0 ? 0 : Math.pow(beta[termIdx], 2) * XtX[termIdx][termIdx];
                                   const termMS = termDF === 0 ? 0 : termSS / termDF;
@@ -3014,9 +3048,9 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                 // Add model row
                                 const numTerms = 1 + dfModel;
                                 //const modelDF = numTerms - 1;
-                                dfModel = dfBasefactors + dfInteractions + dfCurvature;
+                                //dfModel = dfBasefactors + dfInteractions + dfCurvature;
                                 const modelMS = (SS_tot - SS_res) / dfModel;
-                                dfResidual = dfTotal - dfModel;
+                                //dfResidual = dfTotal - dfModel;
                                 //const errorMS = dfResidual === 0 ? NaN : SS_res / dfResidual;                                
                                 const modelFRatio = dfResidual === 0 ? NaN : errorMS > 0 ? modelMS / errorMS : 0;
                                 const modelPValue = dfResidual === 0 ? NaN : modelFRatio > 0 && (n - numTerms) > 0 
@@ -3348,7 +3382,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                 }
                               })}
                               {interactionPairs.map((pair, i) => {
-                                if (dfInteractions > 0 && dfInteractions > i) {
+                                if (dfInteractions > 0) {
                                   const isIncluded = selectedFactorsForModel[`int-${i}`] !== false;
                                   
                                   if (isIncluded) {
@@ -3543,8 +3577,8 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                           // Effect = 2 × coefficient (because coded levels go from -1 to +1, so effect = change over 2 units)
                           const effectsData: { name: string; effect: number; absEffect: number }[] = [];
                           
-                          // Main effects (only base factors, not confounded) - effect = 2 × coefficient
-                          for (let i = 0; i < baseFactorCount; i++) {
+                          // Main effects (all k factors) - effect = 2 × coefficient
+                          for (let i = 0; i < k; i++) {
                             if (selectedFactorsForModel[i] !== false) {
                               const origColIdx = i + 1;
                               const reducedColIdx = colMapReverse[origColIdx];
@@ -3559,10 +3593,10 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                             }
                           }
                           
-                          // Interaction effects - effect = 2 × coefficient
+                          // Interaction effects - effect = 2 × coefficient (offset by k main effects)
                           interactionPairs.forEach((pair, i) => {
                             if (selectedFactorsForModel[`int-${i}`] !== false) {
-                              const origColIdx = baseFactorCount + 1 + i;
+                              const origColIdx = k + 1 + i;
                               const reducedColIdx = colMapReverse[origColIdx];
                               if (reducedColIdx !== undefined && beta_red[reducedColIdx] !== undefined && Number.isFinite(beta_red[reducedColIdx])) {
                                 const effect = 2 * beta_red[reducedColIdx];
@@ -3724,7 +3758,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                       <CardContent>
                         <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded font-mono text-sm">
                           <p>Y = {Number.isFinite(displayBeta[0]) ? displayBeta[0].toFixed(4) : 'N/A'}</p>
-                          {Array.from({length: baseFactorCount}).map((_, i) => {
+                          {Array.from({length: k}).map((_, i) => {
                             if (selectedFactorsForModel[i] === false) return null;
                             const origColIdx = i + 1;
                             const reducedColIdx = colMapReverse[origColIdx];
@@ -3739,7 +3773,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                           })}
                           {interactionPairs.map((pair, i) => {
                             if (selectedFactorsForModel[`int-${i}`] === false) return null;
-                            const origColIdx = baseFactorCount + 1 + i;
+                            const origColIdx = k + 1 + i;
                             const reducedColIdx = colMapReverse[origColIdx];
                             if (reducedColIdx === undefined) return null;
                             return (

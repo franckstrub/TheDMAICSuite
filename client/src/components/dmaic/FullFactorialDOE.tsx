@@ -1641,11 +1641,10 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                 }
 
                 // Get metadata from generatedPlan, but use current factors.length for accurate interaction generation
-                const ffMetadata = generatedPlan.metadata;
                 const k = factors.length; // Always use current factor count, not stale metadata
-                const p = ffMetadata?.p || 0;
-                const resolution = ffMetadata?.resolution || 0;
-                const baseFactorCount = k - p;
+                const p = generatedPlan.p || 0;
+                //const resolution = generatedPlan.resolution || 0;
+                const baseFactorCount = k;
 
                 // Build interaction terms - all N-way interactions between base factors (unconfounded)
                 // Helper to generate all combinations of indices
@@ -1747,11 +1746,35 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                 const dfTotal = n - 1; // total degrees of freedom
                 const hasCurvature = (includeCenterPoints && selectedFactorsForModel['centerPoint'] !== false);
                 const dfCurvature = hasCurvature ? 1 : 0;
-                const dfBasefactors = k;
+                //const dfBasefactors = k;
+                let  dfBasefactors = 0;
+                // Add base factor rows only (not confounded) - AND only if selected in model
+                for (let i = 0; i < factors.length; i++) {
+                  // Skip if this factor is not selected in the model
+                  if (selectedFactorsForModel[i] === false) continue;
+                  const termIdx = i + 1;
+                  const termDF = dfTotal - dfCurvature - termIdx < 0 ? 0 : 1;
+                  dfBasefactors += termDF;
+                }
+                if (dfBasefactors > k) {
+                  dfBasefactors = k;
+                }
                 //const dfInteractions = interactionPairs.length;
                 //Variable degrees of freedom for interactions: depend on resolution and selected factors and center point
                 //let dfInteractions = interactionPairs.length + interactionsTriples // No interactions estimable in R3 designs
-                let dfInteractions = 2^k - k -1;
+                const dfInteractionsMax = Math.pow(2, k) - k -1;
+                // Add interaction rows (only between base factors) - AND only if selected in model
+                let dfInteractions = 0;
+                interactionPairs.forEach((pair, pairIdx) => {
+                  // Skip if this interaction is not selected in the model
+                  if (selectedFactorsForModel[`int-${pairIdx}`] === false) return;                                                 
+                  const termDF = dfTotal - dfCurvature - dfBasefactors - (pairIdx + 1) <= 0 ? 0 : 1;
+                  dfInteractions += termDF;              
+                });
+                if (dfInteractions > dfInteractionsMax) {
+                  dfInteractions = dfInteractionsMax;
+                }
+
                 let dfModel = dfBasefactors + dfInteractions + dfCurvature;
                 if (dfModel > dfTotal) {
                   dfModel = dfTotal;
@@ -2259,7 +2282,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                               {(() => {
                                 let rows: React.ReactNode[] = [];
                                 
-                                let  dfBasefactors = 0;
+                                //let  dfBasefactors = 0;
                                 // Add base factor rows only (not confounded) - AND only if selected in model
                                 for (let i = 0; i < factors.length; i++) {
                                   // Skip if this factor is not selected in the model
@@ -2268,7 +2291,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                   const factor = factors[i];
                                   const termIdx = i + 1;
                                   const termDF = dfTotal - dfCurvature - termIdx < 0 ? 0 : 1;
-                                  dfBasefactors += termDF;
+                                  //dfBasefactors += termDF;
                                   const termSS = termDF === 0 ? 0 : Math.pow(beta[termIdx], 2) * XtX[termIdx][termIdx];
                                   const termMS = termDF === 0 ? 0 : termSS / termDF;
                                   //const errorMS = termDF === 0 ? 0 : SS_res / (n - p);
@@ -2303,7 +2326,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                   
                                   const termIdx = baseFactorCount + 1 + pairIdx;                                  
                                   const termDF = dfTotal - dfCurvature - dfBasefactors - (pairIdx + 1) <= 0 ? 0 : 1;
-                                  dfInteractions += termDF;
+                                  //dfInteractions += termDF;
                                   //const termDF = 1;
                                   const termSS = termDF === 0 ? 0 : Math.pow(beta[termIdx], 2) * XtX[termIdx][termIdx];
                                   const termMS = termDF === 0 ? 0 : termSS / termDF;
@@ -2398,9 +2421,9 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                 // Add model row
                                 const numTerms = 1 + dfModel;
                                 //const modelDF = numTerms - 1;
-                                dfModel = dfBasefactors + dfInteractions + dfCurvature;
+                                //dfModel = dfBasefactors + dfInteractions + dfCurvature;
                                 const modelMS = (SS_tot - SS_res) / dfModel;
-                                dfResidual = dfTotal - dfModel;
+                                //dfResidual = dfTotal - dfModel;
                                 //const errorMS = dfResidual === 0 ? NaN : SS_res / dfResidual;                                
                                 const modelFRatio = dfResidual === 0 ? NaN : errorMS > 0 ? modelMS / errorMS : 0;
                                 const modelPValue = dfResidual === 0 ? NaN : modelFRatio > 0 && (n - numTerms) > 0 
@@ -2736,7 +2759,8 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                 }
                               })}
                               {interactionPairs.map((pair, i) => {
-                                if (dfInteractions > 0 && dfInteractions > i) {
+                                //if (dfInteractions > 0 && dfInteractions > i) {
+                                if (dfInteractions > 0) {
                                   const isIncluded = selectedFactorsForModel[`int-${i}`] !== false;
                                   
                                   if (isIncluded) {
