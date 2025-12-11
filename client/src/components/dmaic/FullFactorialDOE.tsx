@@ -1786,6 +1786,45 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                 const mean_y = y.reduce((a, b) => a + b, 0) / n;
                 // SS_tot accounts for variation from the grand mean across all observations including center points
                 const SS_tot = y.reduce((sum, val) => sum + Math.pow(val - mean_y, 2), 0);
+
+                      // Calculate factorial vs center points statistics
+                      // Center points: all CONTINUOUS factors at 0; categorical factors at ±1
+                      const centerPointIndices: number[] = [];
+                      const factorialPointIndices: number[] = [];
+                      
+                      runData.forEach((row, rowIdx) => {
+                        if (row.response !== null && !isNaN(row.response)) {
+                          const isCenterPoint = factors.every(factor => {
+                            const level = generatedPlan.plan[rowIdx]?.[factor.name] ?? 0;
+                            if (factor.type === 'categorical') {
+                              return Math.abs(level) === 1;
+                            } else {
+                              return Math.abs(level) < 0.01;
+                            }
+                          });
+                          
+                          const hasAnyContinuousAtZero = factors.some(f => 
+                            f.type === 'continuous' && Math.abs(generatedPlan.plan[rowIdx]?.[f.name] ?? 1) < 0.01
+                          );
+                          
+                          if (isCenterPoint && hasAnyContinuousAtZero) {
+                            centerPointIndices.push(rowIdx);
+                          } else {
+                            factorialPointIndices.push(rowIdx);
+                          }
+                        }
+                      });
+
+                      const n_c = centerPointIndices.length;
+                      const n_f = factorialPointIndices.length;
+                      
+                      if (n_c === 0 || n_f === 0) return null;
+
+                      const centerResponses = centerPointIndices.map(idx => runData[idx].response).filter((r): r is number => r !== null && !isNaN(r));
+                      const factorialResponses = factorialPointIndices.map(idx => runData[idx].response).filter((r): r is number => r !== null && !isNaN(r));
+                      
+                      const y_c_avg = centerResponses.reduce((a, b) => a + b, 0) / centerResponses.length;
+                      const y_f_avg = factorialResponses.reduce((a, b) => a + b, 0) / factorialResponses.length;
                 
                 // Calculate sum of squares for curvature (if center points are included)
                 let SS_curvature = 0;
@@ -1899,13 +1938,15 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                 } catch (e) {
                   console.warn('Gaussian elimination error:', e);
                   beta = Array(numCoefficients).fill(0);
-                  beta[0] = mean_y;
+                  //beta[0] = mean_y;
+                  beta[0] = y_f_avg;
                 }
                 
                 // Ensure beta contains valid numbers
                 if (!beta.every(b => Number.isFinite(b))) {
                   beta = Array(numCoefficients).fill(0);
-                  beta[0] = mean_y;
+                  //beta[0] = mean_y;
+                  beta[0] = y_f_avg;
                 }
 
                 // Build reduced design matrix with only selected terms
@@ -2760,7 +2801,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                               })}
                               {interactionPairs.map((pair, i) => {
                                 //if (dfInteractions > 0 && dfInteractions > i) {
-                                if (dfInteractions > 0) {
+                                if (dfInteractions >= 0) {
                                   const isIncluded = selectedFactorsForModel[`int-${i}`] !== false;
                                   
                                   if (isIncluded) {
@@ -3078,7 +3119,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                     tickfont: { size: 11 }
                                   },
                                   height: Math.max(300, effectsData.length * 35 + 100),
-                                  margin: { l: 120, r: 60, t: 50, b: 50 },
+                                  margin: { l: 200, r: 60, t: 50, b: 50 },
                                   showlegend: false,
                                   paper_bgcolor: 'rgba(0,0,0,0)',
                                   plot_bgcolor: 'rgba(0,0,0,0)',
