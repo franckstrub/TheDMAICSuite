@@ -2314,36 +2314,13 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
 
                 const X: number[][] = [];
                 const y: number[] = [];
-                const isCenterPointRow: boolean[] = [];
-                
-                // Helper to detect if a row is a center point
-                const detectCenterPoint = (rowIdx: number): boolean => {
-                  // Center point: all CONTINUOUS factors at 0; categorical factors at ±1
-                  const hasAnyContinuousAtZero = factors.some(f => 
-                    f.type === 'continuous' && Math.abs(generatedPlan.plan[rowIdx]?.[f.name] ?? 1) < 0.01
-                  );
-                  const allContinuousAtZero = factors.filter(f => f.type === 'continuous').every(f =>
-                    Math.abs(generatedPlan.plan[rowIdx]?.[f.name] ?? 1) < 0.01
-                  );
-                  const allCategoricalAtExtreme = factors.filter(f => f.type === 'categorical').every(f =>
-                    Math.abs(generatedPlan.plan[rowIdx]?.[f.name] ?? 0) === 1
-                  );
-                  return hasAnyContinuousAtZero && allContinuousAtZero && allCategoricalAtExtreme;
-                };
                 
                 // Collect all responses including center points
                 // In fractional factorial, ALL k main effects are estimable (not aliased)
                 // Only interactions may be aliased - use baseFactorCount for interaction calculations
                 runData.forEach((row, idx) => {
                   if (row.response !== null && !isNaN(row.response)) {
-                    const isCP = includeCenterPoints && detectCenterPoint(idx);
-                    isCenterPointRow.push(isCP);
-                    
-                    // When center points exist in design: intercept=1 for factorial, 0 for center points
-                    // This makes β₀ = mean of factorial points (not grand mean)
-                    const interceptVal = (includeCenterPoints && isCP) ? 0 : 1;
-                    const row_vals = [interceptVal];
-                    
+                    const row_vals = [1]; // intercept = grand mean in coded view
                     const allFactorValues: number[] = [];
                     // Include ALL k main effects (all are estimable in fractional factorial)
                     for (let i = 0; i < k; i++) {
@@ -2362,13 +2339,6 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                       });
                       row_vals.push(product);
                     });
-                    
-                    // Add center point indicator column (1 for center points, 0 for factorial)
-                    // This column captures curvature when center points exist
-                    if (includeCenterPoints) {
-                      row_vals.push(isCP ? 1 : 0);
-                    }
-                    
                     X.push(row_vals);
                     y.push(row.response);
                   }
@@ -2563,8 +2533,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 }
 
                 // Build reduced design matrix with only selected terms
-                // X matrix structure: [intercept, k main effects, non-aliased interactions, center point indicator (if exists)]
-                const centerPointColIdx = includeCenterPoints ? (k + 1 + interactionPairs.length) : -1;
+                // X matrix structure: [intercept, k main effects, non-aliased interactions]
                 const selectedColumns: number[] = [0]; // Always include intercept
                 // Include all k main effects (all are estimable in fractional factorial)
                 Array.from({length: k}).forEach((_, idx) => {
@@ -2578,10 +2547,6 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     selectedColumns.push(k + 1 + pairIdx); // Offset by k main effects, not baseFactorCount
                   }
                 });
-                // Include center point indicator column if center points exist and are selected in model
-                if (includeCenterPoints && selectedFactorsForModel['centerPoint'] !== false) {
-                  selectedColumns.push(centerPointColIdx);
-                }
                 
                 // Create reverse mapping: original column index -> reduced column index
                 const colMapReverse: Record<number, number> = {};
@@ -3417,7 +3382,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                 }
                               })}
                               {interactionPairs.map((pair, i) => {
-                                if (dfInteractions >= 0) {
+                                if (dfInteractions > 0) {
                                   const isIncluded = selectedFactorsForModel[`int-${i}`] !== false;
                                   
                                   if (isIncluded) {
@@ -3735,7 +3700,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                     tickfont: { size: 11 }
                                   },
                                   height: Math.max(300, effectsData.length * 35 + 100),
-                                  margin: { l: 200, r: 60, t: 50, b: 50 },
+                                  margin: { l: 120, r: 60, t: 50, b: 50 },
                                   showlegend: false,
                                   paper_bgcolor: 'rgba(0,0,0,0)',
                                   plot_bgcolor: 'rgba(0,0,0,0)',
