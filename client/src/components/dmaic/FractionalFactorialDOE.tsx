@@ -2726,7 +2726,8 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     transformedStats[0].pValue = transformedStats[0].stdError > 0 ? 2 * (1 - jStat.studentt.cdf(Math.abs(transformedStats[0].tValue), n - numCoefficients)) : 0;
                   }
                   
-                  transformed[0] = beta[0] - interceptAdjustment;
+                  //transformed[0] = beta[0] - interceptAdjustment;
+                  transformed[0] = beta[0];
                   
                   // If transformation resulted in non-finite values, use coded instead
                   if (!transformed.every(v => Number.isFinite(v))) {
@@ -3382,7 +3383,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                 }
                               })}
                               {interactionPairs.map((pair, i) => {
-                                if (dfInteractions > 0) {
+                                if (dfInteractions >= 0) {
                                   const isIncluded = selectedFactorsForModel[`int-${i}`] !== false;
                                   
                                   if (isIncluded) {
@@ -3700,7 +3701,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                     tickfont: { size: 11 }
                                   },
                                   height: Math.max(300, effectsData.length * 35 + 100),
-                                  margin: { l: 120, r: 60, t: 50, b: 50 },
+                                  margin: { l: 200, r: 60, t: 50, b: 50 },
                                   showlegend: false,
                                   paper_bgcolor: 'rgba(0,0,0,0)',
                                   plot_bgcolor: 'rgba(0,0,0,0)',
