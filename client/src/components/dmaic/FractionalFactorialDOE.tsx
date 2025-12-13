@@ -2410,6 +2410,46 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 const mean_y = y.reduce((a, b) => a + b, 0) / n;
                 // SS_tot accounts for variation from the grand mean across all observations including center points
                 const SS_tot = y.reduce((sum, val) => sum + Math.pow(val - mean_y, 2), 0);
+
+                // Calculate factorial vs center points statistics
+                // Center points: all CONTINUOUS factors at 0; categorical factors at ±1
+                const centerPointIndices: number[] = [];
+                const factorialPointIndices: number[] = [];
+                
+                runData.forEach((row, rowIdx) => {
+                  if (row.response !== null && !isNaN(row.response)) {
+                    const isCenterPoint = factors.every(factor => {
+                      const level = generatedPlan.plan[rowIdx]?.[factor.name] ?? 0;
+                      if (factor.type === 'categorical') {
+                        return Math.abs(level) === 1;
+                      } else {
+                        return Math.abs(level) < 0.01;
+                      }
+                    });
+                    
+                    const hasAnyContinuousAtZero = factors.some(f => 
+                      f.type === 'continuous' && Math.abs(generatedPlan.plan[rowIdx]?.[f.name] ?? 1) < 0.01
+                    );
+                    
+                    if (isCenterPoint && hasAnyContinuousAtZero) {
+                      centerPointIndices.push(rowIdx);
+                    } else {
+                      factorialPointIndices.push(rowIdx);
+                    }
+                  }
+                });
+
+                const n_c = centerPointIndices.length;
+                const n_f = factorialPointIndices.length;
+                
+               //if (n_c === 0 || n_f === 0) return null;
+
+                const centerResponses = n_c > 0 ? centerPointIndices.map(idx => runData[idx].response).filter((r): r is number => r !== null && !isNaN(r)) : null;
+                const factorialResponses = n_f > 0 ? factorialPointIndices.map(idx => runData[idx].response).filter((r): r is number => r !== null && !isNaN(r)) : null;
+                
+                const y_c_avg = n_c > 0 ? centerResponses.reduce((a, b) => a + b, 0) / centerResponses.length : 0;
+                const y_f_avg = n_f > 0 ? factorialResponses.reduce((a, b) => a + b, 0) / factorialResponses.length : 0;
+                
                 
                 // Calculate sum of squares for curvature (if center points are included)
                 let SS_curvature = 0;
@@ -2438,12 +2478,13 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   });
                   
                   if (factorialIndices.length > 0 && centerIndices.length > 0) {
-                    const meanFactorial = factorialIndices.reduce((sum, idx) => sum + runData[idx].response!, 0) / factorialIndices.length;
-                    const meanCenter = centerIndices.reduce((sum, idx) => sum + runData[idx].response!, 0) / centerIndices.length;
-                    const n_f = factorialIndices.length;
-                    const n_c = centerIndices.length;
+                    //const meanFactorial = factorialIndices.reduce((sum, idx) => sum + runData[idx].response!, 0) / factorialIndices.length;
+                    //const meanCenter = centerIndices.reduce((sum, idx) => sum + runData[idx].response!, 0) / centerIndices.length;
+                    //const n_f = factorialIndices.length;
+                    //const n_c = centerIndices.length;
                     // SS_curvature = (n_f * n_c) / (n_f + n_c) * (mean_factorial - mean_center)^2
-                    SS_curvature = ((n_f * n_c) / (n_f + n_c)) * Math.pow(meanFactorial - meanCenter, 2);
+                    //SS_curvature = ((n_f * n_c) / (n_f + n_c)) * Math.pow(meanFactorial - meanCenter, 2);
+                    SS_curvature = ((n_f * n_c) / (n_f + n_c)) * Math.pow(y_f_avg - y_c_avg, 2);
                   }
                 }
 
@@ -2523,13 +2564,15 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 } catch (e) {
                   console.warn('Gaussian elimination error:', e);
                   beta = Array(numCoefficients).fill(0);
-                  beta[0] = mean_y;
+                  //beta[0] = mean_y;
+                  beta[0] = y_f_avg;
                 }
                 
                 // Ensure beta contains valid numbers
                 if (!beta.every(b => Number.isFinite(b))) {
                   beta = Array(numCoefficients).fill(0);
-                  beta[0] = mean_y;
+                  //beta[0] = mean_y;
+                  beta[0] = y_f_avg;
                 }
 
                 // Build reduced design matrix with only selected terms
@@ -2583,7 +2626,8 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 // Calculate predictions and residuals for reduced model
                 const predictions_red = X_reduced.map(row => row.reduce((sum, val, i) => sum + val * beta_red[i], 0));
                 const residuals_red = y.map((val, i) => val - predictions_red[i]);
-                const residualSS_red = residuals_red.reduce((sum, res) => sum + Math.pow(res, 2), 0);
+                const mean_res = residuals_red.reduce((a, b) => a + b, 0) / n;
+                const residualSS_red = residuals_red.reduce((sum, res) => sum + Math.pow(res - mean_res, 2), 0);
                 const SS_res = residualSS_red - SS_curvature;
                 const errorDF_red = n - p_reduced - dfCurvature;
                 const errorMS = errorDF_red > 0 ? SS_res / errorDF_red : 0;
@@ -2598,7 +2642,8 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 const coeffStats = beta_red.map((b, redIdx) => {
                   let xxtInvDiag = 0;
                   if (redIdx === 0) {
-                    xxtInvDiag = 1 / XtX_red[0][0];
+                   //xxtInvDiag = 1 / XtX_red[0][0];//contains number of all data plus number of total centerpoints which is incorrect for stdError calculation
+                    xxtInvDiag = 1 / (n - (numberOfCenterPoints*numberOfReplicates)); // exact formula
                   } else {
                     const denom = XtX_red[redIdx][redIdx] - (redIdx > 0 ? XtX_red[redIdx].slice(0, redIdx).reduce((sum, v, i) => sum + v * v / (XtX_red[i][i] || 1), 0) : 0);
                     xxtInvDiag = Math.abs(denom) > 1e-10 ? 1 / denom : 1 / XtX_red[redIdx][redIdx];
@@ -2737,6 +2782,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 };
                 
                 const { displayBeta, displayCoeffStats } = transformCoefficientsAndSE();
+                displayBeta[0] = y_f_avg;
                 
                 // Always compute uncoded coefficients for solver (independent of display toggle)
                 const getUncodedCoefficientsForSolver = () => {
@@ -2807,7 +2853,8 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     }
                   }
                   
-                  transformed[0] = beta_red[0] - interceptAdjustment;
+                  //transformed[0] = beta_red[0] - interceptAdjustment;
+                  transformed[0] = beta_red[0];
                   
                   // If transformation resulted in non-finite values, use coded instead
                   if (!transformed.every(v => Number.isFinite(v))) {
@@ -3016,9 +3063,9 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                   const n_f = factorialPointIndices.length;
                                   
                                   if (n_c > 0 && n_f > 0) {
-                                    const centerResponses = centerPointIndices.map(idx => runData[idx].response).filter((r): r is number => r !== null && !isNaN(r));
-                                    const y_c_avg = centerResponses.length > 0 ? centerResponses.reduce((a, b) => a + b, 0) / centerResponses.length : 0;
-                                    const y_f_at_center = beta[0];
+                                    //const centerResponses = centerPointIndices.map(idx => runData[idx].response).filter((r): r is number => r !== null && !isNaN(r));
+                                    //const y_c_avg = centerResponses.length > 0 ? centerResponses.reduce((a, b) => a + b, 0) / centerResponses.length : 0;
+                                    //const y_f_at_center = beta[0];
                                     //const curveEffect = y_c_avg - y_f_at_center;
                                     //const curveSS = (n_c * n_f / (n_c + n_f)) * Math.pow(curveEffect, 2);
                                     //const curveMS = curveSS / dfCurvature;
@@ -3318,13 +3365,18 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                 <TableCell className="text-right">-</TableCell>
                                 <TableCell className="text-center"><Checkbox disabled checked /></TableCell>
                               </TableRow>
-                              {factors.map((factor, i) => {
+                              {(() => { // IIFE
+                                let i_reduced = -1;  // Declare variable in local scope. factors is an array with all terms of plan, including intercept, main factors and interactions.
+                                // beta_red and displayCoeffStats have only including terms (intercept and selected main factors and interactions): reduced model!!!
+                                //return factors.map((factor, i) => {
+                                const factorRows = factors.map((factor, i) => {
                                 const isIncluded = selectedFactorsForModel[i] !== false;
-                                
                                 if (isIncluded) {
+                                  i_reduced += 1;
                                   const vif = (() => {
                                     try {
                                       return calculateDOEVIF(X, i);
+                                      //return calculateDOEVIF(X_withselectedterms, i_reduced);
                                     } catch {
                                       return null;
                                     }
@@ -3335,17 +3387,17 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                     ? `${factor.name}${factor.type === 'continuous' && factor.units ? ` (${factor.units})` : ''}`
                                     : factor.name;
                                   
-                                  const codedCoeff = beta_red[i + 1];
+                                  const codedCoeff = beta_red[i_reduced + 1];
                                   const effect = codedCoeff !== undefined ? 2 * codedCoeff : undefined;
                                   
                                   return (
                                   <TableRow key={i}>
                                     <TableCell className="font-medium">{factorLabel}</TableCell>
                                     <TableCell className="text-right">{effect?.toFixed(6) ?? '-'}</TableCell>
-                                    <TableCell className="text-right">{displayBeta[i + 1]?.toFixed(6)}</TableCell>
-                                    <TableCell className="text-right">{displayCoeffStats[i + 1]?.stdError.toFixed(4)}</TableCell>
-                                    <TableCell className="text-right">{displayCoeffStats[i + 1]?.tValue.toFixed(4)}</TableCell>
-                                    <TableCell className={`text-right ${(displayCoeffStats[i + 1]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{(Math.max(0, Math.min(1, displayCoeffStats[i + 1]?.pValue ?? 1))).toFixed(4)}</TableCell>
+                                    <TableCell className="text-right">{displayBeta[i_reduced + 1]?.toFixed(6)}</TableCell>
+                                    <TableCell className="text-right">{displayCoeffStats[i_reduced + 1]?.stdError.toFixed(4)}</TableCell>
+                                    <TableCell className="text-right">{displayCoeffStats[i_reduced + 1]?.tValue.toFixed(4)}</TableCell>
+                                    <TableCell className={`text-right ${(displayCoeffStats[i_reduced + 1]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{(Math.max(0, Math.min(1, displayCoeffStats[i_reduced + 1]?.pValue ?? 1))).toFixed(4)}</TableCell>
                                     <TableCell className={`text-right ${isHighVIF ? 'text-red-600 font-semibold' : isModerateVIF ? 'text-yellow-400 font-semibold' : ''}`}>{vif !== null ? vif.toFixed(2) : '-'}</TableCell>
                                     <TableCell className="text-center">
                                       <Checkbox
@@ -3381,15 +3433,18 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                   </TableRow>
                                   );
                                 }
-                              })}
-                              {interactionPairs.map((pair, i) => {
+                              });
+                              const interactionRows = interactionPairs.map((pair, i) => {
+                                //if (dfInteractions > 0 && dfInteractions > i) {
                                 if (dfInteractions >= 0) {
                                   const isIncluded = selectedFactorsForModel[`int-${i}`] !== false;
                                   
                                   if (isIncluded) {
+                                    i_reduced += 1;
                                     const vif = (() => {
                                       try {
                                         return calculateDOEVIF(X, factors.length + i);
+                                        //return calculateDOEVIF(X_withselectedterms, i_reduced);
                                       } catch {
                                         return null;
                                       }
@@ -3397,17 +3452,17 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                     const isHighVIF = vif !== null && vif > 5;
                                     const isModerateVIF = vif !== null && vif > 1 && vif <= 5;
                                     
-                                    const codedCoeffInt = beta_red[factors.length + 1 + i];
+                                    const codedCoeffInt = beta_red[1 + i_reduced];
                                     const effectInt = codedCoeffInt !== undefined ? 2 * codedCoeffInt : undefined;
                                     
                                     return (
                                     <TableRow key={`int-${i}`}>
                                       <TableCell className="font-medium">{pair.name}</TableCell>
                                       <TableCell className="text-right">{effectInt?.toFixed(6) ?? '-'}</TableCell>
-                                      <TableCell className="text-right">{displayBeta[factors.length + 1 + i]?.toFixed(6)}</TableCell>
-                                      <TableCell className="text-right">{displayCoeffStats[factors.length + 1 + i]?.stdError.toFixed(4)}</TableCell>
-                                      <TableCell className="text-right">{displayCoeffStats[factors.length + 1 + i]?.tValue.toFixed(4)}</TableCell>
-                                      <TableCell className={`text-right ${(displayCoeffStats[factors.length + 1 + i]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{(Math.max(0, Math.min(1, displayCoeffStats[factors.length + 1 + i]?.pValue ?? 1))).toFixed(4)}</TableCell>
+                                      <TableCell className="text-right">{displayBeta[1 + i_reduced]?.toFixed(6)}</TableCell>
+                                      <TableCell className="text-right">{displayCoeffStats[1 + i_reduced]?.stdError.toFixed(4)}</TableCell>
+                                      <TableCell className="text-right">{displayCoeffStats[1 + i_reduced]?.tValue.toFixed(4)}</TableCell>
+                                      <TableCell className={`text-right ${(displayCoeffStats[1 + i_reduced]?.pValue ?? 1) < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{(Math.max(0, Math.min(1, displayCoeffStats[1 + i_reduced]?.pValue ?? 1))).toFixed(4)}</TableCell>
                                       <TableCell className={`text-right ${isHighVIF ? 'text-red-600 font-semibold' : isModerateVIF ? 'text-yellow-400 font-semibold' : ''}`}>{vif !== null ? vif.toFixed(2) : '-'}</TableCell>
                                       <TableCell className="text-center">
                                         <Checkbox
@@ -3445,7 +3500,10 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                   }
                                 }
                                 return null;
-                              })}
+                              });
+                              return [...factorRows, ...interactionRows]; // Combine both arrays
+                              })()}
+
                               {/* Center Point Row */}
                               {(() => {
                                 const centerPointIndices: number[] = [];
