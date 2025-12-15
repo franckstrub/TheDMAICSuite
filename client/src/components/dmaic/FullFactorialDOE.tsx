@@ -2704,6 +2704,18 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                       );
                     })()}
 
+                    {/* Toggle for Coded/Uncoded Analysis */}
+                    <div className="flex items-center space-x-2">
+                      <Label htmlFor="analysis-uncoded-toggle">Coded</Label>
+                      <Switch
+                        id="analysis-uncoded-toggle"
+                        checked={!allFactorsHaveValidLevels() ? false : showUncoded}
+                        onCheckedChange={setShowUncoded}
+                        disabled={!allFactorsHaveValidLevels()}
+                        data-testid="switch-analysis-uncoded-toggle"
+                      />
+                      <Label htmlFor="analysis-uncoded-toggle">Uncoded {!allFactorsHaveValidLevels() && ' switch is disabled due to some factor levels not defined'}</Label>
+                    </div>
                     {/* Coefficients Table with Model Selection */}
                     <Card>
                       <CardHeader className="flex flex-row items-center justify-between">
@@ -2934,7 +2946,8 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                 const y_f_avg = factorialResponses.reduce((a, b) => a + b, 0) / factorialResponses.length;
                                 const curvatureEffect = y_c_avg - y_f_avg;
                                 // Center point coefficient = curvature effect / number of main factors
-                                const curvatureCoeff = factors.length > 0 ? curvatureEffect / factors.length : curvatureEffect;
+                                //const curvatureCoeff = factors.length > 0 ? curvatureEffect / factors.length : curvatureEffect;
+                                const curvatureCoeff = curvatureEffect;
                                 
                                 // Calculate curvature statistics (same as Curvature Analysis Card)
                                 const curvatureSS = (n_f * n_c) / (n_f + n_c) * Math.pow(curvatureEffect, 2);
@@ -2959,7 +2972,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                     <TableRow key="centerPoint">
                                       <TableCell className="font-medium">Center Point</TableCell>
                                       <TableCell className="text-right">{curvatureEffect.toFixed(6)}</TableCell>
-                                      <TableCell className="text-right">{curvatureCoeff.toFixed(6)}</TableCell>
+                                      <TableCell className="text-right" title="For the center point term, by convention, in both coded & uncoded units the variable is 1 if all of the continuous factors are at their midpoints, and is 0 otherwise">{curvatureCoeff.toFixed(6)}</TableCell>
                                       <TableCell className="text-right">{curvStdError > 0 ? curvStdError.toFixed(4) : '-'}</TableCell>
                                       <TableCell className="text-right">{curvTValue !== 0 ? curvTValue.toFixed(4) : '-'}</TableCell>
                                       <TableCell className={`text-right ${curvPValue < significanceLevel ? 'text-green-600 font-semibold' : ''}`}>{curvPValue < 1 ? curvPValue.toFixed(4) : '-'}</TableCell>
@@ -3215,11 +3228,12 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                             return (
                               Number.isFinite(displayBeta[reducedColIdx]) && (
                                 <p key={i}>
-                                  &nbsp;&nbsp;&nbsp;&nbsp;{displayBeta[reducedColIdx] >= 0 ? '+' : ''} {displayBeta[reducedColIdx].toFixed(4)} × {factors[i].name}{factors[i].type === 'continuous' && factors[i].units ? ` (${factors[i].units})` : ''}
+                                  &nbsp;&nbsp;&nbsp;&nbsp;{displayBeta[reducedColIdx] >= 0 ? '+' : ''} {displayBeta[reducedColIdx].toFixed(4)} × {factors[i].name}{factors[i].type === 'continuous' && showUncoded && factors[i].units ? ` (${factors[i].units})` : ''}
                                 </p>
                               )
                             );
                           })}
+
                           {interactionPairs.map((pair, i) => {
                             if (selectedFactorsForModel[`int-${i}`] === false) return null;
                             const origColIdx = baseFactorCount + 1 + i;
