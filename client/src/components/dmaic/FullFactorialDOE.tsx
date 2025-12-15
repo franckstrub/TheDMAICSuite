@@ -1028,7 +1028,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                           onClick={handleGeneratePlan}
                           data-testid="button-regenerate-plan"
                         >
-                          Regenerate Plan
+                          Clear all Responses
                         </Button>
                         <Button
                           onClick={handleSaveData}
