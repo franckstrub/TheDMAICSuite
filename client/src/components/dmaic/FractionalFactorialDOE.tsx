@@ -225,7 +225,8 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
         `/api/projects/${projectId}/solutions/${solutionId}/doe-fractional`,
         {
           selectedFactorsForModel,
-          showParetoOfEffects
+          showParetoOfEffects,
+          showUncoded
         }
       );
     },
@@ -1469,7 +1470,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                           onClick={handleGeneratePlan}
                           data-testid="button-regenerate-plan"
                         >
-                          Clear all Responses
+                          Regenerate Plan
                         </Button>
                         <Button
                           onClick={handleSaveData}
