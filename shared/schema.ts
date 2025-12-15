@@ -2659,7 +2659,6 @@ export const doeFractionalFactorialConfig = pgTable(
     // Display options
     showUncoded: boolean("show_uncoded").default(false),
     showParetoOfEffects: boolean("show_pareto_of_effects").default(false),
-    showQuadraticTerm: boolean("show_quadratic_term").default(false),
     
     lastUpdated: timestamp("last_updated").notNull().defaultNow(),
   },
@@ -2681,7 +2680,6 @@ export const updateDoeFractionalFactorialConfigSchema = z.object({
   constraintValues: z.record(z.number(), z.number().nullable()).optional(),
   showParetoOfEffects: z.boolean().optional(),
   showUncoded: z.boolean().optional(),
-  showQuadraticTerm: z.boolean().optional(),
 });
 
 export type InsertDoeFractionalFactorialConfig = z.infer<typeof insertDoeFractionalFactorialConfigSchema>;
@@ -2738,7 +2736,6 @@ export const doeFullFactorialConfig = pgTable(
     // Display options
     showUncoded: boolean("show_uncoded").default(false),
     showParetoOfEffects: boolean("show_pareto_of_effects").default(false),
-    showQuadraticTerm: boolean("show_quadratic_term").default(false),
     
     lastUpdated: timestamp("last_updated").notNull().defaultNow(),
   },
@@ -2760,7 +2757,6 @@ export const updateDoeFullFactorialConfigSchema = z.object({
   constraintValues: z.record(z.number(), z.number().nullable()).optional(),
   showParetoOfEffects: z.boolean().optional(),
   showUncoded: z.boolean().optional(),
-  showQuadraticTerm: z.boolean().optional(),
 });
 
 export type InsertDoeFullFactorialConfig = z.infer<typeof insertDoeFullFactorialConfigSchema>;

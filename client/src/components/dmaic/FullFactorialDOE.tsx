@@ -125,14 +125,6 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
   const [showResidualsVsOrder, setShowResidualsVsOrder] = useState(false);
   const [showNormalProbPlot, setShowNormalProbPlot] = useState(false);
   const [showParetoOfEffects, setShowParetoOfEffects] = useState(false);
-  const [showQuadraticTerm, setShowQuadraticTerm] = useState(false);
-  
-  // Reset quadratic term when center points are disabled
-  useEffect(() => {
-    if (!includeCenterPoints) {
-      setShowQuadraticTerm(false);
-    }
-  }, [includeCenterPoints]);
   
   // Tab persistence
   const [activeTab, setActiveTab] = useState<string>(() => {
@@ -193,8 +185,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
         {
           selectedFactorsForModel,
           showParetoOfEffects,
-          showUncoded,
-          showQuadraticTerm
+          showUncoded
         }
       );
     },
@@ -290,10 +281,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
       if (config.showParetoOfEffects !== undefined) {
         setShowParetoOfEffects(config.showParetoOfEffects);
       }
-      if (config.showQuadraticTerm !== undefined) {
-        setShowQuadraticTerm(config.showQuadraticTerm);
-      }
-      
+       
       // Load selected factors for model
       if (config.selectedFactorsForModel) {
         setSelectedFactorsForModel(config.selectedFactorsForModel);
@@ -2019,12 +2007,12 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                 const residuals_red = y.map((val, i) => val - predictions_red[i]);
                 const mean_res = residuals_red.reduce((a, b) => a + b, 0) / n;
                 const residualSS_red = residuals_red.reduce((sum, res) => sum + Math.pow(res - mean_res, 2), 0);
-                const SS_res = residualSS_red - SS_curvature;
+                const SS_res =  (includeCenterPoints && selectedFactorsForModel['centerPoint'] !== false) ? residualSS_red - SS_curvature : residualSS_red;
                 //const SS_res = residualSS_red;
                 const errorDF_red = n - p_reduced - dfCurvature;
                 const errorMS = errorDF_red > 0 ? SS_res / errorDF_red : 0;
                 const R_sq = 1 - SS_res / SS_tot;
-                const adj_R_sq = 1 - (1 - R_sq) * (n - 1) / (n - p_reduced - dfCurvature);
+                const adj_R_sq = Math.max(0, 1 - (1 - R_sq) * (n - 1) / (n - p_reduced - dfCurvature));
                 const rmse = Math.sqrt(SS_res / (n - p_reduced- dfCurvature));
                 const residualMean = residuals_red.reduce((a, b) => a + b, 0) / residuals_red.length;
                 const residualStd = Math.sqrt(residuals_red.reduce((sum, r) => sum + Math.pow(r - residualMean, 2), 0) / (residuals_red.length - 1));
@@ -3229,21 +3217,24 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                               <span className="p-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-xl ml-5 text-sm font-normal justify-right">Reduced Model</span>
                             )}
                           </CardTitle>
-                          <div className="flex items-center gap-2">
+                          
+                         {/*} <div className="flex items-center gap-2">
                             <Switch
                               id="show-quadratic-term"
-                              checked={includeCenterPoints ? showQuadraticTerm : false}
+                              //const hasCurvature = (includeCenterPoints && selectedFactorsForModel['centerPoint'] !== false);
+                              checked={includeCenterPoints  && selectedFactorsForModel['centerPoint'] !== false ? showQuadraticTerm : false}
                               onCheckedChange={setShowQuadraticTerm}
-                              disabled={!includeCenterPoints}
+                              disabled={!includeCenterPoints || selectedFactorsForModel['centerPoint'] === false}
                               data-testid="switch-quadratic-term"
                             />
-                            <Label htmlFor="show-quadratic-term" className={`text-sm font-normal ${!includeCenterPoints ? 'text-muted-foreground' : ''}`}>Add a quadratic term</Label>
-                          </div>
+                            <Label htmlFor="show-quadratic-term" className={`text-sm font-normal ${!includeCenterPoints || selectedFactorsForModel['centerPoint'] === false ? 'text-muted-foreground' : ''}`}>Add a quadratic term</Label>
+                          </div> */}
                         </div>
                       </CardHeader>
                       <CardContent>
                         {(() => {
-                          const isUncodedQuadratic = showQuadraticTerm && showUncoded && allFactorsHaveValidLevels() && includeCenterPoints && n_c > 0;
+                          //const isUncodedQuadratic = showQuadraticTerm && showUncoded && allFactorsHaveValidLevels() && includeCenterPoints && n_c  > 0 && selectedFactorsForModel['centerPoint'] !== false;
+                          const isUncodedQuadratic = showUncoded && allFactorsHaveValidLevels() && includeCenterPoints && n_c  > 0 && selectedFactorsForModel['centerPoint'] !== false;
                           
                           const continuousFactorIndices = factors.map((f, i) => ({ factor: f, index: i }))
                             .filter(({ factor, index }) => factor.type === 'continuous' && selectedFactorsForModel[index] !== false);
@@ -3316,7 +3307,8 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                               })}
 
                               {/* Quadratic Terms */}
-                              {showQuadraticTerm && includeCenterPoints && n_c > 0 && k > 0 && (() => {
+                              {/* {showQuadraticTerm && includeCenterPoints && n_c > 0 && k > 0 && (() => { */}
+                              {includeCenterPoints && n_c > 0 && selectedFactorsForModel['centerPoint'] !== false && k > 0 && (() => {
                                 if (isUncodedQuadratic) {
                                   return quadTerms.map(({ factorIdx, factor, x2Coeff }) => (
                                     <p key={`quad-${factorIdx}`}>
