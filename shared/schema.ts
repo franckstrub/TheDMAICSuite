@@ -2679,6 +2679,7 @@ export const updateDoeFractionalFactorialConfigSchema = z.object({
   solveFactorIdx: z.number().optional(),
   constraintValues: z.record(z.number(), z.number().nullable()).optional(),
   showParetoOfEffects: z.boolean().optional(),
+  showUncoded: z.boolean().optional(),
 });
 
 export type InsertDoeFractionalFactorialConfig = z.infer<typeof insertDoeFractionalFactorialConfigSchema>;
@@ -2755,6 +2756,7 @@ export const updateDoeFullFactorialConfigSchema = z.object({
   solveFactorIdx: z.number().optional(),
   constraintValues: z.record(z.number(), z.number().nullable()).optional(),
   showParetoOfEffects: z.boolean().optional(),
+  showUncoded: z.boolean().optional(),
 });
 
 export type InsertDoeFullFactorialConfig = z.infer<typeof insertDoeFullFactorialConfigSchema>;
