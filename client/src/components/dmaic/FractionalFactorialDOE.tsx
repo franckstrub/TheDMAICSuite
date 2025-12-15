@@ -136,6 +136,13 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
   const [showParetoOfEffects, setShowParetoOfEffects] = useState(false);
   const [showQuadraticTerm, setShowQuadraticTerm] = useState(false);
   
+  // Reset quadratic term when center points are disabled
+  useEffect(() => {
+    if (!includeCenterPoints) {
+      setShowQuadraticTerm(false);
+    }
+  }, [includeCenterPoints]);
+  
   // Tab persistence
   const [activeTab, setActiveTab] = useState<string>(() => {
     const stored = localStorage.getItem(`doe-fractional-active-tab-${projectId}-${solutionId}`);
@@ -3837,17 +3844,16 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                               <span className="p-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-xl ml-5 text-sm font-normal justify-right">Reduced Model</span>
                             )}
                           </CardTitle>
-                          {includeCenterPoints && n_c > 0 && (
-                            <div className="flex items-center gap-2">
-                              <Switch
-                                id="show-quadratic-term"
-                                checked={showQuadraticTerm}
-                                onCheckedChange={setShowQuadraticTerm}
-                                data-testid="switch-quadratic-term"
-                              />
-                              <Label htmlFor="show-quadratic-term" className="text-sm font-normal">Add a quadratic term</Label>
-                            </div>
-                          )}
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              id="show-quadratic-term"
+                              checked={includeCenterPoints && n_c > 0 ? showQuadraticTerm : false}
+                              onCheckedChange={setShowQuadraticTerm}
+                              disabled={!includeCenterPoints || n_c === 0}
+                              data-testid="switch-quadratic-term"
+                            />
+                            <Label htmlFor="show-quadratic-term" className={`text-sm font-normal ${!includeCenterPoints || n_c === 0 ? 'text-muted-foreground' : ''}`}>Add a quadratic term</Label>
+                          </div>
                         </div>
                       </CardHeader>
                       <CardContent>
