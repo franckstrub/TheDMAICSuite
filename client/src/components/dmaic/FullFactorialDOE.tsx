@@ -2002,29 +2002,8 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                   beta_red = Xty_red.map(v => v / (XtX_red[0][0] || 1));
                 }
 
-                // Build a set of X row indices that are center points (for curvature adjustment)
-                const xRowToCenterPoint: Set<number> = new Set();
-                let xRowIdx = 0;
-                runData.forEach((row, runIdx) => {
-                  if (row.response !== null && !isNaN(row.response)) {
-                    if (centerPointIndices.includes(runIdx)) {
-                      xRowToCenterPoint.add(xRowIdx);
-                    }
-                    xRowIdx++;
-                  }
-                });
-                
                 // Calculate predictions and residuals for reduced model
-                // When curvature is included, adjust predictions for center points
-                const curvatureEffect = y_c_avg - y_f_avg;
-                const predictions_red = X_reduced.map((row, xIdx) => {
-                  let pred = row.reduce((sum, val, i) => sum + val * beta_red[i], 0);
-                  // Add curvature adjustment for center points when curvature is in the model
-                  if (hasCurvature && n_c > 0 && xRowToCenterPoint.has(xIdx)) {
-                    pred += curvatureEffect;
-                  }
-                  return pred;
-                });
+                const predictions_red = X_reduced.map(row => row.reduce((sum, val, i) => sum + val * beta_red[i], 0));
                 const residuals_red = y.map((val, i) => val - predictions_red[i]);
                 const mean_res = residuals_red.reduce((a, b) => a + b, 0) / n;
                 const residualSS_red = residuals_red.reduce((sum, res) => sum + Math.pow(res - mean_res, 2), 0);
