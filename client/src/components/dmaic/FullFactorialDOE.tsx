@@ -3236,79 +3236,106 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                         </div>
                       </CardHeader>
                       <CardContent>
-                        <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded font-mono text-sm">
-                          <p>Y = {Number.isFinite(displayBeta[0]) ? displayBeta[0].toFixed(4) : 'N/A'}</p>
-                          {Array.from({length: baseFactorCount}).map((_, i) => {
-                            if (selectedFactorsForModel[i] === false) return null;
-                            const origColIdx = i + 1;
-                            const reducedColIdx = colMapReverse[origColIdx];
-                            if (reducedColIdx === undefined) return null;
-                            return (
-                              Number.isFinite(displayBeta[reducedColIdx]) && (
-                                <p key={i}>
-                                  &nbsp;&nbsp;&nbsp;&nbsp;{displayBeta[reducedColIdx] >= 0 ? '+' : ''} {displayBeta[reducedColIdx].toFixed(4)} × {factors[i].name}{factors[i].type === 'continuous' && showUncoded && factors[i].units ? ` (${factors[i].units})` : ''}
-                                </p>
-                              )
-                            );
-                          })}
-
-                          {interactionPairs.map((pair, i) => {
-                            if (selectedFactorsForModel[`int-${i}`] === false) return null;
-                            const origColIdx = baseFactorCount + 1 + i;
-                            const reducedColIdx = colMapReverse[origColIdx];
-                            if (reducedColIdx === undefined) return null;
-                            return (
-                              Number.isFinite(displayBeta[reducedColIdx]) && (
-                                <p key={`int-${i}`}>
-                                  &nbsp;&nbsp;&nbsp;&nbsp;{displayBeta[reducedColIdx] >= 0 ? '+' : ''} {displayBeta[reducedColIdx].toFixed(4)} × {pair.name}
-                                </p>
-                              )
-                            );
-                          })}
-
-                          {/* Quadratic Term */}
-                          {showQuadraticTerm && includeCenterPoints && n_c > 0 && (() => {
-                            const curvatureEffect = y_c_avg - y_f_avg;
-                            const continuousFactorIndices = factors.map((f, i) => ({ factor: f, index: i }))
-                              .filter(({ factor, index }) => factor.type === 'continuous' && selectedFactorsForModel[index] !== false);
-                            const k = continuousFactorIndices.length;
-                            if (k === 0) return null;
-                            
-                            const quadCoeff = curvatureEffect / k;
-                            
-                            if (showUncoded && allFactorsHaveValidLevels()) {
-                              return continuousFactorIndices.map(({ factor, index: factorIdx }) => {
-                                if (factor.type !== 'continuous') return null;
-                                const low = parseFloat(String(factor.lowValue));
-                                const high = parseFloat(String(factor.highValue));
-                                if (isNaN(low) || isNaN(high)) return null;
+                        {(() => {
+                          const isUncodedQuadratic = showQuadraticTerm && showUncoded && allFactorsHaveValidLevels() && includeCenterPoints && n_c > 0;
+                          
+                          const continuousFactorIndices = factors.map((f, i) => ({ factor: f, index: i }))
+                            .filter(({ factor, index }) => factor.type === 'continuous' && selectedFactorsForModel[index] !== false);
+                          const k = continuousFactorIndices.length;
+                          const curvatureEffect = y_c_avg - y_f_avg;
+                          const quadCoeff = k > 0 ? curvatureEffect / k : 0;
+                          
+                          let adjustedIntercept = displayBeta[0];
+                          const linearAdjustments: Record<number, number> = {};
+                          const quadTerms: Array<{ factorIdx: number; factor: any; x2Coeff: number }> = [];
+                          
+                          if (isUncodedQuadratic && k > 0) {
+                            let interceptAdj = 0;
+                            for (const { factor, index: factorIdx } of continuousFactorIndices) {
+                              if (factor.type !== 'continuous') continue;
+                              const low = parseFloat(String(factor.lowValue));
+                              const high = parseFloat(String(factor.highValue));
+                              if (isNaN(low) || isNaN(high)) continue;
+                              
+                              const halfRange = (high - low) / 2;
+                              const midpoint = (high + low) / 2;
+                              const halfRangeSq = halfRange * halfRange;
+                              
+                              const x2Coeff = quadCoeff / halfRangeSq;
+                              const linAdj = -2 * quadCoeff * midpoint / halfRangeSq;
+                              const constAdj = quadCoeff * midpoint * midpoint / halfRangeSq;
+                              
+                              interceptAdj += constAdj;
+                              linearAdjustments[factorIdx] = linAdj;
+                              quadTerms.push({ factorIdx, factor, x2Coeff });
+                            }
+                            adjustedIntercept = displayBeta[0] + interceptAdj;
+                          }
+                          
+                          return (
+                            <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded font-mono text-sm">
+                              <p>Y = {Number.isFinite(adjustedIntercept) ? adjustedIntercept.toFixed(4) : 'N/A'}</p>
+                              {Array.from({length: baseFactorCount}).map((_, i) => {
+                                if (selectedFactorsForModel[i] === false) return null;
+                                const origColIdx = i + 1;
+                                const reducedColIdx = colMapReverse[origColIdx];
+                                if (reducedColIdx === undefined) return null;
                                 
-                                const halfRange = (high - low) / 2;
-                                const uncodedQuadCoeff = quadCoeff / (halfRange * halfRange);
+                                let coeff = displayBeta[reducedColIdx];
+                                if (isUncodedQuadratic && linearAdjustments[i] !== undefined) {
+                                  coeff = coeff + linearAdjustments[i];
+                                }
                                 
                                 return (
-                                  <p key={`quad-${factorIdx}`}>
-                                    &nbsp;&nbsp;&nbsp;&nbsp;{uncodedQuadCoeff >= 0 ? '+' : ''} {uncodedQuadCoeff.toFixed(4)} × {factor.name}²{factor.units ? ` (${factor.units}²)` : ''}
-                                  </p>
+                                  Number.isFinite(coeff) && (
+                                    <p key={i}>
+                                      &nbsp;&nbsp;&nbsp;&nbsp;{coeff >= 0 ? '+' : ''} {coeff.toFixed(4)} × {factors[i].name}{factors[i].type === 'continuous' && showUncoded && factors[i].units ? ` (${factors[i].units})` : ''}
+                                    </p>
+                                  )
                                 );
-                              });
-                            } else {
-                              const factorNames = continuousFactorIndices.map(({ factor }) => `${factor.name}²`).join(' + ');
-                              return (
-                                <p key="quad-coded">
-                                  &nbsp;&nbsp;&nbsp;&nbsp;{quadCoeff >= 0 ? '+' : ''} {quadCoeff.toFixed(4)} × ({factorNames})
-                                </p>
-                              );
-                            }
-                          })()}
+                              })}
 
-                          {displayBeta.every(v => !Number.isFinite(v)) && (
-                            <p className="text-muted-foreground">Unable to compute regression equation. Check data validity.</p>
-                          )}
-                          {p > 0 && (
-                            <p className="text-xs text-muted-foreground mt-2">Note: Generated factors (last {p}) are confounded and not shown.</p>
-                          )}
-                        </div>
+                              {interactionPairs.map((pair, i) => {
+                                if (selectedFactorsForModel[`int-${i}`] === false) return null;
+                                const origColIdx = baseFactorCount + 1 + i;
+                                const reducedColIdx = colMapReverse[origColIdx];
+                                if (reducedColIdx === undefined) return null;
+                                return (
+                                  Number.isFinite(displayBeta[reducedColIdx]) && (
+                                    <p key={`int-${i}`}>
+                                      &nbsp;&nbsp;&nbsp;&nbsp;{displayBeta[reducedColIdx] >= 0 ? '+' : ''} {displayBeta[reducedColIdx].toFixed(4)} × {pair.name}
+                                    </p>
+                                  )
+                                );
+                              })}
+
+                              {/* Quadratic Terms */}
+                              {showQuadraticTerm && includeCenterPoints && n_c > 0 && k > 0 && (() => {
+                                if (isUncodedQuadratic) {
+                                  return quadTerms.map(({ factorIdx, factor, x2Coeff }) => (
+                                    <p key={`quad-${factorIdx}`}>
+                                      &nbsp;&nbsp;&nbsp;&nbsp;{x2Coeff >= 0 ? '+' : ''} {x2Coeff.toFixed(4)} × {factor.name}²{factor.units ? ` (${factor.units}²)` : ''}
+                                    </p>
+                                  ));
+                                } else {
+                                  const factorNames = continuousFactorIndices.map(({ factor }) => `${factor.name}²`).join(' + ');
+                                  return (
+                                    <p key="quad-coded">
+                                      &nbsp;&nbsp;&nbsp;&nbsp;{quadCoeff >= 0 ? '+' : ''} {quadCoeff.toFixed(4)} × ({factorNames})
+                                    </p>
+                                  );
+                                }
+                              })()}
+
+                              {displayBeta.every(v => !Number.isFinite(v)) && (
+                                <p className="text-muted-foreground">Unable to compute regression equation. Check data validity.</p>
+                              )}
+                              {p > 0 && (
+                                <p className="text-xs text-muted-foreground mt-2">Note: Generated factors (last {p}) are confounded and not shown.</p>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </CardContent>
                     </Card>
 
