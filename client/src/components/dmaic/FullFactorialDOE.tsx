@@ -2153,8 +2153,8 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                     transformedStats[0].pValue = coeffStats[0].pValue;
                   }
                   
-                  //transformed[0] = beta[0] - interceptAdjustment;
-                  transformed[0] = beta[0];
+                  transformed[0] = beta[0] - interceptAdjustment;
+                  //transformed[0] = beta[0];
                   
                   // If transformation resulted in non-finite values, use coded instead
                   if (!transformed.every(v => Number.isFinite(v))) {
@@ -2164,7 +2164,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                 };
                 
                 const { displayBeta, displayCoeffStats } = transformCoefficientsAndSE();
-                displayBeta[0] = y_f_avg;
+                //displayBeta[0] = y_f_avg;
                 // Always compute uncoded coefficients for solver (independent of display toggle)
                 const getUncodedCoefficientsForSolver = () => {
                   if (!allFactorsHaveValidLevels()) {
@@ -2234,8 +2234,8 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                     }
                   }
                   
-                  //transformed[0] = beta_red[0] - interceptAdjustment;
-                  transformed[0] = beta_red[0];
+                  transformed[0] = beta_red[0] - interceptAdjustment;
+                  //transformed[0] = beta_red[0];
                   
                   // If transformation resulted in non-finite values, use coded instead
                   if (!transformed.every(v => Number.isFinite(v))) {
@@ -2317,7 +2317,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                       <CardHeader>
                         <CardTitle>ANOVA Analysis
                         {Object.values(selectedFactorsForModel).some(v => v === false) && (
-                          <span className="p-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-xl ml-24 text-sm font-normal justify-right">Reduced Model</span>
+                          <span className="p-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-xl ml-5 text-sm font-normal justify-right">Reduced Model</span>
                         )}
                         </CardTitle>
                       </CardHeader>
@@ -2643,8 +2643,12 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                       
                       return (
                         <Card>
-                          <CardHeader>
-                            <CardTitle className="text-lg">Curvature Analysis (Center Points vs Factorial Points)</CardTitle>
+                          <CardHeader className="flex flex-row items-center justify-between">
+                            <CardTitle>Curvature Analysis (Center Points vs Factorial Points)
+                            {Object.values(selectedFactorsForModel).some(v => v === false) && (
+                            <span className="p-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-xl ml-5 text-sm font-normal justify-leftt">Reduced Model</span>
+                            )}
+                            </CardTitle>
                           </CardHeader>
                           <CardContent>
                             <div className="grid grid-cols-2 gap-4">
@@ -2704,7 +2708,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                       <CardHeader className="flex flex-row items-center justify-between">
                         <CardTitle>Regression Coefficients  {showUncoded && allFactorsHaveValidLevels() ? '(Uncoded)' : '(Coded)'} <span className="text-xs"> (Uncheck to exclude from model)</span></CardTitle>
                         {Object.values(selectedFactorsForModel).some(v => v === false) && (
-                            <span className="p-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-xl ml-24 text-sm font-normal justify-right">Reduced Model</span>
+                            <span className="p-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-xl ml-5 text-sm font-normal justify-right">Reduced Model</span>
                           )}
                           <Button 
                           onClick={() => saveSelectedCoefficientsMutation.mutate()} 
@@ -2761,7 +2765,8 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                   i_reduced += 1;
                                   const vif = (() => {
                                     try {
-                                      return calculateDOEVIF(X_reduced, i_reduced + 1); // Use reduced matrix with reduced index
+                                      return calculateDOEVIF(X, i);
+                                      //return calculateDOEVIF(X_withincludeddterms, i_reduced);
                                     } catch {
                                       return null;
                                     }
@@ -3194,7 +3199,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                         <CardTitle>
                           Regression Model {showUncoded && allFactorsHaveValidLevels() ? '(Uncoded)' : '(Coded)'}
                           {Object.values(selectedFactorsForModel).some(v => v === false) && (
-                            <span className="p-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-xl ml-24 text-sm font-normal justify-right">Reduced Model</span>
+                            <span className="p-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-xl ml-5 text-sm font-normal justify-right">Reduced Model</span>
                           )}
                         </CardTitle>
                       </CardHeader>
@@ -3243,7 +3248,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                         <CardTitle>
                           Goodness of Fit
                           {Object.values(selectedFactorsForModel).some(v => v === false) && (
-                            <span className="p-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-xl ml-24 text-sm font-normal justify-right">Reduced Model</span>
+                            <span className="p-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-xl ml-5 text-sm font-normal justify-right">Reduced Model</span>
                           )}
                         </CardTitle>
                       </CardHeader>
@@ -3275,7 +3280,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                         <CardTitle>
                           Residual Analysis
                           {Object.values(selectedFactorsForModel).some(v => v === false) && (
-                            <span className="p-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-xl ml-24 text-sm font-normal justify-right">Reduced Model</span>
+                            <span className="p-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-xl ml-5 text-sm font-normal justify-right">Reduced Model</span>
                           )}
                         </CardTitle>
                       </CardHeader>
@@ -3504,7 +3509,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                         <CardTitle>
                           Solve for Target Response (Uncoded)
                           {Object.values(selectedFactorsForModel).some(v => v === false) && (
-                            <span className="p-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-xl ml-24 text-sm font-normal justify-right">Reduced Model</span>
+                            <span className="p-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-xl ml-5 text-sm font-normal justify-right">Reduced Model</span>
                           )}
                         </CardTitle>
                       </CardHeader>
