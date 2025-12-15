@@ -194,7 +194,8 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
 
   const refreshToken = user.refresh_token;
   if (!refreshToken) {
-    return res.redirect("/api/login");
+    console.log("isAuthenticated - No refresh token, session expired");
+    return res.status(401).json({ message: "Session expired. Please log in again." });
   }
 
   try {
@@ -203,6 +204,7 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
     updateUserSession(user, tokenResponse);
     return next();
   } catch (error) {
-    return res.redirect("/api/login");
+    console.log("isAuthenticated - Token refresh failed:", error);
+    return res.status(401).json({ message: "Session expired. Please log in again." });
   }
 };
