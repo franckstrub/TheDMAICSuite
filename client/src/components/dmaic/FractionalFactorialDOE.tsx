@@ -1469,7 +1469,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                           onClick={handleGeneratePlan}
                           data-testid="button-regenerate-plan"
                         >
-                          Regenerate Plan
+                          Clear all Responses
                         </Button>
                         <Button
                           onClick={handleSaveData}
