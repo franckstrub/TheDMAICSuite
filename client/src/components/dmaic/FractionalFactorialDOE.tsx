@@ -3847,12 +3847,12 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                           <div className="flex items-center gap-2">
                             <Switch
                               id="show-quadratic-term"
-                              checked={includeCenterPoints && n_c > 0 ? showQuadraticTerm : false}
+                              checked={includeCenterPoints ? showQuadraticTerm : false}
                               onCheckedChange={setShowQuadraticTerm}
-                              disabled={!includeCenterPoints || n_c === 0}
+                              disabled={!includeCenterPoints}
                               data-testid="switch-quadratic-term"
                             />
-                            <Label htmlFor="show-quadratic-term" className={`text-sm font-normal ${!includeCenterPoints || n_c === 0 ? 'text-muted-foreground' : ''}`}>Add a quadratic term</Label>
+                            <Label htmlFor="show-quadratic-term" className={`text-sm font-normal ${!includeCenterPoints ? 'text-muted-foreground' : ''}`}>Add a quadratic term</Label>
                           </div>
                         </div>
                       </CardHeader>
