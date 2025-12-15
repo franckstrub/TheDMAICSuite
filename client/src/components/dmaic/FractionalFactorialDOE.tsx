@@ -134,6 +134,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
   const [showResidualsVsOrder, setShowResidualsVsOrder] = useState(false);
   const [showNormalProbPlot, setShowNormalProbPlot] = useState(false);
   const [showParetoOfEffects, setShowParetoOfEffects] = useState(false);
+  const [showQuadraticTerm, setShowQuadraticTerm] = useState(false);
   
   // Tab persistence
   const [activeTab, setActiveTab] = useState<string>(() => {
@@ -226,7 +227,8 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
         {
           selectedFactorsForModel,
           showParetoOfEffects,
-          showUncoded
+          showUncoded,
+          showQuadraticTerm
         }
       );
     },
@@ -374,6 +376,9 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
       }
       if (config.showParetoOfEffects !== undefined) {
         setShowParetoOfEffects(config.showParetoOfEffects);
+      }
+      if (config.showQuadraticTerm !== undefined) {
+        setShowQuadraticTerm(config.showQuadraticTerm);
       }
       
       // Load selected factors for model
@@ -3825,12 +3830,25 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     {/* Regression Equation */}
                     <Card>
                       <CardHeader>
-                        <CardTitle>
-                          Regression Model {showUncoded && allFactorsHaveValidLevels() ? '(Uncoded)' : '(Coded)'}
-                          {Object.values(selectedFactorsForModel).some(v => v === false) && (
-                            <span className="p-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-xl ml-5 text-sm font-normal justify-right">Reduced Model</span>
+                        <div className="flex items-center justify-between">
+                          <CardTitle>
+                            Regression Model {showUncoded && allFactorsHaveValidLevels() ? '(Uncoded)' : '(Coded)'}
+                            {Object.values(selectedFactorsForModel).some(v => v === false) && (
+                              <span className="p-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-xl ml-5 text-sm font-normal justify-right">Reduced Model</span>
+                            )}
+                          </CardTitle>
+                          {includeCenterPoints && n_c > 0 && (
+                            <div className="flex items-center gap-2">
+                              <Switch
+                                id="show-quadratic-term"
+                                checked={showQuadraticTerm}
+                                onCheckedChange={setShowQuadraticTerm}
+                                data-testid="switch-quadratic-term"
+                              />
+                              <Label htmlFor="show-quadratic-term" className="text-sm font-normal">Add a quadratic term</Label>
+                            </div>
                           )}
-                        </CardTitle>
+                        </div>
                       </CardHeader>
                       <CardContent>
                         <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded font-mono text-sm">
@@ -3861,6 +3879,43 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                               )
                             );
                           })}
+
+                          {/* Quadratic Term */}
+                          {showQuadraticTerm && includeCenterPoints && n_c > 0 && (() => {
+                            const curvatureEffect = y_c_avg - y_f_avg;
+                            const continuousFactorIndices = factors.map((f, i) => ({ factor: f, index: i }))
+                              .filter(({ factor, index }) => factor.type === 'continuous' && selectedFactorsForModel[index] !== false);
+                            const numContinuous = continuousFactorIndices.length;
+                            if (numContinuous === 0) return null;
+                            
+                            const quadCoeff = curvatureEffect / numContinuous;
+                            
+                            if (showUncoded && allFactorsHaveValidLevels()) {
+                              return continuousFactorIndices.map(({ factor, index: factorIdx }) => {
+                                if (factor.type !== 'continuous') return null;
+                                const low = parseFloat(String(factor.lowValue));
+                                const high = parseFloat(String(factor.highValue));
+                                if (isNaN(low) || isNaN(high)) return null;
+                                
+                                const halfRange = (high - low) / 2;
+                                const uncodedQuadCoeff = quadCoeff / (halfRange * halfRange);
+                                
+                                return (
+                                  <p key={`quad-${factorIdx}`}>
+                                    &nbsp;&nbsp;&nbsp;&nbsp;{uncodedQuadCoeff >= 0 ? '+' : ''} {uncodedQuadCoeff.toFixed(4)} × {factor.name}²{factor.units ? ` (${factor.units}²)` : ''}
+                                  </p>
+                                );
+                              });
+                            } else {
+                              const factorNames = continuousFactorIndices.map(({ factor }) => `${factor.name}²`).join(' + ');
+                              return (
+                                <p key="quad-coded">
+                                  &nbsp;&nbsp;&nbsp;&nbsp;{quadCoeff >= 0 ? '+' : ''} {quadCoeff.toFixed(4)} × ({factorNames})
+                                </p>
+                              );
+                            }
+                          })()}
+
                           {displayBeta.every(v => !Number.isFinite(v)) && (
                             <p className="text-muted-foreground">Unable to compute regression equation. Check data validity.</p>
                           )}
