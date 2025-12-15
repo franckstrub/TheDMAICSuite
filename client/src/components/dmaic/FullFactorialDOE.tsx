@@ -184,7 +184,8 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
         `/api/projects/${projectId}/solutions/${solutionId}/doe-full`,
         {
           selectedFactorsForModel,
-          showParetoOfEffects
+          showParetoOfEffects,
+          showUncoded
         }
       );
     },
@@ -1028,7 +1029,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                           onClick={handleGeneratePlan}
                           data-testid="button-regenerate-plan"
                         >
-                          Clear all Responses
+                           Regenerate Plan
                         </Button>
                         <Button
                           onClick={handleSaveData}
