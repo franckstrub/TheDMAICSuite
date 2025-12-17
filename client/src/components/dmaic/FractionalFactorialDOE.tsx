@@ -2624,19 +2624,55 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   beta_red = Xty_red.map(v => v / (XtX_red[0][0] || 1));
                 }
 
-                // Calculate predictions and residuals for reduced model
-                const predictions_red = X_reduced.map(row => row.reduce((sum, val, i) => sum + val * beta_red[i], 0));
+               // Calculate predictions for reduced model with and without quadratic terms in model first (Note: we are in coded view)
+                let predictions_red = [];                                     
+                if (includeCenterPoints && n_c > 0 && selectedFactorsForModel['centerPoint'] !== false && k > 0) {         
+                  // Calculate quadratic coefficients for continuous factors based on curvature effect              
+                  const continuousFactorIndices = factors.map((f, i) => ({ factor: f, index: i }))
+                    .filter(({ factor, index }) => factor.type === 'continuous' /*&& selectedFactorsForModel[index] !== false*/ );
+                  const kl = continuousFactorIndices.length;
+                  const curvatureEffect = y_c_avg - y_f_avg;
+                  const quadCoeff = kl > 0 ? curvatureEffect/kl : 0;                                
+                  const quadTerms: Array<{ factorIdx: number; factor: any; x2Coeff: number }> = []; // not very elegant... but efficient. We could have made a matrix for each factor with a quadCoeff curvatureEffect / kl
+                  // Build quadratic terms for each continuous factor
+                  //for (const { factor, index: factorIdx } of continuousFactorIndices) {
+                  factors.forEach((factor, factorIdx) => {
+                    //if (factor.type !== 'continuous') continue;                    
+                    const x2Coeff = factor.type === 'continuous' ? quadCoeff : 0;
+                    quadTerms.push({ factorIdx, factor, x2Coeff });
+                  });                    
+                  // Get base linear predictions first
+                  const predictions_red_lin = X_reduced.map(row => row.reduce((sum, val, i) => sum + val * beta_red[i], 0));
+                  
+                  // Add quadratic adjustments when there is a centerpoint (0 level in coded view)
+                  predictions_red = predictions_red_lin.map((basePred, rowIdx) => {
+                    let pred = basePred; // get linear prediction
+                    //for (const { factorIdx, x2Coeff } of quadTerms) {
+                    for (let factorIdx = 0; factorIdx < factors.length; factorIdx++) {
+                      const xVal = X[rowIdx][factorIdx+1]; // get original X values (-1, 0, 1) in coded view
+                      //pred += xVal === 0 ? quadTerms[rowIdx].x2Coeff : 0; // Add full quadratic effect only at center point (All continuous Factors set to 0 in coded view)
+                      pred += xVal === 0 ? quadTerms[factorIdx].x2Coeff : 0; // Add full quadratic effect only at center point (All continuous Factors set to 0 in coded view)
+                    }
+                    return pred;
+                  });                       
+                }
+                else {
+                  predictions_red = X_reduced.map(row => row.reduce((sum, val, i) => sum + val * beta_red[i], 0));                  
+                }
                 const residuals_red = y.map((val, i) => val - predictions_red[i]);
-                const mean_res = residuals_red.reduce((a, b) => a + b, 0) / n;
-                const residualSS_red = residuals_red.reduce((sum, res) => sum + Math.pow(res - mean_res, 2), 0);
-                const SS_res =  (includeCenterPoints && selectedFactorsForModel['centerPoint'] !== false) ? residualSS_red - SS_curvature : residualSS_red;
+                const residualMean = residuals_red.reduce((a, b) => a + b, 0) / n;
+                const residualSS_red = residuals_red.reduce((sum, res) => sum + Math.pow(res - residualMean, 2), 0);
+                //Adjust SS_res with - SS_Curvature (Center Point, quadratic term) to have correct calculations when Center Point is included and selected
+                
+                //const SS_res =  (includeCenterPoints && selectedFactorsForModel['centerPoint'] !== false) ? residualSS_red - SS_curvature : residualSS_red;
+                const SS_res =  residualSS_red;
                 const errorDF_red = n - p_reduced - dfCurvature;
                 const errorMS = errorDF_red > 0 ? SS_res / errorDF_red : 0;
                 const R_sq = 1 - SS_res / SS_tot;
                 const adj_R_sq = Math.max(0, 1 - (1 - R_sq) * (n - 1) / (n - p_reduced - dfCurvature));
                 const rmse = Math.sqrt(SS_res / (n - p_reduced- dfCurvature));
-                const residualMean = residuals_red.reduce((a, b) => a + b, 0) / residuals_red.length;
-                const residualStd = Math.sqrt(residuals_red.reduce((sum, r) => sum + Math.pow(r - residualMean, 2), 0) / (residuals_red.length - 1));
+                //const residualMean = residuals_red.reduce((a, b) => a + b, 0) / residuals_red.length;
+                const residualStd = Math.sqrt(residualSS_red / (residuals_red.length - 1));
                 const mse = SS_res / (n - p_reduced - dfCurvature);
                 
                 // Calculate standard errors and t-values for selected coefficients using reduced model
@@ -3851,7 +3887,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                           const isUncodedQuadratic = showUncoded && allFactorsHaveValidLevels() && includeCenterPoints && n_c  > 0 && selectedFactorsForModel['centerPoint'] !== false;
                           
                           const continuousFactorIndices = factors.map((f, i) => ({ factor: f, index: i }))
-                            .filter(({ factor, index }) => factor.type === 'continuous' && selectedFactorsForModel[index] !== false);
+                            .filter(({ factor, index }) => factor.type === 'continuous' /* && selectedFactorsForModel[index] !== false */);
                           const numContinuous = continuousFactorIndices.length;
                           const curvatureEffect = y_c_avg - y_f_avg;
                           const quadCoeff = numContinuous > 0 ? curvatureEffect / numContinuous : 0;

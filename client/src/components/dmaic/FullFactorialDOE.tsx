@@ -2002,20 +2002,55 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                   beta_red = Xty_red.map(v => v / (XtX_red[0][0] || 1));
                 }
 
-                // Calculate predictions and residuals for reduced model
-                const predictions_red = X_reduced.map(row => row.reduce((sum, val, i) => sum + val * beta_red[i], 0));
+               // Calculate predictions for reduced model with and without quadratic terms in model first (Note: we are in coded view)
+                let predictions_red = [];                                     
+                if (includeCenterPoints && n_c > 0 && selectedFactorsForModel['centerPoint'] !== false && k > 0) {         
+                  // Calculate quadratic coefficients for continuous factors based on curvature effect              
+                  const continuousFactorIndices = factors.map((f, i) => ({ factor: f, index: i }))
+                    .filter(({ factor, index }) => factor.type === 'continuous' /*&& selectedFactorsForModel[index] !== false*/ );
+                  const kl = continuousFactorIndices.length;
+                  const curvatureEffect = y_c_avg - y_f_avg;
+                  const quadCoeff = kl > 0 ? curvatureEffect/kl : 0;                                
+                  const quadTerms: Array<{ factorIdx: number; factor: any; x2Coeff: number }> = []; // not very elegant... but efficient. We could have made a matrix for each factor with a quadCoeff curvatureEffect / kl
+                  // Build quadratic terms for each continuous factor
+                  //for (const { factor, index: factorIdx } of continuousFactorIndices) {
+                  factors.forEach((factor, factorIdx) => {
+                    //if (factor.type !== 'continuous') continue;                    
+                    const x2Coeff = factor.type === 'continuous' ? quadCoeff : 0;
+                    quadTerms.push({ factorIdx, factor, x2Coeff });
+                  });                    
+                  // Get base linear predictions first
+                  const predictions_red_lin = X_reduced.map(row => row.reduce((sum, val, i) => sum + val * beta_red[i], 0));
+                  
+                  // Add quadratic adjustments when there is a centerpoint (0 level in coded view)
+                  predictions_red = predictions_red_lin.map((basePred, rowIdx) => {
+                    let pred = basePred; // get linear prediction
+                    //for (const { factorIdx, x2Coeff } of quadTerms) {
+                    for (let factorIdx = 0; factorIdx < factors.length; factorIdx++) {
+                      const xVal = X[rowIdx][factorIdx+1]; // get original X values (-1, 0, 1) in coded view
+                      //pred += xVal === 0 ? quadTerms[rowIdx].x2Coeff : 0; // Add full quadratic effect only at center point (All continuous Factors set to 0 in coded view)
+                      pred += xVal === 0 ? quadTerms[factorIdx].x2Coeff : 0; // Add full quadratic effect only at center point (All continuous Factors set to 0 in coded view)
+                    }
+                    return pred;
+                  });                       
+                }
+                else {
+                  predictions_red = X_reduced.map(row => row.reduce((sum, val, i) => sum + val * beta_red[i], 0));                  
+                }
                 const residuals_red = y.map((val, i) => val - predictions_red[i]);
-                const mean_res = residuals_red.reduce((a, b) => a + b, 0) / n;
-                const residualSS_red = residuals_red.reduce((sum, res) => sum + Math.pow(res - mean_res, 2), 0);
-                const SS_res =  (includeCenterPoints && selectedFactorsForModel['centerPoint'] !== false) ? residualSS_red - SS_curvature : residualSS_red;
-                //const SS_res = residualSS_red;
+                const residualMean = residuals_red.reduce((a, b) => a + b, 0) / n;
+                const residualSS_red = residuals_red.reduce((sum, res) => sum + Math.pow(res - residualMean, 2), 0);
+                //Adjust SS_res with - SS_Curvature (Center Point, quadratic term) to have correct calculations when Center Point is included and selected
+                
+                //const SS_res =  (includeCenterPoints && selectedFactorsForModel['centerPoint'] !== false) ? residualSS_red - SS_curvature : residualSS_red;
+                const SS_res =  residualSS_red;
                 const errorDF_red = n - p_reduced - dfCurvature;
                 const errorMS = errorDF_red > 0 ? SS_res / errorDF_red : 0;
                 const R_sq = 1 - SS_res / SS_tot;
                 const adj_R_sq = Math.max(0, 1 - (1 - R_sq) * (n - 1) / (n - p_reduced - dfCurvature));
                 const rmse = Math.sqrt(SS_res / (n - p_reduced- dfCurvature));
-                const residualMean = residuals_red.reduce((a, b) => a + b, 0) / residuals_red.length;
-                const residualStd = Math.sqrt(residuals_red.reduce((sum, r) => sum + Math.pow(r - residualMean, 2), 0) / (residuals_red.length - 1));
+                //const residualMean = residuals_red.reduce((a, b) => a + b, 0) / residuals_red.length;
+                const residualStd = Math.sqrt(residualSS_red / (residuals_red.length - 1));
                 const mse = SS_res / (n - p_reduced - dfCurvature);
                 
                 // Calculate standard errors and t-values for selected coefficients using reduced model
@@ -2245,68 +2280,195 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                   return transformed;
                 };
                 
-                const handleSolve = () => {
-                  // Check if solve factor is included in the model
-                  if (selectedFactorsForModel[solveFactorIdx] === false || baseFactorCount < 1) {
-                    setSolverResult(null);
-                    return;
-                  }
-                  
-                  // Check if target Y is set (targetYDisplay should be non-empty and targetY should be a valid number)
-                  if (targetYDisplay === '' || !Number.isFinite(targetY)) {
-                    setSolverResult(null);
-                    return;
-                  }
-                  
-                  // Get the reduced column index for the solve factor
-                  const solveOrigCol = solveFactorIdx + 1;
-                  const solveReducedCol = colMapReverse[solveOrigCol];
-                  if (solveReducedCol === undefined) {
-                    setSolverResult(null);
-                    return;
-                  }
-                  
-                  // Always use uncoded coefficients for solver
-                  const solverBeta = getUncodedCoefficientsForSolver();
-                  
-                  if (solverBeta[solveReducedCol] === 0) {
-                    setSolverResult(null);
-                    return;
-                  }
-                  
-                  // Check that ALL non-solve factors have constraint values entered
-                  for (let i = 0; i < factors.length; i++) {
-                    if (i !== solveFactorIdx && selectedFactorsForModel[i] !== false) {
-                      const constraintVal = constraintValues[i];
-                      // If constraint value is not set (null or undefined), don't solve
-                      if (constraintVal === null || constraintVal === undefined || !Number.isFinite(constraintVal)) {
-                        setSolverResult(null);
-                        return;
-                      }
-                    }
-                  }
-                  
-                  let constraintSum = 0;
-                  for (let i = 0; i < factors.length; i++) {
-                    // Only include constraints for factors that are NOT the solve factor and ARE included in the model
-                    if (i !== solveFactorIdx && selectedFactorsForModel[i] !== false) {
-                      const constraintVal = constraintValues[i];
-                      if (Number.isFinite(constraintVal)) {
-                        const origCol = i + 1;
-                        const redCol = colMapReverse[origCol];
-                        if (redCol !== undefined) {
-                          // Use solverBeta (always uncoded coefficients)
-                          constraintSum += solverBeta[redCol] * constraintVal;
-                        }
-                      }
-                    }
-                  }
-                  // Solve using UNCODED equation: targetY = β0_uncoded + Σ_{j≠i} βj_uncoded * constraint_j + βi_uncoded * Xi
-                  // Therefore: Xi = (targetY - β0_uncoded - constraintSum) / βi_uncoded
-                  // User enters target and constraints in uncoded space, result is also uncoded
-                  let result = (targetY - solverBeta[0] - constraintSum) / solverBeta[solveReducedCol];
-                  setSolverResult(result);
-                };
+const handleSolve = () => {
+  // Check if solve factor is included in the model
+  if (selectedFactorsForModel[solveFactorIdx] === false || baseFactorCount < 1) {
+    setSolverResult(null);
+    return;
+  }
+  
+  // Check if target Y is set
+  if (targetYDisplay === '' || !Number.isFinite(targetY)) {
+    setSolverResult(null);
+    return;
+  }
+  
+  // Get the reduced column index for the solve factor
+  const solveOrigCol = solveFactorIdx + 1;
+  const solveReducedCol = colMapReverse[solveOrigCol];
+  if (solveReducedCol === undefined) {
+    setSolverResult(null);
+    return;
+  }
+  
+  // Always use uncoded coefficients for solver
+  const solverBeta = getUncodedCoefficientsForSolver();
+  
+  if (solverBeta[solveReducedCol] === 0) {
+    setSolverResult(null);
+    return;
+  }
+  
+  // Check that ALL non-solve factors have constraint values entered
+  for (let i = 0; i < factors.length; i++) {
+    if (i !== solveFactorIdx && selectedFactorsForModel[i] !== false) {
+      const constraintVal = constraintValues[i];
+      if (constraintVal === null || constraintVal === undefined || !Number.isFinite(constraintVal)) {
+        setSolverResult(null);
+        return;
+      }
+    }
+  }
+  
+  let constSum = 0;
+  let constraintSum = 0;
+  let quadraticSum = 0;
+  
+  // Calculate quadratic coefficients if center points are included
+  let quadCoeffUncoded = 0;
+  let solveFactorHasQuadTerm = false;
+  
+  if (includeCenterPoints && n_c > 0 && selectedFactorsForModel['centerPoint'] !== false && k > 0) {
+    const continuousFactorIndices = factors.map((f, i) => ({ factor: f, index: i }))
+      .filter(({ factor }) => factor.type === 'continuous');
+    const kl = continuousFactorIndices.length;
+    const curvatureEffect = y_c_avg - y_f_avg;
+    const quadCoeff_coded = kl > 0 ? curvatureEffect / kl : 0;
+    
+    // Convert quadratic coefficient from coded to uncoded space
+    // For each continuous factor, need to transform x² term
+    for (let i = 0; i < factors.length; i++) {
+      const factor = factors[i];
+      if (factor.type === 'continuous') {
+        const low = parseFloat(String(factor.lowValue));
+        const high = parseFloat(String(factor.highValue));
+        if (!isNaN(low) && !isNaN(high)) {
+          const halfRange = (high - low) / 2;
+          const midpoint = (high + low) / 2;
+          const halfRangeSq = halfRange * halfRange;
+          
+          // In coded space: x_coded = (x_uncoded - midpoint) / halfRange
+          // x_coded² = (x_uncoded - midpoint)² / halfRange²
+          // So coefficient for x_uncoded² term is: quadCoeff_coded / halfRange²
+          const quadCoeff_uncoded_for_factor = quadCoeff_coded / halfRangeSq;
+          
+          if (i === solveFactorIdx) {
+            quadCoeffUncoded = quadCoeff_uncoded_for_factor;
+            solveFactorHasQuadTerm = true;
+          } else {
+            // Add quadratic contribution from constrained factors
+            const constraintVal = constraintValues[i];
+            if (Number.isFinite(constraintVal)) {
+              quadraticSum += quadCoeff_uncoded_for_factor * constraintVal * constraintVal;
+              
+              // Also add linear adjustment term: -2 * quadCoeff * midpoint / halfRange²
+              const linearAdj = -2 * quadCoeff_uncoded_for_factor * midpoint * constraintVal;
+              const origCol = i + 1;
+              const redCol = colMapReverse[origCol];
+              if (redCol !== undefined) {
+                constraintSum += linearAdj;
+              }
+              //constant adjustment due to x_coded² = (x_uncoded - midpoint)² / halfRange²
+              constSum += quadCoeff_uncoded_for_factor * midpoint * midpoint;
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  // Add linear terms from non-solve factors
+  for (let i = 0; i < factors.length; i++) {
+    if (i !== solveFactorIdx && selectedFactorsForModel[i] !== false) {
+      const constraintVal = constraintValues[i];
+      if (Number.isFinite(constraintVal)) {
+        const origCol = i + 1;
+        const redCol = colMapReverse[origCol];
+        if (redCol !== undefined) {
+          constraintSum += solverBeta[redCol] * constraintVal;
+        }
+      }
+    }
+  }
+  
+  // Solve the equation
+  let result;
+  
+  if (solveFactorHasQuadTerm && quadCoeffUncoded !== 0) {
+    // Quadratic equation: quadCoeff * X² + linearCoeff * X + (intercept + constraintSum + constSum + quadraticSum - targetY) = 0
+    const a = quadCoeffUncoded;
+    const b = solverBeta[solveReducedCol];
+    const c = solverBeta[0] + constSum + constraintSum + quadraticSum - targetY;
+    
+    // Add linear adjustment for solve factor if it's continuous
+    const solveFactor = factors[solveFactorIdx];
+    if (solveFactor.type === 'continuous') {
+      const low = parseFloat(String(solveFactor.lowValue));
+      const high = parseFloat(String(solveFactor.highValue));
+      if (!isNaN(low) && !isNaN(high)) {
+        const halfRange = (high - low) / 2;
+        const midpoint = (high + low) / 2;
+        const halfRangeSq = halfRange * halfRange;
+        const continuousFactorIndices = factors.map((f, i) => ({ factor: f, index: i }))
+          .filter(({ factor }) => factor.type === 'continuous');
+        const kl = continuousFactorIndices.length;
+        const curvatureEffect = y_c_avg - y_f_avg;
+        const quadCoeff_coded = kl > 0 ? curvatureEffect / kl : 0;
+        // In coded space: x_coded = (x_uncoded - midpoint) / halfRange
+        // x_coded² = (x_uncoded - midpoint)² / halfRange²
+        // So coefficient for x_uncoded² term is: quadCoeff_coded / halfRange²
+        //const quadCoeff_uncoded_for_factor = quadCoeff_coded / halfRangeSq;
+        
+        const linearAdj = -2 * quadCoeffUncoded * midpoint;
+        const b_adjusted = b + linearAdj;
+        const constantAdj = quadCoeffUncoded * midpoint * midpoint;
+        const c_adjusted = c + constantAdj;
+        
+        // Solve quadratic equation: a*X² + b_adjusted*X + c_adjusted = 0
+        const discriminant = b_adjusted * b_adjusted - 4 * a * c_adjusted;
+        
+        if (discriminant < 0) {
+          setSolverResult(null); // No real solution
+          return;
+        }
+        
+        const sqrtDiscriminant = Math.sqrt(discriminant);
+        const solution1 = (-b_adjusted + sqrtDiscriminant) / (2 * a);
+        const solution2 = (-b_adjusted - sqrtDiscriminant) / (2 * a);
+        result = solution1;
+        result = solution2;
+        
+        // Choose solution within factor bounds, or closest to midpoint
+        /*const inBounds1 = solution1 >= low && solution1 <= high;
+        const inBounds2 = solution2 >= low && solution2 <= high;
+        
+        if (inBounds1 && inBounds2) {
+          // Both in bounds, choose closest to midpoint
+          result = Math.abs(solution1 - midpoint) < Math.abs(solution2 - midpoint) ? solution1 : solution2;
+        } else if (inBounds1) {
+          result = solution1;
+        } else if (inBounds2) {
+          result = solution2;
+        } else {
+          // Neither in bounds, return null or closest bound
+          setSolverResult(null);
+          return;
+        } */
+      } else {
+        setSolverResult(null);
+        return;
+      }
+    } else {
+      setSolverResult(null);
+      return;
+    }
+  } else {
+    // Linear equation: targetY = β0 + constraintSum + quadraticSum + β_solve * X
+    result = (targetY - solverBeta[0] - constraintSum) / solverBeta[solveReducedCol];
+  }
+  
+  setSolverResult(result);
+};
 
                 // Store solve function in ref so top-level useEffect can call it
                 solveRef.current = handleSolve;
@@ -2946,7 +3108,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                 const y_f_avg = factorialResponses.reduce((a, b) => a + b, 0) / factorialResponses.length;
                                 const curvatureEffect = y_c_avg - y_f_avg;
                                 // Center point coefficient = curvature effect / number of main factors
-                                //const curvatureCoeff = factors.length > 0 ? curvatureEffect / factors.length : curvatureEffect;
+                                //const curvatureCoeff = factors.length > 0 ? curvatureEffect / factors.length : curvatureEffect; by conventiomn in coded and uncoded units, effect is = coeff and Center Point is = 1 or 0.
                                 const curvatureCoeff = curvatureEffect;
                                 
                                 // Calculate curvature statistics (same as Curvature Analysis Card)
@@ -3237,7 +3399,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                           const isUncodedQuadratic = showUncoded && allFactorsHaveValidLevels() && includeCenterPoints && n_c  > 0 && selectedFactorsForModel['centerPoint'] !== false;
                           
                           const continuousFactorIndices = factors.map((f, i) => ({ factor: f, index: i }))
-                            .filter(({ factor, index }) => factor.type === 'continuous' && selectedFactorsForModel[index] !== false);
+                            .filter(({ factor, index }) => factor.type === 'continuous' /*&& selectedFactorsForModel[index] !== false*/ );
                           const k = continuousFactorIndices.length;
                           const curvatureEffect = y_c_avg - y_f_avg;
                           const quadCoeff = k > 0 ? curvatureEffect / k : 0;
@@ -3382,7 +3544,10 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                       <CardContent>
                         <div className="space-y-4">
                           <div className="border-t pt-4">
-                            {(() => {
+                            {(() => {                
+                              //const residualMean = residuals_red.reduce((a, b) => a + b, 0) / residuals_red.length;
+                              //const residualStd = Math.sqrt(residuals_red.reduce((sum, r) => sum + Math.pow(r - residualMean, 2), 0) / (residuals_red.length - 1));
+            
                               const adTest = performNormalityTest(residuals_red, residualMean, residualStd);
                               
                               return (
