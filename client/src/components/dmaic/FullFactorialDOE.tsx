@@ -93,7 +93,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
   const [solveFactorIdx, setSolveFactorIdx] = useState(0);
   const [targetY, setTargetY] = useState(0);
   const [targetYDisplay, setTargetYDisplay] = useState('');
-  const [solverResult, setSolverResult] = useState<number[] | null>(null);
+   const [solverResult, setSolverResult] = useState<number[] | null>(null);
   const [constraintValues, setConstraintValues] = useState<Record<number, number | null>>({});
   const [constraintDisplay, setConstraintDisplay] = useState<Record<number, string>>({});
   
