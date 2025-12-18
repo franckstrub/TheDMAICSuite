@@ -2973,6 +2973,40 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                       }
                     }
                   }
+                  
+                  // Add interaction terms contributions
+                  // For interactions NOT involving the solve factor, multiply by all constrained factor values
+                  for (let i = 0; i < interactionPairs.length; i++) {
+                    if (selectedFactorsForModel[`int-${i}`] === false) continue;
+                    
+                    const origCol = k + 1 + i;
+                    const redCol = colMapReverse[origCol];
+                    if (redCol === undefined) continue;
+                    
+                    const pair = interactionPairs[i];
+                    const involvesSolveFactor = pair.indices.includes(solveFactorIdx);
+                    
+                    if (!involvesSolveFactor) {
+                      // All factors in this interaction are constrained - multiply coefficient by all constraint values
+                      let productOfConstraints = 1;
+                      let allValid = true;
+                      
+                      for (const idx of pair.indices) {
+                        const constraintVal = constraintValues[idx];
+                        if (Number.isFinite(constraintVal)) {
+                          productOfConstraints *= constraintVal;
+                        } else {
+                          allValid = false;
+                          break;
+                        }
+                      }
+                      
+                      if (allValid) {
+                        constraintSum += solverBeta[redCol] * productOfConstraints;
+                      }
+                    }
+                  }
+                  
                   // Solve using UNCODED equation: targetY = β0_uncoded + Σ_{j≠i} βj_uncoded * constraint_j + βi_uncoded * Xi
                   // Therefore: Xi = (targetY - β0_uncoded - constraintSum) / βi_uncoded
                   // User enters target and constraints in uncoded space, result is also uncoded

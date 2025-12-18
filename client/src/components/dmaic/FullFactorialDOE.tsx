@@ -2409,6 +2409,40 @@ const handleSolve = () => {
     }
   }
   
+  // Add interaction terms contributions
+  // For an interaction involving the solve factor, the coefficient contributes to the solve factor's linear term
+  // For interactions NOT involving the solve factor, multiply by all constrained factor values and add to constraintSum
+  for (let i = 0; i < interactionPairs.length; i++) {
+    if (selectedFactorsForModel[`int-${i}`] === false) continue;
+    
+    const origCol = baseFactorCount + 1 + i;
+    const redCol = colMapReverse[origCol];
+    if (redCol === undefined) continue;
+    
+    const pair = interactionPairs[i];
+    const involvesSolveFactor = pair.indices.includes(solveFactorIdx);
+    
+    if (!involvesSolveFactor) {
+      // All factors in this interaction are constrained - multiply coefficient by all constraint values
+      let productOfConstraints = 1;
+      let allValid = true;
+      
+      for (const idx of pair.indices) {
+        const constraintVal = constraintValues[idx];
+        if (Number.isFinite(constraintVal)) {
+          productOfConstraints *= constraintVal;
+        } else {
+          allValid = false;
+          break;
+        }
+      }
+      
+      if (allValid) {
+        constraintSum += solverBeta[redCol] * productOfConstraints;
+      }
+    }
+  }
+  
   // Solve the equation
   let result;
   
