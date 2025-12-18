@@ -2852,6 +2852,9 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   }
                   
                   // Transform N-way interaction coefficients (offset by k main effects)
+                  // For interaction β₁₂*x₁_coded*x₂_coded, expanding (x₁-m₁)/h₁ * (x₂-m₂)/h₂ gives:
+                  // Interaction coeff: β₁₂/(h₁*h₂)
+                  // Intercept adjustment: +β₁₂*m₁*m₂/(h₁*h₂) (added to intercept, so subtract from adjustment)
                   for (let i = 0; i < interactionPairs.length; i++) {
                     if (selectedFactorsForModel[`int-${i}`] === false) continue;
                     
@@ -2869,6 +2872,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     
                     if (allContinuousWithLevels) {
                       let halfRangeProduct = 1;
+                      let centerOverHalfRangeProduct = 1;
                       let allValid = true;
                       
                       for (const idx of pair.indices) {
@@ -2880,18 +2884,22 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                             allValid = false;
                             break;
                           }
-                          halfRangeProduct *= (high - low) / 2;
+                          const halfRange = (high - low) / 2;
+                          const center = (high + low) / 2;
+                          halfRangeProduct *= halfRange;
+                          centerOverHalfRangeProduct *= center / halfRange;
                         }
                       }
                       
                       if (allValid && Number.isFinite(beta_red[colIdx])) {
                         transformed[colIdx] = beta_red[colIdx] / halfRangeProduct;
+                        // Intercept gets +β*m₁*m₂/(h₁*h₂) = β * (m₁/h₁)*(m₂/h₂), so subtract from adjustment
+                        interceptAdjustment -= beta_red[colIdx] * centerOverHalfRangeProduct;
                       }
                     }
                   }
                   
                   transformed[0] = beta_red[0] - interceptAdjustment;
-                  //transformed[0] = beta_red[0];
                   
                   // If transformation resulted in non-finite values, use coded instead
                   if (!transformed.every(v => Number.isFinite(v))) {
