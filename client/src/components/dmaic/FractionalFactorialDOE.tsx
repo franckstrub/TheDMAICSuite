@@ -2903,7 +2903,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                       if (allValid && Number.isFinite(beta_red[colIdx])) {
                         transformed[colIdx] = beta_red[colIdx] / halfRangeProduct;
                         // Intercept gets +β*m₁*m₂/(h₁*h₂) = β * (m₁/h₁)*(m₂/h₂), so subtract from adjustment
-                        interceptAdjustment -= beta_red[colIdx] * centerOverHalfRangeProduct;
+                        interceptAdjustment += beta_red[colIdx] * centerOverHalfRangeProduct;
                       }
                     }
                   }
@@ -2924,7 +2924,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     return;
                   }
                   
-                  // Check if target Y is set (targetYDisplay should be non-empty and targetY should be a valid number)
+                  // Check if target Y is set
                   if (targetYDisplay === '' || !Number.isFinite(targetY)) {
                     setSolverResult(null);
                     return;
@@ -2950,7 +2950,6 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   for (let i = 0; i < factors.length; i++) {
                     if (i !== solveFactorIdx && selectedFactorsForModel[i] !== false) {
                       const constraintVal = constraintValues[i];
-                      // If constraint value is not set (null or undefined), don't solve
                       if (constraintVal === null || constraintVal === undefined || !Number.isFinite(constraintVal)) {
                         setSolverResult(null);
                         return;
@@ -2958,16 +2957,73 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     }
                   }
                   
+                  let constSum = 0;
                   let constraintSum = 0;
+                  let interactionContribution = 0;
+
+                  let quadraticSum = 0;
+                  
+                  // Calculate quadratic coefficients if center points are included
+                  let quadCoeffUncoded = 0;
+                  let solveFactorHasQuadTerm = false;
+                  
+                  if (includeCenterPoints && n_c > 0 && selectedFactorsForModel['centerPoint'] !== false && k > 0) {
+                    const continuousFactorIndices = factors.map((f, i) => ({ factor: f, index: i }))
+                      .filter(({ factor }) => factor.type === 'continuous');
+                    const kl = continuousFactorIndices.length;
+                    const curvatureEffect = y_c_avg - y_f_avg;
+                    const quadCoeff_coded = kl > 0 ? curvatureEffect / kl : 0;
+                    
+                    // Convert quadratic coefficient from coded to uncoded space
+                    // For each continuous factor, need to transform x² term
+                    for (let i = 0; i < factors.length; i++) {
+                      const factor = factors[i];
+                      if (factor.type === 'continuous') {
+                        const low = parseFloat(String(factor.lowValue));
+                        const high = parseFloat(String(factor.highValue));
+                        if (!isNaN(low) && !isNaN(high)) {
+                          const halfRange = (high - low) / 2;
+                          const midpoint = (high + low) / 2;
+                          const halfRangeSq = halfRange * halfRange;
+                          
+                          // In coded space: x_coded = (x_uncoded - midpoint) / halfRange
+                          // x_coded² = (x_uncoded - midpoint)² / halfRange²
+                          // So coefficient for x_uncoded² term is: quadCoeff_coded / halfRange²
+                          const quadCoeff_uncoded_for_factor = quadCoeff_coded / halfRangeSq;
+                          
+                          if (i === solveFactorIdx) {
+                            quadCoeffUncoded = quadCoeff_uncoded_for_factor;
+                            solveFactorHasQuadTerm = true;
+                          } else {
+                            // Add quadratic contribution from constrained factors
+                            const constraintVal = constraintValues[i];
+                            if (Number.isFinite(constraintVal)) {
+                              quadraticSum += quadCoeff_uncoded_for_factor * constraintVal * constraintVal;
+                              
+                              // Also add linear adjustment term: -2 * quadCoeff * midpoint / halfRange²
+                              const linearAdj = -2 * quadCoeff_uncoded_for_factor * midpoint * constraintVal;
+                              const origCol = i + 1;
+                              const redCol = colMapReverse[origCol];
+                              if (redCol !== undefined) {
+                                constraintSum += linearAdj;
+                              }
+                              //constant adjustment due to x_coded² = (x_uncoded - midpoint)² / halfRange²
+                              constSum += quadCoeff_uncoded_for_factor * midpoint * midpoint;
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                  
+                  // Add linear terms from non-solve factors
                   for (let i = 0; i < factors.length; i++) {
-                    // Only include constraints for factors that are NOT the solve factor and ARE included in the model
                     if (i !== solveFactorIdx && selectedFactorsForModel[i] !== false) {
                       const constraintVal = constraintValues[i];
                       if (Number.isFinite(constraintVal)) {
                         const origCol = i + 1;
                         const redCol = colMapReverse[origCol];
                         if (redCol !== undefined) {
-                          // Use solverBeta (always uncoded coefficients)
                           constraintSum += solverBeta[redCol] * constraintVal;
                         }
                       }
@@ -2975,11 +3031,12 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   }
                   
                   // Add interaction terms contributions
-                  // For interactions NOT involving the solve factor, multiply by all constrained factor values
+                  // For an interaction involving the solve factor, the coefficient contributes to the solve factor's linear term
+                  // For interactions NOT involving the solve factor, multiply by all constrained factor values and add to constraintSum
                   for (let i = 0; i < interactionPairs.length; i++) {
                     if (selectedFactorsForModel[`int-${i}`] === false) continue;
                     
-                    const origCol = k + 1 + i;
+                    const origCol = baseFactorCount + 1 + i;
                     const redCol = colMapReverse[origCol];
                     if (redCol === undefined) continue;
                     
@@ -3005,13 +3062,95 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                         constraintSum += solverBeta[redCol] * productOfConstraints;
                       }
                     }
+                    else {      // Interaction involves solve factor - contribute to its linear term
+                      let productOfOtherConstraints = 1;
+                      let allValid = true;
+                      
+                      for (const idx of pair.indices) {
+                        if (idx != solveFactorIdx) {
+                          const constraintVal = constraintValues[idx];
+                          if (Number.isFinite(constraintVal)) {
+                            productOfOtherConstraints *= constraintVal;
+                          } else {
+                            allValid = false;
+                            break;
+                          }
+                        }
+                      }
+                      
+                      if (allValid) {
+                        // Add to linear term for solve factor
+                        // This effectively modifies the coefficient for the solve factor
+                        interactionContribution = solverBeta[redCol] * productOfOtherConstraints;        
+                      }   
+                    }
                   }
+  
+                  // Solve the equation
+                  let result;
                   
-                  // Solve using UNCODED equation: targetY = β0_uncoded + Σ_{j≠i} βj_uncoded * constraint_j + βi_uncoded * Xi
-                  // Therefore: Xi = (targetY - β0_uncoded - constraintSum) / βi_uncoded
-                  // User enters target and constraints in uncoded space, result is also uncoded
-                  let result = (targetY - solverBeta[0] - constraintSum) / solverBeta[solveReducedCol];
-                  setSolverResult([result]);
+                  if (solveFactorHasQuadTerm && quadCoeffUncoded !== 0) {
+                    // Quadratic equation: quadCoeff * X² + linearCoeff * X + (intercept + constraintSum + constSum + quadraticSum - targetY) = 0
+                    const a = quadCoeffUncoded;
+                    const b = solverBeta[solveReducedCol];
+                    const c = solverBeta[0] + constSum + constraintSum + quadraticSum - targetY;
+                    
+                    // Add linear adjustment for solve factor if it's continuous
+                    const solveFactor = factors[solveFactorIdx];
+                    if (solveFactor.type === 'continuous') {
+                      const low = parseFloat(String(solveFactor.lowValue));
+                      const high = parseFloat(String(solveFactor.highValue));
+                      if (!isNaN(low) && !isNaN(high)) {
+                        const halfRange = (high - low) / 2;
+                        const midpoint = (high + low) / 2;
+                        const halfRangeSq = halfRange * halfRange;
+                        const continuousFactorIndices = factors.map((f, i) => ({ factor: f, index: i }))
+                          .filter(({ factor }) => factor.type === 'continuous');
+                        const kl = continuousFactorIndices.length;
+                        const curvatureEffect = y_c_avg - y_f_avg;
+                        const quadCoeff_coded = kl > 0 ? curvatureEffect / kl : 0;
+                        // In coded space: x_coded = (x_uncoded - midpoint) / halfRange
+                        // x_coded² = (x_uncoded - midpoint)² / halfRange²
+                        // So coefficient for x_uncoded² term is: quadCoeff_coded / halfRange²
+                        //const quadCoeff_uncoded_for_factor = quadCoeff_coded / halfRangeSq;
+                        
+                        const linearAdj = -2 * quadCoeffUncoded * midpoint;
+                        const b_adjusted = b + linearAdj + interactionContribution;
+                        const constantAdj = quadCoeffUncoded * midpoint * midpoint;
+                        const c_adjusted = c + constantAdj;
+                        
+                        // Solve quadratic equation: a*X² + b_adjusted*X + c_adjusted = 0
+                        const discriminant = b_adjusted * b_adjusted - 4 * a * c_adjusted;
+                        
+                        if (discriminant < 0) {
+                          setSolverResult(null); // No real solution
+                          return;
+                        }
+                        
+                        const sqrtDiscriminant = Math.sqrt(discriminant);
+                        const solution1 = (-b_adjusted + sqrtDiscriminant) / (2 * a);
+                        const solution2 = (-b_adjusted - sqrtDiscriminant) / (2 * a);
+                        
+                        // Return both solutions if they are different, otherwise just one
+                        if (Math.abs(solution1 - solution2) < 1e-10) {
+                          setSolverResult([solution1]);
+                        } else {
+                          setSolverResult([solution1, solution2]);
+                        }
+                        return;
+                      } else {
+                        setSolverResult(null);
+                        return;
+                      }
+                    } else {
+                      setSolverResult(null);
+                      return;
+                    }
+                  } else {
+                    // Linear equation: targetY = β0 + constraintSum + β_solve * X
+                    const result = (targetY - solverBeta[0] - constraintSum) / (solverBeta[solveReducedCol] + interactionContribution);
+                    setSolverResult([result]);
+                  }
                 };
 
                 // Store solve function in ref so top-level useEffect can call it
