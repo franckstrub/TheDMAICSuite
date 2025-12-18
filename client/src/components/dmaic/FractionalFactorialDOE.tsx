@@ -102,7 +102,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
   const [solveFactorIdx, setSolveFactorIdx] = useState(0);
   const [targetY, setTargetY] = useState(0);
   const [targetYDisplay, setTargetYDisplay] = useState('');
-  const [solverResult, setSolverResult] = useState<number | null>(null);
+  const [solverResult, setSolverResult] = useState<number[] | null>(null);
   const [constraintValues, setConstraintValues] = useState<Record<number, number | null>>({});
   const [constraintDisplay, setConstraintDisplay] = useState<Record<number, string>>({});
   
@@ -3011,7 +3011,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   // Therefore: Xi = (targetY - β0_uncoded - constraintSum) / βi_uncoded
                   // User enters target and constraints in uncoded space, result is also uncoded
                   let result = (targetY - solverBeta[0] - constraintSum) / solverBeta[solveReducedCol];
-                  setSolverResult(result);
+                  setSolverResult([result]);
                 };
 
                 // Store solve function in ref so top-level useEffect can call it
@@ -4433,109 +4433,119 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                             const maxY = observedYValues.length > 0 ? Math.max(...observedYValues) : NaN;
                             const targetYOutsideRange = Number.isFinite(minY) && Number.isFinite(maxY) && (targetY < minY || targetY > maxY);
                             
-                            // Check if solution is outside the solve factor's range
+                            // Check if solutions are outside the solve factor's range
                             const solveFactor = factors[solveFactorIdx];
                             const solveFactorLow = solveFactor.type === 'continuous' ? parseFloat(String(solveFactor.lowValue)) : NaN;
                             const solveFactorHigh = solveFactor.type === 'continuous' ? parseFloat(String(solveFactor.highValue)) : NaN;
-                            const solverOutsideRange = !isNaN(solveFactorLow) && !isNaN(solveFactorHigh) && 
-                              (solverResult < solveFactorLow || solverResult > solveFactorHigh);
                             const solveFactorRangeStr = `[${solveFactorLow.toFixed(4)}, ${solveFactorHigh.toFixed(4)}]`;
-                            
-                            // Build prediction vector x for selected factors: [1, x1, x2, ..., xk]
-                            const xRow: number[] = [1]; // Intercept
-                            for (let i = 0; i < baseFactorCount; i++) {
-                              if (selectedFactorsForModel[i] !== false) {
-                                const val = i === solveFactorIdx ? solverResult : (constraintValues[i] ?? 0);
-                                xRow.push(val);
-                              }
-                            }
-                            
-                            // Calculate X'X matrix for selected base factors only
-                            const XtXForIntervals: number[][] = Array(xRow.length).fill(0).map(() => Array(xRow.length).fill(0));
-                            for (let row = 0; row < n; row++) {
-                              // Build row of X matrix for selected factors only
-                              const xRow_data = [1]; // intercept
-                              for (let i = 0; i < baseFactorCount; i++) {
-                                if (selectedFactorsForModel[i] !== false) {
-                                  xRow_data.push(X[row][i + 1]);
-                                }
-                              }
-                              // Accumulate X'X
-                              for (let i = 0; i < xRow_data.length; i++) {
-                                for (let j = 0; j < xRow_data.length; j++) {
-                                  XtXForIntervals[i][j] += xRow_data[i] * xRow_data[j];
-                                }
-                              }
-                            }
-                            
-                            // Invert (X'X)
-                            let XtXInv: number[][] | null = null;
-                            try {
-                              XtXInv = invertMatrix(XtXForIntervals);
-                            } catch (e) {
-                              // Matrix is singular, XtXInv stays null
-                            }
-                            
-                            let varY = 0;
-                            let ciLower = NaN, ciUpper = NaN, piLower = NaN, piUpper = NaN;
-                            if (XtXInv && isFinite(s2) && s2 > 0 && isFinite(tValue)) {
-                              try {
-                                // Calculate x'(X'X)^-1 x
-                                const minLen = Math.min(xRow.length, XtXInv.length);
-                                for (let i = 0; i < minLen; i++) {
-                                  for (let j = 0; j < minLen; j++) {
-                                    varY += xRow[i] * XtXInv[i][j] * xRow[j];
-                                  }
-                                }
-                                if (isFinite(varY) && varY >= 0) {
-                                  const varConfidence = s2 * varY;
-                                  const varPrediction = s2 * varY + s2; // Add individual observation variance
-                                  const seConfidence = Math.sqrt(Math.max(0, varConfidence));
-                                  const sePrediction = Math.sqrt(Math.max(0, varPrediction));
-                                  if (isFinite(seConfidence) && isFinite(sePrediction)) {
-                                    ciLower = targetY - tValue * seConfidence;
-                                    ciUpper = targetY + tValue * seConfidence;
-                                    piLower = targetY - tValue * sePrediction;
-                                    piUpper = targetY + tValue * sePrediction;
-                                  }
-                                }
-                              } catch (e) {
-                                // Silent catch - intervals stay as NaN
-                              }
-                            }
                             
                             return (
                               <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded border border-green-200 dark:border-green-800">
-                                <p className="text-sm text-muted-foreground mb-2">Result:</p>
-                                <p className="text-2xl font-bold text-green-600 dark:text-green-400 mb-3">
-                                  {factors[solveFactorIdx].name} = {solverResult.toFixed(4)} {factors[solveFactorIdx].type === 'continuous' && factors[solveFactorIdx].units ? `${factors[solveFactorIdx].units}` : ''}
+                                <p className="text-sm text-muted-foreground mb-2">
+                                  {solverResult.length > 1 ? `Results (${solverResult.length} solutions):` : 'Result:'}
                                 </p>
-                                {solverOutsideRange && (
-                                  <p className="text-sm text-orange-600 dark:text-orange-400 mb-2">⚠️ Outside inference space range: {solveFactorRangeStr}</p>
-                                )}
-                                {targetYOutsideRange && (
-                                  <p className="text-sm text-orange-600 dark:text-orange-400 mb-2">⚠️ Target Y outside the studied model (range: {minY.toFixed(4)} - {maxY.toFixed(4)})</p>
-                                )}
-                                <div className="overflow-x-auto">
-                                  <table className="text-xs w-full">
-                                    <thead>
-                                      <tr className="border-b">
-                                        <th className="text-sm text-muted-foreground pb-1 text-left">Target Y {(1 - significanceLevel) * 100}% Confidence Interval:</th>
-                                        <th className="text-sm text-muted-foreground pb-1 text-left">Target Y {(1 - significanceLevel) * 100}% Prediction Interval:</th>
-                                      </tr>
-                                    </thead>
-                                    <tbody>
-                                      <tr>
-                                        <td className="font-medium pb-1 align-text-top">
-                                          {isNaN(ciLower) ? 'N/A' : `[${ciLower.toFixed(4)}, ${ciUpper.toFixed(4)}]`}
-                                        </td>
-                                        <td className="font-medium pb-1 align-text-top">
-                                          {isNaN(piLower) ? 'N/A' : `[${piLower.toFixed(4)}, ${piUpper.toFixed(4)}]`}
-                                        </td>
-                                      </tr>
-                                    </tbody>
-                                  </table>
-                                </div>
+                                {solverResult.map((result, idx) => {
+                                  const isOutsideRange = !isNaN(solveFactorLow) && !isNaN(solveFactorHigh) && 
+                                    (result < solveFactorLow || result > solveFactorHigh);
+                                  
+                                  // Build prediction vector x for selected factors: [1, x1, x2, ..., xk]
+                                  const xRow: number[] = [1]; // Intercept
+                                  for (let i = 0; i < baseFactorCount; i++) {
+                                    if (selectedFactorsForModel[i] !== false) {
+                                      const val = i === solveFactorIdx ? result : (constraintValues[i] ?? 0);
+                                      xRow.push(val);
+                                    }
+                                  }
+                                  
+                                  // Calculate X'X matrix for selected base factors only
+                                  const XtXForIntervals: number[][] = Array(xRow.length).fill(0).map(() => Array(xRow.length).fill(0));
+                                  for (let row = 0; row < n; row++) {
+                                    // Build row of X matrix for selected factors only
+                                    const xRow_data = [1]; // intercept
+                                    for (let i = 0; i < baseFactorCount; i++) {
+                                      if (selectedFactorsForModel[i] !== false) {
+                                        xRow_data.push(X[row][i + 1]);
+                                      }
+                                    }
+                                    // Accumulate X'X
+                                    for (let i = 0; i < xRow_data.length; i++) {
+                                      for (let j = 0; j < xRow_data.length; j++) {
+                                        XtXForIntervals[i][j] += xRow_data[i] * xRow_data[j];
+                                      }
+                                    }
+                                  }
+                                  
+                                  // Invert (X'X)
+                                  let XtXInv: number[][] | null = null;
+                                  try {
+                                    XtXInv = invertMatrix(XtXForIntervals);
+                                  } catch (e) {
+                                    // Matrix is singular, XtXInv stays null
+                                  }
+                                  
+                                  let varY = 0;
+                                  let ciLower = NaN, ciUpper = NaN, piLower = NaN, piUpper = NaN;
+                                  if (XtXInv && isFinite(s2) && s2 > 0 && isFinite(tValue)) {
+                                    try {
+                                      // Calculate x'(X'X)^-1 x
+                                      const minLen = Math.min(xRow.length, XtXInv.length);
+                                      for (let i = 0; i < minLen; i++) {
+                                        for (let j = 0; j < minLen; j++) {
+                                          varY += xRow[i] * XtXInv[i][j] * xRow[j];
+                                        }
+                                      }
+                                      if (isFinite(varY) && varY >= 0) {
+                                        const varConfidence = s2 * varY;
+                                        const varPrediction = s2 * varY + s2; // Add individual observation variance
+                                        const seConfidence = Math.sqrt(Math.max(0, varConfidence));
+                                        const sePrediction = Math.sqrt(Math.max(0, varPrediction));
+                                        if (isFinite(seConfidence) && isFinite(sePrediction)) {
+                                          ciLower = targetY - tValue * seConfidence;
+                                          ciUpper = targetY + tValue * seConfidence;
+                                          piLower = targetY - tValue * sePrediction;
+                                          piUpper = targetY + tValue * sePrediction;
+                                        }
+                                      }
+                                    } catch (e) {
+                                      // Silent catch - intervals stay as NaN
+                                    }
+                                  }
+                                  
+                                  return (
+                                    <div key={idx} className={idx > 0 ? 'mt-3 pt-3 border-t border-green-300 dark:border-green-700' : ''}>
+                                      <p className="text-2xl font-bold text-green-600 dark:text-green-400 mb-3">
+                                        {solverResult.length > 1 && <span className="text-sm font-normal text-muted-foreground mr-2">Solution {idx + 1}:</span>}
+                                        {factors[solveFactorIdx].name} = {result.toFixed(4)} {factors[solveFactorIdx].type === 'continuous' && factors[solveFactorIdx].units ? `${factors[solveFactorIdx].units}` : ''}
+                                      </p>
+                                      {isOutsideRange && (
+                                        <p className="text-sm text-orange-600 dark:text-orange-400 mb-2">⚠️ Outside inference space range: {solveFactorRangeStr}</p>
+                                      )}
+                                      {targetYOutsideRange && idx === 0 && (
+                                        <p className="text-sm text-orange-600 dark:text-orange-400 mb-2">⚠️ Target Y outside the studied model (range: {minY.toFixed(4)} - {maxY.toFixed(4)})</p>
+                                      )}
+                                      <div className="overflow-x-auto">
+                                        <table className="text-xs w-full">
+                                          <thead>
+                                            <tr className="border-b">
+                                              <th className="text-sm text-muted-foreground pb-1 text-left">Target Y {(1 - significanceLevel) * 100}% Confidence Interval:</th>
+                                              <th className="text-sm text-muted-foreground pb-1 text-left">Target Y {(1 - significanceLevel) * 100}% Prediction Interval:</th>
+                                            </tr>
+                                          </thead>
+                                          <tbody>
+                                            <tr>
+                                              <td className="font-medium pb-1 align-text-top">
+                                                {isNaN(ciLower) ? 'N/A' : `[${ciLower.toFixed(4)}, ${ciUpper.toFixed(4)}]`}
+                                              </td>
+                                              <td className="font-medium pb-1 align-text-top">
+                                                {isNaN(piLower) ? 'N/A' : `[${piLower.toFixed(4)}, ${piUpper.toFixed(4)}]`}
+                                              </td>
+                                            </tr>
+                                          </tbody>
+                                        </table>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
                               </div>
                             );
                           })()}
