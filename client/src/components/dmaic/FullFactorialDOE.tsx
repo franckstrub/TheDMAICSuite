@@ -93,7 +93,8 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
   const [solveFactorIdx, setSolveFactorIdx] = useState(0);
   const [targetY, setTargetY] = useState(0);
   const [targetYDisplay, setTargetYDisplay] = useState('');
-   const [solverResult, setSolverResult] = useState<number[] | null>(null);
+  const [solverResult, setSolverResult] = useState<number[] | null>(null);
+  const [solverNoSolution, setSolverNoSolution] = useState(false);
   const [constraintValues, setConstraintValues] = useState<Record<number, number | null>>({});
   const [constraintDisplay, setConstraintDisplay] = useState<Record<number, string>>({});
   
@@ -2126,14 +2127,15 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                     const pair = interactionPairs[i];
                     
                     // Check all factors in this interaction are continuous with valid levels
-                    const allContinuousWithLevels = pair.indices.every(idx => {
+                    //const allContinuousWithLevels = pair.indices.every(idx => {
+                    const someContinuousWithLevels = pair.indices.some(idx => {
                       const factor = factors[idx];
                       return factor.type === 'continuous' && 
                              factor.lowValue !== undefined && 
                              factor.highValue !== undefined;
                     });
-                    
-                    if (allContinuousWithLevels) {
+
+                    if (someContinuousWithLevels) {
                       // Calculate product of half-ranges for all factors in this interaction
                       let halfRangeProduct = 1;
                       let centerOverHalfRangeProduct = 1;
@@ -2256,14 +2258,15 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                     
                     const pair = interactionPairs[i];
                     
-                    const allContinuousWithLevels = pair.indices.every(idx => {
+                    //const allContinuousWithLevels = pair.indices.every(idx => {
+                    const someContinuousWithLevels = pair.indices.some(idx => {
                       const factor = factors[idx];
                       return factor.type === 'continuous' && 
                              factor.lowValue !== undefined && 
                              factor.highValue !== undefined;
                     });
                     
-                    if (allContinuousWithLevels) {
+                    if (someContinuousWithLevels) {
                       let halfRangeProduct = 1;
                       let centerOverHalfRangeProduct = 1;
                       let allValid = true;
@@ -2303,6 +2306,9 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                 };
                 
                 const handleSolve = () => {
+                  // Reset no solution state
+                  setSolverNoSolution(false);
+                  
                   // Check if solve factor is included in the model
                   if (selectedFactorsForModel[solveFactorIdx] === false || baseFactorCount < 1) {
                     setSolverResult(null);
@@ -2508,7 +2514,13 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                         const discriminant = b_adjusted * b_adjusted - 4 * a * c_adjusted;
                         
                         if (discriminant < 0) {
-                          setSolverResult(null); // No real solution
+                          setSolverResult(null);
+                          setSolverNoSolution(true);
+                          toast({
+                            title: "No Solution Found",
+                            description: "The solver could not find a real solution for the given target and constraints.",
+                            variant: "destructive",
+                          });
                           return;
                         }
                         
@@ -3951,6 +3963,14 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                             <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded border border-amber-200 dark:border-amber-800">
                               <p className="text-sm text-amber-600 dark:text-amber-400">
                                 ⚠️ Cannot solve for {factors[solveFactorIdx].name}: This factor has a coefficient of 0 in the model, meaning it has no significant effect on the response in this design.
+                              </p>
+                            </div>
+                          )}
+
+                          {solverNoSolution && (
+                            <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded border border-red-200 dark:border-red-800">
+                              <p className="text-sm text-red-600 dark:text-red-400">
+                                ❌ No solution found: The solver could not find a real solution for the given target and constraints. Try adjusting the target value or constraint values.
                               </p>
                             </div>
                           )}
