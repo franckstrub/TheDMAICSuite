@@ -4514,8 +4514,43 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                 // Only show included factors that are NOT the solve factor
                                 if (idx !== solveFactorIdx && selectedFactorsForModel[idx] !== false) {
                                   const constraintVal = constraintValues[idx];
-                                  const factorLow = factor.type === 'continuous' ? parseFloat(String(factor.lowValue)) : NaN;
-                                  const factorHigh = factor.type === 'continuous' ? parseFloat(String(factor.highValue)) : NaN;
+                                  
+                                  // For categorical factors, show a dropdown with Low (-1) and High (+1) options
+                                  if (factor.type === 'categorical') {
+                                    return (
+                                      <div key={idx} className="space-y-1">
+                                        <Label htmlFor={`constraint-${idx}`} className="text-sm">
+                                          {factor.name}
+                                        </Label>
+                                        <Select 
+                                          value={constraintVal === -1 ? '-1' : constraintVal === 1 ? '1' : ''} 
+                                          onValueChange={(v) => {
+                                            const value = v === '-1' ? -1 : v === '1' ? 1 : null;
+                                            setConstraintValues({
+                                              ...constraintValues,
+                                              [idx]: value
+                                            });
+                                            setConstraintDisplay({
+                                              ...constraintDisplay,
+                                              [idx]: v
+                                            });
+                                          }}
+                                        >
+                                          <SelectTrigger data-testid={`select-constraint-${idx}`}>
+                                            <SelectValue placeholder="Select level" />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            <SelectItem value="-1">Low ({factor.lowValue})</SelectItem>
+                                            <SelectItem value="1">High ({factor.highValue})</SelectItem>
+                                          </SelectContent>
+                                        </Select>
+                                      </div>
+                                    );
+                                  }
+                                  
+                                  // For continuous factors, show text input
+                                  const factorLow = parseFloat(String(factor.lowValue));
+                                  const factorHigh = parseFloat(String(factor.highValue));
                                   const isOutsideRange = constraintVal !== null && constraintVal !== undefined && !isNaN(factorLow) && !isNaN(factorHigh) && (
                                     constraintVal < factorLow || 
                                     constraintVal > factorHigh
