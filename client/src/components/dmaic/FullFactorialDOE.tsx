@@ -1026,7 +1026,11 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                       <div className="flex justify-end gap-2">
                         <Button
                           variant="outline"
-                          onClick={handleGeneratePlan}
+                          onClick={() => {
+                            if (window.confirm('Regeneration will clean all responses. Please confirm that you want to regenerate plan.')) {
+                              handleGeneratePlan();
+                            }
+                          }}
                           data-testid="button-regenerate-plan"
                         >
                            Regenerate Plan
