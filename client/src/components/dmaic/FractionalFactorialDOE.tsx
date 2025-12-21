@@ -4508,8 +4508,9 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                               </SelectTrigger>
                               <SelectContent>
                                 {factors.map((f, i) => {
-                                  // Only show factors that are included in the model
+                                  // Only show continuous factors that are included in the model
                                   if (selectedFactorsForModel[i] === false) return null;
+                                  if (f.type === 'categorical') return null;
                                   return <SelectItem key={i} value={String(i)}>{f.name}</SelectItem>;
                                 })}
                               </SelectContent>

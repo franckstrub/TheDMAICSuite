@@ -2513,16 +2513,18 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                         const midpoint = (high + low) / 2;
                         const result_uncoded = result * halfRange + midpoint;
                         setSolverResult([result_uncoded]);
+                        return;
                       }
                       else {
                         setSolverResult(null);
-                        
+                        return;
                       }
                     } else {
                       setSolverResult(null);
-                      
+                      return;
                     }
                 };
+              };
 
                 // Store solve function in ref so top-level useEffect can call it
                 solveRef.current = handleSolve;
@@ -3862,8 +3864,9 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                               </SelectTrigger>
                               <SelectContent>
                                 {factors.map((f, i) => {
-                                  // Only show factors that are included in the model
+                                  // Only show continuous factors that are included in the model
                                   if (selectedFactorsForModel[i] === false) return null;
+                                  if (f.type === 'categorical') return null;
                                   return <SelectItem key={i} value={String(i)}>{f.name}</SelectItem>;
                                 })}
                               </SelectContent>
