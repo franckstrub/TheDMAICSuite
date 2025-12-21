@@ -2628,6 +2628,9 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   console.warn('Gaussian elimination error for reduced model:', e);
                   beta_red = Xty_red.map(v => v / (XtX_red[0][0] || 1));
                 }
+                
+                // Compute (X'X)^-1 for prediction intervals
+                const XtX_inv_red = invertMatrix(XtX_red);
 
                // Calculate predictions for reduced model with and without quadratic terms in model first (Note: we are in coded view)
                 let predictions_red = [];                                     
@@ -2835,98 +2838,9 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   return { displayBeta: transformed, displayCoeffStats: transformedStats };
                 };
                 
-                const { displayBeta, displayCoeffStats } = transformCoefficientsAndSE();
-                //displayBeta[0] = y_f_avg;
-                
-                // Always compute uncoded coefficients for equation display (independent of display toggle)
-                const getUncodedCoefficientsForEquation = () => {
-                  if (!allFactorsHaveValidLevels()) {
-                    return beta_red; // Return coded if can't transform
-                  }
-                  
-                  const transformed = [...beta_red];
-                  let interceptAdjustment = 0;
-                  
-                  // Transform main effect coefficients (all k factors)
-                  for (let i = 0; i < k; i++) {
-                    const colIdx = selectedColumns.indexOf(i + 1);
-                    if (colIdx === -1 || selectedFactorsForModel[i] === false) continue;
+                const { displayBeta, displayCoeffStats } = transformCoefficientsAndSE();                
                     
-                    const factor = factors[i];
-                    if (factor.type === 'continuous' && factor.lowValue !== undefined && factor.highValue !== undefined) {
-                      const low = parseFloat(String(factor.lowValue));
-                      const high = parseFloat(String(factor.highValue));
-                      if (!isNaN(low) && !isNaN(high)) {
-                        const center = (low + high) / 2;
-                        const halfRange = (high - low) / 2;
-                        
-                        if (Number.isFinite(beta_red[colIdx])) {
-                          transformed[colIdx] = beta_red[colIdx] / halfRange;
-                          interceptAdjustment += beta_red[colIdx] * center / halfRange;
-                        }
-                      }
-                    }
-                  }
-                  
-                  // Transform N-way interaction coefficients (offset by k main effects)
-                  // For interaction β₁₂*x₁_coded*x₂_coded, expanding (x₁-m₁)/h₁ * (x₂-m₂)/h₂ gives:
-                  // Interaction coeff: β₁₂/(h₁*h₂)
-                  // Intercept adjustment: +β₁₂*m₁*m₂/(h₁*h₂) (added to intercept, so subtract from adjustment)
-                  for (let i = 0; i < interactionPairs.length; i++) {
-                    if (selectedFactorsForModel[`int-${i}`] === false) continue;
-                    
-                    const colIdx = selectedColumns.indexOf(k + 1 + i);
-                    if (colIdx === -1) continue;
-                    
-                    const pair = interactionPairs[i];
-                    
-                    //const allContinuousWithLevels = pair.indices.every(idx => {
-                    const someContinuousWithLevels = pair.indices.some(idx => {
-                      const factor = factors[idx];
-                      return factor.type === 'continuous' && 
-                             factor.lowValue !== undefined && 
-                             factor.highValue !== undefined;
-                    });
-                    
-                    if (someContinuousWithLevels) {
-                      let halfRangeProduct = 1;
-                      let centerOverHalfRangeProduct = 1;
-                      let allValid = true;
-                      
-                      for (const idx of pair.indices) {
-                        const factor = factors[idx];
-                        if (factor.type === 'continuous' && factor.lowValue !== undefined && factor.highValue !== undefined) {
-                          const low = parseFloat(String(factor.lowValue));
-                          const high = parseFloat(String(factor.highValue));
-                          if (isNaN(low) || isNaN(high)) {
-                            allValid = false;
-                            break;
-                          }
-                          const halfRange = (high - low) / 2;
-                          const center = (high + low) / 2;
-                          halfRangeProduct *= halfRange;
-                          centerOverHalfRangeProduct *= center / halfRange;
-                        }
-                      }
-                      
-                      if (allValid && Number.isFinite(beta_red[colIdx])) {
-                        transformed[colIdx] = beta_red[colIdx] / halfRangeProduct;
-                        // Intercept gets +β*m₁*m₂/(h₁*h₂) = β * (m₁/h₁)*(m₂/h₂), so subtract from adjustment
-                        interceptAdjustment += beta_red[colIdx] * centerOverHalfRangeProduct;
-                      }
-                    }
-                  }
-                  
-                  transformed[0] = beta_red[0] - interceptAdjustment;
-                  
-                  // If transformation resulted in non-finite values, use coded instead
-                  if (!transformed.every(v => Number.isFinite(v))) {
-                    return beta_red;
-                  }
-                  return transformed;
-                };
-                
-                const handleSolve = () => {
+                const handleSolve = () => { // solve with coded equation (simpler)
                   // Reset no solution state
                   setSolverNoSolution(false);
                   
@@ -2950,15 +2864,12 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     return;
                   }
                   
-                  // Always use uncoded coefficients for solver
-                  const solverBeta = getUncodedCoefficientsForEquation();
-                  
-                  if (solverBeta[solveReducedCol] === 0) {
+                 if (beta_red[solveReducedCol] === 0) {
                     setSolverResult(null);
                     return;
                   }
                   
-                  // Check that ALL non-solve factors have constraint values entered (main effects OR in interactions)
+                  // Check that ALL non-solve factors have constraint values entered for each selected main effects and also for all in selected interactions)
                   for (let i = 0; i < factors.length; i++) {
                     if (i === solveFactorIdx) continue;
                     
@@ -2976,83 +2887,43 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                       }
                     }
                   }
-                  
-                  let constSum = 0;
-                  let constraintSum = 0;
-                  let interactionContribution = 0;
 
-                  let quadraticSum = 0;
-                  
-                  // Calculate quadratic coefficients if center points are included
-                  let quadCoeffUncoded = 0;
-                  let solveFactorHasQuadTerm = false;
-                  
-                  if (includeCenterPoints && n_c > 0 && selectedFactorsForModel['centerPoint'] !== false && k > 0) {
-                    const continuousFactorIndices = factors.map((f, i) => ({ factor: f, index: i }))
-                      .filter(({ factor }) => factor.type === 'continuous' && selectedFactorsForModel[index] !== false);
-                    const kl = continuousFactorIndices.length;
-                    const curvatureEffect = y_c_avg - y_f_avg;
-                    const quadCoeff_coded = kl > 0 ? curvatureEffect / kl : 0;
-                    
-                    // Convert quadratic coefficient from coded to uncoded space
-                    // For each continuous factor, need to transform x² term
-                    for (let i = 0; i < factors.length; i++) {
-                      const factor = factors[i];
-                      if (factor.type === 'continuous') {
-                        const low = parseFloat(String(factor.lowValue));
-                        const high = parseFloat(String(factor.highValue));
-                        if (!isNaN(low) && !isNaN(high)) {
-                          const halfRange = (high - low) / 2;
-                          const midpoint = (high + low) / 2;
-                          const halfRangeSq = halfRange * halfRange;
-                          
-                          // In coded space: x_coded = (x_uncoded - midpoint) / halfRange
-                          // x_coded² = (x_uncoded - midpoint)² / halfRange²
-                          // So coefficient for x_uncoded² term is: quadCoeff_coded / halfRange²
-                          const quadCoeff_uncoded_for_factor = quadCoeff_coded / halfRangeSq;
-                          
-                          if (i === solveFactorIdx) {
-                            quadCoeffUncoded = quadCoeff_uncoded_for_factor;
-                            solveFactorHasQuadTerm = true;
-                          } else {
-                            // Add quadratic contribution from constrained factors
-                            const constraintVal = constraintValues[i];
-                            if (Number.isFinite(constraintVal)) {
-                              quadraticSum += quadCoeff_uncoded_for_factor * constraintVal * constraintVal;
-                              
-                              // Also add linear adjustment term: -2 * quadCoeff * midpoint / halfRange²
-                              const linearAdj = -2 * quadCoeff_uncoded_for_factor * midpoint * constraintVal;
-                              const origCol = i + 1;
-                              const redCol = colMapReverse[origCol];
-                              if (redCol !== undefined) {
-                                constraintSum += linearAdj;
-                              }
-                              //constant adjustment due to x_coded² = (x_uncoded - midpoint)² / halfRange²
-                              constSum += quadCoeff_uncoded_for_factor * midpoint * midpoint;
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                  
-                  // Add linear terms from non-solve factors
+                  //transform all uncoded constraint values to coded constraintValues
+                  let codedConstraintValues: Record<number, number | null> = { ...constraintValues };
+                  //  and calculate sum of constraints for solver
+                  let constraintSum = 0;
                   for (let i = 0; i < factors.length; i++) {
+                    const factor = factors[i];
+                    if (factor.type === 'continuous' && factor.lowValue !== undefined && factor.highValue !== undefined) {
+                      const low = parseFloat(String(factor.lowValue));
+                      const high = parseFloat(String(factor.highValue));
+                      if (isNaN(low) || isNaN(high)) {
+                        continue;
+                      }
+                      const halfRange = (high - low) / 2;
+                      const midPoint = (high + low) / 2;
+                      const uncodedValue = constraintValues[i];
+                      // Skip if null or undefined
+                      if (uncodedValue === null || uncodedValue === undefined) {
+                        continue;
+                      }
+                      codedConstraintValues[i] = (uncodedValue - midPoint)/halfRange;
+                    }
                     if (i !== solveFactorIdx && selectedFactorsForModel[i] !== false) {
-                      const constraintVal = constraintValues[i];
+                      const constraintVal = codedConstraintValues[i];
                       if (Number.isFinite(constraintVal)) {
                         const origCol = i + 1;
                         const redCol = colMapReverse[origCol];
                         if (redCol !== undefined) {
-                          constraintSum += solverBeta[redCol] * constraintVal;
+                          constraintSum += beta_red[redCol] * constraintVal;
                         }
                       }
                     }
                   }
-                  
-                  // Add interaction terms contributions
+
+                  //Adjust solve factor coefficient for interactions with solve factor
+                  let solveFactor_CoeffAdjustment = 0; // due to selected interactions involving the solve factor
                   // For an interaction involving the solve factor, the coefficient contributes to the solve factor's linear term
-                  // For interactions NOT involving the solve factor, multiply by all constrained factor values and add to constraintSum
                   for (let i = 0; i < interactionPairs.length; i++) {
                     if (selectedFactorsForModel[`int-${i}`] === false) continue;
                     
@@ -3061,36 +2932,17 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     if (redCol === undefined) continue;
                     
                     const pair = interactionPairs[i];
-                    const involvesSolveFactor = pair.indices.includes(solveFactorIdx);
+                    const involvesSolveFactor = pair.indices.includes(solveFactorIdx);                    
                     
-                    if (!involvesSolveFactor) {
-                      // All factors in this interaction are constrained - multiply coefficient by all constraint values
-                      let productOfConstraints = 1;
-                      let allValid = true;
-                      
-                      for (const idx of pair.indices) {
-                        const constraintVal = constraintValues[idx];
-                        if (Number.isFinite(constraintVal)) {
-                          productOfConstraints *= constraintVal;
-                        } else {
-                          allValid = false;
-                          break;
-                        }
-                      }
-                      
-                      if (allValid) {
-                        constraintSum += solverBeta[redCol] * productOfConstraints;
-                      }
-                    }
-                    else {      // Interaction involves solve factor - contribute to its linear term
-                      let productOfOtherConstraints = 1;
+                    if (involvesSolveFactor) {      // Interaction involves solve factor - contribute to its linear term
+                      let productOfInteractionConstraints = 1;
                       let allValid = true;
                       
                       for (const idx of pair.indices) {
                         if (idx != solveFactorIdx) {
-                          const constraintVal = constraintValues[idx];
+                          const constraintVal = codedConstraintValues[idx];
                           if (Number.isFinite(constraintVal)) {
-                            productOfOtherConstraints *= constraintVal;
+                            productOfInteractionConstraints *= constraintVal;
                           } else {
                             allValid = false;
                             break;
@@ -3099,23 +2951,35 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                       }
                       
                       if (allValid) {
-                        // Add to linear term for solve factor
-                        // This effectively modifies the coefficient for the solve factor
-                        interactionContribution = solverBeta[redCol] * productOfOtherConstraints;        
+                        // Adjustment of coefficient of solve factor will be interaction coeff * productOfInteractionConstraints. This effectively will be added to the linear coefficient for the solve factor
+                        solveFactor_CoeffAdjustment += beta_red[redCol] * productOfInteractionConstraints;        
                       }   
                     }
                   }
+                  beta_red[solveReducedCol] += solveFactor_CoeffAdjustment; // adjust the solve factor coefficient for interactions involving it
+
+                  // Calculate quadratic coefficients if center points are included
+                  let quadCoeff_coded = 0;
+                  let solveFactorHasQuadTerm = false;
+                  
+                  if (includeCenterPoints && n_c > 0 && selectedFactorsForModel['centerPoint'] !== false && k > 0) {
+                    const continuousFactorIndices = factors.map((f, i) => ({ factor: f, index: i }))
+                      .filter(({ factor, index }) => factor.type === 'continuous' && selectedFactorsForModel[index] !== false);
+                    const kl = continuousFactorIndices.length;
+                    const curvatureEffect = y_c_avg - y_f_avg;
+                    quadCoeff_coded = kl > 0 ? curvatureEffect / kl : 0;
+                    solveFactorHasQuadTerm = true;
+                  }
   
                   // Solve the equation
-                  let result;
                   
-                  if (solveFactorHasQuadTerm && quadCoeffUncoded !== 0) {
+                  if (solveFactorHasQuadTerm && quadCoeff_coded !== 0) {
                     // Quadratic equation: quadCoeff * X² + linearCoeff * X + (intercept + constraintSum + constSum + quadraticSum - targetY) = 0
-                    const a = quadCoeffUncoded;
-                    const b = solverBeta[solveReducedCol];
-                    const c = solverBeta[0] + constSum + constraintSum + quadraticSum - targetY;
+                    const a = quadCoeff_coded;
+                    const b = beta_red[solveReducedCol];
+                    const c = beta_red[0] + constraintSum - targetY;
                     
-                    // Add linear adjustment for solve factor if it's continuous
+                    // find solution(s) for solve factor in coded space if it's continuous
                     const solveFactor = factors[solveFactorIdx];
                     if (solveFactor.type === 'continuous') {
                       const low = parseFloat(String(solveFactor.lowValue));
@@ -3124,23 +2988,9 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                         const halfRange = (high - low) / 2;
                         const midpoint = (high + low) / 2;
                         const halfRangeSq = halfRange * halfRange;
-                        const continuousFactorIndices = factors.map((f, i) => ({ factor: f, index: i }))
-                          .filter(({ factor }) => factor.type === 'continuous');
-                        const kl = continuousFactorIndices.length;
-                        const curvatureEffect = y_c_avg - y_f_avg;
-                        const quadCoeff_coded = kl > 0 ? curvatureEffect / kl : 0;
-                        // In coded space: x_coded = (x_uncoded - midpoint) / halfRange
-                        // x_coded² = (x_uncoded - midpoint)² / halfRange²
-                        // So coefficient for x_uncoded² term is: quadCoeff_coded / halfRange²
-                        //const quadCoeff_uncoded_for_factor = quadCoeff_coded / halfRangeSq;
-                        
-                        const linearAdj = -2 * quadCoeffUncoded * midpoint;
-                        const b_adjusted = b + linearAdj + interactionContribution;
-                        const constantAdj = quadCoeffUncoded * midpoint * midpoint;
-                        const c_adjusted = c + constantAdj;
-                        
+
                         // Solve quadratic equation: a*X² + b_adjusted*X + c_adjusted = 0
-                        const discriminant = b_adjusted * b_adjusted - 4 * a * c_adjusted;
+                        const discriminant = b * b - 4 * a * c;
                         
                         if (discriminant < 0) {
                           setSolverResult(null);
@@ -3154,14 +3004,17 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                         }
                         
                         const sqrtDiscriminant = Math.sqrt(discriminant);
-                        const solution1 = (-b_adjusted + sqrtDiscriminant) / (2 * a);
-                        const solution2 = (-b_adjusted - sqrtDiscriminant) / (2 * a);
+                        const solution1 = (-b + sqrtDiscriminant) / (2 * a);
+                        const solution2 = (-b - sqrtDiscriminant) / (2 * a);
+                        // transform solution(s) / resulti n uncoded space
+                        const solution1_uncoded = solution1 * halfRange + midpoint;
+                        const solution2_uncoded = solution2 * halfRange + midpoint;
                         
                         // Return both solutions if they are different, otherwise just one
-                        if (Math.abs(solution1 - solution2) < 1e-10) {
-                          setSolverResult([solution1]);
+                        if (Math.abs(solution1_uncoded - solution2_uncoded) < 1e-10) {
+                          setSolverResult([solution1_uncoded]);
                         } else {
-                          setSolverResult([solution1, solution2]);
+                          setSolverResult([solution1_uncoded, solution2_uncoded]);
                         }
                         return;
                       } else {
@@ -3174,10 +3027,28 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     }
                   } else {
                     // Linear equation: targetY = β0 + constraintSum + β_solve * X
-                    const result = (targetY - solverBeta[0] - constraintSum) / (solverBeta[solveReducedCol] + interactionContribution);
-                    setSolverResult([result]);
-                  }
+                    const result = (targetY - beta_red[0] - constraintSum) / beta_red[solveReducedCol];
+                    const solveFactor = factors[solveFactorIdx];
+                    if (solveFactor.type === 'continuous') {
+                      const low = parseFloat(String(solveFactor.lowValue));
+                      const high = parseFloat(String(solveFactor.highValue));
+                      if (!isNaN(low) && !isNaN(high)) {
+                        const halfRange = (high - low) / 2;
+                        const midpoint = (high + low) / 2;
+                        const result_uncoded = result * halfRange + midpoint;
+                        setSolverResult([result_uncoded]);
+                        return;
+                      }
+                      else {
+                        setSolverResult(null);
+                        return;
+                      }
+                    } else {
+                      setSolverResult(null);
+                      return;
+                    }
                 };
+              };
 
                 // Store solve function in ref so top-level useEffect can call it
                 solveRef.current = handleSolve;
@@ -4548,10 +4419,6 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                               ...constraintValues,
                                               [idx]: value
                                             });
-                                            setConstraintDisplay({
-                                              ...constraintDisplay,
-                                              [idx]: displayval
-                                            });
                                           }}
                                         >
                                           <SelectTrigger data-testid={`select-constraint-${idx}`}>
@@ -4639,10 +4506,10 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                             </div>
                           )}
 
-                          {solverResult !== null && (() => {
+                          {solverResult !== null && solverResult.length > 0 && (() => {
                             // Calculate confidence and prediction intervals for Y target
-                            const tValue = jStat.studentt.inv((1 - significanceLevel / 2), n - numCoefficients);
-                            const s2 = SS_res / (n - numCoefficients); // Variance estimate
+                            const df_error = n - p_reduced - dfCurvature;
+                            const tValue = jStat.studentt.inv(1 - significanceLevel / 2, df_error);
                             
                             // Get observed Y range from responses
                             const observedYValues = Object.values(responses).filter(r => r !== null && typeof r === 'number' && isFinite(r)) as number[];
@@ -4656,6 +4523,68 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                             const solveFactorHigh = solveFactor.type === 'continuous' ? parseFloat(String(solveFactor.highValue)) : NaN;
                             const solveFactorRangeStr = `[${solveFactorLow.toFixed(4)}, ${solveFactorHigh.toFixed(4)}]`;
                             
+                            // Helper function to build x0 vector (coded) for a given solution
+                            const buildX0Vector = (solvedValue: number): number[] => {
+                              const x0: number[] = Array(p_reduced).fill(0);
+                              x0[0] = 1; // Intercept
+                              
+                              // Set values for each factor in reduced model
+                              for (let i = 0; i < k; i++) {
+                                const redCol = colMapReverse[i + 1];
+                                if (redCol === undefined) continue;
+                                
+                                const factor = factors[i];
+                                let codedVal: number;
+                                
+                                if (i === solveFactorIdx) {
+                                  // Convert solved value to coded
+                                  if (factor.type === 'continuous' && factor.lowValue !== undefined && factor.highValue !== undefined) {
+                                    const low = parseFloat(String(factor.lowValue));
+                                    const high = parseFloat(String(factor.highValue));
+                                    const center = (low + high) / 2;
+                                    const halfRange = (high - low) / 2;
+                                    codedVal = halfRange !== 0 ? (solvedValue - center) / halfRange : 0;
+                                  } else {
+                                    codedVal = solvedValue;
+                                  }
+                                } else {
+                                  // Use constraint value (already in coded form)
+                                  codedVal = constraintValues[i] ?? 0;
+                                }
+                                x0[redCol] = codedVal;
+                              }
+                              
+                              // Set interaction terms
+                              for (let pairIdx = 0; pairIdx < interactionPairs.length; pairIdx++) {
+                                const redCol = colMapReverse[k + 1 + pairIdx];
+                                if (redCol === undefined) continue;
+                                
+                                const pair = interactionPairs[pairIdx];
+                                let interactionVal = 1;
+                                for (const factorIdx of pair.indices) {
+                                  const factorRedCol = colMapReverse[factorIdx + 1];
+                                  if (factorRedCol !== undefined) {
+                                    interactionVal *= x0[factorRedCol];
+                                  }
+                                }
+                                x0[redCol] = interactionVal;
+                              }
+                              
+                              return x0;
+                            };
+                            
+                            // Calculate x0' * (X'X)^-1 * x0 for hat matrix diagonal
+                            const calcHatDiag = (x0: number[]): number => {
+                              if (!XtX_inv_red) return 0;
+                              let h = 0;
+                              for (let i = 0; i < x0.length; i++) {
+                                for (let j = 0; j < x0.length; j++) {
+                                  h += x0[i] * XtX_inv_red[i][j] * x0[j];
+                                }
+                              }
+                              return h;
+                            };
+                            
                             return (
                               <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded border border-green-200 dark:border-green-800">
                                 <p className="text-sm text-muted-foreground mb-2">
@@ -4665,104 +4594,42 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                   const isOutsideRange = !isNaN(solveFactorLow) && !isNaN(solveFactorHigh) && 
                                     (result < solveFactorLow || result > solveFactorHigh);
                                   
-                                  // Build prediction vector x for selected factors: [1, x1, x2, ..., xk]
-                                  const xRow: number[] = [1]; // Intercept
-                                  for (let i = 0; i < baseFactorCount; i++) {
-                                    if (selectedFactorsForModel[i] !== false) {
-                                      const val = i === solveFactorIdx ? result : (constraintValues[i] ?? 0);
-                                      xRow.push(val);
-                                    }
-                                  }
-                                  
-                                  // Calculate X'X matrix for selected base factors only
-                                  const XtXForIntervals: number[][] = Array(xRow.length).fill(0).map(() => Array(xRow.length).fill(0));
-                                  for (let row = 0; row < n; row++) {
-                                    // Build row of X matrix for selected factors only
-                                    const xRow_data = [1]; // intercept
-                                    for (let i = 0; i < baseFactorCount; i++) {
-                                      if (selectedFactorsForModel[i] !== false) {
-                                        xRow_data.push(X[row][i + 1]);
-                                      }
-                                    }
-                                    // Accumulate X'X
-                                    for (let i = 0; i < xRow_data.length; i++) {
-                                      for (let j = 0; j < xRow_data.length; j++) {
-                                        XtXForIntervals[i][j] += xRow_data[i] * xRow_data[j];
-                                      }
-                                    }
-                                  }
-                                  
-                                  // Invert (X'X)
-                                  let XtXInv: number[][] | null = null;
-                                  try {
-                                    XtXInv = invertMatrix(XtXForIntervals);
-                                  } catch (e) {
-                                    // Matrix is singular, XtXInv stays null
-                                  }
-                                  
-                                  let varY = 0;
-                                  let ciLower = NaN, ciUpper = NaN, piLower = NaN, piUpper = NaN;
-                                  if (XtXInv && isFinite(s2) && s2 > 0 && isFinite(tValue)) {
-                                    try {
-                                      // Calculate x'(X'X)^-1 x
-                                      const minLen = Math.min(xRow.length, XtXInv.length);
-                                      for (let i = 0; i < minLen; i++) {
-                                        for (let j = 0; j < minLen; j++) {
-                                          varY += xRow[i] * XtXInv[i][j] * xRow[j];
-                                        }
-                                      }
-                                      if (isFinite(varY) && varY >= 0) {
-                                        const varConfidence = s2 * varY;
-                                        const varPrediction = s2 * varY + s2; // Add individual observation variance
-                                        const seConfidence = Math.sqrt(Math.max(0, varConfidence));
-                                        const sePrediction = Math.sqrt(Math.max(0, varPrediction));
-                                        if (isFinite(seConfidence) && isFinite(sePrediction)) {
-                                          ciLower = targetY - tValue * seConfidence;
-                                          ciUpper = targetY + tValue * seConfidence;
-                                          piLower = targetY - tValue * sePrediction;
-                                          piUpper = targetY + tValue * sePrediction;
-                                        }
-                                      }
-                                    } catch (e) {
-                                      // Silent catch - intervals stay as NaN
-                                    }
-                                  }
+                                  // Calculate intervals for this solution
+                                  const x0 = buildX0Vector(result);
+                                  const h = calcHatDiag(x0);
+                                  const SE_mean = Math.sqrt(mse * h);
+                                  const SE_pred = Math.sqrt(mse * (1 + h));
+                                  const CI_lower = targetY - tValue * SE_mean;
+                                  const CI_upper = targetY + tValue * SE_mean;
+                                  const PI_lower = targetY - tValue * SE_pred;
+                                  const PI_upper = targetY + tValue * SE_pred;
+                                  const confidencePercent = ((1 - significanceLevel) * 100).toFixed(0);
                                   
                                   return (
                                     <div key={idx} className={idx > 0 ? 'mt-3 pt-3 border-t border-green-300 dark:border-green-700' : ''}>
-                                      <p className="text-2xl font-bold text-green-600 dark:text-green-400 mb-3">
+                                      <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                                         {solverResult.length > 1 && <span className="text-sm font-normal text-muted-foreground mr-2">Solution {idx + 1}:</span>}
                                         {factors[solveFactorIdx].name} = {result.toFixed(4)} {factors[solveFactorIdx].type === 'continuous' && factors[solveFactorIdx].units ? `${factors[solveFactorIdx].units}` : ''}
                                       </p>
                                       {isOutsideRange && (
-                                        <p className="text-sm text-orange-600 dark:text-orange-400 mb-2">⚠️ Outside inference space range: {solveFactorRangeStr}</p>
+                                        <p className="text-sm text-orange-600 dark:text-orange-400 mt-1">⚠️ Outside inference space range: {solveFactorRangeStr}</p>
                                       )}
-                                      {targetYOutsideRange && idx === 0 && (
-                                        <p className="text-sm text-orange-600 dark:text-orange-400 mb-2">⚠️ Target Y outside the studied model (range: {minY.toFixed(4)} - {maxY.toFixed(4)})</p>
-                                      )}
-                                      <div className="overflow-x-auto">
-                                        <table className="text-xs w-full">
-                                          <thead>
-                                            <tr className="border-b">
-                                              <th className="text-sm text-muted-foreground pb-1 text-left">Target Y {(1 - significanceLevel) * 100}% Confidence Interval:</th>
-                                              <th className="text-sm text-muted-foreground pb-1 text-left">Target Y {(1 - significanceLevel) * 100}% Prediction Interval:</th>
-                                            </tr>
-                                          </thead>
-                                          <tbody>
-                                            <tr>
-                                              <td className="font-medium pb-1 align-text-top">
-                                                {isNaN(ciLower) ? 'N/A' : `[${ciLower.toFixed(4)}, ${ciUpper.toFixed(4)}]`}
-                                              </td>
-                                              <td className="font-medium pb-1 align-text-top">
-                                                {isNaN(piLower) ? 'N/A' : `[${piLower.toFixed(4)}, ${piUpper.toFixed(4)}]`}
-                                              </td>
-                                            </tr>
-                                          </tbody>
-                                        </table>
+                                      <div className="mt-2 text-sm space-y-1">
+                                        <p className="text-muted-foreground">
+                                          <span className="font-medium">{confidencePercent}% Confidence Interval (Y):</span>{' '}
+                                          <span className="text-green-700 dark:text-green-300">[{CI_lower.toFixed(4)}, {CI_upper.toFixed(4)}]</span>
+                                        </p>
+                                        <p className="text-muted-foreground">
+                                          <span className="font-medium">{confidencePercent}% Prediction Interval (Y):</span>{' '}
+                                          <span className="text-green-700 dark:text-green-300">[{PI_lower.toFixed(4)}, {PI_upper.toFixed(4)}]</span>
+                                        </p>
                                       </div>
                                     </div>
                                   );
                                 })}
+                                {targetYOutsideRange && (
+                                  <p className="text-sm text-orange-600 dark:text-orange-400 mt-3">⚠️ Target Y outside the studied model (range: {minY.toFixed(4)} - {maxY.toFixed(4)})</p>
+                                )}
                               </div>
                             );
                           })()}
