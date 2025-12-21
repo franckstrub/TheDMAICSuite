@@ -1082,14 +1082,14 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                     type="text"
                                     value={factorInputs[`${index}-lowValue`] ?? (factor.lowValue !== null && !isNaN(factor.lowValue) ? String(factor.lowValue) : '')}
                                     onChange={(e) => handleFactorChange(index, 'lowValue', e.target.value)}
-                                    placeholder="Low Value"
+                                    placeholder="Enter Value of Factor at low level (-1)"
                                     data-testid={`input-factor-low-${index}`}
                                   />
                                 ) : (
                                   <Input
                                     value={factor.levels[0] || ''}
                                     onChange={(e) => handleFactorChange(index, 'level0', e.target.value)}
-                                    placeholder="Level 1"
+                                    placeholder="Enter Value of Categorical Factor at low level (-1) (e.g. KO, Low, Fail)"
                                     data-testid={`input-factor-level0-${index}`}
                                   />
                                 )}
@@ -1100,14 +1100,14 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                     type="text"
                                     value={factorInputs[`${index}-highValue`] ?? (factor.highValue !== null && !isNaN(factor.highValue) ? String(factor.highValue) : '')}
                                     onChange={(e) => handleFactorChange(index, 'highValue', e.target.value)}
-                                    placeholder="High Value"
+                                    placeholder="Enter Value of Factor at high level (+1)"
                                     data-testid={`input-factor-high-${index}`}
                                   />
                                 ) : (
                                   <Input
                                     value={factor.levels[1] || ''}
                                     onChange={(e) => handleFactorChange(index, 'level1', e.target.value)}
-                                    placeholder="Level 2"
+                                    placeholder="Enter Value of Categorical Factor at high level (+1) (e.g. OK, High, Pass)"
                                     data-testid={`input-factor-level1-${index}`}
                                   />
                                 )}
@@ -1117,7 +1117,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                   <Input
                                     value={factor.units || ''}
                                     onChange={(e) => handleFactorChange(index, 'units', e.target.value)}
-                                    placeholder="Units"
+                                    placeholder="Enter Units of Factor (e.g. mg/L, Atm, ˚F)"
                                     data-testid={`input-factor-units-${index}`}
                                   />
                                 )}
@@ -1453,7 +1453,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                       type="text"
                                       value={responseInputs[planRow.runOrder] ?? (response !== null && response !== undefined ? String(response) : '')}
                                       onChange={(e) => handleResponseChange(rowIndex, e.target.value)}
-                                      placeholder="Enter response"
+                                      placeholder="Enter Y response"
                                       className="w-full"
                                       data-testid={`input-response-${rowIndex}`}
                                     />
@@ -2634,29 +2634,31 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 if (includeCenterPoints && n_c > 0 && selectedFactorsForModel['centerPoint'] !== false && k > 0) {         
                   // Calculate quadratic coefficients for continuous factors based on curvature effect              
                   const continuousFactorIndices = factors.map((f, i) => ({ factor: f, index: i }))
-                    .filter(({ factor, index }) => factor.type === 'continuous' /*&& selectedFactorsForModel[index] !== false*/ );
+                    .filter(({ factor, index }) => factor.type === 'continuous' && selectedFactorsForModel[index] !== false);
                   const kl = continuousFactorIndices.length;
                   const curvatureEffect = y_c_avg - y_f_avg;
                   const quadCoeff = kl > 0 ? curvatureEffect/kl : 0;                                
                   const quadTerms: Array<{ factorIdx: number; factor: any; x2Coeff: number }> = []; // not very elegant... but efficient. We could have made a matrix for each factor with a quadCoeff curvatureEffect / kl
                   // Build quadratic terms for each continuous factor
-                  //for (const { factor, index: factorIdx } of continuousFactorIndices) {
-                  factors.forEach((factor, factorIdx) => {
+                  for (const { factor, index: factorIdx } of continuousFactorIndices) { // take only selected continuous factors to build quadratic term (x1^2+X2^2+...+xn^2)
+                  //factors.forEach((factor, factorIdx) => {
                     //if (factor.type !== 'continuous') continue;                    
                     const x2Coeff = factor.type === 'continuous' ? quadCoeff : 0;
                     quadTerms.push({ factorIdx, factor, x2Coeff });
-                  });                    
+                  };                    
                   // Get base linear predictions first
                   const predictions_red_lin = X_reduced.map(row => row.reduce((sum, val, i) => sum + val * beta_red[i], 0));
                   
-                  // Add quadratic adjustments when there is a centerpoint (0 level in coded view)
+                  // Add quadratic adjustments when there is a centerpoint (0 level in coded view) and factor is included
                   predictions_red = predictions_red_lin.map((basePred, rowIdx) => {
                     let pred = basePred; // get linear prediction
-                    //for (const { factorIdx, x2Coeff } of quadTerms) {
-                    for (let factorIdx = 0; factorIdx < factors.length; factorIdx++) {
-                      const xVal = X[rowIdx][factorIdx+1]; // get original X values (-1, 0, 1) in coded view
+                    for (let i = 0; i < quadTerms.length; i++) {
+                    //for (const { factorIdx, factor, x2Coeff } of quadTerms) {
+                    //for (let factorIdx = 0; factorIdx < factors.length; factorIdx++) {
+                      const index_quadTerm = quadTerms[i].factorIdx;
+                      const xVal = X[rowIdx][index_quadTerm+1]; // get original X values (-1, 0, 1) in coded view
                       //pred += xVal === 0 ? quadTerms[rowIdx].x2Coeff : 0; // Add full quadratic effect only at center point (All continuous Factors set to 0 in coded view)
-                      pred += xVal === 0 ? quadTerms[factorIdx].x2Coeff : 0; // Add full quadratic effect only at center point (All continuous Factors set to 0 in coded view)
+                      pred += xVal === 0 ? quadTerms[i].x2Coeff : 0; // Add full quadratic effect only at center point (All continuous Factors set to 0 in coded view)
                     }
                     return pred;
                   });                       
@@ -2956,9 +2958,17 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                     return;
                   }
                   
-                  // Check that ALL non-solve factors have constraint values entered
+                  // Check that ALL non-solve factors have constraint values entered (main effects OR in interactions)
                   for (let i = 0; i < factors.length; i++) {
-                    if (i !== solveFactorIdx && selectedFactorsForModel[i] !== false) {
+                    if (i === solveFactorIdx) continue;
+                    
+                    // Check if factor is in model as main effect OR appears in any selected interaction
+                    const isInMainEffect = selectedFactorsForModel[i] !== false;
+                    const isInSelectedInteraction = interactionPairs.some((pair, pairIdx) => 
+                      selectedFactorsForModel[`int-${pairIdx}`] !== false && pair.indices.includes(i)
+                    );
+                    
+                    if (isInMainEffect || isInSelectedInteraction) {
                       const constraintVal = constraintValues[i];
                       if (constraintVal === null || constraintVal === undefined || !Number.isFinite(constraintVal)) {
                         setSolverResult(null);
@@ -2979,7 +2989,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   
                   if (includeCenterPoints && n_c > 0 && selectedFactorsForModel['centerPoint'] !== false && k > 0) {
                     const continuousFactorIndices = factors.map((f, i) => ({ factor: f, index: i }))
-                      .filter(({ factor }) => factor.type === 'continuous');
+                      .filter(({ factor }) => factor.type === 'continuous' && selectedFactorsForModel[index] !== false);
                     const kl = continuousFactorIndices.length;
                     const curvatureEffect = y_c_avg - y_f_avg;
                     const quadCoeff_coded = kl > 0 ? curvatureEffect / kl : 0;
@@ -4093,7 +4103,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                           const isUncodedQuadratic = showUncoded && allFactorsHaveValidLevels() && includeCenterPoints && n_c  > 0 && selectedFactorsForModel['centerPoint'] !== false;
                           
                           const continuousFactorIndices = factors.map((f, i) => ({ factor: f, index: i }))
-                            .filter(({ factor, index }) => factor.type === 'continuous' /* && selectedFactorsForModel[index] !== false */);
+                            .filter(({ factor, index }) => factor.type === 'continuous' && selectedFactorsForModel[index] !== false);
                           const numContinuous = continuousFactorIndices.length;
                           const curvatureEffect = y_c_avg - y_f_avg;
                           const quadCoeff = numContinuous > 0 ? curvatureEffect / numContinuous : 0;
@@ -4477,7 +4487,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                   setTargetY(parsed);
                                 }
                               }}
-                              placeholder="Enter target Y value (use . or , for decimals)"
+                              placeholder="Enter target Y value"
                               data-testid="input-solver-target-y"
                             />
                             {(() => {
@@ -4511,8 +4521,14 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                             <Label>Set Constraint Values for Other Factors</Label>
                             <div className="grid grid-cols-2 gap-3">
                               {factors.map((factor, idx) => {
-                                // Only show included factors that are NOT the solve factor
-                                if (idx !== solveFactorIdx && selectedFactorsForModel[idx] !== false) {
+                                // Check if factor is in model as main effect OR appears in any selected interaction
+                                const isInMainEffect = selectedFactorsForModel[idx] !== false;
+                                const isInSelectedInteraction = interactionPairs.some((pair, pairIdx) => 
+                                  selectedFactorsForModel[`int-${pairIdx}`] !== false && pair.indices.includes(idx)
+                                );
+                                
+                                // Show constraint input if factor is NOT the solve factor AND (is main effect OR in interaction)
+                                if (idx !== solveFactorIdx && (isInMainEffect || isInSelectedInteraction)) {
                                   const constraintVal = constraintValues[idx];
                                   
                                   // For categorical factors, show a dropdown with Low (-1) and High (+1) options
@@ -4526,64 +4542,66 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                           value={constraintVal === -1 ? '-1' : constraintVal === 1 ? '1' : ''} 
                                           onValueChange={(v) => {
                                             const value = v === '-1' ? -1 : v === '1' ? 1 : null;
+                                            const displayval = v === '-1' ? factor.levels[0] : v === '1' ? factor.levels[1] : null;
                                             setConstraintValues({
                                               ...constraintValues,
                                               [idx]: value
                                             });
                                             setConstraintDisplay({
                                               ...constraintDisplay,
-                                              [idx]: v
+                                              [idx]: displayval
                                             });
                                           }}
                                         >
                                           <SelectTrigger data-testid={`select-constraint-${idx}`}>
-                                            <SelectValue placeholder="Select level" />
+                                            <SelectValue placeholder="Select the constrained value of the categorical factor (-1, +1)" />
                                           </SelectTrigger>
                                           <SelectContent>
-                                            <SelectItem value="-1">Low ({factor.lowValue})</SelectItem>
-                                            <SelectItem value="1">High ({factor.highValue})</SelectItem>
+                                           <SelectItem value="-1">{factor.levels[0]} (-1)</SelectItem>
+                                            <SelectItem value="1">{factor.levels[1]} (+1)</SelectItem>
                                           </SelectContent>
                                         </Select>
                                       </div>
                                     );
                                   }
-                                  
-                                  // For continuous factors, show text input
-                                  const factorLow = parseFloat(String(factor.lowValue));
-                                  const factorHigh = parseFloat(String(factor.highValue));
-                                  const isOutsideRange = constraintVal !== null && constraintVal !== undefined && !isNaN(factorLow) && !isNaN(factorHigh) && (
-                                    constraintVal < factorLow || 
-                                    constraintVal > factorHigh
-                                  );
-                                  return (
-                                    <div key={idx} className="space-y-1">
-                                      <Label htmlFor={`constraint-${idx}`} className="text-sm">
-                                        {factor.name}
-                                      </Label>
-                                      <Input
-                                        id={`constraint-${idx}`}
-                                        type="text"
-                                        value={constraintDisplay[idx] ?? ''}
-                                        onChange={(e) => {
-                                          const displayVal = e.target.value;
-                                          setConstraintDisplay({
-                                            ...constraintDisplay,
-                                            [idx]: displayVal
-                                          });
-                                          const value = displayVal === '' ? null : parseDecimalValue(displayVal);
-                                          setConstraintValues({
-                                            ...constraintValues,
-                                            [idx]: value
-                                          });
-                                        }}
-                                        placeholder={`Enter ${factor.name} value (use . or ,)`}
-                                        data-testid={`input-constraint-${idx}`}
-                                      />
-                                      {isOutsideRange && (
-                                        <p className="text-xs text-orange-600 dark:text-orange-400">⚠️ Outside inference space range: [{factorLow.toFixed(4)}, {factorHigh.toFixed(4)}]</p>
-                                      )}
-                                    </div>
-                                  );
+                                  else { // continuous constrained factor 
+                                    // For continuous factors, show text input
+                                    const factorLow = parseFloat(String(factor.lowValue));
+                                    const factorHigh = parseFloat(String(factor.highValue));
+                                    const isOutsideRange = constraintVal !== null && constraintVal !== undefined && !isNaN(factorLow) && !isNaN(factorHigh) && (
+                                      constraintVal < factorLow || 
+                                      constraintVal > factorHigh
+                                    );
+                                    return (
+                                      <div key={idx} className="space-y-1">
+                                        <Label htmlFor={`constraint-${idx}`} className="text-sm">
+                                          {factor.name}
+                                        </Label>
+                                        <Input
+                                          id={`constraint-${idx}`}
+                                          type="text"
+                                          value={constraintDisplay[idx] ?? ''}
+                                          onChange={(e) => {
+                                            const displayVal = e.target.value;
+                                            setConstraintDisplay({
+                                              ...constraintDisplay,
+                                              [idx]: displayVal
+                                            });
+                                            const value = displayVal === '' ? null : parseDecimalValue(displayVal);
+                                            setConstraintValues({
+                                              ...constraintValues,
+                                              [idx]: value
+                                            });
+                                          }}
+                                          placeholder={`Enter ${factor.name} value`}
+                                          data-testid={`input-constraint-${idx}`}
+                                        />
+                                        {isOutsideRange && (
+                                          <p className="text-xs text-orange-600 dark:text-orange-400">⚠️ Outside inference space range: [{factorLow.toFixed(4)}, {factorHigh.toFixed(4)}]</p>
+                                        )}
+                                      </div>
+                                    );
+                                  }
                                 }
                                 return null;
                               })}
