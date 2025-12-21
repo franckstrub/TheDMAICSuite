@@ -2838,8 +2838,8 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                 const { displayBeta, displayCoeffStats } = transformCoefficientsAndSE();
                 //displayBeta[0] = y_f_avg;
                 
-                // Always compute uncoded coefficients for solver (independent of display toggle)
-                const getUncodedCoefficientsForSolver = () => {
+                // Always compute uncoded coefficients for equation display (independent of display toggle)
+                const getUncodedCoefficientsForEquation = () => {
                   if (!allFactorsHaveValidLevels()) {
                     return beta_red; // Return coded if can't transform
                   }
@@ -2951,7 +2951,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                   }
                   
                   // Always use uncoded coefficients for solver
-                  const solverBeta = getUncodedCoefficientsForSolver();
+                  const solverBeta = getUncodedCoefficientsForEquation();
                   
                   if (solverBeta[solveReducedCol] === 0) {
                     setSolverResult(null);
