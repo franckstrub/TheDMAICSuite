@@ -2006,6 +2006,9 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                   console.warn('Gaussian elimination error for reduced model:', e);
                   beta_red = Xty_red.map(v => v / (XtX_red[0][0] || 1));
                 }
+                
+                // Compute (X'X)^-1 for prediction intervals
+                const XtX_inv_red = invertMatrix(XtX_red);
 
                // Calculate predictions for reduced model with and without quadratic terms in model first (Note: we are in coded view)
                 let predictions_red = [];                                     
@@ -2217,95 +2220,6 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                 };
                 
                 const { displayBeta, displayCoeffStats } = transformCoefficientsAndSE();
-                //displayBeta[0] = y_f_avg;
-                // Always compute uncoded coefficients for Equation display (independent of display toggle)
-                const getUncodedCoefficientsForEquation = () => {
-                  if (!allFactorsHaveValidLevels()) {
-                    return beta_red; // Return coded if can't transform
-                  }
-                  
-                  const transformed = [...beta_red];
-                  let interceptAdjustment = 0;
-                  
-                  // Transform main effect coefficients
-                  for (let i = 0; i < baseFactorCount; i++) {
-                    const colIdx = selectedColumns.indexOf(i + 1);
-                    if (colIdx === -1 || selectedFactorsForModel[i] === false) continue;
-                    
-                    const factor = factors[i];
-                    if (factor.type === 'continuous' && factor.lowValue !== undefined && factor.highValue !== undefined) {
-                      const low = parseFloat(String(factor.lowValue));
-                      const high = parseFloat(String(factor.highValue));
-                      if (!isNaN(low) && !isNaN(high)) {
-                        const center = (low + high) / 2;
-                        const halfRange = (high - low) / 2;
-                        
-                        if (Number.isFinite(beta_red[colIdx])) {
-                          transformed[colIdx] = beta_red[colIdx] / halfRange;
-                          interceptAdjustment += beta_red[colIdx] * center / halfRange;
-                        }
-                      }
-                    }
-                  }
-                  
-                  // Transform N-way interaction coefficients
-                  // For interaction β₁₂*x₁_coded*x₂_coded, expanding (x₁-m₁)/h₁ * (x₂-m₂)/h₂ gives:
-                  // Interaction coeff: β₁₂/(h₁*h₂)
-                  // Intercept adjustment: +β₁₂*m₁*m₂/(h₁*h₂) (added to intercept, so subtract from adjustment)
-                  for (let i = 0; i < interactionPairs.length; i++) {
-                    if (selectedFactorsForModel[`int-${i}`] === false) continue;
-                    
-                    const colIdx = selectedColumns.indexOf(baseFactorCount + 1 + i);
-                    if (colIdx === -1) continue;
-                    
-                    const pair = interactionPairs[i];
-                    
-                    //const allContinuousWithLevels = pair.indices.every(idx => {
-                    const someContinuousWithLevels = pair.indices.some(idx => {
-                      const factor = factors[idx];
-                      return factor.type === 'continuous' && 
-                             factor.lowValue !== undefined && 
-                             factor.highValue !== undefined;
-                    });
-                    
-                    if (someContinuousWithLevels) {
-                      let halfRangeProduct = 1;
-                      let centerOverHalfRangeProduct = 1;
-                      let allValid = true;
-                      
-                      for (const idx of pair.indices) {
-                        const factor = factors[idx];
-                        if (factor.type === 'continuous' && factor.lowValue !== undefined && factor.highValue !== undefined) {
-                          const low = parseFloat(String(factor.lowValue));
-                          const high = parseFloat(String(factor.highValue));
-                          if (isNaN(low) || isNaN(high)) {
-                            allValid = false;
-                            break;
-                          }
-                          const halfRange = (high - low) / 2;
-                          const center = (high + low) / 2;
-                          halfRangeProduct *= halfRange;
-                          centerOverHalfRangeProduct *= center / halfRange;
-                        }
-                      }
-                      
-                      if (allValid && Number.isFinite(beta_red[colIdx])) {
-                        transformed[colIdx] = beta_red[colIdx] / halfRangeProduct;
-                        // Intercept gets +β*m₁*m₂/(h₁*h₂) = β * (m₁/h₁)*(m₂/h₂), so subtract from adjustment
-                        interceptAdjustment += beta_red[colIdx] * centerOverHalfRangeProduct;
-                      }
-                    }
-                  }
-                  
-                  transformed[0] = beta_red[0] - interceptAdjustment;
-                  //transformed[0] = beta_red[0];
-                  
-                  // If transformation resulted in non-finite values, use coded instead
-                  if (!transformed.every(v => Number.isFinite(v))) {
-                    return beta_red;
-                  }
-                  return transformed;
-                };
                 
                 const handleSolve = () => { // solve with coded equation (simpler)
                   // Reset no solution state
@@ -2331,15 +2245,6 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                     return;
                   }
                   
-                  // Always use uncoded coefficients for Equation display
-                  const solverBeta = getUncodedCoefficientsForEquation();
-                  
-//
-/*                  if (solverBeta[solveReducedCol] === 0) {
-                    setSolverResult(null);
-                    return;
-                  }
-*/
                  if (beta_red[solveReducedCol] === 0) {
                     setSolverResult(null);
                     return;
@@ -3899,14 +3804,10 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                           value={constraintVal === -1 ? '-1' : constraintVal === 1 ? '1' : ''} 
                                           onValueChange={(v) => {
                                             const value = v === '-1' ? -1 : v === '1' ? 1 : null;
-                                            const displayval = v === '-1' ? factor.levels[0] : v === '1' ? factor.levels[1] : null;
+                                            
                                             setConstraintValues({
                                               ...constraintValues,
                                               [idx]: value
-                                            });
-                                            setConstraintDisplay({
-                                              ...constraintDisplay,
-                                              [idx]: displayval
                                             });
                                           }}
                                         >
@@ -3998,8 +3899,8 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
 
                           {solverResult !== null && solverResult.length > 0 && (() => {
                             // Calculate confidence and prediction intervals for Y target
-                            const tValue = jStat.studentt.inv((1 - significanceLevel / 2), n - numCoefficients);
-                            const s2 = SS_res / (n - numCoefficients); // Variance estimate
+                            const df_error = n - p_reduced - dfCurvature;
+                            const tValue = jStat.studentt.inv(1 - significanceLevel / 2, df_error);
                             
                             // Get observed Y range from responses
                             const observedYValues = Object.values(responses).filter(r => r !== null && typeof r === 'number' && isFinite(r)) as number[];
@@ -4013,6 +3914,68 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                             const solveFactorHigh = solveFactor.type === 'continuous' ? parseFloat(String(solveFactor.highValue)) : NaN;
                             const solveFactorRangeStr = `[${solveFactorLow.toFixed(4)}, ${solveFactorHigh.toFixed(4)}]`;
                             
+                            // Helper function to build x0 vector (coded) for a given solution
+                            const buildX0Vector = (solvedValue: number): number[] => {
+                              const x0: number[] = Array(p_reduced).fill(0);
+                              x0[0] = 1; // Intercept
+                              
+                              // Set values for each factor in reduced model
+                              for (let i = 0; i < baseFactorCount; i++) {
+                                const redCol = colMapReverse[i + 1];
+                                if (redCol === undefined) continue;
+                                
+                                const factor = factors[i];
+                                let codedVal: number;
+                                
+                                if (i === solveFactorIdx) {
+                                  // Convert solved value to coded
+                                  if (factor.type === 'continuous' && factor.lowValue !== undefined && factor.highValue !== undefined) {
+                                    const low = parseFloat(String(factor.lowValue));
+                                    const high = parseFloat(String(factor.highValue));
+                                    const center = (low + high) / 2;
+                                    const halfRange = (high - low) / 2;
+                                    codedVal = halfRange !== 0 ? (solvedValue - center) / halfRange : 0;
+                                  } else {
+                                    codedVal = solvedValue;
+                                  }
+                                } else {
+                                  // Use constraint value (already in coded form)
+                                  codedVal = constraintValues[i] ?? 0;
+                                }
+                                x0[redCol] = codedVal;
+                              }
+                              
+                              // Set interaction terms
+                              for (let pairIdx = 0; pairIdx < interactionPairs.length; pairIdx++) {
+                                const redCol = colMapReverse[baseFactorCount + 1 + pairIdx];
+                                if (redCol === undefined) continue;
+                                
+                                const pair = interactionPairs[pairIdx];
+                                let interactionVal = 1;
+                                for (const factorIdx of pair.indices) {
+                                  const factorRedCol = colMapReverse[factorIdx + 1];
+                                  if (factorRedCol !== undefined) {
+                                    interactionVal *= x0[factorRedCol];
+                                  }
+                                }
+                                x0[redCol] = interactionVal;
+                              }
+                              
+                              return x0;
+                            };
+                            
+                            // Calculate x0' * (X'X)^-1 * x0 for hat matrix diagonal
+                            const calcHatDiag = (x0: number[]): number => {
+                              if (!XtX_inv_red) return 0;
+                              let h = 0;
+                              for (let i = 0; i < x0.length; i++) {
+                                for (let j = 0; j < x0.length; j++) {
+                                  h += x0[i] * XtX_inv_red[i][j] * x0[j];
+                                }
+                              }
+                              return h;
+                            };
+                            
                             return (
                               <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded border border-green-200 dark:border-green-800">
                                 <p className="text-sm text-muted-foreground mb-2">
@@ -4021,6 +3984,17 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                 {solverResult.map((result, idx) => {
                                   const isOutsideRange = !isNaN(solveFactorLow) && !isNaN(solveFactorHigh) && 
                                     (result < solveFactorLow || result > solveFactorHigh);
+                                  
+                                  // Calculate intervals for this solution
+                                  const x0 = buildX0Vector(result);
+                                  const h = calcHatDiag(x0);
+                                  const SE_mean = Math.sqrt(mse * h);
+                                  const SE_pred = Math.sqrt(mse * (1 + h));
+                                  const CI_lower = targetY - tValue * SE_mean;
+                                  const CI_upper = targetY + tValue * SE_mean;
+                                  const PI_lower = targetY - tValue * SE_pred;
+                                  const PI_upper = targetY + tValue * SE_pred;
+                                  const confidencePercent = ((1 - significanceLevel) * 100).toFixed(0);
                                   
                                   return (
                                     <div key={idx} className={idx > 0 ? 'mt-3 pt-3 border-t border-green-300 dark:border-green-700' : ''}>
@@ -4031,6 +4005,16 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                       {isOutsideRange && (
                                         <p className="text-sm text-orange-600 dark:text-orange-400 mt-1">⚠️ Outside inference space range: {solveFactorRangeStr}</p>
                                       )}
+                                      <div className="mt-2 text-sm space-y-1">
+                                        <p className="text-muted-foreground">
+                                          <span className="font-medium">{confidencePercent}% Confidence Interval (Y):</span>{' '}
+                                          <span className="text-green-700 dark:text-green-300">[{CI_lower.toFixed(4)}, {CI_upper.toFixed(4)}]</span>
+                                        </p>
+                                        <p className="text-muted-foreground">
+                                          <span className="font-medium">{confidencePercent}% Prediction Interval (Y):</span>{' '}
+                                          <span className="text-green-700 dark:text-green-300">[{PI_lower.toFixed(4)}, {PI_upper.toFixed(4)}]</span>
+                                        </p>
+                                      </div>
                                     </div>
                                   );
                                 })}
