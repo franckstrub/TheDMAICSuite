@@ -4452,6 +4452,15 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
             selectedColumns.forEach((origCol, reducedIdx) => { colMapReverse[origCol] = reducedIdx; });
             
             const X_reduced = X.map(row => selectedColumns.map(col => row[col]));
+            if (X_reduced.length === 0 || !X_reduced[0]) {
+              return (
+                <Card>
+                  <CardContent className="p-8 text-center text-muted-foreground">
+                    <p>No valid experimental runs with level data found. Please ensure your DOE plan has been generated.</p>
+                  </CardContent>
+                </Card>
+              );
+            }
             const p_reduced = X_reduced[0].length;
             
             let XtX_red: number[][] = Array(p_reduced).fill(null).map(() => Array(p_reduced).fill(0));
