@@ -3784,13 +3784,12 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
               if (run.response === null || isNaN(run.response)) return;
               const row: number[] = [1];
               for (let f = 0; f < baseFactorCount; f++) {
-                const val = generatedPlan.plan[idx]?.[factors[f].name] ?? 0;
-                row.push(val);
+                row.push(run.levels[f] === '+' ? 1 : run.levels[f] === '-' ? -1 : 0);
               }
               interactionPairs.forEach(pair => {
                 let interactionVal = 1;
-                pair.indices.forEach(i => {
-                  interactionVal *= row[i + 1];
+                pair.indices.forEach(idx => {
+                  interactionVal *= row[idx + 1];
                 });
                 row.push(interactionVal);
               });
@@ -3799,26 +3798,14 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
             
             // Calculate center point statistics
             const centerPointIndices = runData.map((run, idx) => ({ run, idx }))
-              .filter(({ run, idx }) => {
-                if (run.response === null || isNaN(run.response)) return false;
-                return factors.every((f, fIdx) => {
-                  const val = generatedPlan.plan[idx]?.[f.name] ?? 1;
-                  return f.type === 'categorical' ? Math.abs(val) === 1 : Math.abs(val) < 0.01;
-                }) && factors.some(f => f.type === 'continuous' && Math.abs(generatedPlan.plan[idx]?.[f.name] ?? 1) < 0.01);
-              })
+              .filter(({ run }) => run.response !== null && !isNaN(run.response) && run.levels.every(l => l === '0'))
               .map(({ idx }) => idx);
             const n_c = centerPointIndices.length;
             const y_c = centerPointIndices.map(i => runData[i].response).filter((r): r is number => r !== null);
             const y_c_avg = y_c.length > 0 ? y_c.reduce((a, b) => a + b, 0) / y_c.length : 0;
             
             const factorialIndices = runData.map((run, idx) => ({ run, idx }))
-              .filter(({ run, idx }) => {
-                if (run.response === null || isNaN(run.response)) return false;
-                return factors.every((f, fIdx) => {
-                  const val = generatedPlan.plan[idx]?.[f.name];
-                  return val === 1 || val === -1;
-                });
-              })
+              .filter(({ run }) => run.response !== null && !isNaN(run.response) && run.levels.every(l => l === '+' || l === '-'))
               .map(({ idx }) => idx);
             const y_f = factorialIndices.map(i => runData[i].response).filter((r): r is number => r !== null);
             const y_f_avg = y_f.length > 0 ? y_f.reduce((a, b) => a + b, 0) / y_f.length : 0;
@@ -3889,15 +3876,6 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
             });
             
             const X_reduced = X.map(row => selectedColumns.map(col => row[col]));
-            if (X_reduced.length === 0 || !X_reduced[0]) {
-              return (
-                <Card>
-                  <CardContent className="p-8 text-center text-muted-foreground">
-                    <p>No valid experimental runs with level data found. Please ensure your DOE plan has been generated.</p>
-                  </CardContent>
-                </Card>
-              );
-            }
             const p_reduced = X_reduced[0].length;
             
             let XtX_red: number[][] = Array(p_reduced).fill(null).map(() => Array(p_reduced).fill(0));
