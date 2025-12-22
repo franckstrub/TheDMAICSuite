@@ -2656,6 +2656,13 @@ export const doeFractionalFactorialConfig = pgTable(
     solveFactorIdx: integer("solve_factor_idx"),
     constraintValues: jsonb("constraint_values").$type<Record<number, number | null>>().default({}),
     
+    // 3D Solver visualization options
+    show3DScatter: boolean("show_3d_scatter").default(false),
+    showContour: boolean("show_contour").default(false),
+    show3DSpinningRSM: boolean("show_3d_spinning_rsm").default(false),
+    plot3DFactorX: integer("plot_3d_factor_x").default(0),
+    plot3DFactorY: integer("plot_3d_factor_y").default(1),
+    
     // Display options
     showUncoded: boolean("show_uncoded").default(false),
     showParetoOfEffects: boolean("show_pareto_of_effects").default(false),
@@ -2678,6 +2685,11 @@ export const updateDoeFractionalFactorialConfigSchema = z.object({
   targetY: z.number().optional(),
   solveFactorIdx: z.number().optional(),
   constraintValues: z.record(z.number(), z.number().nullable()).optional(),
+  show3DScatter: z.boolean().optional(),
+  showContour: z.boolean().optional(),
+  show3DSpinningRSM: z.boolean().optional(),
+  plot3DFactorX: z.number().optional(),
+  plot3DFactorY: z.number().optional(),
   showParetoOfEffects: z.boolean().optional(),
   showUncoded: z.boolean().optional(),
 });
@@ -2733,6 +2745,13 @@ export const doeFullFactorialConfig = pgTable(
     solveFactorIdx: integer("solve_factor_idx"),
     constraintValues: jsonb("constraint_values").$type<Record<number, number | null>>().default({}),
     
+    // 3D Solver visualization options
+    show3DScatter: boolean("show_3d_scatter").default(false),
+    showContour: boolean("show_contour").default(false),
+    show3DSpinningRSM: boolean("show_3d_spinning_rsm").default(false),
+    plot3DFactorX: integer("plot_3d_factor_x").default(0),
+    plot3DFactorY: integer("plot_3d_factor_y").default(1),
+    
     // Display options
     showUncoded: boolean("show_uncoded").default(false),
     showParetoOfEffects: boolean("show_pareto_of_effects").default(false),
@@ -2755,6 +2774,11 @@ export const updateDoeFullFactorialConfigSchema = z.object({
   targetY: z.number().optional(),
   solveFactorIdx: z.number().optional(),
   constraintValues: z.record(z.number(), z.number().nullable()).optional(),
+  show3DScatter: z.boolean().optional(),
+  showContour: z.boolean().optional(),
+  show3DSpinningRSM: z.boolean().optional(),
+  plot3DFactorX: z.number().optional(),
+  plot3DFactorY: z.number().optional(),
   showParetoOfEffects: z.boolean().optional(),
   showUncoded: z.boolean().optional(),
 });

@@ -410,6 +410,23 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
         setConstraintDisplay(displayValues);
       }
       
+      // Load 3D visualization settings
+      if (config.show3DScatter !== undefined) {
+        setShow3DScatter(config.show3DScatter);
+      }
+      if (config.showContour !== undefined) {
+        setShowContour(config.showContour);
+      }
+      if (config.show3DSpinningRSM !== undefined) {
+        setShow3DSpinningRSM(config.show3DSpinningRSM);
+      }
+      if (config.plot3DFactorX !== undefined && config.plot3DFactorX !== null) {
+        setPlot3DFactorX(config.plot3DFactorX);
+      }
+      if (config.plot3DFactorY !== undefined && config.plot3DFactorY !== null) {
+        setPlot3DFactorY(config.plot3DFactorY);
+      }
+      
       // Load generatedPlan from persisted format
       if (config.generatedPlan) {
         const reconstructedPlan = reconstructGeneratedPlanFromPersisted(
@@ -587,6 +604,11 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
       solveFactorIdx,
       constraintValues: cleanedConstraintValues,
       significanceLevel,
+      show3DScatter,
+      showContour,
+      show3DSpinningRSM,
+      plot3DFactorX,
+      plot3DFactorY,
     };
     
     await saveSolvingSetupMutation.mutateAsync(solverSetupData);
@@ -4808,12 +4830,12 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                               <div className="mt-6 space-y-4">
                                 <Separator />
                                 <div className="space-y-3">
-                                  <h4 className="font-medium">3D Visualization</h4>
+                                  <h4 className="font-medium">3D Model Visualization</h4>
                                   
                                   {/* Factor axis selection */}
                                   <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                      <Label>Factor A (X-Axis)</Label>
+                                      <Label>1st Factor (X-Axis)</Label>
                                       <Select
                                         value={String(validFactorX)}
                                         onValueChange={(val) => setPlot3DFactorX(parseInt(val))}
@@ -4831,7 +4853,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                       </Select>
                                     </div>
                                     <div>
-                                      <Label>Factor B (Y-Axis)</Label>
+                                      <Label>2nd Factor (Y-Axis)</Label>
                                       <Select
                                         value={String(validFactorY)}
                                         onValueChange={(val) => setPlot3DFactorY(parseInt(val))}
@@ -4877,7 +4899,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                         onCheckedChange={(checked) => setShow3DGlobe(checked === true)}
                                         data-testid="checkbox-frac-3d-globe"
                                       />
-                                      <Label htmlFor="frac-show-3d-globe" className="cursor-pointer">3D Surface (Globe)</Label>
+                                      <Label htmlFor="frac-show-3d-globe" className="cursor-pointer">3D Spinning Response Surface</Label>
                                     </div>
                                   </div>
                                   
