@@ -4895,7 +4895,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                             z: scatterData.map(d => d.z),
                                             marker: { size: 5, color: 'rgb(59, 130, 246)', opacity: 0.8 },
                                             name: 'Y Response',
-                                            hovertemplate: `${factors[validFactorX]?.name}: %{x:.4f}<br>${factors[validFactorY]?.name}: %{y:.4f}<br>${responseName || 'Y'}: %{z:.4f}<extra></extra>`,
+                                            hovertemplate: `${factors[validFactorX]?.name}: %{x:.4f}<br>${factors[validFactorY]?.name}: %{y:.4f}<br>Y: %{z:.4f}<extra></extra>`,
                                           } as any,
                                           // Regression surface
                                           {
@@ -4907,7 +4907,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                             colorscale: 'Viridis',
                                             name: 'Fit Model',
                                             showscale: false,
-                                            hovertemplate: `Fit Model<br>${factors[validFactorX]?.name}: %{x:.4f}<br>${factors[validFactorY]?.name}: %{y:.4f}<br>Predicted ${responseName || 'Y'}: %{z:.4f}<extra></extra>`,
+                                            hovertemplate: `Fit Model<br>${factors[validFactorX]?.name}: %{x:.4f}<br>${factors[validFactorY]?.name}: %{y:.4f}<br>Predicted Y: %{z:.4f}<extra></extra>`,
                                           } as any,
                                           // Solution points
                                           ...(solutionPoints.length > 0 ? [{
@@ -4918,16 +4918,16 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                             z: solutionPoints.map(d => d.z),
                                             marker: { size: 8, color: 'red', symbol: 'diamond' },
                                             name: 'Solution',
-                                            hovertemplate: `Solution<br>${factors[validFactorX]?.name}: %{x:.4f}<br>${factors[validFactorY]?.name}: %{y:.4f}<br>Target ${responseName || 'Y'}: %{z:.4f}<extra></extra>`,
+                                            hovertemplate: `Solution<br>${factors[validFactorX]?.name}: %{x:.4f}<br>${factors[validFactorY]?.name}: %{y:.4f}<br>Target Y: %{z:.4f}<extra></extra>`,
                                           } as any] : []),
                                         ]}
                                         layout={{
                                           autosize: true,
-                                          title: { text: `<b>3D Scatter: ${responseName || 'Y'} vs ${factors[validFactorX]?.name}, ${factors[validFactorY]?.name}</b>`, font: { size: 14 } },
+                                          title: { text: `<b>3D Scatter: Y vs ${factors[validFactorX]?.name}, ${factors[validFactorY]?.name}</b>`, font: { size: 14 } },
                                           scene: {
                                             xaxis: { title: { text: `<b>${factors[validFactorX]?.name}</b>` } },
                                             yaxis: { title: { text: `<b>${factors[validFactorY]?.name}</b>` } },
-                                            zaxis: { title: { text: `<b>${responseName || 'Y Response'}</b>` } },
+                                            zaxis: { title: { text: '<b>Y Response</b>' } },
                                           },
                                           legend: { x: 0.85, y: 0.95 },
                                           margin: { l: 0, r: 0, b: 0, t: 40 },
@@ -4952,12 +4952,12 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                             colorscale: 'Viridis',
                                             contours: { showlabels: true, labelfont: { size: 10, color: 'white' } },
                                             name: 'Fit Model',
-                                            hovertemplate: `${factors[validFactorX]?.name}: %{x:.4f}<br>${factors[validFactorY]?.name}: %{y:.4f}<br>Predicted ${responseName || 'Y'}: %{z:.4f}<extra></extra>`,
+                                            hovertemplate: `${factors[validFactorX]?.name}: %{x:.4f}<br>${factors[validFactorY]?.name}: %{y:.4f}<br>Predicted Y: %{z:.4f}<extra></extra>`,
                                           } as any,
                                         ]}
                                         layout={{
                                           autosize: true,
-                                          title: { text: `<b>Contour Plot: ${responseName || 'Y'} = f(${factors[validFactorX]?.name}, ${factors[validFactorY]?.name})</b>`, font: { size: 14 } },
+                                          title: { text: `<b>Contour Plot: Y = f(${factors[validFactorX]?.name}, ${factors[validFactorY]?.name})</b>`, font: { size: 14 } },
                                           xaxis: { title: { text: `<b>${factors[validFactorX]?.name}</b>` } },
                                           yaxis: { title: { text: `<b>${factors[validFactorY]?.name}</b>` } },
                                           margin: { l: 60, r: 20, b: 50, t: 50 },
@@ -4983,7 +4983,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                             z: scatterData.map(d => d.z),
                                             marker: { size: 5, color: 'rgb(59, 130, 246)', opacity: 0.8 },
                                             name: 'Y Response',
-                                            hovertemplate: `${factors[validFactorX]?.name}: %{x:.4f}<br>${factors[validFactorY]?.name}: %{y:.4f}<br>${responseName || 'Y'}: %{z:.4f}<extra></extra>`,
+                                            hovertemplate: `${factors[validFactorX]?.name}: %{x:.4f}<br>${factors[validFactorY]?.name}: %{y:.4f}<br>Y: %{z:.4f}<extra></extra>`,
                                           } as any,
                                           // 3D mesh surface (globe-like)
                                           {
@@ -4996,7 +4996,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                             intensity: zGrid.flat(),
                                             name: 'Fit Model',
                                             showscale: true,
-                                            hovertemplate: `Fit Model<br>${factors[validFactorX]?.name}: %{x:.4f}<br>${factors[validFactorY]?.name}: %{y:.4f}<br>Predicted ${responseName || 'Y'}: %{z:.4f}<extra></extra>`,
+                                            hovertemplate: `Fit Model<br>${factors[validFactorX]?.name}: %{x:.4f}<br>${factors[validFactorY]?.name}: %{y:.4f}<br>Predicted Y: %{z:.4f}<extra></extra>`,
                                           } as any,
                                           // Solution points
                                           ...(solutionPoints.length > 0 ? [{
@@ -5007,16 +5007,16 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                             z: solutionPoints.map(d => d.z),
                                             marker: { size: 8, color: 'red', symbol: 'diamond' },
                                             name: 'Solution',
-                                            hovertemplate: `Solution<br>${factors[validFactorX]?.name}: %{x:.4f}<br>${factors[validFactorY]?.name}: %{y:.4f}<br>Target ${responseName || 'Y'}: %{z:.4f}<extra></extra>`,
+                                            hovertemplate: `Solution<br>${factors[validFactorX]?.name}: %{x:.4f}<br>${factors[validFactorY]?.name}: %{y:.4f}<br>Target Y: %{z:.4f}<extra></extra>`,
                                           } as any] : []),
                                         ]}
                                         layout={{
                                           autosize: true,
-                                          title: { text: `<b>3D Surface: ${responseName || 'Y'} = f(${factors[validFactorX]?.name}, ${factors[validFactorY]?.name})</b>`, font: { size: 14 } },
+                                          title: { text: `<b>3D Surface: Y = f(${factors[validFactorX]?.name}, ${factors[validFactorY]?.name})</b>`, font: { size: 14 } },
                                           scene: {
                                             xaxis: { title: { text: `<b>${factors[validFactorX]?.name}</b>` } },
                                             yaxis: { title: { text: `<b>${factors[validFactorY]?.name}</b>` } },
-                                            zaxis: { title: { text: `<b>${responseName || 'Y Response'}</b>` } },
+                                            zaxis: { title: { text: '<b>Y Response</b>' } },
                                           },
                                           legend: { x: 0.85, y: 0.95 },
                                           margin: { l: 0, r: 0, b: 0, t: 40 },
