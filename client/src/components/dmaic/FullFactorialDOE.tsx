@@ -3781,7 +3781,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
             const y: number[] = responsesArr;
             
             runData.forEach((run, idx) => {
-              if (run.response === null || isNaN(run.response)) return;
+              if (run.response === null || isNaN(run.response) || !run.levels) return;
               const row: number[] = [1];
               for (let f = 0; f < baseFactorCount; f++) {
                 row.push(run.levels[f] === '+' ? 1 : run.levels[f] === '-' ? -1 : 0);
@@ -3798,14 +3798,14 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
             
             // Calculate center point statistics
             const centerPointIndices = runData.map((run, idx) => ({ run, idx }))
-              .filter(({ run }) => run.response !== null && !isNaN(run.response) && run.levels.every(l => l === '0'))
+              .filter(({ run }) => run.response !== null && !isNaN(run.response) && run.levels && run.levels.every(l => l === '0'))
               .map(({ idx }) => idx);
             const n_c = centerPointIndices.length;
             const y_c = centerPointIndices.map(i => runData[i].response).filter((r): r is number => r !== null);
             const y_c_avg = y_c.length > 0 ? y_c.reduce((a, b) => a + b, 0) / y_c.length : 0;
             
             const factorialIndices = runData.map((run, idx) => ({ run, idx }))
-              .filter(({ run }) => run.response !== null && !isNaN(run.response) && run.levels.every(l => l === '+' || l === '-'))
+              .filter(({ run }) => run.response !== null && !isNaN(run.response) && run.levels && run.levels.every(l => l === '+' || l === '-'))
               .map(({ idx }) => idx);
             const y_f = factorialIndices.map(i => runData[i].response).filter((r): r is number => r !== null);
             const y_f_avg = y_f.length > 0 ? y_f.reduce((a, b) => a + b, 0) / y_f.length : 0;
