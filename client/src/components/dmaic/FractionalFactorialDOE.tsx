@@ -4744,14 +4744,14 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                             
                             // Get actual Y responses for scatter plot (uncoded X values)
                             const scatterData: { x: number; y: number; z: number }[] = [];
-                            if (generatedPlan) {
-                              generatedPlan.forEach((run, runIdx) => {
+                            if (generatedPlan && generatedPlan.plan && Array.isArray(generatedPlan.plan)) {
+                              generatedPlan.plan.forEach((run: any, runIdx: number) => {
                                 const response = responses[runIdx];
                                 if (response === null || response === undefined || !isFinite(response)) return;
                                 
-                                // Get factor values for this run in uncoded form
-                                const xFactorVal = run.levels[validFactorX];
-                                const yFactorVal = run.levels[validFactorY];
+                                // Get factor values for this run in coded form from plan row
+                                const xFactorVal = run[factors[validFactorX]?.name] ?? 0;
+                                const yFactorVal = run[factors[validFactorY]?.name] ?? 0;
                                 
                                 // Convert from coded to uncoded
                                 const xCenter = (xLow + xHigh) / 2;
