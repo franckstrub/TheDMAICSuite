@@ -127,6 +127,13 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
   const [showNormalProbPlot, setShowNormalProbPlot] = useState(false);
   const [showParetoOfEffects, setShowParetoOfEffects] = useState(false);
   
+  // 3D Solver visualization options
+  const [show3DScatter, setShow3DScatter] = useState(false);
+  const [showContour, setShowContour] = useState(false);
+  const [show3DGlobe, setShow3DGlobe] = useState(false);
+  const [plot3DFactorX, setPlot3DFactorX] = useState<number>(0);
+  const [plot3DFactorY, setPlot3DFactorY] = useState<number>(1);
+  
   // Tab persistence
   const [activeTab, setActiveTab] = useState<string>(() => {
     const stored = localStorage.getItem(`doe-full-active-tab-${projectId}-${solutionId}`);
@@ -4005,7 +4012,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                       {isOutsideRange && (
                                         <p className="text-sm text-orange-600 dark:text-orange-400 mt-1">⚠️ Outside inference space range: {solveFactorRangeStr}</p>
                                       )}
-                                      <div className="mt-2 text-sm space-y-1">
+                                      {/*<div className="mt-2 text-sm space-y-1">
                                         <p className="text-muted-foreground">
                                           <span className="font-medium">{confidencePercent}% Confidence Interval (Y):</span>{' '}
                                           <span className="text-green-700 dark:text-green-300">[{CI_lower.toFixed(4)}, {CI_upper.toFixed(4)}]</span>
@@ -4014,13 +4021,403 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                           <span className="font-medium">{confidencePercent}% Prediction Interval (Y):</span>{' '}
                                           <span className="text-green-700 dark:text-green-300">[{PI_lower.toFixed(4)}, {PI_upper.toFixed(4)}]</span>
                                         </p>
-                                      </div>
+                                      </div>*/}
                                     </div>
                                   );
                                 })}
                                 {targetYOutsideRange && (
                                   <p className="text-sm text-orange-600 dark:text-orange-400 mt-3">⚠️ Target Y outside the studied model (range: {minY.toFixed(4)} - {maxY.toFixed(4)})</p>
                                 )}
+                              </div>
+                            );
+                          })()}
+                          
+                          {/* 3D Visualization Section */}
+                          {baseFactorCount >= 2 && (() => {
+                            // Get continuous factors for axis selection
+                            const continuousFactorIndices = factors
+                              .map((f, i) => ({ factor: f, index: i }))
+                              .filter(({ factor }) => factor.type === 'continuous')
+                              .map(({ index }) => index);
+                            
+                            if (continuousFactorIndices.length < 2) return null;
+                            
+                            // Ensure selected factors are valid
+                            const validFactorX = continuousFactorIndices.includes(plot3DFactorX) ? plot3DFactorX : continuousFactorIndices[0];
+                            const validFactorY = continuousFactorIndices.includes(plot3DFactorY) ? plot3DFactorY : continuousFactorIndices[1] ?? continuousFactorIndices[0];
+                            
+                            // Get factor ranges for the selected axes
+                            const factorXData = factors[validFactorX];
+                            const factorYData = factors[validFactorY];
+                            const xLow = parseFloat(String(factorXData?.lowValue ?? 0));
+                            const xHigh = parseFloat(String(factorXData?.highValue ?? 1));
+                            const yLow = parseFloat(String(factorYData?.lowValue ?? 0));
+                            const yHigh = parseFloat(String(factorYData?.highValue ?? 1));
+                            
+                            // Calculate predicted Z for a given (x, y) in uncoded units
+                            const predictZ = (xVal: number, yVal: number): number => {
+                              // Convert to coded values
+                              const xCenter = (xLow + xHigh) / 2;
+                              const xHalfRange = (xHigh - xLow) / 2;
+                              const yCenter = (yLow + yHigh) / 2;
+                              const yHalfRange = (yHigh - yLow) / 2;
+                              
+                              const xCoded = xHalfRange !== 0 ? (xVal - xCenter) / xHalfRange : 0;
+                              const yCoded = yHalfRange !== 0 ? (yVal - yCenter) / yHalfRange : 0;
+                              
+                              // Build prediction using displayBeta and reduced model
+                              let z = displayBeta[0] || 0; // Intercept
+                              
+                              // Add main effects
+                              for (let i = 0; i < baseFactorCount; i++) {
+                                const redCol = colMapReverse[i + 1];
+                                if (redCol === undefined) continue;
+                                
+                                const factor = factors[i];
+                                let codedVal: number;
+                                
+                                if (i === validFactorX) {
+                                  codedVal = xCoded;
+                                } else if (i === validFactorY) {
+                                  codedVal = yCoded;
+                                } else {
+                                  // Use constraint value for other factors
+                                  codedVal = constraintValues[i] ?? 0;
+                                }
+                                
+                                z += (displayBeta[redCol] || 0) * codedVal;
+                              }
+                              
+                              // Add interaction effects
+                              for (let pairIdx = 0; pairIdx < interactionPairs.length; pairIdx++) {
+                                const redCol = colMapReverse[baseFactorCount + 1 + pairIdx];
+                                if (redCol === undefined) continue;
+                                
+                                const pair = interactionPairs[pairIdx];
+                                let interactionVal = 1;
+                                for (const factorIdx of pair.indices) {
+                                  const factor = factors[factorIdx];
+                                  let codedVal: number;
+                                  
+                                  if (factorIdx === validFactorX) {
+                                    codedVal = xCoded;
+                                  } else if (factorIdx === validFactorY) {
+                                    codedVal = yCoded;
+                                  } else {
+                                    codedVal = constraintValues[factorIdx] ?? 0;
+                                  }
+                                  interactionVal *= codedVal;
+                                }
+                                
+                                z += (displayBeta[redCol] || 0) * interactionVal;
+                              }
+                              
+                              return z;
+                            };
+                            
+                            // Generate grid for surface/contour
+                            const gridSize = 25;
+                            const xGridVals: number[] = [];
+                            const yGridVals: number[] = [];
+                            for (let i = 0; i <= gridSize; i++) {
+                              xGridVals.push(xLow + (xHigh - xLow) * i / gridSize);
+                              yGridVals.push(yLow + (yHigh - yLow) * i / gridSize);
+                            }
+                            
+                            const zGrid: number[][] = [];
+                            for (let i = 0; i <= gridSize; i++) {
+                              const row: number[] = [];
+                              for (let j = 0; j <= gridSize; j++) {
+                                row.push(predictZ(xGridVals[i], yGridVals[j]));
+                              }
+                              zGrid.push(row);
+                            }
+                            
+                            // Get actual Y responses for scatter plot (uncoded X values)
+                            const scatterData: { x: number; y: number; z: number }[] = [];
+                            if (generatedPlan) {
+                              generatedPlan.forEach((run, runIdx) => {
+                                const response = responses[runIdx];
+                                if (response === null || response === undefined || !isFinite(response)) return;
+                                
+                                // Get factor values for this run in uncoded form
+                                const xFactorVal = run.levels[validFactorX];
+                                const yFactorVal = run.levels[validFactorY];
+                                
+                                // Convert from coded to uncoded
+                                const xCenter = (xLow + xHigh) / 2;
+                                const xHalfRange = (xHigh - xLow) / 2;
+                                const yCenter = (yLow + yHigh) / 2;
+                                const yHalfRange = (yHigh - yLow) / 2;
+                                
+                                const xUncoded = xCenter + xFactorVal * xHalfRange;
+                                const yUncoded = yCenter + yFactorVal * yHalfRange;
+                                
+                                scatterData.push({ x: xUncoded, y: yUncoded, z: response });
+                              });
+                            }
+                            
+                            // Get solution points in uncoded form
+                            const solutionPoints: { x: number; y: number; z: number }[] = [];
+                            if (solverResult && solverResult.length > 0) {
+                              solverResult.forEach((result) => {
+                                // Determine x and y values based on which factor is being solved
+                                let xVal: number, yVal: number;
+                                
+                                if (solveFactorIdx === validFactorX) {
+                                  xVal = result;
+                                  // Use constraint for Y factor
+                                  const yConstraint = constraintValues[validFactorY] ?? 0;
+                                  const yCenter = (yLow + yHigh) / 2;
+                                  const yHalfRange = (yHigh - yLow) / 2;
+                                  yVal = yCenter + yConstraint * yHalfRange;
+                                } else if (solveFactorIdx === validFactorY) {
+                                  yVal = result;
+                                  // Use constraint for X factor
+                                  const xConstraint = constraintValues[validFactorX] ?? 0;
+                                  const xCenter = (xLow + xHigh) / 2;
+                                  const xHalfRange = (xHigh - xLow) / 2;
+                                  xVal = xCenter + xConstraint * xHalfRange;
+                                } else {
+                                  // Solved factor is neither X nor Y axis - use constraints
+                                  const xConstraint = constraintValues[validFactorX] ?? 0;
+                                  const yConstraint = constraintValues[validFactorY] ?? 0;
+                                  const xCenter = (xLow + xHigh) / 2;
+                                  const xHalfRange = (xHigh - xLow) / 2;
+                                  const yCenter = (yLow + yHigh) / 2;
+                                  const yHalfRange = (yHigh - yLow) / 2;
+                                  xVal = xCenter + xConstraint * xHalfRange;
+                                  yVal = yCenter + yConstraint * yHalfRange;
+                                }
+                                
+                                solutionPoints.push({ x: xVal, y: yVal, z: targetY });
+                              });
+                            }
+                            
+                            return (
+                              <div className="mt-6 space-y-4">
+                                <Separator />
+                                <div className="space-y-3">
+                                  <h4 className="font-medium">3D Visualization</h4>
+                                  
+                                  {/* Factor axis selection */}
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                      <Label>Factor A (X-Axis)</Label>
+                                      <Select
+                                        value={String(validFactorX)}
+                                        onValueChange={(val) => setPlot3DFactorX(parseInt(val))}
+                                      >
+                                        <SelectTrigger data-testid="select-doe-3d-factor-x">
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          {continuousFactorIndices.map(idx => (
+                                            <SelectItem key={idx} value={String(idx)}>
+                                              {factors[idx].name}
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                    <div>
+                                      <Label>Factor B (Y-Axis)</Label>
+                                      <Select
+                                        value={String(validFactorY)}
+                                        onValueChange={(val) => setPlot3DFactorY(parseInt(val))}
+                                      >
+                                        <SelectTrigger data-testid="select-doe-3d-factor-y">
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          {continuousFactorIndices.map(idx => (
+                                            <SelectItem key={idx} value={String(idx)}>
+                                              {factors[idx].name}
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                  </div>
+                                  
+                                  {/* Plot type checkboxes */}
+                                  <div className="flex flex-wrap gap-4">
+                                    <div className="flex items-center space-x-2">
+                                      <Checkbox
+                                        id="show-3d-scatter"
+                                        checked={show3DScatter}
+                                        onCheckedChange={(checked) => setShow3DScatter(checked === true)}
+                                        data-testid="checkbox-3d-scatter"
+                                      />
+                                      <Label htmlFor="show-3d-scatter" className="cursor-pointer">3D Scatter Plot</Label>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                      <Checkbox
+                                        id="show-contour"
+                                        checked={showContour}
+                                        onCheckedChange={(checked) => setShowContour(checked === true)}
+                                        data-testid="checkbox-contour"
+                                      />
+                                      <Label htmlFor="show-contour" className="cursor-pointer">Contour Plot</Label>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                      <Checkbox
+                                        id="show-3d-globe"
+                                        checked={show3DGlobe}
+                                        onCheckedChange={(checked) => setShow3DGlobe(checked === true)}
+                                        data-testid="checkbox-3d-globe"
+                                      />
+                                      <Label htmlFor="show-3d-globe" className="cursor-pointer">3D Surface (Globe)</Label>
+                                    </div>
+                                  </div>
+                                  
+                                  {/* 3D Scatter Plot */}
+                                  {show3DScatter && (
+                                    <div className="border rounded-lg p-2">
+                                      <Plot
+                                        data={[
+                                          // Data points (Y responses)
+                                          {
+                                            type: 'scatter3d',
+                                            mode: 'markers',
+                                            x: scatterData.map(d => d.x),
+                                            y: scatterData.map(d => d.y),
+                                            z: scatterData.map(d => d.z),
+                                            marker: { size: 5, color: 'rgb(59, 130, 246)', opacity: 0.8 },
+                                            name: 'Y Response',
+                                            hovertemplate: `${factors[validFactorX]?.name}: %{x:.4f}<br>${factors[validFactorY]?.name}: %{y:.4f}<br>${responseName || 'Y'}: %{z:.4f}<extra></extra>`,
+                                          } as any,
+                                          // Regression surface
+                                          {
+                                            type: 'surface',
+                                            x: xGridVals,
+                                            y: yGridVals,
+                                            z: zGrid,
+                                            opacity: 0.6,
+                                            colorscale: 'Viridis',
+                                            name: 'Fit Model',
+                                            showscale: false,
+                                            hovertemplate: `Fit Model<br>${factors[validFactorX]?.name}: %{x:.4f}<br>${factors[validFactorY]?.name}: %{y:.4f}<br>Predicted ${responseName || 'Y'}: %{z:.4f}<extra></extra>`,
+                                          } as any,
+                                          // Solution points
+                                          ...(solutionPoints.length > 0 ? [{
+                                            type: 'scatter3d',
+                                            mode: 'markers',
+                                            x: solutionPoints.map(d => d.x),
+                                            y: solutionPoints.map(d => d.y),
+                                            z: solutionPoints.map(d => d.z),
+                                            marker: { size: 8, color: 'red', symbol: 'diamond' },
+                                            name: 'Solution',
+                                            hovertemplate: `Solution<br>${factors[validFactorX]?.name}: %{x:.4f}<br>${factors[validFactorY]?.name}: %{y:.4f}<br>Target ${responseName || 'Y'}: %{z:.4f}<extra></extra>`,
+                                          } as any] : []),
+                                        ]}
+                                        layout={{
+                                          autosize: true,
+                                          title: { text: `<b>3D Scatter: ${responseName || 'Y'} vs ${factors[validFactorX]?.name}, ${factors[validFactorY]?.name}</b>`, font: { size: 14 } },
+                                          scene: {
+                                            xaxis: { title: { text: `<b>${factors[validFactorX]?.name}</b>` } },
+                                            yaxis: { title: { text: `<b>${factors[validFactorY]?.name}</b>` } },
+                                            zaxis: { title: { text: `<b>${responseName || 'Y Response'}</b>` } },
+                                          },
+                                          legend: { x: 0.85, y: 0.95 },
+                                          margin: { l: 0, r: 0, b: 0, t: 40 },
+                                        }}
+                                        useResizeHandler
+                                        style={{ width: '100%', height: '450px' }}
+                                        config={{ responsive: true, displayModeBar: true, displaylogo: false }}
+                                      />
+                                    </div>
+                                  )}
+                                  
+                                  {/* Contour Plot (fit model only) */}
+                                  {showContour && (
+                                    <div className="border rounded-lg p-2">
+                                      <Plot
+                                        data={[
+                                          {
+                                            type: 'contour',
+                                            x: xGridVals,
+                                            y: yGridVals,
+                                            z: zGrid,
+                                            colorscale: 'Viridis',
+                                            contours: { showlabels: true, labelfont: { size: 10, color: 'white' } },
+                                            name: 'Fit Model',
+                                            hovertemplate: `${factors[validFactorX]?.name}: %{x:.4f}<br>${factors[validFactorY]?.name}: %{y:.4f}<br>Predicted ${responseName || 'Y'}: %{z:.4f}<extra></extra>`,
+                                          } as any,
+                                        ]}
+                                        layout={{
+                                          autosize: true,
+                                          title: { text: `<b>Contour Plot: ${responseName || 'Y'} = f(${factors[validFactorX]?.name}, ${factors[validFactorY]?.name})</b>`, font: { size: 14 } },
+                                          xaxis: { title: { text: `<b>${factors[validFactorX]?.name}</b>` } },
+                                          yaxis: { title: { text: `<b>${factors[validFactorY]?.name}</b>` } },
+                                          margin: { l: 60, r: 20, b: 50, t: 50 },
+                                        }}
+                                        useResizeHandler
+                                        style={{ width: '100%', height: '400px' }}
+                                        config={{ responsive: true, displayModeBar: true, displaylogo: false }}
+                                      />
+                                    </div>
+                                  )}
+                                  
+                                  {/* 3D Globe/Surface */}
+                                  {show3DGlobe && (
+                                    <div className="border rounded-lg p-2">
+                                      <Plot
+                                        data={[
+                                          // Data points (Y responses)
+                                          {
+                                            type: 'scatter3d',
+                                            mode: 'markers',
+                                            x: scatterData.map(d => d.x),
+                                            y: scatterData.map(d => d.y),
+                                            z: scatterData.map(d => d.z),
+                                            marker: { size: 5, color: 'rgb(59, 130, 246)', opacity: 0.8 },
+                                            name: 'Y Response',
+                                            hovertemplate: `${factors[validFactorX]?.name}: %{x:.4f}<br>${factors[validFactorY]?.name}: %{y:.4f}<br>${responseName || 'Y'}: %{z:.4f}<extra></extra>`,
+                                          } as any,
+                                          // 3D mesh surface (globe-like)
+                                          {
+                                            type: 'mesh3d',
+                                            x: xGridVals.flatMap(x => yGridVals.map(() => x)),
+                                            y: xGridVals.flatMap(() => yGridVals),
+                                            z: zGrid.flat(),
+                                            opacity: 0.7,
+                                            colorscale: 'Viridis',
+                                            intensity: zGrid.flat(),
+                                            name: 'Fit Model',
+                                            showscale: true,
+                                            hovertemplate: `Fit Model<br>${factors[validFactorX]?.name}: %{x:.4f}<br>${factors[validFactorY]?.name}: %{y:.4f}<br>Predicted ${responseName || 'Y'}: %{z:.4f}<extra></extra>`,
+                                          } as any,
+                                          // Solution points
+                                          ...(solutionPoints.length > 0 ? [{
+                                            type: 'scatter3d',
+                                            mode: 'markers',
+                                            x: solutionPoints.map(d => d.x),
+                                            y: solutionPoints.map(d => d.y),
+                                            z: solutionPoints.map(d => d.z),
+                                            marker: { size: 8, color: 'red', symbol: 'diamond' },
+                                            name: 'Solution',
+                                            hovertemplate: `Solution<br>${factors[validFactorX]?.name}: %{x:.4f}<br>${factors[validFactorY]?.name}: %{y:.4f}<br>Target ${responseName || 'Y'}: %{z:.4f}<extra></extra>`,
+                                          } as any] : []),
+                                        ]}
+                                        layout={{
+                                          autosize: true,
+                                          title: { text: `<b>3D Surface: ${responseName || 'Y'} = f(${factors[validFactorX]?.name}, ${factors[validFactorY]?.name})</b>`, font: { size: 14 } },
+                                          scene: {
+                                            xaxis: { title: { text: `<b>${factors[validFactorX]?.name}</b>` } },
+                                            yaxis: { title: { text: `<b>${factors[validFactorY]?.name}</b>` } },
+                                            zaxis: { title: { text: `<b>${responseName || 'Y Response'}</b>` } },
+                                          },
+                                          legend: { x: 0.85, y: 0.95 },
+                                          margin: { l: 0, r: 0, b: 0, t: 40 },
+                                        }}
+                                        useResizeHandler
+                                        style={{ width: '100%', height: '450px' }}
+                                        config={{ responsive: true, displayModeBar: true, displaylogo: false }}
+                                      />
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             );
                           })()}
