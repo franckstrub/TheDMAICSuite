@@ -642,12 +642,11 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
       </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="setup" data-testid="tab-setup">Setup</TabsTrigger>
           <TabsTrigger value="data" data-testid="tab-data">Data</TabsTrigger>
           <TabsTrigger value="chart" data-testid="tab-chart">Chart</TabsTrigger>
           <TabsTrigger value="analysis" data-testid="tab-analysis">Analysis</TabsTrigger>
-          <TabsTrigger value="solver" data-testid="tab-solver">Solver</TabsTrigger>
         </TabsList>
         
         {/* Setup Tab */}
@@ -3724,481 +3723,315 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                         </div>
                       </CardContent>
                     </Card>
+
+                    {/* Solver */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>
+                          Solve for Target Response (Uncoded)
+                          {Object.values(selectedFactorsForModel).some(v => v === false) && (
+                            <span className="p-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-xl ml-5 text-sm font-normal justify-right">Reduced Model</span>
+                          )}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <div>
+                            <Label>Target Y Value</Label>
+                            <Input
+                              type="text"
+                              value={targetYDisplay}
+                              onChange={(e) => {
+                                setTargetYDisplay(e.target.value);
+                                const parsed = parseDecimalValue(e.target.value);
+                                if (parsed !== null) {
+                                  setTargetY(parsed);
+                                }
+                              }}
+                              placeholder="Enter target Y value"
+                              data-testid="input-solver-target-y"
+                            />
+                            {(() => {
+                              const observedYValues = Object.values(responses).filter(r => r !== null && typeof r === 'number' && isFinite(r)) as number[];
+                              const minY = observedYValues.length > 0 ? Math.min(...observedYValues) : NaN;
+                              const maxY = observedYValues.length > 0 ? Math.max(...observedYValues) : NaN;
+                              const isOutsideRange = targetYDisplay !== '' && Number.isFinite(minY) && Number.isFinite(maxY) && Number.isFinite(targetY) && (targetY < minY || targetY > maxY);
+                              return isOutsideRange ? (
+                                <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">⚠️ Target Y outside the studied model range: [{minY.toFixed(4)}, {maxY.toFixed(4)}]</p>
+                              ) : null;
+                            })()}
+                          </div>
+                          <div>
+                            <Label>Solve for Factor</Label>
+                            <Select value={String(solveFactorIdx)} onValueChange={(v) => setSolveFactorIdx(parseInt(v))}>
+                              <SelectTrigger data-testid="select-solver-factor">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {factors.map((f, i) => {
+                                  // Only show continuous factors that are included in the model
+                                  if (selectedFactorsForModel[i] === false) return null;
+                                  if (f.type === 'categorical') return null;
+                                  return <SelectItem key={i} value={String(i)}>{f.name}</SelectItem>;
+                                })}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          {/* Set Constraint Values for Other Factors */}
+                          <div className="space-y-3">
+                            <Label>Set Constraint Values for Other Factors</Label>
+                            <div className="grid grid-cols-2 gap-3">
+                              {factors.map((factor, idx) => {
+                                // Check if factor is in model as main effect OR appears in any selected interaction
+                                const isInMainEffect = selectedFactorsForModel[idx] !== false;
+                                const isInSelectedInteraction = interactionPairs.some((pair, pairIdx) => 
+                                  selectedFactorsForModel[`int-${pairIdx}`] !== false && pair.indices.includes(idx)
+                                );
+                                
+                                // Show constraint input if factor is NOT the solve factor AND (is main effect OR in interaction)
+                                if (idx !== solveFactorIdx && (isInMainEffect || isInSelectedInteraction)) {
+                                  const constraintVal = constraintValues[idx];
+                                  
+                                  // For categorical factors, show a dropdown with Low (-1) and High (+1) options
+                                  if (factor.type === 'categorical') {
+                                    return (
+                                      <div key={idx} className="space-y-1">
+                                        <Label htmlFor={`constraint-${idx}`} className="text-sm">
+                                          {factor.name}
+                                        </Label>
+                                        <Select 
+                                          value={constraintVal === -1 ? '-1' : constraintVal === 1 ? '1' : ''} 
+                                          onValueChange={(v) => {
+                                            const value = v === '-1' ? -1 : v === '1' ? 1 : null;
+                                            
+                                            setConstraintValues({
+                                              ...constraintValues,
+                                              [idx]: value
+                                            });
+                                          }}
+                                        >
+                                          <SelectTrigger data-testid={`select-constraint-${idx}`}>
+                                            <SelectValue placeholder="Select the constrained value of the categorical factor (-1, +1)" />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            <SelectItem value="-1">{factor.levels[0]} (-1)</SelectItem>
+                                            <SelectItem value="1">{factor.levels[1]} (+1)</SelectItem>
+                                          </SelectContent>
+                                        </Select>
+                                      </div>
+                                    );
+                                  }
+                                  else { // continuous constrained factor
+                                    // For continuous factors, show text input
+                                    const factorLow = parseFloat(String(factor.lowValue));
+                                    const factorHigh = parseFloat(String(factor.highValue));
+                                    const isOutsideRange = constraintVal !== null && constraintVal !== undefined && !isNaN(factorLow) && !isNaN(factorHigh) && (
+                                      constraintVal < factorLow || 
+                                      constraintVal > factorHigh
+                                    );
+                                  
+                                    return (
+                                      <div key={idx} className="space-y-1">
+                                        <Label htmlFor={`constraint-${idx}`} className="text-sm">
+                                          {factor.name}
+                                        </Label>
+                                        <Input
+                                          id={`constraint-${idx}`}
+                                          type="text"
+                                          value={constraintDisplay[idx] ?? ''}
+                                          onChange={(e) => {
+                                            const displayVal = e.target.value;
+                                            setConstraintDisplay({
+                                              ...constraintDisplay,
+                                              [idx]: displayVal
+                                            });
+                                            const value = displayVal === '' ? null : parseDecimalValue(displayVal);
+                                            setConstraintValues({
+                                              ...constraintValues,
+                                              [idx]: value
+                                            });
+                                          }}
+                                          placeholder={`Enter ${factor.name} value`}
+                                          data-testid={`input-constraint-${idx}`}
+                                        />
+                                        {isOutsideRange && (
+                                          <p className="text-xs text-orange-600 dark:text-orange-400">⚠️ Outside inference space range: [{factorLow.toFixed(4)}, {factorHigh.toFixed(4)}]</p>
+                                        )}
+                                      </div>
+                                    );
+                                  }
+                                }
+                                return null;
+                              })}
+                            </div>
+                          </div>
+
+                          <Button
+                            onClick={handleSaveSolvingSetup}
+                            disabled={targetY === null || saveSolvingSetupMutation.isPending}
+                            data-testid="button-save-solving-setup"
+                            className="w-full"
+                          >
+                            {saveSolvingSetupMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Save Setup
+                          </Button>
+
+                          {targetYDisplay !== '' && Number.isFinite(targetY) && (() => {
+                            const solveOrigCol = solveFactorIdx + 1;
+                            const solveRedCol = colMapReverse[solveOrigCol];
+                            return solveRedCol !== undefined && displayBeta[solveRedCol] === 0;
+                          })() && (
+                            <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded border border-amber-200 dark:border-amber-800">
+                              <p className="text-sm text-amber-600 dark:text-amber-400">
+                                ⚠️ Cannot solve for {factors[solveFactorIdx].name}: This factor has a coefficient of 0 in the model, meaning it has no significant effect on the response in this design.
+                              </p>
+                            </div>
+                          )}
+
+                          {solverNoSolution && (
+                            <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded border border-red-200 dark:border-red-800">
+                              <p className="text-sm text-red-600 dark:text-red-400">
+                                ❌ No solution found: The solver could not find a real solution for the given target and constraints. Try adjusting the target value or constraint values.
+                              </p>
+                            </div>
+                          )}
+
+                          {solverResult !== null && solverResult.length > 0 && (() => {
+                            // Calculate confidence and prediction intervals for Y target
+                            const df_error = n - p_reduced - dfCurvature;
+                            const tValue = jStat.studentt.inv(1 - significanceLevel / 2, df_error);
+                            
+                            // Get observed Y range from responses
+                            const observedYValues = Object.values(responses).filter(r => r !== null && typeof r === 'number' && isFinite(r)) as number[];
+                            const minY = observedYValues.length > 0 ? Math.min(...observedYValues) : NaN;
+                            const maxY = observedYValues.length > 0 ? Math.max(...observedYValues) : NaN;
+                            const targetYOutsideRange = Number.isFinite(minY) && Number.isFinite(maxY) && (targetY < minY || targetY > maxY);
+                            
+                            // Check if solutions are outside the solve factor's range
+                            const solveFactor = factors[solveFactorIdx];
+                            const solveFactorLow = solveFactor.type === 'continuous' ? parseFloat(String(solveFactor.lowValue)) : NaN;
+                            const solveFactorHigh = solveFactor.type === 'continuous' ? parseFloat(String(solveFactor.highValue)) : NaN;
+                            const solveFactorRangeStr = `[${solveFactorLow.toFixed(4)}, ${solveFactorHigh.toFixed(4)}]`;
+                            
+                            // Helper function to build x0 vector (coded) for a given solution
+                            const buildX0Vector = (solvedValue: number): number[] => {
+                              const x0: number[] = Array(p_reduced).fill(0);
+                              x0[0] = 1; // Intercept
+                              
+                              // Set values for each factor in reduced model
+                              for (let i = 0; i < baseFactorCount; i++) {
+                                const redCol = colMapReverse[i + 1];
+                                if (redCol === undefined) continue;
+                                
+                                const factor = factors[i];
+                                let codedVal: number;
+                                
+                                if (i === solveFactorIdx) {
+                                  // Convert solved value to coded
+                                  if (factor.type === 'continuous' && factor.lowValue !== undefined && factor.highValue !== undefined) {
+                                    const low = parseFloat(String(factor.lowValue));
+                                    const high = parseFloat(String(factor.highValue));
+                                    const center = (low + high) / 2;
+                                    const halfRange = (high - low) / 2;
+                                    codedVal = halfRange !== 0 ? (solvedValue - center) / halfRange : 0;
+                                  } else {
+                                    codedVal = solvedValue;
+                                  }
+                                } else {
+                                  // Use constraint value (already in coded form)
+                                  codedVal = constraintValues[i] ?? 0;
+                                }
+                                x0[redCol] = codedVal;
+                              }
+                              
+                              // Set interaction terms
+                              for (let pairIdx = 0; pairIdx < interactionPairs.length; pairIdx++) {
+                                const redCol = colMapReverse[baseFactorCount + 1 + pairIdx];
+                                if (redCol === undefined) continue;
+                                
+                                const pair = interactionPairs[pairIdx];
+                                let interactionVal = 1;
+                                for (const factorIdx of pair.indices) {
+                                  const factorRedCol = colMapReverse[factorIdx + 1];
+                                  if (factorRedCol !== undefined) {
+                                    interactionVal *= x0[factorRedCol];
+                                  }
+                                }
+                                x0[redCol] = interactionVal;
+                              }
+                              
+                              return x0;
+                            };
+                            
+                            // Calculate x0' * (X'X)^-1 * x0 for hat matrix diagonal
+                            const calcHatDiag = (x0: number[]): number => {
+                              if (!XtX_inv_red) return 0;
+                              let h = 0;
+                              for (let i = 0; i < x0.length; i++) {
+                                for (let j = 0; j < x0.length; j++) {
+                                  h += x0[i] * XtX_inv_red[i][j] * x0[j];
+                                }
+                              }
+                              return h;
+                            };
+                            
+                            return (
+                              <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded border border-green-200 dark:border-green-800">
+                                <p className="text-sm text-muted-foreground mb-2">
+                                  {solverResult.length > 1 ? `Results (${solverResult.length} solutions):` : 'Result:'}
+                                </p>
+                                {solverResult.map((result, idx) => {
+                                  const isOutsideRange = !isNaN(solveFactorLow) && !isNaN(solveFactorHigh) && 
+                                    (result < solveFactorLow || result > solveFactorHigh);
+                                  
+                                  // Calculate intervals for this solution
+                                  const x0 = buildX0Vector(result);
+                                  const h = calcHatDiag(x0);
+                                  const SE_mean = Math.sqrt(mse * h);
+                                  const SE_pred = Math.sqrt(mse * (1 + h));
+                                  const CI_lower = targetY - tValue * SE_mean;
+                                  const CI_upper = targetY + tValue * SE_mean;
+                                  const PI_lower = targetY - tValue * SE_pred;
+                                  const PI_upper = targetY + tValue * SE_pred;
+                                  const confidencePercent = ((1 - significanceLevel) * 100).toFixed(0);
+                                  
+                                  return (
+                                    <div key={idx} className={idx > 0 ? 'mt-3 pt-3 border-t border-green-300 dark:border-green-700' : ''}>
+                                      <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                                        {solverResult.length > 1 && <span className="text-sm font-normal text-muted-foreground mr-2">Solution {idx + 1}:</span>}
+                                        {factors[solveFactorIdx].name} = {result.toFixed(4)} {factors[solveFactorIdx].type === 'continuous' && factors[solveFactorIdx].units ? `${factors[solveFactorIdx].units}` : ''}
+                                      </p>
+                                      {isOutsideRange && (
+                                        <p className="text-sm text-orange-600 dark:text-orange-400 mt-1">⚠️ Outside inference space range: {solveFactorRangeStr}</p>
+                                      )}
+                                      <div className="mt-2 text-sm space-y-1">
+                                        <p className="text-muted-foreground">
+                                          <span className="font-medium">{confidencePercent}% Confidence Interval (Y):</span>{' '}
+                                          <span className="text-green-700 dark:text-green-300">[{CI_lower.toFixed(4)}, {CI_upper.toFixed(4)}]</span>
+                                        </p>
+                                        <p className="text-muted-foreground">
+                                          <span className="font-medium">{confidencePercent}% Prediction Interval (Y):</span>{' '}
+                                          <span className="text-green-700 dark:text-green-300">[{PI_lower.toFixed(4)}, {PI_upper.toFixed(4)}]</span>
+                                        </p>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                                {targetYOutsideRange && (
+                                  <p className="text-sm text-orange-600 dark:text-orange-400 mt-3">⚠️ Target Y outside the studied model (range: {minY.toFixed(4)} - {maxY.toFixed(4)})</p>
+                                )}
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      </CardContent>
+                    </Card>
                   </>
                 );
               })()}
             </>
           );
-          })()}
-        </TabsContent>
-
-        {/* Solver Tab */}
-        <TabsContent value="solver" className="space-y-4">
-          {(() => {
-            const validResponseCount = runData.filter(r => r.response !== null && !isNaN(r.response)).length;
-            const planLength = generatedPlan?.plan?.length || 0;
-            const hasEnoughData = validResponseCount === planLength && planLength > 0;
-            
-            if (!generatedPlan || runData.length === 0 || !hasEnoughData) {
-              return (
-                <Card>
-                  <CardContent className="p-8 text-center text-muted-foreground">
-                    <p>Generate a plan and enter all data to use the solver ({validResponseCount}/{planLength} responses)</p>
-                  </CardContent>
-                </Card>
-              );
-            }
-            
-            // Build regression model for solver
-            const responsesArr = runData.map(r => r.response).filter((r): r is number => r !== null && !isNaN(r));
-            if (responsesArr.length < 2) {
-              return (
-                <Card>
-                  <CardContent className="p-8 text-center text-muted-foreground">
-                    <p>Insufficient data for solver</p>
-                  </CardContent>
-                </Card>
-              );
-            }
-            
-            const baseFactorCount = factors.length;
-            const interactionPairs: Array<{ indices: number[]; label: string }> = [];
-            for (let i = 0; i < baseFactorCount; i++) {
-              for (let j = i + 1; j < baseFactorCount; j++) {
-                interactionPairs.push({
-                  indices: [i, j],
-                  label: `${factors[i].name} × ${factors[j].name}`
-                });
-              }
-            }
-            
-            const n = responsesArr.length;
-            const k = baseFactorCount;
-            const p = 1 + k + interactionPairs.length;
-            
-            // Build design matrix X
-            const X: number[][] = [];
-            const y: number[] = responsesArr;
-            
-            runData.forEach((run, idx) => {
-              if (run.response === null || isNaN(run.response)) return;
-              const row: number[] = [1];
-              for (let f = 0; f < baseFactorCount; f++) {
-                row.push(run.levels[f] === '+' ? 1 : run.levels[f] === '-' ? -1 : 0);
-              }
-              interactionPairs.forEach(pair => {
-                let interactionVal = 1;
-                pair.indices.forEach(idx => {
-                  interactionVal *= row[idx + 1];
-                });
-                row.push(interactionVal);
-              });
-              X.push(row);
-            });
-            
-            // Calculate center point statistics
-            const centerPointIndices = runData.map((run, idx) => ({ run, idx }))
-              .filter(({ run }) => run.response !== null && !isNaN(run.response) && run.levels.every(l => l === '0'))
-              .map(({ idx }) => idx);
-            const n_c = centerPointIndices.length;
-            const y_c = centerPointIndices.map(i => runData[i].response).filter((r): r is number => r !== null);
-            const y_c_avg = y_c.length > 0 ? y_c.reduce((a, b) => a + b, 0) / y_c.length : 0;
-            
-            const factorialIndices = runData.map((run, idx) => ({ run, idx }))
-              .filter(({ run }) => run.response !== null && !isNaN(run.response) && run.levels.every(l => l === '+' || l === '-'))
-              .map(({ idx }) => idx);
-            const y_f = factorialIndices.map(i => runData[i].response).filter((r): r is number => r !== null);
-            const y_f_avg = y_f.length > 0 ? y_f.reduce((a, b) => a + b, 0) / y_f.length : 0;
-            const dfCurvature = (includeCenterPoints && n_c > 0) ? 1 : 0;
-            
-            // Solve using Gaussian elimination
-            const solveNormalEquations = (A: number[][], b: number[]): number[] => {
-              const n = A.length;
-              const aug = A.map((row, i) => [...row, b[i]]);
-              
-              for (let col = 0; col < n; col++) {
-                let maxRow = col;
-                let maxVal = Math.abs(aug[col][col]);
-                
-                for (let row = col + 1; row < n; row++) {
-                  if (Math.abs(aug[row][col]) > maxVal) {
-                    maxVal = Math.abs(aug[row][col]);
-                    maxRow = row;
-                  }
-                }
-                
-                if (maxVal < 1e-10) continue;
-                
-                [aug[col], aug[maxRow]] = [aug[maxRow], aug[col]];
-                
-                for (let row = col + 1; row < n; row++) {
-                  if (Math.abs(aug[col][col]) > 1e-15) {
-                    const factor = aug[row][col] / aug[col][col];
-                    for (let j = col; j <= n; j++) {
-                      aug[row][j] -= factor * aug[col][j];
-                    }
-                  }
-                }
-              }
-              
-              const x: number[] = Array(n).fill(0);
-              for (let i = n - 1; i >= 0; i--) {
-                x[i] = aug[i][n];
-                for (let j = i + 1; j < n; j++) {
-                  x[i] -= aug[i][j] * x[j];
-                }
-                if (Math.abs(aug[i][i]) > 1e-12) {
-                  x[i] /= aug[i][i];
-                } else if (Math.abs(x[i]) < 1e-10) {
-                  x[i] = 0;
-                }
-              }
-              x[0] = y_f_avg;
-              return x;
-            };
-            
-            // Build reduced model
-            const selectedColumns: number[] = [0];
-            for (let i = 0; i < k; i++) {
-              if (selectedFactorsForModel[i] !== false) {
-                selectedColumns.push(i + 1);
-              }
-            }
-            interactionPairs.forEach((_, pairIdx) => {
-              if (selectedFactorsForModel[`int-${pairIdx}`] !== false) {
-                selectedColumns.push(k + 1 + pairIdx);
-              }
-            });
-            
-            const colMapReverse: Record<number, number> = {};
-            selectedColumns.forEach((origCol, reducedIdx) => {
-              colMapReverse[origCol] = reducedIdx;
-            });
-            
-            const X_reduced = X.map(row => selectedColumns.map(col => row[col]));
-            const p_reduced = X_reduced[0].length;
-            
-            let XtX_red: number[][] = Array(p_reduced).fill(null).map(() => Array(p_reduced).fill(0));
-            let Xty_red: number[] = Array(p_reduced).fill(0);
-            
-            for (let i = 0; i < n; i++) {
-              for (let j = 0; j < p_reduced; j++) {
-                Xty_red[j] += X_reduced[i][j] * y[i];
-                for (let kk = 0; kk < p_reduced; kk++) {
-                  XtX_red[j][kk] += X_reduced[i][j] * X_reduced[i][kk];
-                }
-              }
-            }
-            
-            let beta_red: number[] = [];
-            try {
-              beta_red = solveNormalEquations(XtX_red, Xty_red);
-            } catch (e) {
-              beta_red = Xty_red.map(v => v / (XtX_red[0][0] || 1));
-            }
-            
-            const XtX_inv_red = invertMatrix(XtX_red);
-            
-            // Calculate MSE
-            const predictions_red = X_reduced.map(row => row.reduce((sum, val, i) => sum + val * beta_red[i], 0));
-            const residuals_red = y.map((yi, i) => yi - predictions_red[i]);
-            const SS_res = residuals_red.reduce((sum, r) => sum + r * r, 0);
-            const mse = SS_res / (n - p_reduced - dfCurvature);
-            
-            // Transform beta to uncoded (for solver display)
-            const displayBeta = [...beta_red];
-            let interceptAdjustment = 0;
-            for (let i = 0; i < baseFactorCount; i++) {
-              const redCol = colMapReverse[i + 1];
-              if (redCol === undefined) continue;
-              
-              const factor = factors[i];
-              if (factor.type === 'continuous' && factor.lowValue !== undefined && factor.highValue !== undefined) {
-                const low = parseFloat(String(factor.lowValue));
-                const high = parseFloat(String(factor.highValue));
-                const m = (low + high) / 2;
-                const halfRange = (high - low) / 2;
-                if (halfRange !== 0) {
-                  const scaledCoeff = beta_red[redCol] / halfRange;
-                  interceptAdjustment += beta_red[redCol] * m / halfRange;
-                  displayBeta[redCol] = scaledCoeff;
-                }
-              }
-            }
-            displayBeta[0] = beta_red[0] - interceptAdjustment;
-            
-            return (
-              <Card>
-                <CardHeader>
-                  <CardTitle>
-                    Solve for Target Response (Uncoded)
-                    {Object.values(selectedFactorsForModel).some(v => v === false) && (
-                      <span className="p-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-xl ml-5 text-sm font-normal">Reduced Model</span>
-                    )}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <Label>Target Y Value</Label>
-                      <Input
-                        type="text"
-                        value={targetYDisplay}
-                        onChange={(e) => {
-                          setTargetYDisplay(e.target.value);
-                          const parsed = parseDecimalValue(e.target.value);
-                          if (parsed !== null) {
-                            setTargetY(parsed);
-                          }
-                        }}
-                        placeholder="Enter target Y value"
-                        data-testid="input-solver-target-y"
-                      />
-                      {(() => {
-                        const observedYValues = Object.values(responses).filter(r => r !== null && typeof r === 'number' && isFinite(r)) as number[];
-                        const minY = observedYValues.length > 0 ? Math.min(...observedYValues) : NaN;
-                        const maxY = observedYValues.length > 0 ? Math.max(...observedYValues) : NaN;
-                        const isOutsideRange = targetYDisplay !== '' && Number.isFinite(minY) && Number.isFinite(maxY) && Number.isFinite(targetY) && (targetY < minY || targetY > maxY);
-                        return isOutsideRange ? (
-                          <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">⚠️ Target Y outside the studied model range: [{minY.toFixed(4)}, {maxY.toFixed(4)}]</p>
-                        ) : null;
-                      })()}
-                    </div>
-                    <div>
-                      <Label>Solve for Factor</Label>
-                      <Select value={String(solveFactorIdx)} onValueChange={(v) => setSolveFactorIdx(parseInt(v))}>
-                        <SelectTrigger data-testid="select-solver-factor">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {factors.map((f, i) => {
-                            if (selectedFactorsForModel[i] === false) return null;
-                            if (f.type === 'categorical') return null;
-                            return <SelectItem key={i} value={String(i)}>{f.name}</SelectItem>;
-                          })}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="space-y-3">
-                      <Label>Set Constraint Values for Other Factors</Label>
-                      <div className="grid grid-cols-2 gap-3">
-                        {factors.map((factor, idx) => {
-                          const isInMainEffect = selectedFactorsForModel[idx] !== false;
-                          const isInSelectedInteraction = interactionPairs.some((pair, pairIdx) => 
-                            selectedFactorsForModel[`int-${pairIdx}`] !== false && pair.indices.includes(idx)
-                          );
-                          
-                          if (idx !== solveFactorIdx && (isInMainEffect || isInSelectedInteraction)) {
-                            const constraintVal = constraintValues[idx];
-                            
-                            if (factor.type === 'categorical') {
-                              return (
-                                <div key={idx} className="space-y-1">
-                                  <Label htmlFor={`constraint-${idx}`} className="text-sm">{factor.name}</Label>
-                                  <Select 
-                                    value={constraintVal === -1 ? '-1' : constraintVal === 1 ? '1' : ''} 
-                                    onValueChange={(v) => {
-                                      const value = v === '-1' ? -1 : v === '1' ? 1 : null;
-                                      setConstraintValues({ ...constraintValues, [idx]: value });
-                                    }}
-                                  >
-                                    <SelectTrigger data-testid={`select-constraint-${idx}`}>
-                                      <SelectValue placeholder="Select level" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="-1">{factor.levels[0]} (-1)</SelectItem>
-                                      <SelectItem value="1">{factor.levels[1]} (+1)</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                              );
-                            } else {
-                              const factorLow = parseFloat(String(factor.lowValue));
-                              const factorHigh = parseFloat(String(factor.highValue));
-                              const isOutsideRange = constraintVal !== null && constraintVal !== undefined && !isNaN(factorLow) && !isNaN(factorHigh) && (
-                                constraintVal < factorLow || constraintVal > factorHigh
-                              );
-                              
-                              return (
-                                <div key={idx} className="space-y-1">
-                                  <Label htmlFor={`constraint-${idx}`} className="text-sm">{factor.name}</Label>
-                                  <Input
-                                    id={`constraint-${idx}`}
-                                    type="text"
-                                    value={constraintDisplay[idx] ?? ''}
-                                    onChange={(e) => {
-                                      const displayVal = e.target.value;
-                                      setConstraintDisplay({ ...constraintDisplay, [idx]: displayVal });
-                                      const value = displayVal === '' ? null : parseDecimalValue(displayVal);
-                                      setConstraintValues({ ...constraintValues, [idx]: value });
-                                    }}
-                                    placeholder={`Enter ${factor.name} value`}
-                                    data-testid={`input-constraint-${idx}`}
-                                  />
-                                  {isOutsideRange && (
-                                    <p className="text-xs text-orange-600 dark:text-orange-400">⚠️ Outside range: [{factorLow.toFixed(4)}, {factorHigh.toFixed(4)}]</p>
-                                  )}
-                                </div>
-                              );
-                            }
-                          }
-                          return null;
-                        })}
-                      </div>
-                    </div>
-
-                    <Button
-                      onClick={handleSaveSolvingSetup}
-                      disabled={targetY === null || saveSolvingSetupMutation.isPending}
-                      data-testid="button-save-solving-setup"
-                      className="w-full"
-                    >
-                      {saveSolvingSetupMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Save Setup
-                    </Button>
-
-                    {targetYDisplay !== '' && Number.isFinite(targetY) && (() => {
-                      const solveOrigCol = solveFactorIdx + 1;
-                      const solveRedCol = colMapReverse[solveOrigCol];
-                      return solveRedCol !== undefined && displayBeta[solveRedCol] === 0;
-                    })() && (
-                      <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded border border-amber-200 dark:border-amber-800">
-                        <p className="text-sm text-amber-600 dark:text-amber-400">
-                          ⚠️ Cannot solve for {factors[solveFactorIdx].name}: This factor has a coefficient of 0 in the model.
-                        </p>
-                      </div>
-                    )}
-
-                    {solverNoSolution && (
-                      <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded border border-red-200 dark:border-red-800">
-                        <p className="text-sm text-red-600 dark:text-red-400">
-                          ❌ No solution found: Try adjusting the target value or constraint values.
-                        </p>
-                      </div>
-                    )}
-
-                    {solverResult !== null && solverResult.length > 0 && (() => {
-                      const df_error = n - p_reduced - dfCurvature;
-                      const tValue = jStat.studentt.inv(1 - significanceLevel / 2, df_error);
-                      
-                      const observedYValues = Object.values(responses).filter(r => r !== null && typeof r === 'number' && isFinite(r)) as number[];
-                      const minY = observedYValues.length > 0 ? Math.min(...observedYValues) : NaN;
-                      const maxY = observedYValues.length > 0 ? Math.max(...observedYValues) : NaN;
-                      const targetYOutsideRange = Number.isFinite(minY) && Number.isFinite(maxY) && (targetY < minY || targetY > maxY);
-                      
-                      const solveFactor = factors[solveFactorIdx];
-                      const solveFactorLow = solveFactor.type === 'continuous' ? parseFloat(String(solveFactor.lowValue)) : NaN;
-                      const solveFactorHigh = solveFactor.type === 'continuous' ? parseFloat(String(solveFactor.highValue)) : NaN;
-                      const solveFactorRangeStr = `[${solveFactorLow.toFixed(4)}, ${solveFactorHigh.toFixed(4)}]`;
-                      
-                      const buildX0Vector = (solvedValue: number): number[] => {
-                        const x0: number[] = Array(p_reduced).fill(0);
-                        x0[0] = 1;
-                        
-                        for (let i = 0; i < baseFactorCount; i++) {
-                          const redCol = colMapReverse[i + 1];
-                          if (redCol === undefined) continue;
-                          
-                          const factor = factors[i];
-                          let codedVal: number;
-                          
-                          if (i === solveFactorIdx) {
-                            if (factor.type === 'continuous' && factor.lowValue !== undefined && factor.highValue !== undefined) {
-                              const low = parseFloat(String(factor.lowValue));
-                              const high = parseFloat(String(factor.highValue));
-                              const center = (low + high) / 2;
-                              const halfRange = (high - low) / 2;
-                              codedVal = halfRange !== 0 ? (solvedValue - center) / halfRange : 0;
-                            } else {
-                              codedVal = solvedValue;
-                            }
-                          } else {
-                            codedVal = constraintValues[i] ?? 0;
-                          }
-                          x0[redCol] = codedVal;
-                        }
-                        
-                        for (let pairIdx = 0; pairIdx < interactionPairs.length; pairIdx++) {
-                          const redCol = colMapReverse[baseFactorCount + 1 + pairIdx];
-                          if (redCol === undefined) continue;
-                          
-                          const pair = interactionPairs[pairIdx];
-                          let interactionVal = 1;
-                          for (const factorIdx of pair.indices) {
-                            const factorRedCol = colMapReverse[factorIdx + 1];
-                            if (factorRedCol !== undefined) {
-                              interactionVal *= x0[factorRedCol];
-                            }
-                          }
-                          x0[redCol] = interactionVal;
-                        }
-                        
-                        return x0;
-                      };
-                      
-                      const calcHatDiag = (x0: number[]): number => {
-                        if (!XtX_inv_red) return 0;
-                        let h = 0;
-                        for (let i = 0; i < x0.length; i++) {
-                          for (let j = 0; j < x0.length; j++) {
-                            h += x0[i] * XtX_inv_red[i][j] * x0[j];
-                          }
-                        }
-                        return h;
-                      };
-                      
-                      return (
-                        <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded border border-green-200 dark:border-green-800">
-                          <p className="text-sm text-muted-foreground mb-2">
-                            {solverResult.length > 1 ? `Results (${solverResult.length} solutions):` : 'Result:'}
-                          </p>
-                          {solverResult.map((result, idx) => {
-                            const isOutsideRange = !isNaN(solveFactorLow) && !isNaN(solveFactorHigh) && 
-                              (result < solveFactorLow || result > solveFactorHigh);
-                            
-                            const x0 = buildX0Vector(result);
-                            const h = calcHatDiag(x0);
-                            const SE_mean = Math.sqrt(mse * h);
-                            const SE_pred = Math.sqrt(mse * (1 + h));
-                            const CI_lower = targetY - tValue * SE_mean;
-                            const CI_upper = targetY + tValue * SE_mean;
-                            const PI_lower = targetY - tValue * SE_pred;
-                            const PI_upper = targetY + tValue * SE_pred;
-                            const confidencePercent = ((1 - significanceLevel) * 100).toFixed(0);
-                            
-                            return (
-                              <div key={idx} className={idx > 0 ? 'mt-3 pt-3 border-t border-green-300 dark:border-green-700' : ''}>
-                                <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                                  {solverResult.length > 1 && <span className="text-sm font-normal text-muted-foreground mr-2">Solution {idx + 1}:</span>}
-                                  {factors[solveFactorIdx].name} = {result.toFixed(4)} {factors[solveFactorIdx].type === 'continuous' && factors[solveFactorIdx].units ? `${factors[solveFactorIdx].units}` : ''}
-                                </p>
-                                {isOutsideRange && (
-                                  <p className="text-sm text-orange-600 dark:text-orange-400 mt-1">⚠️ Outside inference space range: {solveFactorRangeStr}</p>
-                                )}
-                                <div className="mt-2 text-sm space-y-1">
-                                  <p className="text-muted-foreground">
-                                    <span className="font-medium">{confidencePercent}% Confidence Interval (Y):</span>{' '}
-                                    <span className="text-green-700 dark:text-green-300">[{CI_lower.toFixed(4)}, {CI_upper.toFixed(4)}]</span>
-                                  </p>
-                                  <p className="text-muted-foreground">
-                                    <span className="font-medium">{confidencePercent}% Prediction Interval (Y):</span>{' '}
-                                    <span className="text-green-700 dark:text-green-300">[{PI_lower.toFixed(4)}, {PI_upper.toFixed(4)}]</span>
-                                  </p>
-                                </div>
-                              </div>
-                            );
-                          })}
-                          {targetYOutsideRange && (
-                            <p className="text-sm text-orange-600 dark:text-orange-400 mt-3">⚠️ Target Y outside the studied model (range: {minY.toFixed(4)} - {maxY.toFixed(4)})</p>
-                          )}
-                        </div>
-                      );
-                    })()}
-                  </div>
-                </CardContent>
-              </Card>
-            );
           })()}
         </TabsContent>
       </Tabs>
