@@ -131,7 +131,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
   // 3D Solver visualization options
   const [show3DScatter, setShow3DScatter] = useState(false);
   const [showContour, setShowContour] = useState(false);
-  const [show3DGlobe, setShow3DGlobe] = useState(false);
+  const [show3DSpinningRSM, setShow3DSpinningRSM] = useState(false);
   const [plot3DFactorX, setPlot3DFactorX] = useState<number>(0);
   const [plot3DFactorY, setPlot3DFactorY] = useState<number>(1);
   
@@ -316,6 +316,23 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
         setConstraintDisplay(displayValues);
       }
       
+      // Load 3D visualization settings
+      if (config.show3DScatter !== undefined) {
+        setShow3DScatter(config.show3DScatter);
+      }
+      if (config.showContour !== undefined) {
+        setShowContour(config.showContour);
+      }
+      if (config.show3DSpinningRSM !== undefined) {
+        setShow3DSpinningRSM(config.show3DSpinningRSM);
+      }
+      if (config.plot3DFactorX !== undefined && config.plot3DFactorX !== null) {
+        setPlot3DFactorX(config.plot3DFactorX);
+      }
+      if (config.plot3DFactorY !== undefined && config.plot3DFactorY !== null) {
+        setPlot3DFactorY(config.plot3DFactorY);
+      }
+      
       // Load generatedPlan from persisted format
       if (config.generatedPlan) {
         const reconstructedPlan = reconstructGeneratedPlanFromPersisted(
@@ -488,6 +505,11 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
       solveFactorIdx,
       constraintValues: cleanedConstraintValues,
       significanceLevel,
+      show3DScatter,
+      showContour,
+      show3DSpinningRSM,
+      plot3DFactorX,
+      plot3DFactorY,
     };
     
     await saveSolvingSetupMutation.mutateAsync(solverSetupData);
@@ -4050,10 +4072,23 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                             // Get factor ranges for the selected axes
                             const factorXData = factors[validFactorX];
                             const factorYData = factors[validFactorY];
-                            const xLow = parseFloat(String(factorXData?.lowValue ?? 0));
-                            const xHigh = parseFloat(String(factorXData?.highValue ?? 1));
-                            const yLow = parseFloat(String(factorYData?.lowValue ?? 0));
-                            const yHigh = parseFloat(String(factorYData?.highValue ?? 1));
+                            let xLow: number, xHigh: number, yLow: number, yHigh: number;
+                            if (factorXData.type === 'continuous' && factorXData.lowValue !== undefined && factorXData.highValue !== undefined) {
+                              xLow = parseFloat(String(factorXData?.lowValue ?? -1));
+                              xHigh = parseFloat(String(factorXData?.highValue ?? 1));
+                            }
+                            else {
+                              xLow = -1;
+                              xHigh = 1;
+                            }
+                            if (factorYData.type === 'continuous' && factorYData.lowValue !== undefined && factorYData.highValue !== undefined) {
+                               yLow = parseFloat(String(factorYData?.lowValue ?? -1));
+                               yHigh = parseFloat(String(factorYData?.highValue ?? 1));
+                            }
+                            else {
+                              yLow = -1;
+                              yHigh = 1;
+                            }
                             
                             // Calculate predicted Z for a given (x, y) in uncoded units
                             const predictZ = (xVal: number, yVal: number): number => {
@@ -4199,12 +4234,12 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                               <div className="mt-6 space-y-4">
                                 <Separator />
                                 <div className="space-y-3">
-                                  <h4 className="font-medium">3D Visualization</h4>
+                                  <h4 className="font-medium">3D Model Visualization</h4>
                                   
                                   {/* Factor axis selection */}
                                   <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                      <Label>Factor A (X-Axis)</Label>
+                                      <Label>1st Factor (X-Axis)</Label>
                                       <Select
                                         value={String(validFactorX)}
                                         onValueChange={(val) => setPlot3DFactorX(parseInt(val))}
@@ -4222,7 +4257,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                       </Select>
                                     </div>
                                     <div>
-                                      <Label>Factor B (Y-Axis)</Label>
+                                      <Label>2nd Factor (Y-Axis)</Label>
                                       <Select
                                         value={String(validFactorY)}
                                         onValueChange={(val) => setPlot3DFactorY(parseInt(val))}
@@ -4263,12 +4298,12 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                     </div>
                                     <div className="flex items-center space-x-2">
                                       <Checkbox
-                                        id="show-3d-globe"
-                                        checked={show3DGlobe}
-                                        onCheckedChange={(checked) => setShow3DGlobe(checked === true)}
-                                        data-testid="checkbox-3d-globe"
+                                        id="show-3d-SpinningRSM"
+                                        checked={show3DSpinningRSM}
+                                        onCheckedChange={(checked) => setShow3DSpinningRSM(checked === true)}
+                                        data-testid="checkbox-3d-SpinningRSM"
                                       />
-                                      <Label htmlFor="show-3d-globe" className="cursor-pointer">3D Surface (Globe)</Label>
+                                      <Label htmlFor="show-3d-SpinningRSM" className="cursor-pointer">3D Spinning Response Surface</Label>
                                     </div>
                                   </div>
                                   
@@ -4360,8 +4395,8 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                     </div>
                                   )}
                                   
-                                  {/* 3D Globe/Surface */}
-                                  {show3DGlobe && (
+                                  {/* 3D Spinning Response Surface */}
+                                  {show3DSpinningRSM && (
                                     <div className="border rounded-lg p-2">
                                       <Plot
                                         data={[
