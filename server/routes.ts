@@ -7965,6 +7965,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           solveFactorIdx: z.number().optional(),
           constraintValues: z.record(z.string(), z.number().nullable()).optional(),
           significanceLevel: z.number().min(0).max(1).optional(),
+          show3DScatter: z.boolean().optional(),
+          showContour: z.boolean().optional(),
+          show3DSpinningRSM: z.boolean().optional(),
+          plot3DFactorX: z.number().optional(),
+          plot3DFactorY: z.number().optional(),
         });
 
         const validatedData = solverSchema.parse(req.body);
@@ -8225,6 +8230,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           solveFactorIdx: z.number().optional(),
           constraintValues: z.record(z.string(), z.number().nullable()).optional(),
           significanceLevel: z.number().min(0).max(1).optional(),
+          show3DScatter: z.boolean().optional(),
+          showContour: z.boolean().optional(),
+          show3DSpinningRSM: z.boolean().optional(),
+          plot3DFactorX: z.number().optional(),
+          plot3DFactorY: z.number().optional(),
         });
 
         const validatedData = solverSchema.parse(req.body);
