@@ -48,6 +48,7 @@ import {
   calculateDOEVIF
 } from '@/lib/doeSharedUtils';
 import { performNormalityTest } from '@/lib/statisticsUtils';
+import SpinningResponseSurface3D from './SpinningResponseSurface3D';
 import { number } from 'zod';
 
 interface FractionalFactorialDOEProps {
@@ -140,7 +141,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
   // 3D Solver visualization options
   const [show3DScatter, setShow3DScatter] = useState(false);
   const [showContour, setShowContour] = useState(false);
-  const [show3DGlobe, setShow3DGlobe] = useState(false);
+  const [show3DSpinningRSM, setShow3DSpinningRSM] = useState(false);
   const [plot3DFactorX, setPlot3DFactorX] = useState<number>(0);
   const [plot3DFactorY, setPlot3DFactorY] = useState<number>(1);
    
@@ -4681,10 +4682,23 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                             // Get factor ranges for the selected axes
                             const factorXData = factors[validFactorX];
                             const factorYData = factors[validFactorY];
-                            const xLow = parseFloat(String(factorXData?.lowValue ?? 0));
-                            const xHigh = parseFloat(String(factorXData?.highValue ?? 1));
-                            const yLow = parseFloat(String(factorYData?.lowValue ?? 0));
-                            const yHigh = parseFloat(String(factorYData?.highValue ?? 1));
+                             let xLow: number, xHigh: number, yLow: number, yHigh: number;
+                            if (factorXData.type === 'continuous' && factorXData.lowValue !== undefined && factorXData.highValue !== undefined) {
+                              xLow = parseFloat(String(factorXData?.lowValue ?? -1));
+                              xHigh = parseFloat(String(factorXData?.highValue ?? 1));
+                            }
+                            else {
+                              xLow = -1;
+                              xHigh = 1;
+                            }
+                            if (factorYData.type === 'continuous' && factorYData.lowValue !== undefined && factorYData.highValue !== undefined) {
+                               yLow = parseFloat(String(factorYData?.lowValue ?? -1));
+                               yHigh = parseFloat(String(factorYData?.highValue ?? 1));
+                            }
+                            else {
+                              yLow = -1;
+                              yHigh = 1;
+                            }
                             
                             // Calculate predicted Z for a given (x, y) in uncoded units
                             const predictZ = (xVal: number, yVal: number): number => {
@@ -4747,20 +4761,103 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                               return z;
                             };
                             
+                            // Calculate predicted Z for a given (x, y) in uncoded units (using the coded reduced model equation)
+                            const predictionZ = (xVal: number, yVal: number): number => {
+                            // Build prediction using beta_red (reduced model)
+                            let z = beta_red[0] || 0; // Intercept
+                            let codedVal = 0;
+                            // Add main effects (linear terms)
+                            for (let j = 0; j < k; j++) {
+                              const redCol = colMapReverse[j + 1];
+                              if (redCol === undefined) continue;
+                              //const factor = factors[j];
+                              if (selectedFactorsForModel[j] !== false) { 
+                                if (j === validFactorX) {
+                                  codedVal += beta_red[redCol] * xVal;
+                                } else if (j === validFactorY) {
+                                  codedVal += beta_red[redCol] * yVal;
+                                } else { // Use constraint value for other factors (not x nor y )
+                                  codedVal += beta_red[redCol] * (constraintValues[j] ?? 0);
+                                }
+                              }
+                              z += codedVal; // cumulate linear terms
+                            }
+
+                            // Add interaction effects
+                            for (let pairIdx = 0; pairIdx < interactionPairs.length; pairIdx++) {
+                              const redCol = colMapReverse[baseFactorCount + 1 + pairIdx];
+                              if (redCol === undefined) continue;
+                              
+                              const pair = interactionPairs[pairIdx];
+                              let interactionsVal = 0;
+                              for (const factorIdx of pair.indices) {
+                                let interactionValue = 1;
+                                //const factor = factors[factorIdx];                            
+                                if (factorIdx === validFactorX) {
+                                  interactionValue *= xVal;
+                                } else if (factorIdx === validFactorY) {
+                                  interactionValue *= yVal;
+                                } else {
+                                  interactionValue *= constraintValues[factorIdx] ?? 0;
+                                }
+                                interactionsVal += beta_red[redCol] * interactionValue;
+                              }
+                              z += interactionsVal;
+                            };
+                              
+                            // Add quadratic terms if present in reduced model
+                            // Calculate quadratic coefficients if center points are included
+                            let quadCoeff_coded = 0;
+                            let solveFactorHasQuadTerm = false;
+                            
+                            if (includeCenterPoints && n_c > 0 && selectedFactorsForModel['centerPoint'] !== false && k > 0) {
+                              const continuousFactorIndices = factors.map((f, i) => ({ factor: f, index: i }))
+                                .filter(({ factor, index }) => factor.type === 'continuous' && selectedFactorsForModel[index] !== false);
+                              const kl = continuousFactorIndices.length;
+                              const curvatureEffect = y_c_avg - y_f_avg;
+                              quadCoeff_coded = kl > 0 ? curvatureEffect / kl : 0;
+
+                              // Quadratic terms: quadCoeff * X²
+                              let quadTerm = 0;                                                          
+                              for (let j = 0; j < k; j++) {
+                                const redCol = colMapReverse[j + 1];
+                                if (redCol === undefined) continue;
+                                
+                                if (selectedFactorsForModel[j] !== false) { 
+                                  if (j === validFactorX) {
+                                    quadTerm += quadCoeff_coded * xVal * xVal;
+                                  } else if (j === validFactorY) {
+                                    quadTerm += quadCoeff_coded * yVal * yVal;
+                                  } else { // Use constraint value for other factors (not x nor y )
+                                    quadTerm += quadCoeff_coded * (constraintValues[j] ?? 0) * (constraintValues[j] ?? 0);
+                                  }
+                                }
+                                z += quadTerm; // cumulate quadratic terms
+                              }
+                            };
+
+                            return z;
+                            };
+                            // -----------------------------------------------------
+
                             // Generate grid for surface/contour
                             const gridSize = 25;
                             const xGridVals: number[] = [];
                             const yGridVals: number[] = [];
+                            const xcodeGridVals: number[] = [];
+                            const yCodedGridVals: number[] = [];
                             for (let i = 0; i <= gridSize; i++) {
                               xGridVals.push(xLow + (xHigh - xLow) * i / gridSize);
                               yGridVals.push(yLow + (yHigh - yLow) * i / gridSize);
+                              xcodeGridVals.push(-1 + (1 - (-1)) * i / gridSize);
+                              yCodedGridVals.push(-1 + (1 - (-1)) * i / gridSize);
                             }
                             
                             const zGrid: number[][] = [];
                             for (let i = 0; i <= gridSize; i++) {
                               const row: number[] = [];
                               for (let j = 0; j <= gridSize; j++) {
-                                row.push(predictZ(xGridVals[i], yGridVals[j]));
+                                row.push(predictionZ(xcodeGridVals[i], yCodedGridVals[j]));
                               }
                               zGrid.push(row);
                             }
@@ -4799,27 +4896,19 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                 if (solveFactorIdx === validFactorX) {
                                   xVal = result;
                                   // Use constraint for Y factor
-                                  const yConstraint = constraintValues[validFactorY] ?? 0;
-                                  const yCenter = (yLow + yHigh) / 2;
-                                  const yHalfRange = (yHigh - yLow) / 2;
-                                  yVal = yCenter + yConstraint * yHalfRange;
+                                  const yConstraint = constraintValues[validFactorY] ?? 0;                                  
+                                  yVal = yConstraint;
                                 } else if (solveFactorIdx === validFactorY) {
                                   yVal = result;
                                   // Use constraint for X factor
                                   const xConstraint = constraintValues[validFactorX] ?? 0;
-                                  const xCenter = (xLow + xHigh) / 2;
-                                  const xHalfRange = (xHigh - xLow) / 2;
-                                  xVal = xCenter + xConstraint * xHalfRange;
+                                  xVal = xConstraint;
                                 } else {
                                   // Solved factor is neither X nor Y axis - use constraints
                                   const xConstraint = constraintValues[validFactorX] ?? 0;
                                   const yConstraint = constraintValues[validFactorY] ?? 0;
-                                  const xCenter = (xLow + xHigh) / 2;
-                                  const xHalfRange = (xHigh - xLow) / 2;
-                                  const yCenter = (yLow + yHigh) / 2;
-                                  const yHalfRange = (yHigh - yLow) / 2;
-                                  xVal = xCenter + xConstraint * xHalfRange;
-                                  yVal = yCenter + yConstraint * yHalfRange;
+                                  xVal = xConstraint;
+                                  yVal = yConstraint;
                                 }
                                 
                                 solutionPoints.push({ x: xVal, y: yVal, z: targetY });
@@ -4894,12 +4983,12 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                     </div>
                                     <div className="flex items-center space-x-2">
                                       <Checkbox
-                                        id="frac-show-3d-globe"
-                                        checked={show3DGlobe}
-                                        onCheckedChange={(checked) => setShow3DGlobe(checked === true)}
-                                        data-testid="checkbox-frac-3d-globe"
+                                        id="frac-show-3d-SpinningRSM"
+                                        checked={show3DSpinningRSM}
+                                        onCheckedChange={(checked) => setShow3DSpinningRSM(checked === true)}
+                                        data-testid="checkbox-frac-3d-SpinningRSM"
                                       />
-                                      <Label htmlFor="frac-show-3d-globe" className="cursor-pointer">3D Spinning Response Surface</Label>
+                                      <Label htmlFor="frac-show-3d-SpinningRSM" className="cursor-pointer">3D Spinning Response Surface</Label>
                                     </div>
                                   </div>
                                   
@@ -4991,61 +5080,82 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                     </div>
                                   )}
                                   
-                                  {/* 3D Globe/Surface */}
-                                  {show3DGlobe && (
+                                  {/* 3D Spinning Response Surface */}
+                                  {show3DSpinningRSM && (
                                     <div className="border rounded-lg p-2">
-                                      <Plot
-                                        data={[
-                                          // Data points (Y responses)
-                                          {
-                                            type: 'scatter3d',
-                                            mode: 'markers',
-                                            x: scatterData.map(d => d.x),
-                                            y: scatterData.map(d => d.y),
-                                            z: scatterData.map(d => d.z),
-                                            marker: { size: 5, color: 'rgb(59, 130, 246)', opacity: 0.8 },
-                                            name: 'Y Response',
-                                            hovertemplate: `${factors[validFactorX]?.name}: %{x:.4f}<br>${factors[validFactorY]?.name}: %{y:.4f}<br>Y: %{z:.4f}<extra></extra>`,
-                                          } as any,
-                                          // 3D mesh surface (globe-like)
-                                          {
-                                            type: 'mesh3d',
-                                            x: xGridVals.flatMap(x => yGridVals.map(() => x)),
-                                            y: xGridVals.flatMap(() => yGridVals),
-                                            z: zGrid.flat(),
-                                            opacity: 0.7,
-                                            colorscale: 'Viridis',
-                                            intensity: zGrid.flat(),
-                                            name: 'Fit Model',
-                                            showscale: true,
-                                            hovertemplate: `Fit Model<br>${factors[validFactorX]?.name}: %{x:.4f}<br>${factors[validFactorY]?.name}: %{y:.4f}<br>Predicted Y: %{z:.4f}<extra></extra>`,
-                                          } as any,
-                                          // Solution points
-                                          ...(solutionPoints.length > 0 ? [{
-                                            type: 'scatter3d',
-                                            mode: 'markers',
-                                            x: solutionPoints.map(d => d.x),
-                                            y: solutionPoints.map(d => d.y),
-                                            z: solutionPoints.map(d => d.z),
-                                            marker: { size: 8, color: 'red', symbol: 'diamond' },
-                                            name: 'Solution',
-                                            hovertemplate: `Solution<br>${factors[validFactorX]?.name}: %{x:.4f}<br>${factors[validFactorY]?.name}: %{y:.4f}<br>Target Y: %{z:.4f}<extra></extra>`,
-                                          } as any] : []),
+                                      <h4 className="text-sm font-medium mb-2 text-center">
+                                        3D Spinning Response Surface: Y = f({factors[validFactorX]?.name}, {factors[validFactorY]?.name})
+                                      </h4>
+                                      <SpinningResponseSurface3D
+                                        xAxisLabel={factors[validFactorX]?.name || 'X'}
+                                        yAxisLabel={factors[validFactorY]?.name || 'Y'}
+                                        zAxisLabel="Y Response"
+                                        xRange={[
+                                          factors[validFactorX]?.type === 'continuous' ? (factors[validFactorX]?.lowValue ?? -1) : -1,
+                                          factors[validFactorX]?.type === 'continuous' ? (factors[validFactorX]?.highValue ?? 1) : 1
                                         ]}
-                                        layout={{
-                                          autosize: true,
-                                          title: { text: `<b>3D Surface: Y = f(${factors[validFactorX]?.name}, ${factors[validFactorY]?.name})</b>`, font: { size: 14 } },
-                                          scene: {
-                                            xaxis: { title: { text: `<b>${factors[validFactorX]?.name}</b>` } },
-                                            yaxis: { title: { text: `<b>${factors[validFactorY]?.name}</b>` } },
-                                            zaxis: { title: { text: '<b>Y Response</b>' } },
-                                          },
-                                          legend: { x: 0.85, y: 0.95 },
-                                          margin: { l: 0, r: 0, b: 0, t: 40 },
+                                        yRange={[
+                                          factors[validFactorY]?.type === 'continuous' ? (factors[validFactorY]?.lowValue ?? -1) : -1,
+                                          factors[validFactorY]?.type === 'continuous' ? (factors[validFactorY]?.highValue ?? 1) : 1
+                                        ]}
+                                        predictFn={(xVal, yVal) => {
+                                          const xCoded = factors[validFactorX]?.type === 'continuous' 
+                                            ? (2 * (xVal - (factors[validFactorX]?.lowValue ?? 0)) / ((factors[validFactorX]?.highValue ?? 1) - (factors[validFactorX]?.lowValue ?? 0)) - 1)
+                                            : xVal;
+                                          const yCoded = factors[validFactorY]?.type === 'continuous'
+                                            ? (2 * (yVal - (factors[validFactorY]?.lowValue ?? 0)) / ((factors[validFactorY]?.highValue ?? 1) - (factors[validFactorY]?.lowValue ?? 0)) - 1)
+                                            : yVal;
+                                          
+                                          const xRow = new Array(p_reduced + 1).fill(0);
+                                          xRow[0] = 1;
+                                          
+                                          const solveIdx = solveFactorIdx;
+                                          factors.forEach((_, idx) => {
+                                            if (idx === solveIdx) return;
+                                            const origCol = idx + 1;
+                                            const redCol = colMapReverse[origCol];
+                                            if (redCol !== undefined) {
+                                              if (idx === validFactorX) {
+                                                xRow[redCol] = xCoded;
+                                              } else if (idx === validFactorY) {
+                                                xRow[redCol] = yCoded;
+                                              } else {
+                                                const cv = constraintValues[idx];
+                                                if (cv !== null && cv !== undefined) {
+                                                  const factor = factors[idx];
+                                                  if (factor.type === 'continuous' && factor.lowValue !== undefined && factor.highValue !== undefined) {
+                                                    xRow[redCol] = (2 * (cv - factor.lowValue) / (factor.highValue - factor.lowValue)) - 1;
+                                                  } else {
+                                                    xRow[redCol] = cv;
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          });
+                                          
+                                          let yHat = 0;
+                                          for (let i = 0; i <= p_reduced; i++) {
+                                            yHat += xRow[i] * displayBeta[i];
+                                          }
+                                          return yHat;
                                         }}
-                                        useResizeHandler
-                                        style={{ width: '100%', height: '450px' }}
-                                        config={{ responsive: true, displayModeBar: true, displaylogo: false }}
+                                        dataPoints={[
+                                          ...scatterData.map(d => ({ 
+                                            x: d.x, 
+                                            y: d.y, 
+                                            z: d.z, 
+                                            isCenter: false, 
+                                            isSolution: false 
+                                          })),
+                                          ...solutionPoints.map(d => ({ 
+                                            x: d.x, 
+                                            y: d.y, 
+                                            z: d.z, 
+                                            isCenter: false, 
+                                            isSolution: true 
+                                          })),
+                                        ]}
+                                        height={450}
                                       />
                                     </div>
                                   )}
