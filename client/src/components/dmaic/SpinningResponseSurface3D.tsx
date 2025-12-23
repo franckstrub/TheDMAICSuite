@@ -5,9 +5,9 @@ interface SpinningResponseSurface3DProps {
   xAxisLabel: string;
   yAxisLabel: string;
   zAxisLabel: string;
-  xRange: [number, number];
-  yRange: [number, number];
-  predictFn: (x: number, y: number) => number;
+  xGridVals: number[];
+  yGridVals: number[];
+  zGrid: number[][];
   dataPoints?: Array<{ x: number; y: number; z: number; isCenter?: boolean; isSolution?: boolean }>;
   height?: number;
 }
@@ -16,9 +16,9 @@ export default function SpinningResponseSurface3D({
   xAxisLabel,
   yAxisLabel,
   zAxisLabel,
-  xRange,
-  yRange,
-  predictFn,
+  xGridVals,
+  yGridVals,
+  zGrid,
   dataPoints = [],
   height = 450,
 }: SpinningResponseSurface3DProps) {
@@ -30,6 +30,7 @@ export default function SpinningResponseSurface3D({
 
   useEffect(() => {
     if (!mountRef.current) return;
+    if (xGridVals.length === 0 || yGridVals.length === 0 || zGrid.length === 0) return;
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0xf8f9fa);
@@ -57,7 +58,10 @@ export default function SpinningResponseSurface3D({
     directionalLight.position.set(5, 10, 5);
     scene.add(directionalLight);
 
-    const resolution = 40;
+    // Get grid dimensions from the provided data
+    const resolutionX = xGridVals.length - 1;
+    const resolutionY = yGridVals.length - 1;
+    
     const geometry = new THREE.BufferGeometry();
     const vertices: number[] = [];
     const colors: number[] = [];
@@ -65,18 +69,12 @@ export default function SpinningResponseSurface3D({
 
     const scaleXY = 1.5;
     
+    // Find min/max Z from zGrid
     let minZ = Infinity;
     let maxZ = -Infinity;
-    const zValues: number[] = [];
-    
-    for (let i = 0; i <= resolution; i++) {
-      for (let j = 0; j <= resolution; j++) {
-        const tX = i / resolution;
-        const tY = j / resolution;
-        const xVal = xRange[0] + tX * (xRange[1] - xRange[0]);
-        const yVal = yRange[0] + tY * (yRange[1] - yRange[0]);
-        const zVal = predictFn(xVal, yVal);
-        zValues.push(zVal);
+    for (let i = 0; i <= resolutionX; i++) {
+      for (let j = 0; j <= resolutionY; j++) {
+        const zVal = zGrid[i]?.[j] ?? 0;
         if (zVal < minZ) minZ = zVal;
         if (zVal > maxZ) maxZ = zVal;
       }
@@ -85,12 +83,20 @@ export default function SpinningResponseSurface3D({
     const zMid = (minZ + maxZ) / 2;
     const zScale = maxZ > minZ ? 1.5 / (maxZ - minZ) : 1;
 
-    let idx = 0;
-    for (let i = 0; i <= resolution; i++) {
-      for (let j = 0; j <= resolution; j++) {
-        const tX = -1 + (2 * i / resolution);
-        const tY = -1 + (2 * j / resolution);
-        const zVal = zValues[idx];
+    // Get X and Y ranges from grid values
+    const xMin = xGridVals[0];
+    const xMax = xGridVals[xGridVals.length - 1];
+    const yMin = yGridVals[0];
+    const yMax = yGridVals[yGridVals.length - 1];
+    const xRange = xMax - xMin;
+    const yRange = yMax - yMin;
+
+    // Build vertices using provided zGrid
+    for (let i = 0; i <= resolutionX; i++) {
+      for (let j = 0; j <= resolutionY; j++) {
+        const tX = -1 + (2 * i / resolutionX);
+        const tY = -1 + (2 * j / resolutionY);
+        const zVal = zGrid[i]?.[j] ?? 0;
         
         vertices.push(tX * scaleXY, (zVal - zMid) * zScale, tY * scaleXY);
 
@@ -98,14 +104,14 @@ export default function SpinningResponseSurface3D({
         const color = new THREE.Color();
         color.setHSL(0.6 * normalized, 0.8, 0.5);
         colors.push(color.r, color.g, color.b);
-        idx++;
       }
     }
 
-    for (let i = 0; i < resolution; i++) {
-      for (let j = 0; j < resolution; j++) {
-        const a = i * (resolution + 1) + j;
-        const b = a + resolution + 1;
+    // Build indices for triangles
+    for (let i = 0; i < resolutionX; i++) {
+      for (let j = 0; j < resolutionY; j++) {
+        const a = i * (resolutionY + 1) + j;
+        const b = a + resolutionY + 1;
         const c = a + 1;
         const d = b + 1;
 
@@ -130,26 +136,36 @@ export default function SpinningResponseSurface3D({
     const surface = new THREE.Mesh(geometry, material);
     scene.add(surface);
 
+    // Add data points as spheres
     const pointsGroup = new THREE.Group();
     dataPoints.forEach(point => {
-      const tX = (point.x - xRange[0]) / (xRange[1] - xRange[0]);
-      const tY = (point.y - yRange[0]) / (yRange[1] - yRange[0]);
+      // Skip invalid points
+      if (point.x === null || point.x === undefined || !isFinite(point.x) ||
+          point.y === null || point.y === undefined || !isFinite(point.y) ||
+          point.z === null || point.z === undefined || !isFinite(point.z)) {
+        return;
+      }
+      
+      // Convert from uncoded values to normalized position
+      const tX = xRange > 0 ? (point.x - xMin) / xRange : 0.5;
+      const tY = yRange > 0 ? (point.y - yMin) / yRange : 0.5;
       const x3D = (-1 + 2 * tX) * scaleXY;
       const z3D = (-1 + 2 * tY) * scaleXY;
       const y3D = (point.z - zMid) * zScale;
 
       const sphereGeom = new THREE.SphereGeometry(0.08, 16, 16);
-      let sphereColor = 0x3b82f6;
+      let sphereColor = 0x3b82f6; // blue
       if (point.isSolution) {
-        sphereColor = 0xff0000;
+        sphereColor = 0xff0000; // red
       } else if (point.isCenter) {
-        sphereColor = 0x22c55e;
+        sphereColor = 0x22c55e; // green
       }
       const sphereMat = new THREE.MeshPhongMaterial({ color: sphereColor });
       const sphere = new THREE.Mesh(sphereGeom, sphereMat);
       sphere.position.set(x3D, y3D, z3D);
       pointsGroup.add(sphere);
 
+      // Add vertical drop line
       const lineGeom = new THREE.BufferGeometry().setFromPoints([
         new THREE.Vector3(x3D, -0.8, z3D),
         new THREE.Vector3(x3D, y3D, z3D)
@@ -160,6 +176,7 @@ export default function SpinningResponseSurface3D({
     });
     scene.add(pointsGroup);
 
+    // Add axes
     const axesGroup = new THREE.Group();
     const axisLength = 2.0;
     const axesMaterial = new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 2 });
@@ -182,6 +199,7 @@ export default function SpinningResponseSurface3D({
     ]);
     axesGroup.add(new THREE.Line(zGeom, axesMaterial));
 
+    // Create axis labels
     const createLabel = (text: string, position: THREE.Vector3) => {
       const canvas = document.createElement('canvas');
       const context = canvas.getContext('2d');
@@ -211,10 +229,12 @@ export default function SpinningResponseSurface3D({
 
     scene.add(axesGroup);
 
+    // Add grid helper
     const gridHelper = new THREE.GridHelper(3, 10, 0xcccccc, 0xeeeeee);
     gridHelper.position.y = -0.8;
     scene.add(gridHelper);
 
+    // Animation loop for spinning
     let angle = 0;
     const animate = () => {
       animationRef.current = requestAnimationFrame(animate);
@@ -226,6 +246,7 @@ export default function SpinningResponseSurface3D({
     };
     animate();
 
+    // Handle window resize
     const handleResize = () => {
       if (mountRef.current && cameraRef.current && rendererRef.current) {
         cameraRef.current.aspect = mountRef.current.clientWidth / mountRef.current.clientHeight;
@@ -235,6 +256,7 @@ export default function SpinningResponseSurface3D({
     };
     window.addEventListener('resize', handleResize);
 
+    // Cleanup
     return () => {
       window.removeEventListener('resize', handleResize);
       if (animationRef.current) {
@@ -251,7 +273,7 @@ export default function SpinningResponseSurface3D({
       });
       renderer.dispose();
     };
-  }, [xAxisLabel, yAxisLabel, zAxisLabel, xRange, yRange, predictFn, dataPoints]);
+  }, [xAxisLabel, yAxisLabel, zAxisLabel, xGridVals, yGridVals, zGrid, dataPoints]);
 
   return (
     <div className="w-full">
