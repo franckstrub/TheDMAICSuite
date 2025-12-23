@@ -4420,55 +4420,9 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                         xAxisLabel={factors[validFactorX]?.name || 'X'}
                                         yAxisLabel={factors[validFactorY]?.name || 'Y'}
                                         zAxisLabel="Y Response"
-                                        xRange={[
-                                          factors[validFactorX]?.type === 'continuous' ? (factors[validFactorX]?.lowValue ?? -1) : -1,
-                                          factors[validFactorX]?.type === 'continuous' ? (factors[validFactorX]?.highValue ?? 1) : 1
-                                        ]}
-                                        yRange={[
-                                          factors[validFactorY]?.type === 'continuous' ? (factors[validFactorY]?.lowValue ?? -1) : -1,
-                                          factors[validFactorY]?.type === 'continuous' ? (factors[validFactorY]?.highValue ?? 1) : 1
-                                        ]}
-                                        predictFn={(xVal, yVal) => {
-                                          const xCoded = factors[validFactorX]?.type === 'continuous' 
-                                            ? (2 * (xVal - (factors[validFactorX]?.lowValue ?? 0)) / ((factors[validFactorX]?.highValue ?? 1) - (factors[validFactorX]?.lowValue ?? 0)) - 1)
-                                            : xVal;
-                                          const yCoded = factors[validFactorY]?.type === 'continuous'
-                                            ? (2 * (yVal - (factors[validFactorY]?.lowValue ?? 0)) / ((factors[validFactorY]?.highValue ?? 1) - (factors[validFactorY]?.lowValue ?? 0)) - 1)
-                                            : yVal;
-                                          
-                                          const xRow = new Array(p_reduced + 1).fill(0);
-                                          xRow[0] = 1;
-                                          
-                                          const solveIdx = solveFactorIdx;
-                                          factors.forEach((_, idx) => {
-                                            if (idx === solveIdx) return;
-                                            const origCol = idx + 1;
-                                            const redCol = colMapReverse[origCol];
-                                            if (redCol !== undefined) {
-                                              if (idx === validFactorX) {
-                                                xRow[redCol] = xCoded;
-                                              } else if (idx === validFactorY) {
-                                                xRow[redCol] = yCoded;
-                                              } else {
-                                                const cv = constraintValues[idx];
-                                                if (cv !== null && cv !== undefined) {
-                                                  const factor = factors[idx];
-                                                  if (factor.type === 'continuous' && factor.lowValue !== undefined && factor.highValue !== undefined) {
-                                                    xRow[redCol] = (2 * (cv - factor.lowValue) / (factor.highValue - factor.lowValue)) - 1;
-                                                  } else {
-                                                    xRow[redCol] = cv;
-                                                  }
-                                                }
-                                              }
-                                            }
-                                          });
-                                          
-                                          let yHat = 0;
-                                          for (let i = 0; i <= p_reduced; i++) {
-                                            yHat += xRow[i] * displayBeta[i];
-                                          }
-                                          return yHat;
-                                        }}
+                                        xGridVals={xGridVals}
+                                        yGridVals={yGridVals}
+                                        zGrid={zGrid}
                                         dataPoints={[
                                           ...scatterData.map(d => ({ 
                                             x: d.x, 
