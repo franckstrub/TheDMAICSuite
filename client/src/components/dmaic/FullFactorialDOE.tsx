@@ -2464,7 +2464,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
 
                 // Store solve function in ref so top-level useEffect can call it
                 solveRef.current = handleSolve;
-                let solvedValue = solverResult?.[0] ?? 0;
+                let solvedValue = solverResult?.[0] ?? 0;// will be used in 3D graphs later
 
                 return (
                   <>
@@ -4109,6 +4109,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                 } else if (j === validFactorY) {
                                   codedVal += beta_red[redCol] * yVal;
                                 } else if (j === solveFactorIdx) {
+                                  let solution = 0;
                                   const solveFactor = factors[solveFactorIdx];
                                   // Convert solved value to coded
                                   if (solveFactor.type === 'continuous') {
@@ -4116,11 +4117,11 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                     const high = parseFloat(String(solveFactor.highValue));
                                     const center = (low + high) / 2;
                                     const halfRange = (high - low) / 2;
-                                    codedVal = halfRange !== 0 ? (solvedValue - center) / halfRange : 0;                                                                     
+                                    solution = halfRange !== 0 ? (solvedValue - center) / halfRange : 0;                                                                     
                                   } else {
-                                    codedVal = 0;
+                                    solution = 0;
                                   }
-                                  codedVal += beta_red[redCol] * yVal;
+                                  codedVal += beta_red[redCol] * solution;
                                 } else { // Use constraint value for other factors (not x nor y )
                                   codedVal += beta_red[redCol] * (constraintValues[j] ?? 0);
                                 }
@@ -4191,8 +4192,8 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                     const center = (low + high) / 2;
                                     const halfRange = (high - low) / 2;
                                     quadTerm += halfRange !== 0 ? quadCoeff_coded * Math.pow((solvedValue - center) / halfRange, 2) : 0;                                                                     
-                                  }
-                                } else { // Use constraint value for other factors (not x nor y )
+                                    }
+                                  } else { // Use constraint value for other factors (not x nor y )
                                     quadTerm += quadCoeff_coded * (constraintValues[j] ?? 0) * (constraintValues[j] ?? 0);
                                   }
                                 }
