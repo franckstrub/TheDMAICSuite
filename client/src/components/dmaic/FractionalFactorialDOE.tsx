@@ -3083,6 +3083,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
 
                 // Store solve function in ref so top-level useEffect can call it
                 solveRef.current = handleSolve;
+                let solvedValue = solverResult?.[0] ?? 0;// will be used in 3D graphs later
 
                 return (
                   <>
@@ -4699,68 +4700,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                               yLow = -1;
                               yHigh = 1;
                             }
-                            
-                            // Calculate predicted Z for a given (x, y) in uncoded units
-                            const predictZ = (xVal: number, yVal: number): number => {
-                              // Convert to coded values
-                              const xCenter = (xLow + xHigh) / 2;
-                              const xHalfRange = (xHigh - xLow) / 2;
-                              const yCenter = (yLow + yHigh) / 2;
-                              const yHalfRange = (yHigh - yLow) / 2;
-                              
-                              const xCoded = xHalfRange !== 0 ? (xVal - xCenter) / xHalfRange : 0;
-                              const yCoded = yHalfRange !== 0 ? (yVal - yCenter) / yHalfRange : 0;
-                              
-                              // Build prediction using displayBeta and reduced model
-                              let z = displayBeta[0] || 0; // Intercept
-                              
-                              // Add main effects
-                              for (let i = 0; i < k; i++) {
-                                const redCol = colMapReverse[i + 1];
-                                if (redCol === undefined) continue;
-                                
-                                const factor = factors[i];
-                                let codedVal: number;
-                                
-                                if (i === validFactorX) {
-                                  codedVal = xCoded;
-                                } else if (i === validFactorY) {
-                                  codedVal = yCoded;
-                                } else {
-                                  // Use constraint value for other factors
-                                  codedVal = constraintValues[i] ?? 0;
-                                }
-                                
-                                z += (displayBeta[redCol] || 0) * codedVal;
-                              }
-                              
-                              // Add interaction effects
-                              for (let pairIdx = 0; pairIdx < interactionPairs.length; pairIdx++) {
-                                const redCol = colMapReverse[k + 1 + pairIdx];
-                                if (redCol === undefined) continue;
-                                
-                                const pair = interactionPairs[pairIdx];
-                                let interactionVal = 1;
-                                for (const factorIdx of pair.indices) {
-                                  const factor = factors[factorIdx];
-                                  let codedVal: number;
-                                  
-                                  if (factorIdx === validFactorX) {
-                                    codedVal = xCoded;
-                                  } else if (factorIdx === validFactorY) {
-                                    codedVal = yCoded;
-                                  } else {
-                                    codedVal = constraintValues[factorIdx] ?? 0;
-                                  }
-                                  interactionVal *= codedVal;
-                                }
-                                
-                                z += (displayBeta[redCol] || 0) * interactionVal;
-                              }
-                              
-                              return z;
-                            };
-                            
+                                                      
                             // Calculate predicted Z for a given (x, y) in uncoded units (using the coded reduced model equation)
                             const predictionZ = (xVal: number, yVal: number): number => {
                             // Build prediction using beta_red (reduced model)
@@ -4776,6 +4716,20 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                   codedVal += beta_red[redCol] * xVal;
                                 } else if (j === validFactorY) {
                                   codedVal += beta_red[redCol] * yVal;
+                                } else if (j === solveFactorIdx) {
+                                  let solution = 0;
+                                  const solveFactor = factors[solveFactorIdx];
+                                  // Convert solved value to coded
+                                  if (solveFactor.type === 'continuous') {
+                                    const low = parseFloat(String(solveFactor.lowValue));
+                                    const high = parseFloat(String(solveFactor.highValue));
+                                    const center = (low + high) / 2;
+                                    const halfRange = (high - low) / 2;
+                                    solution = halfRange !== 0 ? (solvedValue - center) / halfRange : 0;                                                                     
+                                  } else {
+                                    solution = 0;
+                                  }
+                                  codedVal += beta_red[redCol] * solution;
                                 } else { // Use constraint value for other factors (not x nor y )
                                   codedVal += beta_red[redCol] * (constraintValues[j] ?? 0);
                                 }
@@ -4797,6 +4751,16 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                   interactionValue *= xVal;
                                 } else if (factorIdx === validFactorY) {
                                   interactionValue *= yVal;
+                                } else if (factorIdx === solveFactorIdx) {
+                                  const solveFactor = factors[solveFactorIdx];
+                                  // Convert solved value to coded
+                                  if (solveFactor.type === 'continuous') {
+                                    const low = parseFloat(String(solveFactor.lowValue));
+                                    const high = parseFloat(String(solveFactor.highValue));
+                                    const center = (low + high) / 2;
+                                    const halfRange = (high - low) / 2;
+                                    interactionValue *= halfRange !== 0 ? (solvedValue - center) / halfRange : 0;                                                                     
+                                  }
                                 } else {
                                   interactionValue *= constraintValues[factorIdx] ?? 0;
                                 }
@@ -4808,7 +4772,6 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                             // Add quadratic terms if present in reduced model
                             // Calculate quadratic coefficients if center points are included
                             let quadCoeff_coded = 0;
-                            let solveFactorHasQuadTerm = false;
                             
                             if (includeCenterPoints && n_c > 0 && selectedFactorsForModel['centerPoint'] !== false && k > 0) {
                               const continuousFactorIndices = factors.map((f, i) => ({ factor: f, index: i }))
@@ -4828,6 +4791,16 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                     quadTerm += quadCoeff_coded * xVal * xVal;
                                   } else if (j === validFactorY) {
                                     quadTerm += quadCoeff_coded * yVal * yVal;
+                                  } else if (j === solveFactorIdx) {
+                                  const solveFactor = factors[solveFactorIdx];
+                                  // Convert solved value to coded
+                                  if (solveFactor.type === 'continuous') {
+                                    const low = parseFloat(String(solveFactor.lowValue));
+                                    const high = parseFloat(String(solveFactor.highValue));
+                                    const center = (low + high) / 2;
+                                    const halfRange = (high - low) / 2;
+                                    quadTerm += halfRange !== 0 ? quadCoeff_coded * Math.pow((solvedValue - center) / halfRange, 2) : 0;                                                                     
+                                    }
                                   } else { // Use constraint value for other factors (not x nor y )
                                     quadTerm += quadCoeff_coded * (constraintValues[j] ?? 0) * (constraintValues[j] ?? 0);
                                   }
