@@ -2464,6 +2464,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
 
                 // Store solve function in ref so top-level useEffect can call it
                 solveRef.current = handleSolve;
+                let solvedValue = solverResult?.[0] ?? 0;
 
                 return (
                   <>
@@ -4094,6 +4095,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                             // Calculate predicted Z for a given (x, y) in uncoded units (using the coded reduced model equation)
                             const predictionZ = (xVal: number, yVal: number): number => {
                             // Build prediction using beta_red (reduced model)
+                            
                             let z = beta_red[0] || 0; // Intercept
                             let codedVal = 0;
                             // Add main effects (linear terms)
@@ -4105,6 +4107,19 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                 if (j === validFactorX) {
                                   codedVal += beta_red[redCol] * xVal;
                                 } else if (j === validFactorY) {
+                                  codedVal += beta_red[redCol] * yVal;
+                                } else if (j === solveFactorIdx) {
+                                  const solveFactor = factors[solveFactorIdx];
+                                  // Convert solved value to coded
+                                  if (solveFactor.type === 'continuous') {
+                                    const low = parseFloat(String(solveFactor.lowValue));
+                                    const high = parseFloat(String(solveFactor.highValue));
+                                    const center = (low + high) / 2;
+                                    const halfRange = (high - low) / 2;
+                                    codedVal = halfRange !== 0 ? (solvedValue - center) / halfRange : 0;                                                                     
+                                  } else {
+                                    codedVal = 0;
+                                  }
                                   codedVal += beta_red[redCol] * yVal;
                                 } else { // Use constraint value for other factors (not x nor y )
                                   codedVal += beta_red[redCol] * (constraintValues[j] ?? 0);
@@ -4127,6 +4142,16 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                   interactionValue *= xVal;
                                 } else if (factorIdx === validFactorY) {
                                   interactionValue *= yVal;
+                                } else if (factorIdx === solveFactorIdx) {
+                                  const solveFactor = factors[solveFactorIdx];
+                                  // Convert solved value to coded
+                                  if (solveFactor.type === 'continuous') {
+                                    const low = parseFloat(String(solveFactor.lowValue));
+                                    const high = parseFloat(String(solveFactor.highValue));
+                                    const center = (low + high) / 2;
+                                    const halfRange = (high - low) / 2;
+                                    interactionValue *= halfRange !== 0 ? (solvedValue - center) / halfRange : 0;                                                                     
+                                  }
                                 } else {
                                   interactionValue *= constraintValues[factorIdx] ?? 0;
                                 }
@@ -4138,8 +4163,7 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                             // Add quadratic terms if present in reduced model
                             // Calculate quadratic coefficients if center points are included
                             let quadCoeff_coded = 0;
-                            let solveFactorHasQuadTerm = false;
-                            
+                                                        
                             if (includeCenterPoints && n_c > 0 && selectedFactorsForModel['centerPoint'] !== false && k > 0) {
                               const continuousFactorIndices = factors.map((f, i) => ({ factor: f, index: i }))
                                 .filter(({ factor, index }) => factor.type === 'continuous' && selectedFactorsForModel[index] !== false);
@@ -4158,14 +4182,23 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                                     quadTerm += quadCoeff_coded * xVal * xVal;
                                   } else if (j === validFactorY) {
                                     quadTerm += quadCoeff_coded * yVal * yVal;
-                                  } else { // Use constraint value for other factors (not x nor y )
+                                  } else if (j === solveFactorIdx) {
+                                  const solveFactor = factors[solveFactorIdx];
+                                  // Convert solved value to coded
+                                  if (solveFactor.type === 'continuous') {
+                                    const low = parseFloat(String(solveFactor.lowValue));
+                                    const high = parseFloat(String(solveFactor.highValue));
+                                    const center = (low + high) / 2;
+                                    const halfRange = (high - low) / 2;
+                                    quadTerm += halfRange !== 0 ? quadCoeff_coded * Math.pow((solvedValue - center) / halfRange, 2) : 0;                                                                     
+                                  }
+                                } else { // Use constraint value for other factors (not x nor y )
                                     quadTerm += quadCoeff_coded * (constraintValues[j] ?? 0) * (constraintValues[j] ?? 0);
                                   }
                                 }
                                 z += quadTerm; // cumulate quadratic terms
                               }
                             };
-
                             return z;
                             };
                             // -----------------------------------------------------
