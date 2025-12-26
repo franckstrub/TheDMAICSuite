@@ -1317,7 +1317,8 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                       </div>
                       
                       {includeCenterPoints && (
-                        <div className="ml-6 space-y-2">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="ml-6 space-y-2">
                           <Label htmlFor="number-of-center-points">Number of Center Points</Label>
                           <Input
                             id="number-of-center-points"
@@ -1327,6 +1328,7 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                             onChange={(e) => setNumberOfCenterPoints(parseInt(e.target.value) || 3)}
                             data-testid="input-number-of-center-points"
                           />
+                          </div>
                         </div>
                       )}
                     </div>
