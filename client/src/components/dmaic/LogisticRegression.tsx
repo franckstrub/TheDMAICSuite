@@ -10,6 +10,13 @@ import { Loader2, Trash2, Save } from "lucide-react";
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { parseTwoColumnPaste } from '@/lib/excelPasteUtils';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import Plot from 'react-plotly.js';
 import jStat from 'jstat';
 
@@ -134,15 +141,12 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
     });
   };
 
-  const calculateLogisticRegression = () => {
+  // Auto-recalculate logistic regression when data or settings change
+  useEffect(() => {
     const validPoints = dataPoints.filter(p => !isNaN(p.x) && (p.y === 0 || p.y === 1));
     
     if (validPoints.length < 2) {
-      toast({
-        title: "Insufficient data",
-        description: "Need at least 2 valid data points for logistic regression",
-        variant: "destructive",
-      });
+      setLogisticResult(null);
       return;
     }
 
@@ -176,16 +180,16 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
     const residuals = ys.map((y, i) => y - predictions[i]);
     const devianceResiduals = ys.map((y, i) => {
       const p = predictions[i];
-      if (y === 1) return Math.sqrt(-2 * Math.log(p));
-      else return -Math.sqrt(-2 * Math.log(1 - p));
+      if (y === 1) return Math.sqrt(-2 * Math.log(Math.max(p, 1e-10)));
+      else return -Math.sqrt(-2 * Math.log(Math.max(1 - p, 1e-10)));
     });
 
     const deviance = devianceResiduals.reduce((sum: number, r) => sum + r * r, 0);
     const ySum = ys.reduce((a: number, b: number) => a + b, 0);
     const p0 = ySum / ys.length;
     const nullDeviance = ys.reduce((sum: number, y) => {
-      if (y === 1) return sum - 2 * Math.log(p0);
-      else return sum - 2 * Math.log(1 - p0);
+      if (y === 1) return sum - 2 * Math.log(Math.max(p0, 1e-10));
+      else return sum - 2 * Math.log(Math.max(1 - p0, 1e-10));
     }, 0);
 
     const mcFaddenR2 = 1 - deviance / nullDeviance;
@@ -199,8 +203,9 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
       nullDeviance,
       mcFaddenR2: Math.max(0, Math.min(1, mcFaddenR2)),
       n: validPoints.length,
+      significanceLevel,
     });
-  };
+  }, [dataPoints, significanceLevel]);
 
   const handleSaveData = () => {
     const validPoints = dataPoints.filter(p => !isNaN(p.x) && (p.y === 0 || p.y === 1));
@@ -213,7 +218,6 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
       return;
     }
 
-    calculateLogisticRegression();
     saveDataMutation.mutate({
       dataX: validPoints.map(p => p.x),
       dataY: validPoints.map(p => p.y),
@@ -308,17 +312,21 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
                 />
               </div>
               <div>
-                <Label htmlFor="sig-level">Significance Level</Label>
-                <Input
-                  id="sig-level"
-                  type="number"
-                  value={significanceLevel}
-                  onChange={(e) => setSignificanceLevel(parseFloat(e.target.value) || 0.05)}
-                  min="0.01"
-                  max="0.1"
-                  step="0.01"
-                  className="mt-2"
-                />
+                <Label htmlFor="significance-level">Significance Level (α)</Label>
+                <Select
+                  value={significanceLevel.toString()}
+                  onValueChange={(value) => setSignificanceLevel(parseFloat(value))}
+                >
+                  <SelectTrigger id="significanceLevel" data-testid="select-significance-level">
+                    <SelectValue placeholder="Select significance level" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0.01" data-testid="option-significance-0.01">1%</SelectItem>
+                    <SelectItem value="0.05" data-testid="option-significance-0.05">5%</SelectItem>
+                    <SelectItem value="0.10" data-testid="option-significance-0.10">10%</SelectItem>
+                    <SelectItem value="0.20" data-testid="option-significance-0.20">20%</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="pt-4 border-t">
                 <Button
@@ -415,7 +423,7 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
 
               <Button onClick={handleSaveData} disabled={saveDataMutation.isPending} className="w-full">
                 {saveDataMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Save Data & Calculate
+                Save Data
               </Button>
             </CardContent>
           </Card>
