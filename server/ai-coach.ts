@@ -69,7 +69,8 @@ export async function generateAICoachResponse(userMessage: string): Promise<stri
     
     // Create a generative model instance
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-2.5-pro",
+      //model: "gemini-2.5-pro",
+      model: "gemini-2.5-flash-lite",
       safetySettings: [
         {
           category: HarmCategory.HARM_CATEGORY_HARASSMENT,
