@@ -2833,3 +2833,40 @@ export const insertUserSettingsSchema = createInsertSchema(userSettings).omit({
 
 export type InsertUserSettings = z.infer<typeof insertUserSettingsSchema>;
 export type UserSettings = typeof userSettings.$inferSelect;
+
+// Logistic Regression Configuration Table
+export const logisticRegressionConfig = pgTable(
+  "logistic_regression_config",
+  {
+    id: serial("id").primaryKey(),
+    organizationId: integer("organization_id")
+      .references(() => organizations.id)
+      .notNull(),
+    projectId: integer("project_id").notNull(),
+    solutionId: text("solution_id").notNull(),
+    
+    // Variable descriptions
+    datasetYDescription: text("dataset_y_description").default("Y Binary Response (0/1)"),
+    datasetXDescription: text("dataset_x_description").default("X Predictor"),
+    
+    // Significance level for hypothesis testing
+    significanceLevel: real("significance_level").default(0.05),
+    
+    // Data arrays
+    dataX: jsonb("data_x").$type<number[]>().default([]),
+    dataY: jsonb("data_y").$type<number[]>().default([]),
+    
+    lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+  },
+  (table) => ({
+    uniqueSolutionLogistic: unique().on(table.projectId, table.solutionId),
+  }),
+);
+
+export const insertLogisticRegressionConfigSchema = createInsertSchema(logisticRegressionConfig).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type InsertLogisticRegressionConfig = z.infer<typeof insertLogisticRegressionConfigSchema>;
+export type LogisticRegressionConfig = typeof logisticRegressionConfig.$inferSelect;
