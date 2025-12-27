@@ -152,6 +152,106 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
 
     const xs = validPoints.map(p => p.x);
     const ys = validPoints.map(p => p.y);
+    const n = xs.length;
+
+    // Initialize parameters
+    let b0 = 0;
+    let b1 = 0;
+    
+    // Newton-Raphson iteration
+    for (let iter = 0; iter < 20; iter++) {
+      // Compute predictions: p = 1 / (1 + exp(-(b0 + b1*x)))
+      const predictions = xs.map(x => 1 / (1 + Math.exp(-(b0 + b1 * x))));
+      
+      // Compute gradient (first derivatives)
+      let g0 = 0; // ∂L/∂b0
+      let g1 = 0; // ∂L/∂b1
+      
+      for (let i = 0; i < n; i++) {
+        const error = ys[i] - predictions[i];
+        g0 += error;
+        g1 += error * xs[i];
+      }
+      
+      // Check convergence
+      if (Math.abs(g0) < 1e-6 && Math.abs(g1) < 1e-6) break;
+      
+      // Compute Hessian (second derivatives)
+      let h00 = 0; // ∂²L/∂b0²
+      let h01 = 0; // ∂²L/∂b0∂b1
+      let h11 = 0; // ∂²L/∂b1²
+      
+      for (let i = 0; i < n; i++) {
+        const p = predictions[i];
+        const w = p * (1 - p); // weight
+        h00 -= w;
+        h01 -= w * xs[i];
+        h11 -= w * xs[i] * xs[i];
+      }
+      
+      // Invert 2x2 Hessian matrix
+      const det = h00 * h11 - h01 * h01;
+      
+      if (Math.abs(det) < 1e-10) break; // Singular matrix
+      
+      // H^-1 for 2x2: [h11, -h01; -h01, h00] / det
+      const invH00 = h11 / det;
+      const invH01 = -h01 / det;
+      const invH11 = h00 / det;
+      
+      // Newton-Raphson update: θ_new = θ_old - H^-1 * g
+      const delta0 = -(invH00 * g0 + invH01 * g1);
+      const delta1 = -(invH01 * g0 + invH11 * g1);
+      
+      b0 += delta0;
+      b1 += delta1;
+    }
+
+    // Final predictions and diagnostics
+    const predictions = xs.map(x => 1 / (1 + Math.exp(-(b0 + b1 * x))));
+    const residuals = ys.map((y, i) => y - predictions[i]);
+    
+    const devianceResiduals = ys.map((y, i) => {
+      const p = Math.max(1e-10, Math.min(1 - 1e-10, predictions[i])); // Clamp
+      if (y === 1) return Math.sqrt(-2 * Math.log(p));
+      else return -Math.sqrt(-2 * Math.log(1 - p));
+    });
+
+    const deviance = devianceResiduals.reduce((sum, r) => sum + r * r, 0);
+    
+    const ySum: number = ys.reduce((a, b) => a + b, 0);
+    const p0 = Math.max(1e-10, Math.min(1 - 1e-10, ySum / ys.length));
+    const nullDeviance = ys.reduce((sum: number, y) => {
+      if (y === 1) return sum - 2 * Math.log(p0);
+      else return sum - 2 * Math.log(1 - p0);
+    }, 0);
+
+    const mcFaddenR2 = 1 - deviance / nullDeviance;
+
+    setLogisticResult({
+      intercept: b0,
+      slope: b1,
+      predictions,
+      residuals,
+      deviance,
+      nullDeviance,
+      mcFaddenR2: Math.max(0, Math.min(1, mcFaddenR2)),
+      n: validPoints.length,
+      significanceLevel,
+    });
+  }, [dataPoints, significanceLevel]);
+
+  // Auto-recalculate logistic regression when data or settings change
+  /*useEffect(() => {
+    const validPoints = dataPoints.filter(p => !isNaN(p.x) && (p.y === 0 || p.y === 1));
+    
+    if (validPoints.length < 2) {
+      setLogisticResult(null);
+      return;
+    }
+
+    const xs = validPoints.map(p => p.x);
+    const ys = validPoints.map(p => p.y);
 
     // Logistic regression: log-odds = β0 + β1*x
     // Using iterative Newton-Raphson method
@@ -206,6 +306,7 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
       significanceLevel,
     });
   }, [dataPoints, significanceLevel]);
+  */
 
   const handleSaveData = () => {
     const validPoints = dataPoints.filter(p => !isNaN(p.x) && (p.y === 0 || p.y === 1));
@@ -467,7 +568,7 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
                 <div className="border-t pt-4">
                   <p className="text-sm font-semibold mb-4">Logistic Model: P(Y=1) = 1 / (1 + e^(-β₀ - β₁*X))</p>
                   <p className="text-sm text-gray-600">
-                    Model: P(Y=1) = 1 / (1 + e^(-{logisticResult.intercept.toFixed(4)} - {logisticResult.slope.toFixed(4)}*X))
+                    Model: P(Y=1) = 1 / (1 + e^({logisticResult.intercept >= 0 ? '-' : '+'}{Math.abs(logisticResult.intercept).toFixed(4)} {logisticResult.slope >= 0 ? '-' : '+'} {Math.abs(logisticResult.slope).toFixed(4)}*X))
                   </p>
                 </div>
 
@@ -525,7 +626,7 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
                       layout={{
                         title: { text: 'Logistic Regression' },
                         xaxis: { title: { text: datasetXDescription } },
-                        yaxis: { title: { text: 'Probability' }, range: [-0.1, 1.1] },
+                        yaxis: { title: { text: 'Probability of ' + datasetYDescription }, range: [-0.1, 1.1] },
                         hovermode: 'closest',
                         margin: { l: 60, r: 40, t: 40, b: 60 },
                       }}
