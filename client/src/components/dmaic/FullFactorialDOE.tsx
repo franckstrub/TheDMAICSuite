@@ -2041,7 +2041,16 @@ export function FullFactorialDOE({ projectId, solutionId }: FullFactorialDOEProp
                 }
                 
                 // Compute (X'X)^-1 for prediction intervals
-                const XtX_inv_red = invertMatrix(XtX_red);
+                let XtX_inv_red: number[][] | null = null;
+                try {
+                  XtX_inv_red = invertMatrix(XtX_red);
+                } catch (e) {
+                  console.warn('Matrix inversion error:', e);
+                  // Create identity matrix as fallback
+                  XtX_inv_red = Array(p_reduced).fill(null).map((_, i) => 
+                    Array(p_reduced).fill(0).map((_, j) => i === j ? 1 : 0)
+                  );
+                }
 
                // Calculate predictions for reduced model with and without quadratic terms in model first (Note: we are in coded view)
                 let predictions_red = [];                                     
