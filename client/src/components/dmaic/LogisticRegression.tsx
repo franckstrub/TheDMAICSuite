@@ -219,7 +219,7 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
 
     const deviance = devianceResiduals.reduce((sum, r) => sum + r * r, 0);
     
-    const ySum: number = ys.reduce((a, b) => a + b, 0);
+    const ySum: number = ys.reduce((a, b) => a + b, 0 as number);
     const p0 = Math.max(1e-10, Math.min(1 - 1e-10, ySum / ys.length));
     const nullDeviance = ys.reduce((sum: number, y) => {
       if (y === 1) return sum - 2 * Math.log(p0);
@@ -540,6 +540,18 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   <div>
+                    <p className="text-sm text-muted-foreground">Y Response</p>
+                    <p className="text-2xl font-bold">{datasetYDescription || 'Y'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Number of '1' Responses</p>
+                    <p className="text-2xl font-bold">{dataPoints.filter(p => p.y === 1 && !isNaN(p.x)).length}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Number of '0' Responses</p>
+                    <p className="text-2xl font-bold">{dataPoints.filter(p => p.y === 0 && !isNaN(p.x)).length}</p>
+                  </div>
+                  <div>
                     <p className="text-sm text-muted-foreground">Intercept (β₀)</p>
                     <p className="text-2xl font-bold">{logisticResult.intercept.toFixed(6)}</p>
                   </div>
@@ -566,7 +578,7 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
                 </div>
 
                 <div className="border-t pt-4">
-                  <p className="text-sm font-semibold mb-4">Logistic Model: P(Y=1) = 1 / (1 + e^(-β₀ - β₁*X))</p>
+                  <p className="text-sm font-semibold mb-4">Logistic Model (Logit): P(Y=1) = 1 / (1 + e^(-β₀ - β₁*X))</p>
                   <p className="text-sm text-gray-600">
                     Model: P(Y=1) = 1 / (1 + e^({logisticResult.intercept >= 0 ? '-' : '+'}{Math.abs(logisticResult.intercept).toFixed(4)} {logisticResult.slope >= 0 ? '-' : '+'} {Math.abs(logisticResult.slope).toFixed(4)}*X))
                   </p>
