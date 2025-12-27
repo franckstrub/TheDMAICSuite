@@ -2848,6 +2848,8 @@ export const logisticRegressionConfig = pgTable(
     // Variable descriptions
     datasetYDescription: text("dataset_y_description").default("Y Binary Response (0/1)"),
     datasetXDescription: text("dataset_x_description").default("X Predictor"),
+    zeroValueLabel: text("zero_value_label").default(""),
+    oneValueLabel: text("one_value_label").default(""),
     
     // Significance level for hypothesis testing
     significanceLevel: real("significance_level").default(0.05),
