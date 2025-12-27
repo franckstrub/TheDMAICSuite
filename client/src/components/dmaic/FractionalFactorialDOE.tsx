@@ -4992,7 +4992,8 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                             opacity: 0.6,
                                             colorscale: 'Viridis',
                                             name: 'Fit Model',
-                                            showscale: false,
+                                            showscale: true,
+                                            showlegend: true,
                                             hovertemplate: `Fit Model<br>${factors[validFactorX]?.name}: %{x:.4f}<br>${factors[validFactorY]?.name}: %{y:.4f}<br>Predicted Y: %{z:.4f}<extra></extra>`,
                                           } as any,
                                           // Solution points
@@ -5015,12 +5016,24 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                             yaxis: { title: { text: `<b>${factors[validFactorY]?.name}</b>` } },
                                             zaxis: { title: { text: '<b>Y Response</b>' } },
                                           },
-                                          legend: { x: 0.85, y: 0.95 },
+                                          legend: { title: {text: 'Click on any legend below<br>to show/hide the 3D graph<br>elements'}, font: { size: 10 },
+                                                  x: 0.85, y: 0.95 },
                                           margin: { l: 0, r: 0, b: 0, t: 40 },
                                         }}
                                         useResizeHandler
                                         style={{ width: '100%', height: '450px' }}
-                                        config={{ responsive: true, displayModeBar: true, displaylogo: false }}
+                                        config={{
+                                          responsive: true,
+                                          displayModeBar: true,
+                                          displaylogo: false,
+                                          toImageButtonOptions: {
+                                            format: 'png',
+                                            filename: `3D_Scatter_Fractional_Factorial_DOE_${responseVariableName || 'Y Response'}=f(${factors[validFactorX]?.name}, ${factors[validFactorY]?.name})`,
+                                            height: 500,
+                                            width: 800,
+                                            scale: 1
+                                          }
+                                        }}
                                       />
                                     </div>
                                   )}
@@ -5050,7 +5063,18 @@ export function FractionalFactorialDOE({ projectId, solutionId }: FractionalFact
                                         }}
                                         useResizeHandler
                                         style={{ width: '100%', height: '400px' }}
-                                        config={{ responsive: true, displayModeBar: true, displaylogo: false }}
+                                        config={{
+                                        responsive: true,
+                                        displayModeBar: true,
+                                        displaylogo: false,
+                                        toImageButtonOptions: {
+                                          format: 'png',
+                                          filename: `2D_Contour_Plot_Fractional_Factorial_DOE_${responseVariableName || 'Y Response'}=f(${factors[validFactorX]?.name}, ${factors[validFactorY]?.name})`,
+                                          height: 500,
+                                          width: 800,
+                                          scale: 1
+                                          }
+                                        }}
                                       />
                                     </div>
                                   )}

@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Trash2 } from "lucide-react";
+import { Loader2, Trash2, Save } from "lucide-react";
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { parseTwoColumnPaste } from '@/lib/excelPasteUtils';
@@ -96,6 +96,43 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
       });
     },
   });
+
+  const saveSetupMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return apiRequest(
+        'POST',
+        `/api/projects/${projectId}/solutions/${solutionId}/logistic-regression`,
+        data
+      );
+    },
+    onSuccess: () => {
+      toast({
+        title: "Setup saved",
+        description: "Your setup configuration has been saved successfully.",
+      });
+      queryClient.invalidateQueries({
+        queryKey: [`/api/projects/${projectId}/solutions/${solutionId}/logistic-regression`]
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save setup.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSaveSetup = () => {
+    const validPoints = dataPoints.filter(p => !isNaN(p.x) && (p.y === 0 || p.y === 1));
+    saveSetupMutation.mutate({
+      dataX: validPoints.map(p => p.x),
+      dataY: validPoints.map(p => p.y),
+      datasetYDescription,
+      datasetXDescription,
+      significanceLevel,
+    });
+  };
 
   const calculateLogisticRegression = () => {
     const validPoints = dataPoints.filter(p => !isNaN(p.x) && (p.y === 0 || p.y === 1));
@@ -282,6 +319,25 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
                   step="0.01"
                   className="mt-2"
                 />
+              </div>
+              <div className="pt-4 border-t">
+                <Button
+                  onClick={handleSaveSetup}
+                  disabled={saveSetupMutation.isPending}
+                  data-testid="button-save-setup"
+                >
+                  {saveSetupMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="mr-2 h-4 w-4" />
+                      Save Setup
+                    </>
+                  )}
+                </Button>
               </div>
             </CardContent>
           </Card>

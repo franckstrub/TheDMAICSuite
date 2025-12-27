@@ -33,9 +33,9 @@ export async function generateMitigationPlan(
     
     console.log("Using Google AI API to generate a mitigation plan");
     
-    // Create a generative model instance - using Gemini Pro
+    // Create a generative model instance - using Gemini Flash
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-2.5-pro",
+      model: "gemini-2.5-flash-lite",
       safetySettings: [
         {
           category: HarmCategory.HARM_CATEGORY_HARASSMENT,
@@ -126,7 +126,7 @@ export async function generateElevatorSpeech(
     
     // Create a generative model instance
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-2.5-pro",
+      model: "gemini-2.5-flash-lite",
       safetySettings: [
         {
           category: HarmCategory.HARM_CATEGORY_HARASSMENT,
@@ -222,7 +222,7 @@ export async function generateEngagementStrategy(
     
     // Create a generative model instance
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-2.5-pro",
+      model: "gemini-2.5-flash-lite",
       safetySettings: [
         {
           category: HarmCategory.HARM_CATEGORY_HARASSMENT,
