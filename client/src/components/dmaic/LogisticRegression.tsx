@@ -415,7 +415,7 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
                     id="zero-label"
                     value={zeroValueLabel}
                     onChange={(e) => setZeroValueLabel(e.target.value)}
-                    placeholder="Fail, NOK, KO, Bad, etc."
+                    placeholder="Fail, NOK, KO, No, Bad, etc."
                     className="mt-2"
                   />
                 </div>
@@ -425,7 +425,7 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
                     id="one-label"
                     value={oneValueLabel}
                     onChange={(e) => setOneValueLabel(e.target.value)}
-                    placeholder="Pass, OK, Good"
+                    placeholder="Pass, OK, Yes, Good, etc."
                     className="mt-2"
                   />
                 </div>
@@ -572,11 +572,11 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
                     <p className="text-2xl font-bold">{datasetYDescription || 'Y'}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Number of '1' Responses</p>
+                    <p className="text-sm text-muted-foreground">Number of '1' Responses{oneValueLabel ? ` (${oneValueLabel})` : ''}</p>
                     <p className="text-2xl font-bold">{dataPoints.filter(p => p.y === 1 && !isNaN(p.x)).length}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Number of '0' Responses</p>
+                    <p className="text-sm text-muted-foreground">Number of '0' Responses{zeroValueLabel ? ` (${zeroValueLabel})` : ''}</p>
                     <p className="text-2xl font-bold">{dataPoints.filter(p => p.y === 0 && !isNaN(p.x)).length}</p>
                   </div>
                   <div>
