@@ -664,14 +664,28 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
                         }] : [])
                       ] as any}
                       layout={{
-                        title: { text: 'Logistic Regression' },
+                        title: { text: '<b>Logistic Regression of ' + datasetYDescription + ' vs ' + datasetXDescription + '</b>', font: { size: 16 } },
                         xaxis: { title: { text: datasetXDescription } },
                         yaxis: { title: { text: 'Probability of ' + datasetYDescription }, range: [-0.1, 1.1] },
                         hovermode: 'closest',
-                        margin: { l: 60, r: 40, t: 40, b: 60 },
+                        margin: { l: 60, r: 80, t: 40, b: 60 },
+                        legend: { title: {text: ' Click on any legend below<br> to show/hide the Logistic<br> Regression graph elements'}, font: { size: 10 },
+                                x: 0.85, y: 0.95 },
                       }}
                       style={{ width: '100%', height: '400px' }}
                       useResizeHandler
+                      config={{
+                        responsive: true,
+                        displayModeBar: true,
+                        displaylogo: false,
+                        toImageButtonOptions: {
+                          format: 'png',
+                          filename: `Logistic Regression of ${datasetYDescription || 'Y Response'} vs ${datasetXDescription || 'X Predictor'}`,
+                          height: 500,
+                          width: 800,
+                          scale: 1
+                        }
+                      }}
                     />
                   </div>
                 )}
