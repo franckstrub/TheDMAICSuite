@@ -36,6 +36,8 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
   
   const [datasetYDescription, setDatasetYDescription] = useState("Y Binary Response (0/1)");
   const [datasetXDescription, setDatasetXDescription] = useState("X Predictor");
+  const [zeroValueLabel, setZeroValueLabel] = useState("");
+  const [oneValueLabel, setOneValueLabel] = useState("");
   const [significanceLevel, setSignificanceLevel] = useState(0.05);
   
   const [dataPoints, setDataPoints] = useState<DataPoint[]>([
@@ -63,6 +65,8 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
       const config = configQuery.data as any;
       setDatasetYDescription(config.datasetYDescription || "Y Binary Response (0/1)");
       setDatasetXDescription(config.datasetXDescription || "X Predictor");
+      setZeroValueLabel(config.zeroValueLabel || "");
+      setOneValueLabel(config.oneValueLabel || "");
       
       if (config.dataX && config.dataY && config.dataX.length > 0) {
         const points: DataPoint[] = config.dataX.map((x: number, i: number) => ({
@@ -137,6 +141,8 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
       dataY: validPoints.map(p => p.y),
       datasetYDescription,
       datasetXDescription,
+      zeroValueLabel,
+      oneValueLabel,
       significanceLevel,
     });
   };
@@ -392,15 +398,37 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
               <CardTitle>Setup</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="y-desc">Y Variable Description (Binary 0/1)</Label>
-                <Input
-                  id="y-desc"
-                  value={datasetYDescription}
-                  onChange={(e) => setDatasetYDescription(e.target.value)}
-                  placeholder="e.g., Success/Failure"
-                  className="mt-2"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="y-desc">Y Response Binary (0/1)</Label>
+                  <Input
+                    id="y-desc"
+                    value={datasetYDescription}
+                    onChange={(e) => setDatasetYDescription(e.target.value)}
+                    placeholder="e.g., Success/Failure"
+                    className="mt-2"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="zero-label">'0' Value</Label>
+                  <Input
+                    id="zero-label"
+                    value={zeroValueLabel}
+                    onChange={(e) => setZeroValueLabel(e.target.value)}
+                    placeholder="Fail, NOK, KO, Bad, etc."
+                    className="mt-2"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="one-label">'1' Value</Label>
+                  <Input
+                    id="one-label"
+                    value={oneValueLabel}
+                    onChange={(e) => setOneValueLabel(e.target.value)}
+                    placeholder="Pass, OK, Good"
+                    className="mt-2"
+                  />
+                </div>
               </div>
               <div>
                 <Label htmlFor="x-desc">X Variable Description (Predictor)</Label>
