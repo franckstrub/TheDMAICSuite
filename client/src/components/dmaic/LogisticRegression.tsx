@@ -645,11 +645,36 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
 
                 <div className="border-t pt-4">
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div>
-                      <p className="text-sm font-semibold mb-4">Logistic Model (Logit): P(Y=1) = 1 / (1 + e^(-β₀ - β₁*X))</p>
-                      <p className="text-sm text-gray-600">
-                        Model: P(Y=1) = 1 / (1 + e^({logisticResult.intercept >= 0 ? '-' : '+'}{Math.abs(logisticResult.intercept).toFixed(4)} {logisticResult.slope >= 0 ? '-' : '+'} {Math.abs(logisticResult.slope).toFixed(4)}*X))
-                      </p>
+                    <div className="space-y-4">
+                      <div>
+                        <p className="text-sm font-semibold mb-4">Logistic Model (Logit): P(Y=1) = 1 / (1 + e^(-β₀ - β₁*X))</p>
+                        <p className="text-sm text-gray-600">
+                          Model: P(Y=1) = 1 / (1 + e^({logisticResult.intercept >= 0 ? '-' : '+'}{Math.abs(logisticResult.intercept).toFixed(4)} {logisticResult.slope >= 0 ? '-' : '+'} {Math.abs(logisticResult.slope).toFixed(4)}*X))
+                        </p>
+                      </div>
+                      <div className="bg-muted/50 p-3 rounded-lg">
+                        <p className="text-sm font-semibold mb-2">Odds Ratio for Continuous Predictor</p>
+                        <div className="overflow-x-auto">
+                          <table className="text-sm">
+                            <thead>
+                              <tr>
+                                <th className="px-3 py-1 text-left"></th>
+                                <th className="px-3 py-1 text-right">Odds Ratio</th>
+                                <th className="px-3 py-1 text-right">{((1 - significanceLevel) * 100).toFixed(0)}% CI</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr>
+                                <td className="px-3 py-1 font-medium">{datasetXDescription}</td>
+                                <td className="px-3 py-1 text-right font-mono">{Math.exp(logisticResult.slope).toFixed(4)}</td>
+                                <td className="px-3 py-1 text-right font-mono">
+                                  ({Math.exp(logisticResult.slope - jStat.normal.inv(1 - significanceLevel / 2, 0, 1) * (logisticResult.slopeSE || 0)).toFixed(4)}, {Math.exp(logisticResult.slope + jStat.normal.inv(1 - significanceLevel / 2, 0, 1) * (logisticResult.slopeSE || 0)).toFixed(4)})
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
                     </div>
                     <div>
                       <p className="text-sm font-semibold mb-2">Model Evaluation</p>
