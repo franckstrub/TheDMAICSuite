@@ -7258,6 +7258,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
             .json({ message: "User organization not found" });
         }
 
+        // Get the solution to find its solutionId (text like "S1", "S2") and projectId
+        const [solutionToDelete] = await db
+          .select()
+          .from(solutions)
+          .where(
+            and(
+              eq(solutions.id, solutionId),
+              eq(solutions.organizationId, userRecord.organizationId),
+            ),
+          )
+          .limit(1);
+
+        if (!solutionToDelete) {
+          return res.status(404).json({ message: "Solution not found" });
+        }
+
+        const { solutionId: solutionTextId, projectId } = solutionToDelete;
+
+        // Delete all related Solution Design records
+        await db
+          .delete(solutionDesignTracking)
+          .where(
+            and(
+              eq(solutionDesignTracking.projectId, projectId),
+              eq(solutionDesignTracking.solutionId, solutionTextId),
+              eq(solutionDesignTracking.organizationId, userRecord.organizationId),
+            ),
+          );
+
+        // Delete Simple Regression Config
+        await db
+          .delete(simpleRegressionConfig)
+          .where(
+            and(
+              eq(simpleRegressionConfig.projectId, projectId),
+              eq(simpleRegressionConfig.solutionId, solutionTextId),
+              eq(simpleRegressionConfig.organizationId, userRecord.organizationId),
+            ),
+          );
+
+        // Delete ANOVA Two-Way Config
+        await db
+          .delete(anovaTwoWayConfig)
+          .where(
+            and(
+              eq(anovaTwoWayConfig.projectId, projectId),
+              eq(anovaTwoWayConfig.solutionId, solutionTextId),
+              eq(anovaTwoWayConfig.organizationId, userRecord.organizationId),
+            ),
+          );
+
+        // Delete Multiple Regression Config
+        await db
+          .delete(multipleRegressionConfig)
+          .where(
+            and(
+              eq(multipleRegressionConfig.projectId, projectId),
+              eq(multipleRegressionConfig.solutionId, solutionTextId),
+              eq(multipleRegressionConfig.organizationId, userRecord.organizationId),
+            ),
+          );
+
+        // Delete Logistic Regression Config
+        await db
+          .delete(logisticRegressionConfig)
+          .where(
+            and(
+              eq(logisticRegressionConfig.projectId, projectId),
+              eq(logisticRegressionConfig.solutionId, solutionTextId),
+              eq(logisticRegressionConfig.organizationId, userRecord.organizationId),
+            ),
+          );
+
+        // Delete the solution itself
         await db
           .delete(solutions)
           .where(
@@ -7267,7 +7341,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             ),
           );
 
-        return res.json({ message: "Solution deleted successfully" });
+        return res.json({ message: "Solution and all related designs deleted successfully" });
       } catch (err) {
         console.error("Solution deletion error:", err);
         return handleErrors(err, res);
