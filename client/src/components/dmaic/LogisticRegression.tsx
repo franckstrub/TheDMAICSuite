@@ -829,7 +829,20 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
                         placeholder="X value"
                         className="w-32"
                       />
-                      <Button
+                    </div>
+                    {predictionX && !isNaN(parseFloat(predictionX)) && (
+                      <div className="bg-muted p-3 rounded-lg">
+                        <span className="text-sm">
+                          P({datasetYDescription} = 1{oneValueLabel ? ` [${oneValueLabel}]` : ''}) = {' '}
+                          <span className="font-bold text-lg">
+                            {(1 / (1 + Math.exp(-(logisticResult.intercept + logisticResult.slope * parseFloat(predictionX))))).toFixed(4)}
+                          </span>
+                          {' '}({((1 / (1 + Math.exp(-(logisticResult.intercept + logisticResult.slope * parseFloat(predictionX))))) * 100).toFixed(2)}%)
+                        </span>
+                      </div>
+                    )}
+                  
+                    <Button
                         size="sm"
                         onClick={() => {
                           const xVal = parseFloat(predictionX);
@@ -848,21 +861,9 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
                         }}
                         disabled={!predictionX || isNaN(parseFloat(predictionX))}
                       >
-                        <Save className="w-4 h-4 mr-1" />
-                        Save Prediction
-                      </Button>
-                    </div>
-                    {predictionX && !isNaN(parseFloat(predictionX)) && (
-                      <div className="bg-muted p-3 rounded-lg">
-                        <span className="text-sm">
-                          P({datasetYDescription} = 1{oneValueLabel ? ` [${oneValueLabel}]` : ''}) = {' '}
-                          <span className="font-bold text-lg">
-                            {(1 / (1 + Math.exp(-(logisticResult.intercept + logisticResult.slope * parseFloat(predictionX))))).toFixed(4)}
-                          </span>
-                          {' '}({((1 / (1 + Math.exp(-(logisticResult.intercept + logisticResult.slope * parseFloat(predictionX))))) * 100).toFixed(2)}%)
-                        </span>
-                      </div>
-                    )}
+                      <Save className="w-4 h-4 mr-1" />
+                      Save Prediction
+                    </Button>
                   </div>
                 </div>
               </CardContent>
