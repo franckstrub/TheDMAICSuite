@@ -88,6 +88,10 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
       if (config.showScatterPlot !== null && config.showScatterPlot !== undefined) {
         setShowScatterPlot(config.showScatterPlot);
       }
+      
+      if (config.predictionX !== null && config.predictionX !== undefined) {
+        setPredictionX(String(config.predictionX));
+      }
     }
   }, [configQuery.data]);
 
@@ -825,6 +829,28 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
                         placeholder="X value"
                         className="w-32"
                       />
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          const xVal = parseFloat(predictionX);
+                          if (!isNaN(xVal)) {
+                            apiRequest(
+                              'POST',
+                              `/api/projects/${projectId}/solutions/${solutionId}/logistic-regression`,
+                              { predictionX: xVal }
+                            ).then(() => {
+                              toast({
+                                title: "Prediction saved",
+                                description: `X = ${xVal} saved successfully.`,
+                              });
+                            }).catch(() => {});
+                          }
+                        }}
+                        disabled={!predictionX || isNaN(parseFloat(predictionX))}
+                      >
+                        <Save className="w-4 h-4 mr-1" />
+                        Save Prediction
+                      </Button>
                     </div>
                     {predictionX && !isNaN(parseFloat(predictionX)) && (
                       <div className="bg-muted p-3 rounded-lg">
