@@ -52,6 +52,7 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
   const [logisticResult, setLogisticResult] = useState<any>(null);
   const [showScatterPlot, setShowScatterPlot] = useState(false);
   const [activeTab, setActiveTab] = useState("setup");
+  const [predictionX, setPredictionX] = useState("");
 
   const configQuery = useQuery({
     queryKey: [`/api/projects/${projectId}/solutions/${solutionId}/logistic-regression`],
@@ -810,6 +811,34 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
                     />
                   </div>
                 )}
+
+                <div className="border-t pt-4 mt-4">
+                  <p className="text-sm font-semibold mb-3">Prediction</p>
+                  <div className="flex items-center gap-4 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="prediction-x">Enter {datasetXDescription} value:</Label>
+                      <Input
+                        id="prediction-x"
+                        type="text"
+                        value={predictionX}
+                        onChange={(e) => setPredictionX(e.target.value.replace(',', '.'))}
+                        placeholder="X value"
+                        className="w-32"
+                      />
+                    </div>
+                    {predictionX && !isNaN(parseFloat(predictionX)) && (
+                      <div className="bg-muted p-3 rounded-lg">
+                        <span className="text-sm">
+                          P({datasetYDescription} = 1{oneValueLabel ? ` [${oneValueLabel}]` : ''}) = {' '}
+                          <span className="font-bold text-lg">
+                            {(1 / (1 + Math.exp(-(logisticResult.intercept + logisticResult.slope * parseFloat(predictionX))))).toFixed(4)}
+                          </span>
+                          {' '}({((1 / (1 + Math.exp(-(logisticResult.intercept + logisticResult.slope * parseFloat(predictionX))))) * 100).toFixed(2)}%)
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </CardContent>
             </Card>
           ) : (
