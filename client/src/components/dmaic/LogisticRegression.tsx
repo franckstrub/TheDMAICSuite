@@ -51,6 +51,7 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
   const [showClearDialog, setShowClearDialog] = useState(false);
   const [logisticResult, setLogisticResult] = useState<any>(null);
   const [showScatterPlot, setShowScatterPlot] = useState(false);
+  const [activeTab, setActiveTab] = useState("setup");
 
   const configQuery = useQuery({
     queryKey: [`/api/projects/${projectId}/solutions/${solutionId}/logistic-regression`],
@@ -77,6 +78,10 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
       
       if (config.significanceLevel !== null && config.significanceLevel !== undefined) {
         setSignificanceLevel(config.significanceLevel);
+      }
+      
+      if (config.activeTab) {
+        setActiveTab(config.activeTab);
       }
     }
   }, [configQuery.data]);
@@ -420,9 +425,18 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
     }
   };
 
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    apiRequest(
+      'POST',
+      `/api/projects/${projectId}/solutions/${solutionId}/logistic-regression`,
+      { activeTab: tab }
+    ).catch(() => {});
+  };
+
   return (
     <div className="space-y-4">
-      <Tabs defaultValue="setup" className="w-full">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="setup">Setup</TabsTrigger>
           <TabsTrigger value="data">Data Entry</TabsTrigger>
@@ -626,15 +640,15 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
                     <p className="text-2xl font-bold">{logisticResult.slope.toFixed(6)}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">McFadden R²</p>
+                    <p title="McFadden's R² is a pseudo R² measure for logistic regression models" className="text-sm text-muted-foreground">McFadden R²</p>
                     <p className="text-2xl font-bold">{(logisticResult.mcFaddenR2 * 100).toFixed(2)}%</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Deviance</p>
+                    <p title="Residual Deviance is a measure of the goodness of fit for logistic regression models" className="text-sm text-muted-foreground">Residual Deviance</p>
                     <p className="text-2xl font-bold">{logisticResult.deviance.toFixed(4)}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Null Deviance</p>
+                    <p title="Null Deviance is a measure of how well a logistic regression model with NO predictors (intercept-only) fits the data" className="text-sm text-muted-foreground">Null Deviance</p>
                     <p className="text-2xl font-bold">{logisticResult.nullDeviance.toFixed(4)}</p>
                   </div>
                   <div>
@@ -653,13 +667,13 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
                         </p>
                       </div>
                       <div>
-                        <p className="text-sm font-semibold mb-2">Odds Ratio for Continuous Predictor</p>
+                        <p title="The odds ratio (OR) multiply by OR every 1-unit increase in X continuous predictor" className="text-sm font-semibold mb-3">Odds Ratio (OR) for X Continuous Predictor</p>
                         <div className="overflow-x-auto">
                           <table className="w-full text-sm border-collapse border">
                             <thead>
                               <tr className="bg-muted">
                                 <th className="border px-3 py-2 text-left font-semibold"></th>
-                                <th className="border px-3 py-2 text-right font-semibold">Odds Ratio</th>
+                                <th title="The odds ratio (OR) multiply by OR every 1-unit increase in X continuous predictor" className="border px-3 py-2 text-right font-semibold">Odds Ratio (OR)</th>
                                 <th className="border px-3 py-2 text-right font-semibold">{((1 - significanceLevel) * 100).toFixed(0)}% CI</th>
                               </tr>
                             </thead>
