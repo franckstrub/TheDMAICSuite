@@ -2858,6 +2858,9 @@ export const logisticRegressionConfig = pgTable(
     dataX: jsonb("data_x").$type<number[]>().default([]),
     dataY: jsonb("data_y").$type<number[]>().default([]),
     
+    // UI state
+    activeTab: text("active_tab").default("setup"),
+    
     lastUpdated: timestamp("last_updated").notNull().defaultNow(),
   },
   (table) => ({
