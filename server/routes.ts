@@ -3398,7 +3398,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
             ),
           );
 
-        // Step 5: Delete the CTQ from CTS characteristics
+        // Step 5: Delete all Proof of Improvement records for this CTQ
+        await db
+          .delete(beforeAfterContCTQTwoSampleTest)
+          .where(
+            and(
+              eq(beforeAfterContCTQTwoSampleTest.ctqId, ctqId),
+              eq(beforeAfterContCTQTwoSampleTest.projectId, projectId),
+              eq(beforeAfterContCTQTwoSampleTest.organizationId, userRecord.organizationId),
+            ),
+          );
+
+        await db
+          .delete(beforeAfterTwoProportionTest)
+          .where(
+            and(
+              eq(beforeAfterTwoProportionTest.ctqId, ctqId),
+              eq(beforeAfterTwoProportionTest.projectId, projectId),
+              eq(beforeAfterTwoProportionTest.organizationId, userRecord.organizationId),
+            ),
+          );
+
+        await db
+          .delete(beforeAfterChiSquareTest)
+          .where(
+            and(
+              eq(beforeAfterChiSquareTest.ctqId, ctqId),
+              eq(beforeAfterChiSquareTest.projectId, projectId),
+              eq(beforeAfterChiSquareTest.organizationId, userRecord.organizationId),
+            ),
+          );
+
+        await db
+          .delete(proofOfImprovementPreferences)
+          .where(
+            and(
+              eq(proofOfImprovementPreferences.ctqId, ctqId),
+              eq(proofOfImprovementPreferences.projectId, projectId),
+              eq(proofOfImprovementPreferences.organizationId, userRecord.organizationId),
+            ),
+          );
+
+        // Step 6: Delete the CTQ from CTS characteristics
         await db
           .delete(ctsCharacteristics)
           .where(
