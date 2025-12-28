@@ -83,6 +83,10 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
       if (config.activeTab) {
         setActiveTab(config.activeTab);
       }
+      
+      if (config.showScatterPlot !== null && config.showScatterPlot !== undefined) {
+        setShowScatterPlot(config.showScatterPlot);
+      }
     }
   }, [configQuery.data]);
 
@@ -734,7 +738,15 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
                     <Checkbox
                       id="scatter"
                       checked={showScatterPlot}
-                      onCheckedChange={(checked) => setShowScatterPlot(!!checked)}
+                      onCheckedChange={(checked) => {
+                        const value = !!checked;
+                        setShowScatterPlot(value);
+                        apiRequest(
+                          'POST',
+                          `/api/projects/${projectId}/solutions/${solutionId}/logistic-regression`,
+                          { showScatterPlot: value }
+                        ).catch(() => {});
+                      }}
                     />
                     <Label htmlFor="scatter">Show Data Points and Logistic Regression Fitted Curve</Label>
                   </div>                  
