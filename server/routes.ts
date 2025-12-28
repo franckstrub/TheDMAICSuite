@@ -7331,6 +7331,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
             ),
           );
 
+        // Delete Full Factorial DOE Config
+        await db
+          .delete(doeFullFactorialConfig)
+          .where(
+            and(
+              eq(doeFullFactorialConfig.projectId, projectId),
+              eq(doeFullFactorialConfig.solutionId, solutionTextId),
+              eq(doeFullFactorialConfig.organizationId, userRecord.organizationId),
+            ),
+          );
+
+        // Delete Fractional Factorial DOE Config
+        await db
+          .delete(doeFractionalFactorialConfig)
+          .where(
+            and(
+              eq(doeFractionalFactorialConfig.projectId, projectId),
+              eq(doeFractionalFactorialConfig.solutionId, solutionTextId),
+              eq(doeFractionalFactorialConfig.organizationId, userRecord.organizationId),
+            ),
+          );
+
         // Delete the solution itself
         await db
           .delete(solutions)
