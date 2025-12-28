@@ -34,8 +34,8 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
   const { toast } = useToast();
   const loadedRef = useRef(false);
   
-  const [datasetYDescription, setDatasetYDescription] = useState("Y Binary Response (0/1)");
-  const [datasetXDescription, setDatasetXDescription] = useState("X Predictor");
+  const [datasetYDescription, setDatasetYDescription] = useState("Y Categorical Response (0/1)");
+  const [datasetXDescription, setDatasetXDescription] = useState("X Continuous Predictor");
   const [zeroValueLabel, setZeroValueLabel] = useState("");
   const [oneValueLabel, setOneValueLabel] = useState("");
   const [significanceLevel, setSignificanceLevel] = useState(0.05);
@@ -51,7 +51,6 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
   const [showClearDialog, setShowClearDialog] = useState(false);
   const [logisticResult, setLogisticResult] = useState<any>(null);
   const [showScatterPlot, setShowScatterPlot] = useState(false);
-  const [showFittedCurve, setShowFittedCurve] = useState(false);
 
   const configQuery = useQuery({
     queryKey: [`/api/projects/${projectId}/solutions/${solutionId}/logistic-regression`],
@@ -63,8 +62,8 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
       loadedRef.current = true;
       
       const config = configQuery.data as any;
-      setDatasetYDescription(config.datasetYDescription || "Y Binary Response (0/1)");
-      setDatasetXDescription(config.datasetXDescription || "X Predictor");
+      setDatasetYDescription(config.datasetYDescription || "Y Categorical Response (0/1)");
+      setDatasetXDescription(config.datasetXDescription || "X Continuous Predictor");
       setZeroValueLabel(config.zeroValueLabel || "");
       setOneValueLabel(config.oneValueLabel || "");
       
@@ -217,6 +216,39 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
     const predictions = xs.map(x => 1 / (1 + Math.exp(-(b0 + b1 * x))));
     const residuals = ys.map((y, i) => y - predictions[i]);
     
+    // Compute Fisher Information Matrix (negative Hessian) for standard errors
+    let I00 = 0; // Fisher info for b0
+    let I01 = 0; // Fisher info for b0, b1
+    let I11 = 0; // Fisher info for b1
+    
+    for (let i = 0; i < n; i++) {
+      const p = predictions[i];
+      const w = p * (1 - p); // weight
+      I00 += w;
+      I01 += w * xs[i];
+      I11 += w * xs[i] * xs[i];
+    }
+    
+    // Invert Fisher Information Matrix to get covariance matrix
+    const detI = I00 * I11 - I01 * I01;
+    let se0 = 0;
+    let se1 = 0;
+    
+    if (Math.abs(detI) > 1e-10) {
+      const var0 = I11 / detI; // Variance of b0
+      const var1 = I00 / detI; // Variance of b1
+      se0 = Math.sqrt(Math.max(0, var0)); // Standard error of intercept
+      se1 = Math.sqrt(Math.max(0, var1)); // Standard error of slope
+    }
+    
+    // Calculate z-values (Wald statistic)
+    const z0 = se0 > 0 ? b0 / se0 : 0;
+    const z1 = se1 > 0 ? b1 / se1 : 0;
+    
+    // Calculate p-values (two-tailed Wald test)
+    const pValue0 = se0 > 0 ? 2 * (1 - jStat.normal.cdf(Math.abs(z0), 0, 1)) : 1;
+    const pValue1 = se1 > 0 ? 2 * (1 - jStat.normal.cdf(Math.abs(z1), 0, 1)) : 1;
+    
     const devianceResiduals = ys.map((y, i) => {
       const p = Math.max(1e-10, Math.min(1 - 1e-10, predictions[i])); // Clamp
       if (y === 1) return Math.sqrt(-2 * Math.log(p));
@@ -237,6 +269,12 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
     setLogisticResult({
       intercept: b0,
       slope: b1,
+      interceptSE: se0,
+      slopeSE: se1,
+      interceptZ: z0,
+      slopeZ: z1,
+      interceptPValue: pValue0,
+      slopePValue: pValue1,
       predictions,
       residuals,
       deviance,
@@ -400,12 +438,12 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <Label htmlFor="y-desc">Y Response Binary (0/1)</Label>
+                  <Label htmlFor="y-desc">Y Categorical Response (0/1)</Label>
                   <Input
                     id="y-desc"
                     value={datasetYDescription}
                     onChange={(e) => setDatasetYDescription(e.target.value)}
-                    placeholder="e.g., Success/Failure"
+                    placeholder="e.g.,Exam Success"
                     className="mt-2"
                   />
                 </div>
@@ -425,18 +463,18 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
                     id="one-label"
                     value={oneValueLabel}
                     onChange={(e) => setOneValueLabel(e.target.value)}
-                    placeholder="Pass, OK, Yes, Good, etc."
+                    placeholder="Pass, Success, OK, Yes, Good, etc."
                     className="mt-2"
                   />
                 </div>
               </div>
               <div>
-                <Label htmlFor="x-desc">X Variable Description (Predictor)</Label>
+                <Label htmlFor="x-desc">X Variable Description (Continuous Predictor)</Label>
                 <Input
                   id="x-desc"
                   value={datasetXDescription}
                   onChange={(e) => setDatasetXDescription(e.target.value)}
-                  placeholder="e.g., Temperature"
+                  placeholder="e.g., Temperature, Age, Time"
                   className="mt-2"
                 />
               </div>
@@ -606,10 +644,50 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
                 </div>
 
                 <div className="border-t pt-4">
-                  <p className="text-sm font-semibold mb-4">Logistic Model (Logit): P(Y=1) = 1 / (1 + e^(-β₀ - β₁*X))</p>
-                  <p className="text-sm text-gray-600">
-                    Model: P(Y=1) = 1 / (1 + e^({logisticResult.intercept >= 0 ? '-' : '+'}{Math.abs(logisticResult.intercept).toFixed(4)} {logisticResult.slope >= 0 ? '-' : '+'} {Math.abs(logisticResult.slope).toFixed(4)}*X))
-                  </p>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div>
+                      <p className="text-sm font-semibold mb-4">Logistic Model (Logit): P(Y=1) = 1 / (1 + e^(-β₀ - β₁*X))</p>
+                      <p className="text-sm text-gray-600">
+                        Model: P(Y=1) = 1 / (1 + e^({logisticResult.intercept >= 0 ? '-' : '+'}{Math.abs(logisticResult.intercept).toFixed(4)} {logisticResult.slope >= 0 ? '-' : '+'} {Math.abs(logisticResult.slope).toFixed(4)}*X))
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold mb-2">Model Evaluation</p>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm border-collapse border">
+                          <thead>
+                            <tr className="bg-muted">
+                              <th className="border px-3 py-2 text-left font-semibold"></th>
+                              <th className="border px-3 py-2 text-right font-semibold">Coefficient</th>
+                              <th className="border px-3 py-2 text-right font-semibold">Std. Error</th>
+                              <th className="border px-3 py-2 text-right font-semibold">z-value</th>
+                              <th className="border px-3 py-2 text-right font-semibold">p-value (Wald)</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr>
+                              <td className="border px-3 py-2 font-medium">Intercept (β₀)</td>
+                              <td className="border px-3 py-2 text-right font-mono">{logisticResult.intercept.toFixed(4)}</td>
+                              <td className="border px-3 py-2 text-right font-mono">{logisticResult.interceptSE?.toFixed(4) || '-'}</td>
+                              <td className="border px-3 py-2 text-right font-mono">{logisticResult.interceptZ?.toFixed(4) || '-'}</td>
+                              <td className={`border px-3 py-2 text-right font-mono ${logisticResult.interceptPValue < significanceLevel ? 'text-green-600 font-bold' : ''}`}>
+                                {logisticResult.interceptPValue?.toFixed(4) || '-'}
+                              </td>
+                            </tr>
+                            <tr>
+                              <td className="border px-3 py-2 font-medium">{datasetXDescription} (β₁)</td>
+                              <td className="border px-3 py-2 text-right font-mono">{logisticResult.slope.toFixed(4)}</td>
+                              <td className="border px-3 py-2 text-right font-mono">{logisticResult.slopeSE?.toFixed(4) || '-'}</td>
+                              <td className="border px-3 py-2 text-right font-mono">{logisticResult.slopeZ?.toFixed(4) || '-'}</td>
+                              <td className={`border px-3 py-2 text-right font-mono ${logisticResult.slopePValue < significanceLevel ? 'text-green-600 font-bold' : ''}`}>
+                                {logisticResult.slopePValue?.toFixed(4) || '-'}
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="space-y-4">
@@ -619,31 +697,23 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
                       checked={showScatterPlot}
                       onCheckedChange={(checked) => setShowScatterPlot(!!checked)}
                     />
-                    <Label htmlFor="scatter">Show Data Points</Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      id="curve"
-                      checked={showFittedCurve}
-                      onCheckedChange={(checked) => setShowFittedCurve(!!checked)}
-                    />
-                    <Label htmlFor="curve">Show Fitted Curve</Label>
-                  </div>
+                    <Label htmlFor="scatter">Show Data Points and Logistic Regression Fitted Curve</Label>
+                  </div>                  
                 </div>
 
-                {(showScatterPlot || showFittedCurve) && (
+                {(showScatterPlot) && (
                   <div>
                     <Plot
                       data={[
-                        ...(showScatterPlot ? [{
+                        ...([{
                           x: dataPoints.filter(p => !isNaN(p.x)).map(p => p.x) as any,
                           y: dataPoints.filter(p => !isNaN(p.x)).map(p => p.y) as any,
                           mode: 'markers',
                           type: 'scatter' as any,
                           marker: { color: 'rgba(99, 102, 241, 0.7)', size: 8 },
                           name: 'Data Points'
-                        }] : []),
-                        ...(showFittedCurve ? [{
+                        }]),
+                        ...([{
                           x: Array.from({ length: 100 }, (_, i) => {
                             const validPoints = dataPoints.filter(p => !isNaN(p.x)).map(p => p.x);
                             const xMin = Math.min(...validPoints);
@@ -661,7 +731,7 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
                           type: 'scatter' as any,
                           line: { color: 'rgba(239, 68, 68, 1)', width: 2 },
                           name: 'Fitted Curve'
-                        }] : [])
+                        }])
                       ] as any}
                       layout={{
                         title: { text: '<b>Logistic Regression of ' + datasetYDescription + ' vs ' + datasetXDescription + '</b>', font: { size: 16 } },
@@ -680,7 +750,7 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
                         displaylogo: false,
                         toImageButtonOptions: {
                           format: 'png',
-                          filename: `Logistic Regression of ${datasetYDescription || 'Y Response'} vs ${datasetXDescription || 'X Predictor'}`,
+                          filename: `Logistic Regression of ${datasetYDescription || 'Y CategoricalResponse'} vs ${datasetXDescription || 'X Continuous Predictor'}`,
                           height: 500,
                           width: 800,
                           scale: 1
