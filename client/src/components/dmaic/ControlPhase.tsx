@@ -41,11 +41,36 @@ import {
 } from "recharts";
 import { BarChart3, Save, Plus, Trash2, Calculator, Undo2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import TrainingPlan from '@/components/dmaic/TrainingPlan';
+import WorkInstructions from '@/components/dmaic/WorkInstructions';
+{/*import LessonsLearned from '@/components/dmaic/LessonsLearned';
+import ControlPlan from '@/components/dmaic/ControlPlan';      
+import SPC from '@/components/dmaic/SPC';
+import AuditPlan from '@/components/dmaic/AuditPlan';      
+import TransferToPO from '@/components/dmaic/TransferToPO';
+import FinancialBenefitsValidation from '@/components/dmaic/FinancialBenefitsValidation';*/}
 import ControlGateReviewValidation from '@/components/dmaic/ControlGateReviewValidation';
 
 interface CtqWithType {
   ctq: string;
   ctqType: "Attribute" | "Continuous";
+}
+
+interface Charter {
+  id: number;
+  projectId: number;
+  projectTitle?: string;
+  projectType?: string;
+  projectLeader?: string;
+  sponsor?: string;
+  financialController?: string;
+  projectCoach?: string;
+  analyze_phase_date?: string | null;
+  improve_phase_date?: string | null;
+}
+
+interface CharterResponse {
+  charter: Charter;
 }
 
 export default function ControlPhase() {
@@ -69,6 +94,9 @@ export default function ControlPhase() {
     enabled: !!user?.id && !!projectId,
     refetchOnWindowFocus: false
   });
+
+   // Get project type from charter
+  const projectType = charter?.charter?.projectType || 'Green Belt';
   
   // Set milestone dates when charter data is fetched
   useEffect(() => {
@@ -126,68 +154,6 @@ export default function ControlPhase() {
     { date: "Week 8", value: 39, ucl: 60, lcl: 20, centerLine: 40 },
   ];
 
-  // Training Plan state
-  const [trainingPlan, setTrainingPlan] = useState([
-    {
-      topic: "New Validation Process",
-      audience: "Data Entry Team",
-      trainer: "Quality Manager",
-      date: "2023-07-15",
-      duration: "4 hours",
-      status: "Completed",
-      effectiveness: 4
-    },
-    {
-      topic: "SPC Chart Interpretation",
-      audience: "Process Supervisors",
-      trainer: "Six Sigma Black Belt",
-      date: "2023-07-22",
-      duration: "2 hours",
-      status: "Scheduled",
-      effectiveness: null
-    },
-    {
-      topic: "",
-      audience: "",
-      trainer: "",
-      date: "",
-      duration: "",
-      status: "Not Started",
-      effectiveness: null
-    }
-  ]);
-
-  // Standardization Documents state
-  const [standardDocs, setStandardDocs] = useState([
-    {
-      document: "Order Processing SOP",
-      version: "2.0",
-      date: "2023-07-10",
-      owner: "Operations Manager",
-      location: "Company Intranet",
-      approver: "COO",
-      status: "Active"
-    },
-    {
-      document: "Data Validation Procedure",
-      version: "1.5",
-      date: "2023-07-12",
-      owner: "Quality Assurance Lead",
-      location: "Quality Management System",
-      approver: "Quality Director",
-      status: "Pending Approval"
-    },
-    {
-      document: "",
-      version: "",
-      date: "",
-      owner: "",
-      location: "",
-      approver: "",
-      status: "Draft"
-    }
-  ]);
-
   // Update control plan
   const updateControlPlan = (index: number, field: string, value: string) => {
     const newPlan = [...controlPlan];
@@ -220,89 +186,11 @@ export default function ControlPhase() {
     setControlPlan(newPlan);
   };
 
-  // Update training plan
-  const updateTrainingPlan = (index: number, field: string, value: any) => {
-    const newPlan = [...trainingPlan];
-    newPlan[index] = { ...newPlan[index], [field]: value };
-    setTrainingPlan(newPlan);
-  };
-
-  // Add training plan item
-  const addTrainingPlanItem = () => {
-    if (trainingPlan[trainingPlan.length - 1].topic.trim() !== "") {
-      setTrainingPlan([
-        ...trainingPlan,
-        {
-          topic: "",
-          audience: "",
-          trainer: "",
-          date: "",
-          duration: "",
-          status: "Not Started",
-          effectiveness: null
-        }
-      ]);
-    }
-  };
-
-  // Remove training plan item
-  const removeTrainingPlanItem = (index: number) => {
-    const newPlan = [...trainingPlan];
-    newPlan.splice(index, 1);
-    setTrainingPlan(newPlan);
-  };
-
-  // Update standard document
-  const updateStandardDoc = (index: number, field: string, value: string) => {
-    const newDocs = [...standardDocs];
-    newDocs[index] = { ...newDocs[index], [field]: value };
-    setStandardDocs(newDocs);
-  };
-
-  // Add standard document
-  const addStandardDoc = () => {
-    if (standardDocs[standardDocs.length - 1].document.trim() !== "") {
-      setStandardDocs([
-        ...standardDocs,
-        {
-          document: "",
-          version: "",
-          date: "",
-          owner: "",
-          location: "",
-          approver: "",
-          status: "Draft"
-        }
-      ]);
-    }
-  };
-
-  // Remove standard document
-  const removeStandardDoc = (index: number) => {
-    const newDocs = [...standardDocs];
-    newDocs.splice(index, 1);
-    setStandardDocs(newDocs);
-  };
-
   // Handle save actions
   const handleSaveControlPlan = () => {
     toast({
       title: "Success",
       description: "Control plan has been saved successfully",
-    });
-  };
-
-  const handleSaveTrainingPlan = () => {
-    toast({
-      title: "Success",
-      description: "Training plan has been saved successfully",
-    });
-  };
-
-  const handleSaveDocs = () => {
-    toast({
-      title: "Success",
-      description: "Standardization documents have been saved successfully",
     });
   };
 
@@ -330,6 +218,30 @@ export default function ControlPhase() {
         {/* Space for milestone progress card */}
         <div className="w-1/2"></div>
       </div>
+
+      {/* Training Plan */}
+      <TrainingPlan projectId={projectId} projectType={projectType} />
+
+      {/* Work Instructions */}
+      <WorkInstructions projectId={projectId} projectType={projectType} />
+
+      {/* Lessons Learned */}
+      {/*<LessonsLearned projectId={projectId} projectType={projectType} />*/}
+
+      {/* Control Plan */}
+      {/*<ControlPlan projectId={projectId} projectType={projectType} />*/}
+      
+      {/* Improvement Solution Design */}
+      {/*<SPC projectId={projectId} />*/}
+      
+      {/* Audit Plan */}
+      {/*<AuditPlan projectId={projectId} />*/}
+      
+      {/* Transfer to Process Owner */}
+      {/*<TransferToPO projectId={projectId} />*/}
+
+      {/* Financial Benfits Validation */}
+      {/*<FinancialBenefitsValidation projectId={projectId} />*/}
       
       {/* Control Plan */}
       <Card>
@@ -533,253 +445,7 @@ export default function ControlPhase() {
         </CardContent>
       </Card>
       
-      {/* Training Plan */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Training Plan</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-gray-500 mb-4">
-            Document training requirements to ensure staff can maintain the improved process.
-          </p>
-          
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Training Topic</TableHead>
-                  <TableHead>Target Audience</TableHead>
-                  <TableHead>Trainer</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Duration</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Effectiveness (1-5)</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {trainingPlan.map((item, index) => (
-                  <TableRow key={index}>
-                    <TableCell>
-                      <Input
-                        type="text"
-                        value={item.topic}
-                        onChange={(e) => updateTrainingPlan(index, "topic", e.target.value)}
-                        placeholder={index === trainingPlan.length - 1 ? "Add new training..." : ""}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        type="text"
-                        value={item.audience}
-                        onChange={(e) => updateTrainingPlan(index, "audience", e.target.value)}
-                        placeholder="Who needs training"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        type="text"
-                        value={item.trainer}
-                        onChange={(e) => updateTrainingPlan(index, "trainer", e.target.value)}
-                        placeholder="Who will conduct"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        type="date"
-                        value={item.date}
-                        onChange={(e) => updateTrainingPlan(index, "date", e.target.value)}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        type="text"
-                        value={item.duration}
-                        onChange={(e) => updateTrainingPlan(index, "duration", e.target.value)}
-                        placeholder="Length of training"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Select
-                        value={item.status}
-                        onValueChange={(value) => updateTrainingPlan(index, "status", value)}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Not Started">Not Started</SelectItem>
-                          <SelectItem value="Scheduled">Scheduled</SelectItem>
-                          <SelectItem value="In Progress">In Progress</SelectItem>
-                          <SelectItem value="Completed">Completed</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
-                      <Select
-                        value={item.effectiveness !== null ? item.effectiveness.toString() : ""}
-                        onValueChange={(value) => updateTrainingPlan(index, "effectiveness", parseInt(value))}
-                        disabled={item.status !== "Completed"}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Rate" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="1">1 - Poor</SelectItem>
-                          <SelectItem value="2">2 - Fair</SelectItem>
-                          <SelectItem value="3">3 - Good</SelectItem>
-                          <SelectItem value="4">4 - Very Good</SelectItem>
-                          <SelectItem value="5">5 - Excellent</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
-                      {index === trainingPlan.length - 1 && item.topic ? (
-                        <Button variant="ghost" size="sm" onClick={addTrainingPlanItem}>
-                          <i className="fas fa-plus"></i>
-                        </Button>
-                      ) : index === trainingPlan.length - 1 ? (
-                        <Button variant="ghost" size="sm" disabled className="text-gray-400">
-                          <i className="fas fa-plus"></i>
-                        </Button>
-                      ) : (
-                        <Button variant="ghost" size="sm" onClick={() => removeTrainingPlanItem(index)} className="text-red-500 hover:text-red-700">
-                          <i className="fas fa-trash"></i>
-                        </Button>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-          
-          <div className="mt-4">
-            <Button onClick={handleSaveTrainingPlan}>
-              Save Training Plan
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-      
-      {/* Work Instructions and Standardization Documents */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Work Instructions and Standardization Documents</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-gray-500 mb-4">
-            Track documentation used to standardize the improved process.
-          </p>
-          
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Work Instructions/Document Name</TableHead>
-                  <TableHead>Version</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Document Owner</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Approver</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {standardDocs.map((doc, index) => (
-                  <TableRow key={index}>
-                    <TableCell>
-                      <Input
-                        type="text"
-                        value={doc.document}
-                        onChange={(e) => updateStandardDoc(index, "document", e.target.value)}
-                        placeholder={index === standardDocs.length - 1 ? "Add new document..." : ""}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        type="text"
-                        value={doc.version}
-                        onChange={(e) => updateStandardDoc(index, "version", e.target.value)}
-                        placeholder="Version number"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        type="date"
-                        value={doc.date}
-                        onChange={(e) => updateStandardDoc(index, "date", e.target.value)}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        type="text"
-                        value={doc.owner}
-                        onChange={(e) => updateStandardDoc(index, "owner", e.target.value)}
-                        placeholder="Who maintains it"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        type="text"
-                        value={doc.location}
-                        onChange={(e) => updateStandardDoc(index, "location", e.target.value)}
-                        placeholder="Where it's stored"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        type="text"
-                        value={doc.approver}
-                        onChange={(e) => updateStandardDoc(index, "approver", e.target.value)}
-                        placeholder="Who approves it"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Select
-                        value={doc.status}
-                        onValueChange={(value) => updateStandardDoc(index, "status", value)}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Draft">Draft</SelectItem>
-                          <SelectItem value="Pending Approval">Pending Approval</SelectItem>
-                          <SelectItem value="Active">Active</SelectItem>
-                          <SelectItem value="Obsolete">Obsolete</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
-                      {index === standardDocs.length - 1 && doc.document ? (
-                        <Button variant="ghost" size="sm" onClick={addStandardDoc}>
-                          <i className="fas fa-plus"></i>
-                        </Button>
-                      ) : index === standardDocs.length - 1 ? (
-                        <Button variant="ghost" size="sm" disabled className="text-gray-400">
-                          <i className="fas fa-plus"></i>
-                        </Button>
-                      ) : (
-                        <Button variant="ghost" size="sm" onClick={() => removeStandardDoc(index)} className="text-red-500 hover:text-red-700">
-                          <i className="fas fa-trash"></i>
-                        </Button>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-          
-          <div className="mt-4">
-            <Button onClick={handleSaveDocs}>
-              Save Documentation
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Control Gate Review and Validation */}
       <ControlGateReviewValidation projectId={projectId} />
     </div>
   );
