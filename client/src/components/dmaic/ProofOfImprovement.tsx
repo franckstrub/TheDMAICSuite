@@ -7,12 +7,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, Save, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { BarChart3, Save, X, CheckCircle2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import type { Project, SimpleProofOfImprovement } from "@shared/schema";
 
 // Import wrapper components for proof of improvement
 import BeforeAfterContTwoSampleTest from "./proof-improvement/BeforeAfterContTwoSampleTest";
@@ -37,13 +39,31 @@ export default function ProofOfImprovement({ projectId }: ProofOfImprovementProp
   // State for test preferences (which tests to show for each CTQ) - initialized with defaults
   const [testPreferences, setTestPreferences] = useState<{ [ctqId: number]: { enableTwoProportionTest: boolean; enableChiSquareTest: boolean } }>({});
   
+  // State for simple proof of improvement (White/Yellow Belt)
+  const [simpleProofValues, setSimpleProofValues] = useState<{ [ctqId: number]: string }>({});
+  
   // Track which CTQs have been loaded from database to prevent re-fetching
   const loadedCtqsRef = useRef<Set<number>>(new Set());
+
+  // Load project to get project type
+  const { data: projectData } = useQuery<{ project: Project }>({
+    queryKey: [`/api/projects/${projectId}`],
+    enabled: !!projectId,
+  });
+  
+  const projectType = projectData?.project?.projectType;
+  const isSimplifiedView = projectType === "White Belt" || projectType === "Yellow Belt";
 
   // Load CTQs with types from CTS characteristics
   const { data: ctsData, isLoading: ctsLoading } = useQuery({
     queryKey: [`/api/projects/${projectId}/cts-characteristics`],
     enabled: !!projectId,
+  });
+
+  // Load simple proof of improvement data for White/Yellow Belt projects
+  const { data: simpleProofData } = useQuery<{ proofData: SimpleProofOfImprovement[] }>({
+    queryKey: [`/api/projects/${projectId}/simple-proof-of-improvement`],
+    enabled: !!projectId && isSimplifiedView,
   });
 
   // Get CTQs with types from CTS characteristics
@@ -87,7 +107,7 @@ export default function ProofOfImprovement({ projectId }: ProofOfImprovementProp
 
   // Initialize default preferences for all Attribute CTQs
   useEffect(() => {
-    if (ctqList.length > 0) {
+    if (ctqList.length > 0 && !isSimplifiedView) {
       const newPreferences: { [ctqId: number]: { enableTwoProportionTest: boolean; enableChiSquareTest: boolean } } = {};
       
       ctqList.forEach(ctq => {
@@ -103,11 +123,23 @@ export default function ProofOfImprovement({ projectId }: ProofOfImprovementProp
         setTestPreferences(prev => ({ ...prev, ...newPreferences }));
       }
     }
-  }, [ctqList]);
+  }, [ctqList, isSimplifiedView]);
+
+  // Initialize simple proof values from database
+  useEffect(() => {
+    if (simpleProofData?.proofData && isSimplifiedView) {
+      const values: { [ctqId: number]: string } = {};
+      simpleProofData.proofData.forEach((item) => {
+        values[item.ctqId] = item.newPerformanceValue || "";
+      });
+      setSimpleProofValues(values);
+    }
+  }, [simpleProofData, isSimplifiedView]);
 
   // Load preferences from database for each Attribute CTQ (only once per CTQ)
+  // Skip for White/Yellow Belt projects (simplified view)
   useEffect(() => {
-    if (ctqList.length > 0) {
+    if (ctqList.length > 0 && !isSimplifiedView) {
       ctqList.forEach(async (ctq) => {
         // Only load if it's an Attribute CTQ AND we haven't loaded it yet
         if (ctq.ctqType === "Attribute" && !loadedCtqsRef.current.has(ctq.ctqId)) {
@@ -138,7 +170,7 @@ export default function ProofOfImprovement({ projectId }: ProofOfImprovementProp
         }
       });
     }
-  }, [ctqList, projectId]);
+  }, [ctqList, projectId, isSimplifiedView]);
 
   // Save preferences mutation
   const savePreferencesMutation = useMutation({
@@ -196,6 +228,46 @@ export default function ProofOfImprovement({ projectId }: ProofOfImprovementProp
     savePreferencesMutation.mutate({ ctqId, preferences });
   };
 
+  // Save simple proof of improvement mutation (for White/Yellow Belt)
+  const saveSimpleProofMutation = useMutation({
+    mutationFn: async ({ ctqId, newPerformanceValue }: { ctqId: number; newPerformanceValue: string }) => {
+      const response = await apiRequest(
+        'POST',
+        `/api/projects/${projectId}/ctq/${ctqId}/simple-proof-of-improvement`,
+        { newPerformanceValue }
+      );
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/simple-proof-of-improvement`] });
+      toast({
+        title: "Saved",
+        description: "Performance value saved successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Save Failed",
+        description: "Failed to save performance value. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Handle simple proof value change
+  const handleSimpleProofChange = (ctqId: number, value: string) => {
+    setSimpleProofValues(prev => ({
+      ...prev,
+      [ctqId]: value,
+    }));
+  };
+
+  // Save simple proof value
+  const handleSaveSimpleProof = (ctqId: number) => {
+    const value = simpleProofValues[ctqId] || "";
+    saveSimpleProofMutation.mutate({ ctqId, newPerformanceValue: value });
+  };
+
   if (ctqList.length === 0) {
     return (
       <Card>
@@ -214,6 +286,84 @@ export default function ProofOfImprovement({ projectId }: ProofOfImprovementProp
     );
   }
 
+  // Simplified UI for White/Yellow Belt projects
+  if (isSimplifiedView) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="h-5 w-5" />
+            Proof of Improvement - New Performance Values
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="mb-4 p-3 bg-blue-50 border-l-4 border-blue-500 rounded">
+            <p className="text-sm text-blue-800">
+              Enter the new performance value achieved after implementing improvements for each CTQ (Critical to Quality).
+            </p>
+          </div>
+          
+          <div className="space-y-4">
+            {ctqList.map((ctq) => (
+              <div key={ctq.ctqId} className="p-4 border rounded-lg bg-gray-50">
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center gap-2">
+                    <Label className="font-semibold text-base">{ctq.ctq}</Label>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                      ctq.ctqType === "Continuous" 
+                        ? "bg-blue-100 text-blue-800" 
+                        : "bg-green-100 text-green-800"
+                    }`}>
+                      {ctq.ctqType}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1">
+                      <Label htmlFor={`simple-proof-${ctq.ctqId}`} className="text-sm text-gray-600 mb-1 block">
+                        New Performance Value
+                      </Label>
+                      <Input
+                        id={`simple-proof-${ctq.ctqId}`}
+                        value={simpleProofValues[ctq.ctqId] || ""}
+                        onChange={(e) => handleSimpleProofChange(ctq.ctqId, e.target.value)}
+                        placeholder="Enter the new performance value..."
+                        className="w-full"
+                        data-testid={`input-simple-proof-${ctq.ctqId}`}
+                      />
+                    </div>
+                    <Button
+                      onClick={() => handleSaveSimpleProof(ctq.ctqId)}
+                      disabled={saveSimpleProofMutation.isPending}
+                      size="sm"
+                      className="mt-6"
+                      data-testid={`button-save-simple-proof-${ctq.ctqId}`}
+                    >
+                      {saveSimpleProofMutation.isPending ? (
+                        <Save className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <>
+                          <Save className="h-4 w-4 mr-1" />
+                          Save
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                  {simpleProofData?.proofData?.find(p => p.ctqId === ctq.ctqId)?.newPerformanceValue && (
+                    <div className="flex items-center gap-1 text-sm text-green-600">
+                      <CheckCircle2 className="h-4 w-4" />
+                      Saved value: {simpleProofData.proofData.find(p => p.ctqId === ctq.ctqId)?.newPerformanceValue}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Full UI for Green Belt and Black Belt projects
   return (
     <Card>
       <CardHeader>

@@ -9119,12 +9119,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // GET simple proof of improvement for White/Yellow Belt projects
   app.get(
     "/api/projects/:projectId/simple-proof-of-improvement",
-    authMiddleware,
-    async (req, res) => {
+    isAuthenticated,
+    async (req: Request, res: Response) => {
       try {
-        const userRecord = await getUserRecord(req.headers["x-replit-user-id"] as string);
-        if (!userRecord) {
-          return res.status(401).json({ error: "User not authenticated" });
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res.status(400).json({ message: "User organization not found" });
         }
 
         const projectId = parseInt(req.params.projectId);
@@ -9153,12 +9160,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // POST/PUT simple proof of improvement for White/Yellow Belt projects
   app.post(
     "/api/projects/:projectId/ctq/:ctqId/simple-proof-of-improvement",
-    authMiddleware,
-    async (req, res) => {
+    isAuthenticated,
+    async (req: Request, res: Response) => {
       try {
-        const userRecord = await getUserRecord(req.headers["x-replit-user-id"] as string);
-        if (!userRecord) {
-          return res.status(401).json({ error: "User not authenticated" });
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res.status(400).json({ message: "User organization not found" });
         }
 
         const projectId = parseInt(req.params.projectId);
