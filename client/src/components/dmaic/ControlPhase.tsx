@@ -662,10 +662,10 @@ export default function ControlPhase() {
         </CardContent>
       </Card>
       
-      {/* Standardization Documents */}
+      {/* Work Instructions and Standardization Documents */}
       <Card>
         <CardHeader>
-          <CardTitle>Standardization Documents</CardTitle>
+          <CardTitle>Work Instructions and Standardization Documents</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-gray-500 mb-4">
@@ -676,7 +676,7 @@ export default function ControlPhase() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Document Name</TableHead>
+                  <TableHead>Work Instructions/Document Name</TableHead>
                   <TableHead>Version</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Document Owner</TableHead>
