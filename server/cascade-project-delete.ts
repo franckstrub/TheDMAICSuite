@@ -24,7 +24,23 @@ import {
   processMaps,
   continuousCtqAnalysisConfig,
   oneSampleHypothesisConfig,
-  hypothesisTestingConfig
+  hypothesisTestingConfig,
+  solutions,
+  solutionDesignTracking,
+  solutionProcessMaps,
+  processRaciMatrix,
+  simpleRegressionConfig,
+  anovaTwoWayConfig,
+  multipleRegressionConfig,
+  logisticRegressionConfig,
+  doeFullFactorialConfig,
+  doeFractionalFactorialConfig,
+  implementationPlanTasks,
+  simpleProofOfImprovement,
+  beforeAfterContCTQTwoSampleTest,
+  beforeAfterTwoProportionTest,
+  beforeAfterChiSquareTest,
+  proofOfImprovementPreferences
 } from '@shared/schema';
 
 /**
@@ -208,6 +224,124 @@ export async function permanentlyDeleteProject(projectId: number): Promise<numbe
     results['processMaps'] = processMapsResult.length;
     deletionCount += processMapsResult.length > 0 ? 1 : 0;
     console.log(`Deleted ${processMapsResult.length} process maps`);
+
+    // Delete Solution Design related tables (Transfer Function configs)
+    const simpleRegressionResult = await db.delete(simpleRegressionConfig)
+      .where(eq(simpleRegressionConfig.projectId, projectId))
+      .returning();
+    results['simpleRegressionConfig'] = simpleRegressionResult.length;
+    deletionCount += simpleRegressionResult.length > 0 ? 1 : 0;
+    console.log(`Deleted ${simpleRegressionResult.length} simple regression configs`);
+
+    const anovaTwoWayResult = await db.delete(anovaTwoWayConfig)
+      .where(eq(anovaTwoWayConfig.projectId, projectId))
+      .returning();
+    results['anovaTwoWayConfig'] = anovaTwoWayResult.length;
+    deletionCount += anovaTwoWayResult.length > 0 ? 1 : 0;
+    console.log(`Deleted ${anovaTwoWayResult.length} two-way ANOVA configs`);
+
+    const multipleRegressionResult = await db.delete(multipleRegressionConfig)
+      .where(eq(multipleRegressionConfig.projectId, projectId))
+      .returning();
+    results['multipleRegressionConfig'] = multipleRegressionResult.length;
+    deletionCount += multipleRegressionResult.length > 0 ? 1 : 0;
+    console.log(`Deleted ${multipleRegressionResult.length} multiple regression configs`);
+
+    const logisticRegressionResult = await db.delete(logisticRegressionConfig)
+      .where(eq(logisticRegressionConfig.projectId, projectId))
+      .returning();
+    results['logisticRegressionConfig'] = logisticRegressionResult.length;
+    deletionCount += logisticRegressionResult.length > 0 ? 1 : 0;
+    console.log(`Deleted ${logisticRegressionResult.length} logistic regression configs`);
+
+    const doeFullFactorialResult = await db.delete(doeFullFactorialConfig)
+      .where(eq(doeFullFactorialConfig.projectId, projectId))
+      .returning();
+    results['doeFullFactorialConfig'] = doeFullFactorialResult.length;
+    deletionCount += doeFullFactorialResult.length > 0 ? 1 : 0;
+    console.log(`Deleted ${doeFullFactorialResult.length} DOE Full Factorial configs`);
+
+    const doeFractionalResult = await db.delete(doeFractionalFactorialConfig)
+      .where(eq(doeFractionalFactorialConfig.projectId, projectId))
+      .returning();
+    results['doeFractionalFactorialConfig'] = doeFractionalResult.length;
+    deletionCount += doeFractionalResult.length > 0 ? 1 : 0;
+    console.log(`Deleted ${doeFractionalResult.length} DOE Fractional Factorial configs`);
+
+    // Delete Solution TO-BE process maps and RACI matrices
+    const solutionProcessMapsResult = await db.delete(solutionProcessMaps)
+      .where(eq(solutionProcessMaps.projectId, projectId))
+      .returning();
+    results['solutionProcessMaps'] = solutionProcessMapsResult.length;
+    deletionCount += solutionProcessMapsResult.length > 0 ? 1 : 0;
+    console.log(`Deleted ${solutionProcessMapsResult.length} solution TO-BE process maps`);
+
+    const processRaciResult = await db.delete(processRaciMatrix)
+      .where(eq(processRaciMatrix.projectId, projectId))
+      .returning();
+    results['processRaciMatrix'] = processRaciResult.length;
+    deletionCount += processRaciResult.length > 0 ? 1 : 0;
+    console.log(`Deleted ${processRaciResult.length} solution TO-BE RACI matrices`);
+
+    // Delete Solution Design Tracking records
+    const solutionDesignResult = await db.delete(solutionDesignTracking)
+      .where(eq(solutionDesignTracking.projectId, projectId))
+      .returning();
+    results['solutionDesignTracking'] = solutionDesignResult.length;
+    deletionCount += solutionDesignResult.length > 0 ? 1 : 0;
+    console.log(`Deleted ${solutionDesignResult.length} solution design tracking records`);
+
+    // Delete Solutions
+    const solutionsResult = await db.delete(solutions)
+      .where(eq(solutions.projectId, projectId))
+      .returning();
+    results['solutions'] = solutionsResult.length;
+    deletionCount += solutionsResult.length > 0 ? 1 : 0;
+    console.log(`Deleted ${solutionsResult.length} solutions`);
+
+    // Delete Implementation Plan records
+    const implementationPlanResult = await db.delete(implementationPlanTasks)
+      .where(eq(implementationPlanTasks.projectId, projectId))
+      .returning();
+    results['implementationPlanTasks'] = implementationPlanResult.length;
+    deletionCount += implementationPlanResult.length > 0 ? 1 : 0;
+    console.log(`Deleted ${implementationPlanResult.length} implementation plan records`);
+
+    // Delete Proof of Improvement related tables
+    const beforeAfterContResult = await db.delete(beforeAfterContCTQTwoSampleTest)
+      .where(eq(beforeAfterContCTQTwoSampleTest.projectId, projectId))
+      .returning();
+    results['beforeAfterContCTQTwoSampleTest'] = beforeAfterContResult.length;
+    deletionCount += beforeAfterContResult.length > 0 ? 1 : 0;
+    console.log(`Deleted ${beforeAfterContResult.length} before/after continuous CTQ tests`);
+
+    const beforeAfterTwoProportionResult = await db.delete(beforeAfterTwoProportionTest)
+      .where(eq(beforeAfterTwoProportionTest.projectId, projectId))
+      .returning();
+    results['beforeAfterTwoProportionTest'] = beforeAfterTwoProportionResult.length;
+    deletionCount += beforeAfterTwoProportionResult.length > 0 ? 1 : 0;
+    console.log(`Deleted ${beforeAfterTwoProportionResult.length} before/after two-proportion tests`);
+
+    const beforeAfterChiSquareResult = await db.delete(beforeAfterChiSquareTest)
+      .where(eq(beforeAfterChiSquareTest.projectId, projectId))
+      .returning();
+    results['beforeAfterChiSquareTest'] = beforeAfterChiSquareResult.length;
+    deletionCount += beforeAfterChiSquareResult.length > 0 ? 1 : 0;
+    console.log(`Deleted ${beforeAfterChiSquareResult.length} before/after chi-square tests`);
+
+    const proofPreferencesResult = await db.delete(proofOfImprovementPreferences)
+      .where(eq(proofOfImprovementPreferences.projectId, projectId))
+      .returning();
+    results['proofOfImprovementPreferences'] = proofPreferencesResult.length;
+    deletionCount += proofPreferencesResult.length > 0 ? 1 : 0;
+    console.log(`Deleted ${proofPreferencesResult.length} proof of improvement preferences`);
+
+    const simpleProofResult = await db.delete(simpleProofOfImprovement)
+      .where(eq(simpleProofOfImprovement.projectId, projectId))
+      .returning();
+    results['simpleProofOfImprovement'] = simpleProofResult.length;
+    deletionCount += simpleProofResult.length > 0 ? 1 : 0;
+    console.log(`Deleted ${simpleProofResult.length} simple proof of improvement records`);
 
     // Delete CTS characteristics
     const ctsResult = await db.delete(ctsCharacteristics)
