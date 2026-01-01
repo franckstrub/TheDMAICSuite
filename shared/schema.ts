@@ -2877,3 +2877,34 @@ export const insertLogisticRegressionConfigSchema = createInsertSchema(logisticR
 
 export type InsertLogisticRegressionConfig = z.infer<typeof insertLogisticRegressionConfigSchema>;
 export type LogisticRegressionConfig = typeof logisticRegressionConfig.$inferSelect;
+
+// Simple Proof of Improvement for White/Yellow Belt Projects
+export const simpleProofOfImprovement = pgTable(
+  "simple_proof_of_improvement",
+  {
+    id: serial("id").primaryKey(),
+    organizationId: integer("organization_id")
+      .references(() => organizations.id)
+      .notNull(),
+    projectId: integer("project_id").notNull(),
+    ctqId: integer("ctq_id")
+      .references(() => ctsCharacteristics.id)
+      .notNull(),
+    
+    // New performance value entered by user
+    newPerformanceValue: text("new_performance_value").default(""),
+    
+    lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+  },
+  (table) => ({
+    uniqueProjectCtq: unique().on(table.projectId, table.ctqId),
+  }),
+);
+
+export const insertSimpleProofOfImprovementSchema = createInsertSchema(simpleProofOfImprovement).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export type InsertSimpleProofOfImprovement = z.infer<typeof insertSimpleProofOfImprovementSchema>;
+export type SimpleProofOfImprovement = typeof simpleProofOfImprovement.$inferSelect;
