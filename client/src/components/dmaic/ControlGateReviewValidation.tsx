@@ -92,15 +92,15 @@ const getDefaultcontrolDeliverables = (projectType?: string): Omit<Deliverable, 
  const baseDeliverables: Omit<Deliverable, "id" | "projectId">[] = [
   {
     phase: "control",
-    name: "Training plan in place",
-    description: "Training plan in place and operators trained",
+    name: "Training plan completed",
+    description: "Training plan completed and Operators trained",
     isRequired: "Required",
     isCompleted: false
   },
   {
     phase: "control",
     name: "Work Instructions defined",
-    description: "Work Instructions defined for new process",
+    description: "Work Instructions and Standardization defined for new process",
     isRequired: "Required",
     isCompleted: false
   },
@@ -113,8 +113,8 @@ const getDefaultcontrolDeliverables = (projectType?: string): Omit<Deliverable, 
   },
   {
     phase: "control",
-    name: "Gate Review",
-    description: "Gate review meeting to proceed to control phase",
+    name: "Control gate review",
+    description: "Control gate review completed",
     isRequired: "Required",
     isCompleted: false
   }
@@ -125,36 +125,36 @@ const getDefaultcontrolDeliverables = (projectType?: string): Omit<Deliverable, 
     const greenBeltDeliverables: Omit<Deliverable, "id" | "projectId">[] = [
         {
         phase: "control",
-        name: "Control plan & Monitoring plan",
-        description: "Control plan and Monitoring plan defined",
+        name: "Control plan defined",
+        description: "Control plan defined for main CTQs/Metrics",
         isRequired: "Required",
         isCompleted: false
         },
         {
         phase: "control",
-        name: "RACI defined",
-        description: "RACI defined for new process",
+        name: "SPC implemented",
+        description: "Statistical Process Control (SPC) implemented for main CTQs",
         isRequired: "Required",
         isCompleted: false
         },
         {
         phase: "control",
         name: "Audit plan defined",
-        description: "Audit plan defined and completed",
+        description: "Audit plan defined and first audit completed",
         isRequired: "Required",
         isCompleted: false
         },
         { 
         phase: "control",
         name: "Transfer to process owner",
-        description: "Transfer to process owner completed",
+        description: "Transfer to process owner or responsible completed",
         isRequired: "Required",
         isCompleted: false
         },
         {
         phase: "control",
-        name: "Non-financial & financial benefits updated",
-        description: "Non-financial & financial benefits updated",
+        name: "Financial benefits validated",
+        description: "Financial benefits updated and validated",
         isRequired: "Required",
         isCompleted: false
         },

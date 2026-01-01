@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import type { Solution, SolutionDesignTracking } from "@shared/schema";
+import type { Solution, SolutionDesignTracking, Project } from "@shared/schema";
 import { Loader2, FileText, Download, Trash2, Paperclip, X } from "lucide-react";
 import DrawIoProcessMap from "@/components/dmaic/DrawIoProcessMap";
 import ProcessRaciMatrix from "@/components/dmaic/ProcessRaciMatrix";
@@ -89,8 +89,22 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
     queryKey: [`/api/projects/${projectId}/solution-design-tracking`],
   });
 
+  // Fetch project to get project type
+  const { data: projectData } = useQuery<{ project: Project }>({
+    queryKey: [`/api/projects/${projectId}`],
+  });
+
   const solutions = solutionsData?.solutions || [];
   const tracking = trackingData?.tracking || [];
+  const projectType = projectData?.project?.projectType;
+  
+  // Filter checkboxLabels: hide "Transfer Function & System Setting" for non Green/Black Belt projects
+  const filteredCheckboxLabels = checkboxLabels.filter(({ key }) => {
+    if (key === "transferFunction") {
+      return projectType === "Green Belt" || projectType === "Black Belt";
+    }
+    return true;
+  });
 
   // Set active tab to first solution when solutions load or from localStorage
   useEffect(() => {
@@ -613,7 +627,7 @@ export default function SolutionDesign({ projectId }: SolutionDesignProps) {
                   <div className="space-y-4">
                     <h3 className="font-semibold text-lg">Select Design Tools (select multiple) or confirm that solution is not retained</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {checkboxLabels.map(({ key, label }) => (
+                      {filteredCheckboxLabels.map(({ key, label }) => (
                         <div key={key} className="flex items-center space-x-2">
                           <Checkbox
                             id={`${solution.solutionId}-${key}`}

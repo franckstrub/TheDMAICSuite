@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'wouter';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import React, { useState, useEffect } from "react";
+import { useParams } from "wouter";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAppContext } from "@/store/AppContext";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import {
   Table,
@@ -33,11 +33,31 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { apiRequest } from '@/lib/queryClient';
-import { formatDateByUserSetting } from '@/lib/utils';
-import { CheckCircle, XCircle, Clock, Plus, Trash2, Paperclip, File, Download, ClipboardList, Edit } from 'lucide-react';
-import { Project, DeliverableRequirementType, deliverableRequirementTypes } from '@shared/schema';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { apiRequest } from "@/lib/queryClient";
+import { formatDateByUserSetting } from "@/lib/utils";
+import {
+  CheckCircle,
+  XCircle,
+  Clock,
+  Plus,
+  Trash2,
+  Paperclip,
+  File,
+  Download,
+  ClipboardList,
+  Edit,
+} from "lucide-react";
+import {
+  Project,
+  DeliverableRequirementType,
+  deliverableRequirementTypes,
+} from "@shared/schema";
 
 // Types for our validators and deliverables
 type ValidationStatus = "Pending" | "Approved" | "Rejected";
@@ -86,64 +106,66 @@ interface Deliverable {
 }
 
 // Function to get default deliverables based on project type
-const getDefaultImproveDeliverables = (projectType?: string): Omit<Deliverable, "id" | "projectId">[] => {
+const getDefaultImproveDeliverables = (
+  projectType?: string,
+): Omit<Deliverable, "id" | "projectId">[] => {
   // Base deliverables that apply to all project types
   // Default deliverables for the Improve phase
- const baseDeliverables: Omit<Deliverable, "id" | "projectId">[] = [
-  {
-    phase: "Improve",
-    name: "Solutions defined",
-    description: "Solutions defined addressing critical root causes",
-    isRequired: "Required",
-    isCompleted: false
-  },
-   {
-    phase: "Improve",
-    name: "Improvement action designed",
-    description: "Improvement action designed",
-    isRequired: "Required",
-    isCompleted: false
-  },
-  {
-    phase: "Improve",
-    name: "Implementation plan",
-    description: "Implementation plan defined",
-    isRequired: "Required",
-    isCompleted: false
-  },
-  {
-    phase: "Improve",
-    name: "TO BE process mapped",
-    description: "TO BE process mapped with improvements",
-    isRequired: "Required",
-    isCompleted: false
-  },
-  {
-    phase: "Improve",
-    name: "TO BE process RACI",
-    description: "TO BE process RACI updated",
-    isRequired: "Required",
-    isCompleted: false
-  },
-  {
-    phase: "Improve",
-    name: "Gate Review",
-    description: "Gate review meeting to proceed to Improve phase",
-    isRequired: "Required",
-    isCompleted: false
-  }
- ];
- 
- // Add Green Belt and Black Belt specific deliverables
+  const baseDeliverables: Omit<Deliverable, "id" | "projectId">[] = [
+    {
+      phase: "Improve",
+      name: "Solutions defined",
+      description: "Solutions defined addressing critical root causes",
+      isRequired: "Required",
+      isCompleted: false,
+    },
+    {
+      phase: "Improve",
+      name: "Improvement action designed",
+      description: "Improvement action designed",
+      isRequired: "Required",
+      isCompleted: false,
+    },
+    {
+      phase: "Improve",
+      name: "Implementation plan",
+      description: "Implementation plan defined",
+      isRequired: "Required",
+      isCompleted: false,
+    },
+    {
+      phase: "Improve",
+      name: "TO BE process mapped",
+      description: "TO BE process mapped with improvements",
+      isRequired: "Required",
+      isCompleted: false,
+    },
+    {
+      phase: "Improve",
+      name: "TO BE process RACI",
+      description: "TO BE process RACI defined",
+      isRequired: "Required",
+      isCompleted: false,
+    },
+    {
+      phase: "Improve",
+      name: "Gate Review",
+      description: "Gate review meeting to proceed to Improve phase",
+      isRequired: "Required",
+      isCompleted: false,
+    },
+  ];
+
+  // Add Green Belt and Black Belt specific deliverables
   if (projectType === "Green Belt" || projectType === "Black Belt") {
     const greenBeltDeliverables: Omit<Deliverable, "id" | "projectId">[] = [
-        {
+      {
         phase: "Improve",
         name: "Proof of Improvement",
         description: "Statistical proof of Improvement",
         isRequired: "Required",
-        isCompleted: false
-        },
+        isCompleted: false,
+      },
     ];
 
     // Insert Solution Benefit-Effort matrix at position 2 (index 1)
@@ -156,11 +178,11 @@ const getDefaultImproveDeliverables = (projectType?: string): Omit<Deliverable, 
         name: "Solution Benefit-Effort matrix",
         description: "Solution Benefit-Effort matrix completed",
         isRequired: "Required",
-        isCompleted: false
+        isCompleted: false,
       },
       ...baseDeliverables.slice(1, gateReviewIndex),
       ...greenBeltDeliverables,
-      baseDeliverables[gateReviewIndex]
+      baseDeliverables[gateReviewIndex],
     ];
   }
 
@@ -168,9 +190,11 @@ const getDefaultImproveDeliverables = (projectType?: string): Omit<Deliverable, 
 };
 
 // Function to get default validators for Improve phase based on charter data
-const getDefaultImproveValidators = (charter?: Charter): Omit<Validator, 'id' | 'projectId'>[] => {
-  const defaultValidators: Omit<Validator, 'id' | 'projectId'>[] = [];
-  
+const getDefaultImproveValidators = (
+  charter?: Charter,
+): Omit<Validator, "id" | "projectId">[] => {
+  const defaultValidators: Omit<Validator, "id" | "projectId">[] = [];
+
   if (!charter) {
     return defaultValidators;
   }
@@ -183,7 +207,7 @@ const getDefaultImproveValidators = (charter?: Charter): Omit<Validator, 'id' | 
       validatorRole: "Sponsor",
       status: "Pending",
       comments: null,
-      validatedDate: null
+      validatedDate: null,
     });
   }
 
@@ -194,7 +218,7 @@ const getDefaultImproveValidators = (charter?: Charter): Omit<Validator, 'id' | 
       validatorRole: "Project Leader",
       status: "Pending",
       comments: null,
-      validatedDate: null
+      validatedDate: null,
     });
   }
 
@@ -205,7 +229,7 @@ const getDefaultImproveValidators = (charter?: Charter): Omit<Validator, 'id' | 
       validatorRole: "Financial Controller",
       status: "Pending",
       comments: null,
-      validatedDate: null
+      validatedDate: null,
     });
   }
 
@@ -216,7 +240,7 @@ const getDefaultImproveValidators = (charter?: Charter): Omit<Validator, 'id' | 
       validatorRole: "Coach",
       status: "Pending",
       comments: null,
-      validatedDate: null
+      validatedDate: null,
     });
   }
 
@@ -226,7 +250,9 @@ const getDefaultImproveValidators = (charter?: Charter): Omit<Validator, 'id' | 
 interface ImproveGateReviewValidationProps {
   projectId: number;
 }
-export default function ImproveGateReviewValidation({ projectId }: ImproveGateReviewValidationProps) {
+export default function ImproveGateReviewValidation({
+  projectId,
+}: ImproveGateReviewValidationProps) {
   //const { projectId } = useParams();
   const { project_type_in_project } = useParams();
   const { toast } = useToast();
@@ -237,14 +263,18 @@ export default function ImproveGateReviewValidation({ projectId }: ImproveGateRe
   // States for form handling
   const [deliverables, setDeliverables] = useState<Deliverable[]>([]);
   const [validators, setValidators] = useState<Validator[]>([]);
-  const [newValidatorName, setNewValidatorName] = useState('');
-  const [newValidatorRole, setNewValidatorRole] = useState('');
-  const [newDeliverable, setNewDeliverable] = useState('');
-  const [newDeliverableDescription, setNewDeliverableDescription] = useState('');
-  const [newDeliverableRequired, setNewDeliverableRequired] = useState<boolean>(false); // Default to Optional
+  const [newValidatorName, setNewValidatorName] = useState("");
+  const [newValidatorRole, setNewValidatorRole] = useState("");
+  const [newDeliverable, setNewDeliverable] = useState("");
+  const [newDeliverableDescription, setNewDeliverableDescription] =
+    useState("");
+  const [newDeliverableRequired, setNewDeliverableRequired] =
+    useState<boolean>(false); // Default to Optional
   const [isAddingDeliverable, setIsAddingDeliverable] = useState(false);
   const [isAddingValidator, setIsAddingValidator] = useState(false);
-  const [defaultImproveDeliverables, setDefaultImproveDeliverables] = useState<Omit<Deliverable, "id" | "projectId">[]>([]);
+  const [defaultImproveDeliverables, setDefaultImproveDeliverables] = useState<
+    Omit<Deliverable, "id" | "projectId">[]
+  >([]);
   const [uploadingFor, setUploadingFor] = useState<number | null>(null); // Track deliverable ID for which file is being uploaded
   const [isUploading, setIsUploading] = useState(false); // Track upload state
   const fileInputRef = React.useRef<HTMLInputElement>(null); // Hidden file input reference
@@ -252,13 +282,13 @@ export default function ImproveGateReviewValidation({ projectId }: ImproveGateRe
   // Fetch both project and charter data
   const { data: project } = useQuery<{ project: Project }>({
     queryKey: [`/api/projects/${projectId}`],
-    enabled: !!projectId
+    enabled: !!projectId,
   });
 
   const { data: charter } = useQuery<CharterResponse>({
     queryKey: [`/api/projects/${projectId}/charter`],
     enabled: !!projectId,
-    refetchOnWindowFocus: false
+    refetchOnWindowFocus: false,
   });
 
   // Interfaces for API responses
@@ -271,10 +301,16 @@ export default function ImproveGateReviewValidation({ projectId }: ImproveGateRe
   }
 
   // Fetch existing deliverables
-  const { data: deliverablesData, isLoading: isLoadingDeliverables, error: deliverablesError } = useQuery<DeliverablesResponse>({
+  const {
+    data: deliverablesData,
+    isLoading: isLoadingDeliverables,
+    error: deliverablesError,
+  } = useQuery<DeliverablesResponse>({
     queryKey: [`/api/projects/${projectId}/gate-review-deliverables`, phase],
     queryFn: async () => {
-      const response = await fetch(`/api/projects/${projectId}/gate-review-deliverables?phase=${phase}`);
+      const response = await fetch(
+        `/api/projects/${projectId}/gate-review-deliverables?phase=${phase}`,
+      );
       if (!response.ok) {
         console.error(`API error: ${response.status} ${response.statusText}`);
         // If API fails, return empty array to trigger default initialization
@@ -283,23 +319,31 @@ export default function ImproveGateReviewValidation({ projectId }: ImproveGateRe
       return response.json();
     },
     enabled: !!projectId,
-    retry: false // Don't retry failed requests
+    retry: false, // Don't retry failed requests
   });
 
   // Fetch existing validators
-  const { data: validatorsData, isLoading: isLoadingValidators, error: validatorsError } = useQuery<ValidatorsResponse>({
+  const {
+    data: validatorsData,
+    isLoading: isLoadingValidators,
+    error: validatorsError,
+  } = useQuery<ValidatorsResponse>({
     queryKey: [`/api/projects/${projectId}/gate-review-validators`, phase],
     queryFn: async () => {
-      const response = await fetch(`/api/projects/${projectId}/gate-review-validators?phase=${phase}`);
+      const response = await fetch(
+        `/api/projects/${projectId}/gate-review-validators?phase=${phase}`,
+      );
       if (!response.ok) {
-        console.error(`Validators API error: ${response.status} ${response.statusText}`);
+        console.error(
+          `Validators API error: ${response.status} ${response.statusText}`,
+        );
         // If API fails, return empty array to trigger default initialization
         return { validators: [] };
       }
       return response.json();
     },
     enabled: !!projectId,
-    retry: false // Don't retry failed requests
+    retry: false, // Don't retry failed requests
   });
 
   // Save data to backend
@@ -309,10 +353,18 @@ export default function ImproveGateReviewValidation({ projectId }: ImproveGateRe
       for (const deliverable of deliverables) {
         if (deliverable.id) {
           // Update existing deliverable
-          await apiRequest('PUT', `/api/gate-review-deliverables/${deliverable.id}`, deliverable);
+          await apiRequest(
+            "PUT",
+            `/api/gate-review-deliverables/${deliverable.id}`,
+            deliverable,
+          );
         } else {
           // Create new deliverable (including default ones without IDs)
-          await apiRequest('POST', `/api/projects/${projectId}/gate-review-deliverables`, deliverable);
+          await apiRequest(
+            "POST",
+            `/api/projects/${projectId}/gate-review-deliverables`,
+            deliverable,
+          );
         }
       }
 
@@ -320,16 +372,31 @@ export default function ImproveGateReviewValidation({ projectId }: ImproveGateRe
       for (const validator of validators) {
         if (validator.id) {
           // Update existing validator
-          await apiRequest('PUT', `/api/gate-review-validators/${validator.id}`, validator);
+          await apiRequest(
+            "PUT",
+            `/api/gate-review-validators/${validator.id}`,
+            validator,
+          );
         } else {
           // Create new validator
-          await apiRequest('POST', `/api/projects/${projectId}/gate-review-validators`, validator);
+          await apiRequest(
+            "POST",
+            `/api/projects/${projectId}/gate-review-validators`,
+            validator,
+          );
         }
       }
 
       // Invalidate queries to refresh data
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gate-review-deliverables`, phase] });
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gate-review-validators`, phase] });
+      queryClient.invalidateQueries({
+        queryKey: [
+          `/api/projects/${projectId}/gate-review-deliverables`,
+          phase,
+        ],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [`/api/projects/${projectId}/gate-review-validators`, phase],
+      });
 
       toast({
         title: "Success",
@@ -340,7 +407,7 @@ export default function ImproveGateReviewValidation({ projectId }: ImproveGateRe
       toast({
         title: "Error",
         description: "Failed to save gate review data",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
@@ -364,26 +431,34 @@ export default function ImproveGateReviewValidation({ projectId }: ImproveGateRe
     }
 
     // If API failed or returned empty, initialize with defaults
-    if (!deliverablesData || !deliverablesData.deliverables || deliverablesData.deliverables.length === 0) {
+    if (
+      !deliverablesData ||
+      !deliverablesData.deliverables ||
+      deliverablesData.deliverables.length === 0
+    ) {
       //console.log("No deliverables found, creating defaults based on project type");
       const ImproveDefaults = getDefaultImproveDeliverables(projectType);
       setDefaultImproveDeliverables(ImproveDefaults);
-      
+
       // Create defaults with project ID using the fresh Improve defaults
-      const defaultsWithProjectId = ImproveDefaults.map(deliverable => ({
+      const defaultsWithProjectId = ImproveDefaults.map((deliverable) => ({
         ...deliverable,
-        projectId: parseInt(projectId || "0")
+        projectId: parseInt(projectId || "0"),
       }));
-      
+
       setDeliverables(defaultsWithProjectId);
       //console.log("Created Improve phase deliverables:", defaultsWithProjectId.length);
-      
+
       // Initialize validators too
-      if (!validatorsData || !validatorsData.validators || validatorsData.validators.length === 0) {
+      if (
+        !validatorsData ||
+        !validatorsData.validators ||
+        validatorsData.validators.length === 0
+      ) {
         const defaultValidators = getDefaultImproveValidators(charter?.charter);
-        const validatorsWithProjectId = defaultValidators.map(validator => ({
+        const validatorsWithProjectId = defaultValidators.map((validator) => ({
           ...validator,
-          projectId: parseInt(projectId || "0")
+          projectId: parseInt(projectId || "0"),
         }));
         setValidators(validatorsWithProjectId);
         //console.log("Created default validators:", validatorsWithProjectId.length);
@@ -406,7 +481,7 @@ export default function ImproveGateReviewValidation({ projectId }: ImproveGateRe
     deliverablesData.deliverables.forEach((deliverable: Deliverable) => {
       // Check if this is a default deliverable by name using fresh Improve defaults
       const isDefault = ImproveDefaults.some(
-        def => def.name === deliverable.name
+        (def) => def.name === deliverable.name,
       );
 
       if (isDefault) {
@@ -421,11 +496,11 @@ export default function ImproveGateReviewValidation({ projectId }: ImproveGateRe
     const orderedDeliverables: Deliverable[] = [];
 
     // First add all default deliverables, either from DB or default template
-    ImproveDefaults.forEach(defaultDeliverable => {
+    ImproveDefaults.forEach((defaultDeliverable) => {
       if (existingDefaultNames.has(defaultDeliverable.name)) {
         // Find the existing default deliverable in the database data
         const existingDeliverable = deliverablesData.deliverables.find(
-          d => d.name === defaultDeliverable.name
+          (d) => d.name === defaultDeliverable.name,
         );
 
         if (existingDeliverable) {
@@ -435,7 +510,7 @@ export default function ImproveGateReviewValidation({ projectId }: ImproveGateRe
         // Default deliverable doesn't exist in database, add it from template
         orderedDeliverables.push({
           ...defaultDeliverable,
-          projectId: parseInt(projectId || "0")
+          projectId: parseInt(projectId || "0"),
         });
       }
     });
@@ -458,32 +533,48 @@ export default function ImproveGateReviewValidation({ projectId }: ImproveGateRe
     setDeliverables(orderedDeliverables);
 
     // Also handle validators from existing data
-    if (validatorsData && validatorsData.validators && validatorsData.validators.length > 0) {
+    if (
+      validatorsData &&
+      validatorsData.validators &&
+      validatorsData.validators.length > 0
+    ) {
       //console.log("Setting validators from existing data:", validatorsData.validators);
       setValidators(validatorsData.validators);
-    } else if (!validatorsData || !validatorsData.validators || validatorsData.validators.length === 0) {
+    } else if (
+      !validatorsData ||
+      !validatorsData.validators ||
+      validatorsData.validators.length === 0
+    ) {
       // Initialize with default validators if none exist
       const defaultValidators = getDefaultImproveValidators(charter?.charter);
-      const validatorsWithProjectId = defaultValidators.map(validator => ({
+      const validatorsWithProjectId = defaultValidators.map((validator) => ({
         ...validator,
-        projectId: parseInt(projectId || "0")
+        projectId: parseInt(projectId || "0"),
       }));
       setValidators(validatorsWithProjectId);
       //console.log("Created default Improve validators:", validatorsWithProjectId.length);
     }
-  }, [deliverablesData, validatorsData, projectId, charter, project, isLoadingDeliverables, isLoadingValidators]);
-
-
+  }, [
+    deliverablesData,
+    validatorsData,
+    projectId,
+    charter,
+    project,
+    isLoadingDeliverables,
+    isLoadingValidators,
+  ]);
 
   // Toggle completion status of a deliverable
   const toggleDeliverableCompletion = (index: number) => {
     const updatedDeliverables = [...deliverables];
-    updatedDeliverables[index].isCompleted = !updatedDeliverables[index].isCompleted;
+    updatedDeliverables[index].isCompleted =
+      !updatedDeliverables[index].isCompleted;
     setDeliverables(updatedDeliverables);
   };
 
   // Track when a new deliverable is added for auto-save
-  const [newDeliverableAdded, setNewDeliverableAdded] = useState<boolean>(false);
+  const [newDeliverableAdded, setNewDeliverableAdded] =
+    useState<boolean>(false);
 
   // Auto-save when a new deliverable is added
   useEffect(() => {
@@ -504,12 +595,12 @@ export default function ImproveGateReviewValidation({ projectId }: ImproveGateRe
       name: newDeliverable,
       description: newDeliverableDescription || null,
       isRequired: "Added by User", // All user-added deliverables have this status
-      isCompleted: false
+      isCompleted: false,
     };
 
     setDeliverables([...deliverables, newDeliverableObj]);
-    setNewDeliverable('');
-    setNewDeliverableDescription('');
+    setNewDeliverable("");
+    setNewDeliverableDescription("");
     setNewDeliverableRequired(false); // Keep this for form reset but ignore the value
     setIsAddingDeliverable(false);
 
@@ -526,23 +617,29 @@ export default function ImproveGateReviewValidation({ projectId }: ImproveGateRe
       phase: "Improve",
       validatorName: newValidatorName,
       validatorRole: newValidatorRole,
-      status: "Pending"
+      status: "Pending",
     };
 
     try {
       //console.log("Creating new validator:", newValidatorObj);
 
       // Create the new validator directly via API
-      const response = await apiRequest('POST', `/api/projects/${projectId}/gate-review-validators`, newValidatorObj);
+      const response = await apiRequest(
+        "POST",
+        `/api/projects/${projectId}/gate-review-validators`,
+        newValidatorObj,
+      );
 
       //console.log("New validator created:", response);
 
       // Invalidate query to refresh data
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gate-review-validators`] });
+      queryClient.invalidateQueries({
+        queryKey: [`/api/projects/${projectId}/gate-review-validators`],
+      });
 
       // Clear the form
-      setNewValidatorName('');
-      setNewValidatorRole('');
+      setNewValidatorName("");
+      setNewValidatorRole("");
       setIsAddingValidator(false);
 
       toast({
@@ -554,7 +651,7 @@ export default function ImproveGateReviewValidation({ projectId }: ImproveGateRe
       toast({
         title: "Error",
         description: "Failed to add validator",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
@@ -593,10 +690,16 @@ export default function ImproveGateReviewValidation({ projectId }: ImproveGateRe
       if (validatorToRemove.id) {
         // If the validator has an ID, it exists in the database and must be deleted
         //console.log("Deleting validator from database:", validatorToRemove);
-        await apiRequest('DELETE', `/api/gate-review-validators/${validatorToRemove.id}`, {});
+        await apiRequest(
+          "DELETE",
+          `/api/gate-review-validators/${validatorToRemove.id}`,
+          {},
+        );
 
         // After successful deletion from database, refresh the data
-        queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gate-review-validators`] });
+        queryClient.invalidateQueries({
+          queryKey: [`/api/projects/${projectId}/gate-review-validators`],
+        });
 
         toast({
           title: "Success",
@@ -613,7 +716,7 @@ export default function ImproveGateReviewValidation({ projectId }: ImproveGateRe
       toast({
         title: "Error",
         description: "Failed to remove validator",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
@@ -625,49 +728,56 @@ export default function ImproveGateReviewValidation({ projectId }: ImproveGateRe
   };
 
   // Handle file change from input
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     if (!event.target.files || event.target.files.length === 0) {
       return;
     }
-    
+
     const file = event.target.files[0];
-    
+
     // Check file size (10MB limit)
     if (file.size > 10 * 1024 * 1024) {
       toast({
         title: "Error",
         description: "File size exceeds 10MB limit",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
-    
+
     setIsUploading(true);
-    
+
     try {
       const formData = new FormData();
-      formData.append('file', file);
-      
+      formData.append("file", file);
+
       if (uploadingFor) {
-        formData.append('deliverableId', uploadingFor.toString());
+        formData.append("deliverableId", uploadingFor.toString());
       }
-      
+
       // Upload file
-      const response = await fetch(`/api/projects/${projectId}/deliverable-file-upload`, {
-        method: 'POST',
-        body: formData,
-      });
-      
+      const response = await fetch(
+        `/api/projects/${projectId}/deliverable-file-upload`,
+        {
+          method: "POST",
+          body: formData,
+        },
+      );
+
       if (!response.ok) {
-        throw new Error('File upload failed');
+        throw new Error("File upload failed");
       }
-      
+
       const result = await response.json();
-      
+
       // Update UI after successful upload
       if (result.success && uploadingFor) {
-        queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gate-review-deliverables`] });
-        
+        queryClient.invalidateQueries({
+          queryKey: [`/api/projects/${projectId}/gate-review-deliverables`],
+        });
+
         toast({
           title: "Success",
           description: "File uploaded successfully",
@@ -678,28 +788,28 @@ export default function ImproveGateReviewValidation({ projectId }: ImproveGateRe
       toast({
         title: "Error",
         description: "Failed to upload file",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setIsUploading(false);
       setUploadingFor(null);
       // Reset the file input
       if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+        fileInputRef.current.value = "";
       }
     }
   };
-  
+
   // Download attached file
   const downloadFile = async (deliverableId: number) => {
     try {
-      window.open(`/api/deliverable-file/${deliverableId}`, '_blank');
+      window.open(`/api/deliverable-file/${deliverableId}`, "_blank");
     } catch (error) {
       console.error("Error downloading file:", error);
       toast({
         title: "Error",
         description: "Failed to download file",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
@@ -714,10 +824,16 @@ export default function ImproveGateReviewValidation({ projectId }: ImproveGateRe
       if (deliverableToRemove.id) {
         // If the deliverable has an ID, it exists in the database and must be deleted
         //console.log("Deleting deliverable from database:", deliverableToRemove);
-        await apiRequest('DELETE', `/api/gate-review-deliverables/${deliverableToRemove.id}`, {});
+        await apiRequest(
+          "DELETE",
+          `/api/gate-review-deliverables/${deliverableToRemove.id}`,
+          {},
+        );
 
         // After successful deletion from database, refresh the data
-        queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/gate-review-deliverables`] });
+        queryClient.invalidateQueries({
+          queryKey: [`/api/projects/${projectId}/gate-review-deliverables`],
+        });
 
         toast({
           title: "Success",
@@ -734,7 +850,7 @@ export default function ImproveGateReviewValidation({ projectId }: ImproveGateRe
       toast({
         title: "Error",
         description: "Failed to remove deliverable",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
@@ -767,19 +883,27 @@ export default function ImproveGateReviewValidation({ projectId }: ImproveGateRe
   // const deliverableCompletionPercentage = deliverables.length
   //   ? Math.round((deliverables.filter(d => d.isCompleted).length / deliverables.length) * 100)
   //   : 0;
-// Calculate completion percentage
-  const requiredDeliverables = deliverables.filter(d => d.isRequired !== "Optional");
-  const completedRequiredDeliverables = deliverables.filter(d => d.isCompleted && d.isRequired !== "Optional");
-  const deliverableCompletionPercentage = requiredDeliverables.length > 0
-    ? Math.round((completedRequiredDeliverables.length / requiredDeliverables.length) * 100) 
-    : 0;
+  // Calculate completion percentage
+  const requiredDeliverables = deliverables.filter(
+    (d) => d.isRequired !== "Optional",
+  );
+  const completedRequiredDeliverables = deliverables.filter(
+    (d) => d.isCompleted && d.isRequired !== "Optional",
+  );
+  const deliverableCompletionPercentage =
+    requiredDeliverables.length > 0
+      ? Math.round(
+          (completedRequiredDeliverables.length / requiredDeliverables.length) *
+            100,
+        )
+      : 0;
 
   // Overall validation status
-  const overallApproved = validators.length > 0 && 
-    validators.every(v => v.status === "Approved");
-  const someRejected = validators.some(v => v.status === "Rejected");
-  const allPending = validators.length > 0 && 
-    validators.every(v => v.status === "Pending");
+  const overallApproved =
+    validators.length > 0 && validators.every((v) => v.status === "Approved");
+  const someRejected = validators.some((v) => v.status === "Rejected");
+  const allPending =
+    validators.length > 0 && validators.every((v) => v.status === "Pending");
 
   let overallStatus = "Pending";
   if (overallApproved) overallStatus = "Approved";
@@ -788,14 +912,14 @@ export default function ImproveGateReviewValidation({ projectId }: ImproveGateRe
   return (
     <div className="space-y-6">
       {/* Hidden file input for document uploads */}
-      <input 
+      <input
         type="file"
         ref={fileInputRef}
-        style={{ display: 'none' }}
+        style={{ display: "none" }}
         onChange={handleFileChange}
         accept="*/*" // Allow all file types
       />
-      
+
       <Card>
         <CardHeader>
           <CardTitle className="text-xl flex items-center justify-between">
@@ -803,18 +927,21 @@ export default function ImproveGateReviewValidation({ projectId }: ImproveGateRe
               <ClipboardList className="h-5 w-5" />
               <span>Gate Review and Validation</span>
             </div>
-            <Badge className={`px-3 py-1 ${
-              overallStatus === "Approved" 
-                ? "bg-green-100 text-green-800" 
-                : overallStatus === "Rejected"
-                ? "bg-red-100 text-red-800"
-                : "bg-amber-100 text-amber-800"
-            }`}>
+            <Badge
+              className={`px-3 py-1 ${
+                overallStatus === "Approved"
+                  ? "bg-green-100 text-green-800"
+                  : overallStatus === "Rejected"
+                    ? "bg-red-100 text-red-800"
+                    : "bg-amber-100 text-amber-800"
+              }`}
+            >
               {overallStatus}
             </Badge>
           </CardTitle>
           <CardDescription>
-            Review and validate the Improve phase deliverables before proceeding to the Control phase.
+            Review and validate the Improve phase deliverables before proceeding
+            to the Control phase.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -828,8 +955,8 @@ export default function ImproveGateReviewValidation({ projectId }: ImproveGateRe
                     {deliverableCompletionPercentage}% Completed Review
                   </span>
                   <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-blue-500" 
+                    <div
+                      className="h-full bg-blue-500"
                       style={{ width: `${deliverableCompletionPercentage}%` }}
                     ></div>
                   </div>
@@ -852,20 +979,33 @@ export default function ImproveGateReviewValidation({ projectId }: ImproveGateRe
                       <TableCell>
                         <Checkbox
                           checked={deliverable.isCompleted}
-                          onCheckedChange={() => toggleDeliverableCompletion(index)}
+                          onCheckedChange={() =>
+                            toggleDeliverableCompletion(index)
+                          }
                         />
                       </TableCell>
-                      <TableCell className="font-medium">{deliverable.name}</TableCell>
+                      <TableCell className="font-medium">
+                        {deliverable.name}
+                      </TableCell>
                       <TableCell>{deliverable.description}</TableCell>
                       <TableCell>
                         {deliverable.isRequired === "Required" && (
-                          <Badge variant="outline" className="bg-blue-50">Required</Badge>
+                          <Badge variant="outline" className="bg-blue-50">
+                            Required
+                          </Badge>
                         )}
                         {deliverable.isRequired === "Optional" && (
-                          <Badge variant="outline" className="bg-gray-50">Optional</Badge>
+                          <Badge variant="outline" className="bg-gray-50">
+                            Optional
+                          </Badge>
                         )}
                         {deliverable.isRequired === "Added by User" && (
-                          <Badge variant="outline" className="bg-green-50 text-green-800">Added by User</Badge>
+                          <Badge
+                            variant="outline"
+                            className="bg-green-50 text-green-800"
+                          >
+                            Added by User
+                          </Badge>
                         )}
                       </TableCell>
                       <TableCell className="text-right">
@@ -878,17 +1018,22 @@ export default function ImproveGateReviewValidation({ projectId }: ImproveGateRe
                                 <TooltipProvider>
                                   <Tooltip>
                                     <TooltipTrigger asChild>
-                                      <Button 
-                                        variant="ghost" 
+                                      <Button
+                                        variant="ghost"
                                         size="icon"
                                         className="h-7 w-7 text-gray-500 hover:text-blue-500 p-1"
-                                        onClick={() => downloadFile(deliverable.id!)}
+                                        onClick={() =>
+                                          downloadFile(deliverable.id!)
+                                        }
                                       >
                                         <i className="fas fa-file-download"></i>
                                       </Button>
                                     </TooltipTrigger>
                                     <TooltipContent>
-                                      <p>Download {deliverable.fileOriginalName || 'file'}</p>
+                                      <p>
+                                        Download{" "}
+                                        {deliverable.fileOriginalName || "file"}
+                                      </p>
                                     </TooltipContent>
                                   </Tooltip>
                                 </TooltipProvider>
@@ -898,11 +1043,13 @@ export default function ImproveGateReviewValidation({ projectId }: ImproveGateRe
                                   <TooltipProvider>
                                     <Tooltip>
                                       <TooltipTrigger asChild>
-                                        <Button 
-                                          variant="ghost" 
+                                        <Button
+                                          variant="ghost"
                                           size="icon"
                                           className="h-7 w-7 text-gray-500 hover:text-blue-500 p-1"
-                                          onClick={() => handleFileUpload(deliverable.id!)}
+                                          onClick={() =>
+                                            handleFileUpload(deliverable.id!)
+                                          }
                                           disabled={isUploading}
                                         >
                                           <Paperclip className="h-4 w-4" />
@@ -917,16 +1064,18 @@ export default function ImproveGateReviewValidation({ projectId }: ImproveGateRe
                               )}
                             </>
                           )}
-                          
+
                           {/* Remove button - only enabled for Added by User deliverables */}
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <Button 
-                                  variant="ghost" 
+                                <Button
+                                  variant="ghost"
                                   size="icon"
                                   onClick={() => removeDeliverable(index)}
-                                  disabled={deliverable.isRequired !== "Added by User"}
+                                  disabled={
+                                    deliverable.isRequired !== "Added by User"
+                                  }
                                   className="h-7 w-7 text-gray-500 hover:text-gray-700 p-1"
                                 >
                                   <i className="fas fa-trash"></i>
@@ -934,7 +1083,7 @@ export default function ImproveGateReviewValidation({ projectId }: ImproveGateRe
                               </TooltipTrigger>
                               <TooltipContent>
                                 {deliverable.isRequired !== "Added by User"
-                                  ? "Only user-added deliverables can be removed" 
+                                  ? "Only user-added deliverables can be removed"
                                   : "Remove deliverable"}
                               </TooltipContent>
                             </Tooltip>
@@ -962,24 +1111,31 @@ export default function ImproveGateReviewValidation({ projectId }: ImproveGateRe
                         <Input
                           placeholder="Description"
                           value={newDeliverableDescription}
-                          onChange={(e) => setNewDeliverableDescription(e.target.value)}
+                          onChange={(e) =>
+                            setNewDeliverableDescription(e.target.value)
+                          }
                           className="w-full"
                         />
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="bg-green-50 text-green-800">Added by User</Badge>
+                        <Badge
+                          variant="outline"
+                          className="bg-green-50 text-green-800"
+                        >
+                          Added by User
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
                             size="sm"
                             onClick={() => setIsAddingDeliverable(false)}
                           >
                             Cancel
                           </Button>
-                          <Button 
-                            variant="default" 
+                          <Button
+                            variant="default"
                             size="sm"
                             onClick={addDeliverable}
                           >
@@ -994,14 +1150,15 @@ export default function ImproveGateReviewValidation({ projectId }: ImproveGateRe
 
               {/* Add Deliverable button moved to below the table */}
               <div className="mt-4 mb-4 flex justify-start">
-                <Button 
+                <Button
                   variant={isAddingDeliverable ? "secondary" : "outline"}
                   size="sm"
                   onClick={() => setIsAddingDeliverable(true)}
                   disabled={isAddingDeliverable}
-                  className={isAddingDeliverable 
-                    ? "mt-4 bg-gray-200 text-gray-500 px-4 py-2 rounded cursor-not-allowed" 
-                    : "mt-4 bg-blue-100 text-blue-800 px-4 py-2 rounded hover:bg-blue-200 transition-colors"
+                  className={
+                    isAddingDeliverable
+                      ? "mt-4 bg-gray-200 text-gray-500 px-4 py-2 rounded cursor-not-allowed"
+                      : "mt-4 bg-blue-100 text-blue-800 px-4 py-2 rounded hover:bg-blue-200 transition-colors"
                   }
                 >
                   <Plus className="w-4 h-4 mr-1" />
@@ -1011,7 +1168,7 @@ export default function ImproveGateReviewValidation({ projectId }: ImproveGateRe
             </div>
             {/* Save Button */}
             <div className="flex justify-start mt-6">
-              <Button 
+              <Button
                 onClick={saveData}
                 className="bg-primary text-white hover:bg-primary/90"
               >
@@ -1021,7 +1178,7 @@ export default function ImproveGateReviewValidation({ projectId }: ImproveGateRe
             {/* Validators Section */}
             <div>
               <div className="flex gap-2 items-center mb-3">
-                <Edit className="h-5 w-5" />                
+                <Edit className="h-5 w-5" />
                 <h3 className="text-lg font-medium">Approvers</h3>
               </div>
 
@@ -1031,7 +1188,9 @@ export default function ImproveGateReviewValidation({ projectId }: ImproveGateRe
                     <TableHead>Name</TableHead>
                     <TableHead>Role</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead className="min-w-[120px]">Validation Date</TableHead>
+                    <TableHead className="min-w-[120px]">
+                      Validation Date
+                    </TableHead>
                     <TableHead>Comments</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -1046,13 +1205,15 @@ export default function ImproveGateReviewValidation({ projectId }: ImproveGateRe
                       <TableCell>
                         <Select
                           defaultValue={validator.status}
-                          onValueChange={(value: ValidationStatus) => 
+                          onValueChange={(value: ValidationStatus) =>
                             updateValidatorStatus(index, value)
                           }
                         >
                           <SelectTrigger className="w-[130px]">
                             <div className="flex items-center gap-2">
-                              {getStatusIcon(validator.status as ValidationStatus)}
+                              {getStatusIcon(
+                                validator.status as ValidationStatus,
+                              )}
                               <SelectValue />
                             </div>
                           </SelectTrigger>
@@ -1082,9 +1243,13 @@ export default function ImproveGateReviewValidation({ projectId }: ImproveGateRe
                         </Select>
                       </TableCell>
                       <TableCell>
-                        {validator.status !== "Pending" && validator.validatedDate ? (
+                        {validator.status !== "Pending" &&
+                        validator.validatedDate ? (
                           <span className="text-sm">
-                            {formatDateByUserSetting(validator.validatedDate, userSettings.dateFormat)}
+                            {formatDateByUserSetting(
+                              validator.validatedDate,
+                              userSettings.dateFormat,
+                            )}
                           </span>
                         ) : (
                           <span className="text-gray-400 text-sm">—</span>
@@ -1094,13 +1259,15 @@ export default function ImproveGateReviewValidation({ projectId }: ImproveGateRe
                         <Textarea
                           placeholder="Add comments"
                           value={validator.comments || ""}
-                          onChange={(e) => updateValidatorComments(index, e.target.value)}
+                          onChange={(e) =>
+                            updateValidatorComments(index, e.target.value)
+                          }
                           className="min-h-[80px] resize-none"
                         />
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button 
-                          variant="ghost" 
+                        <Button
+                          variant="ghost"
                           size="icon"
                           onClick={() => removeValidator(index)}
                           className="h-7 w-7 text-gray-500 hover:text-gray-700 p-1"
@@ -1130,9 +1297,7 @@ export default function ImproveGateReviewValidation({ projectId }: ImproveGateRe
                           className="w-full"
                         />
                       </TableCell>
-                      <TableCell>
-                        {getStatusBadge("Pending")}
-                      </TableCell>
+                      <TableCell>{getStatusBadge("Pending")}</TableCell>
                       <TableCell>
                         <span className="text-gray-400 text-sm">—</span>
                       </TableCell>
@@ -1145,15 +1310,15 @@ export default function ImproveGateReviewValidation({ projectId }: ImproveGateRe
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
                             size="sm"
                             onClick={() => setIsAddingValidator(false)}
                           >
                             Cancel
                           </Button>
-                          <Button 
-                            variant="default" 
+                          <Button
+                            variant="default"
                             size="sm"
                             onClick={addValidator}
                           >
@@ -1166,25 +1331,26 @@ export default function ImproveGateReviewValidation({ projectId }: ImproveGateRe
                 </TableBody>
               </Table>
               <div className="flex justify-start items-center mb-3">
-                <Button 
-                  variant={isAddingValidator? "secondary" : "outline"}
+                <Button
+                  variant={isAddingValidator ? "secondary" : "outline"}
                   size="sm"
                   onClick={() => setIsAddingValidator(true)}
                   disabled={isAddingValidator}
-                  className={isAddingValidator 
-                    ? "mt-4 bg-gray-200 text-gray-500 px-4 py-2 rounded cursor-not-allowed" 
-                    : "mt-4 bg-blue-100 text-blue-800 px-4 py-2 rounded hover:bg-blue-200 transition-colors"
+                  className={
+                    isAddingValidator
+                      ? "mt-4 bg-gray-200 text-gray-500 px-4 py-2 rounded cursor-not-allowed"
+                      : "mt-4 bg-blue-100 text-blue-800 px-4 py-2 rounded hover:bg-blue-200 transition-colors"
                   }
                 >
                   <Plus className="w-4 h-4 mr-1" />
                   Add Approver
-                </Button>  
+                </Button>
               </div>
             </div>
 
             {/* Save Button */}
             <div className="flex justify-start mt-6">
-              <Button 
+              <Button
                 onClick={saveData}
                 className="bg-primary text-white hover:bg-primary/90"
               >
