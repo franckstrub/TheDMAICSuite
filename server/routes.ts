@@ -118,6 +118,7 @@ import {
   beforeAfterTwoProportionTest,
   beforeAfterChiSquareTest,
   proofOfImprovementPreferences,
+  simpleProofOfImprovement,
   processRaciMatrix,
   simpleRegressionConfig,
   anovaTwoWayConfig,
@@ -9110,6 +9111,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(201).json(savedPreferences);
       } catch (err) {
         console.error("Proof of improvement preferences save error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // GET simple proof of improvement for White/Yellow Belt projects
+  app.get(
+    "/api/projects/:projectId/simple-proof-of-improvement",
+    authMiddleware,
+    async (req, res) => {
+      try {
+        const userRecord = await getUserRecord(req.headers["x-replit-user-id"] as string);
+        if (!userRecord) {
+          return res.status(401).json({ error: "User not authenticated" });
+        }
+
+        const projectId = parseInt(req.params.projectId);
+        if (isNaN(projectId)) {
+          return res.status(400).json({ error: "Invalid project ID" });
+        }
+
+        const proofData = await db
+          .select()
+          .from(simpleProofOfImprovement)
+          .where(
+            and(
+              eq(simpleProofOfImprovement.projectId, projectId),
+              eq(simpleProofOfImprovement.organizationId, userRecord.organizationId),
+            ),
+          );
+
+        return res.json({ proofData });
+      } catch (err) {
+        console.error("Simple proof of improvement fetch error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // POST/PUT simple proof of improvement for White/Yellow Belt projects
+  app.post(
+    "/api/projects/:projectId/ctq/:ctqId/simple-proof-of-improvement",
+    authMiddleware,
+    async (req, res) => {
+      try {
+        const userRecord = await getUserRecord(req.headers["x-replit-user-id"] as string);
+        if (!userRecord) {
+          return res.status(401).json({ error: "User not authenticated" });
+        }
+
+        const projectId = parseInt(req.params.projectId);
+        const ctqId = parseInt(req.params.ctqId);
+        if (isNaN(projectId) || isNaN(ctqId)) {
+          return res.status(400).json({ error: "Invalid project ID or CTQ ID" });
+        }
+
+        const { newPerformanceValue } = req.body;
+
+        const [existingRecord] = await db
+          .select()
+          .from(simpleProofOfImprovement)
+          .where(
+            and(
+              eq(simpleProofOfImprovement.projectId, projectId),
+              eq(simpleProofOfImprovement.ctqId, ctqId),
+              eq(simpleProofOfImprovement.organizationId, userRecord.organizationId),
+            ),
+          );
+
+        let savedRecord;
+        if (existingRecord) {
+          [savedRecord] = await db
+            .update(simpleProofOfImprovement)
+            .set({ newPerformanceValue, lastUpdated: new Date() })
+            .where(eq(simpleProofOfImprovement.id, existingRecord.id))
+            .returning();
+        } else {
+          [savedRecord] = await db
+            .insert(simpleProofOfImprovement)
+            .values({
+              projectId,
+              ctqId,
+              organizationId: userRecord.organizationId,
+              newPerformanceValue,
+            })
+            .returning();
+        }
+
+        return res.status(201).json(savedRecord);
+      } catch (err) {
+        console.error("Simple proof of improvement save error:", err);
         return handleErrors(err, res);
       }
     },
