@@ -224,7 +224,7 @@ export default function WorkInstructions({ projectId }: WorkInstructionsProps) {
         }
       }
       
-      if (saveCount > 0) {
+      if (saveCount >= 0) {
         toast({
           title: "Success",
           description: `Work instructions have been saved (${saveCount} item${saveCount > 1 ? 's' : ''} updated)`,
