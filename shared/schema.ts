@@ -2989,3 +2989,32 @@ export const insertLessonLearnedSchema = createInsertSchema(lessonsLearned).omit
 
 export type InsertLessonLearned = z.infer<typeof insertLessonLearnedSchema>;
 export type LessonLearned = typeof lessonsLearned.$inferSelect;
+
+// Control Plan Items for Control Phase
+export const controlPlanItems = pgTable("control_plan_items", {
+  id: serial("id").primaryKey(),
+  organizationId: integer("organization_id")
+    .references(() => organizations.id)
+    .notNull(),
+  projectId: integer("project_id").notNull(),
+  
+  process: text("process").default(""),
+  metric: text("metric").default(""),
+  specification: text("specification").default(""),
+  measurement: text("measurement").default(""),
+  frequency: text("frequency").default(""),
+  responsible: text("responsible").default(""),
+  reaction: text("reaction").default(""),
+  
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertControlPlanItemSchema = createInsertSchema(controlPlanItems).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertControlPlanItem = z.infer<typeof insertControlPlanItemSchema>;
+export type ControlPlanItem = typeof controlPlanItems.$inferSelect;

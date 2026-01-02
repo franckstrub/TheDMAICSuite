@@ -133,6 +133,8 @@ import {
   insertWorkInstructionDocumentSchema,
   lessonsLearned,
   insertLessonLearnedSchema,
+  controlPlanItems,
+  insertControlPlanItemSchema,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, asc, desc, ne, and, or, ilike, sql, inArray } from "drizzle-orm";
@@ -9804,6 +9806,204 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json({ success: true, deleted: deletedLesson });
       } catch (err) {
         console.error("Lesson learned delete error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // ========== Control Plan Items (Control Phase) ==========
+  
+  // GET all control plan items for a project
+  app.get(
+    "/api/projects/:projectId/control-plan-items",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res.status(400).json({ message: "User organization not found" });
+        }
+
+        const projectId = parseInt(req.params.projectId);
+        if (isNaN(projectId)) {
+          return res.status(400).json({ error: "Invalid project ID" });
+        }
+
+        const items = await db
+          .select()
+          .from(controlPlanItems)
+          .where(
+            and(
+              eq(controlPlanItems.projectId, projectId),
+              eq(controlPlanItems.organizationId, userRecord.organizationId),
+            ),
+          )
+          .orderBy(asc(controlPlanItems.id));
+
+        return res.json({ items });
+      } catch (err) {
+        console.error("Control plan items fetch error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // POST create a new control plan item
+  app.post(
+    "/api/projects/:projectId/control-plan-items",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res.status(400).json({ message: "User organization not found" });
+        }
+
+        const projectId = parseInt(req.params.projectId);
+        if (isNaN(projectId)) {
+          return res.status(400).json({ error: "Invalid project ID" });
+        }
+
+        const { process, metric, specification, measurement, frequency, responsible, reaction } = req.body;
+
+        const [newItem] = await db
+          .insert(controlPlanItems)
+          .values({
+            projectId,
+            organizationId: userRecord.organizationId,
+            process: process || "",
+            metric: metric || "",
+            specification: specification || "",
+            measurement: measurement || "",
+            frequency: frequency || "",
+            responsible: responsible || "",
+            reaction: reaction || "",
+          })
+          .returning();
+
+        return res.status(201).json(newItem);
+      } catch (err) {
+        console.error("Control plan item create error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // PUT update a control plan item
+  app.put(
+    "/api/projects/:projectId/control-plan-items/:itemId",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res.status(400).json({ message: "User organization not found" });
+        }
+
+        const projectId = parseInt(req.params.projectId);
+        const itemId = parseInt(req.params.itemId);
+        if (isNaN(projectId) || isNaN(itemId)) {
+          return res.status(400).json({ error: "Invalid project ID or item ID" });
+        }
+
+        const { process, metric, specification, measurement, frequency, responsible, reaction } = req.body;
+
+        const [updatedItem] = await db
+          .update(controlPlanItems)
+          .set({
+            process,
+            metric,
+            specification,
+            measurement,
+            frequency,
+            responsible,
+            reaction,
+            updatedAt: new Date(),
+          })
+          .where(
+            and(
+              eq(controlPlanItems.id, itemId),
+              eq(controlPlanItems.projectId, projectId),
+              eq(controlPlanItems.organizationId, userRecord.organizationId),
+            ),
+          )
+          .returning();
+
+        if (!updatedItem) {
+          return res.status(404).json({ error: "Control plan item not found" });
+        }
+
+        return res.json(updatedItem);
+      } catch (err) {
+        console.error("Control plan item update error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // DELETE a control plan item
+  app.delete(
+    "/api/projects/:projectId/control-plan-items/:itemId",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res.status(400).json({ message: "User organization not found" });
+        }
+
+        const projectId = parseInt(req.params.projectId);
+        const itemId = parseInt(req.params.itemId);
+        if (isNaN(projectId) || isNaN(itemId)) {
+          return res.status(400).json({ error: "Invalid project ID or item ID" });
+        }
+
+        const [deletedItem] = await db
+          .delete(controlPlanItems)
+          .where(
+            and(
+              eq(controlPlanItems.id, itemId),
+              eq(controlPlanItems.projectId, projectId),
+              eq(controlPlanItems.organizationId, userRecord.organizationId),
+            ),
+          )
+          .returning();
+
+        if (!deletedItem) {
+          return res.status(404).json({ error: "Control plan item not found" });
+        }
+
+        return res.json({ success: true, deleted: deletedItem });
+      } catch (err) {
+        console.error("Control plan item delete error:", err);
         return handleErrors(err, res);
       }
     },

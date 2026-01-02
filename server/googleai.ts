@@ -35,7 +35,7 @@ export async function generateMitigationPlan(
     
     // Create a generative model instance - using Gemini Flash
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-2.5-flash-lite",
+      model: "gemini-2.5-pro",
       safetySettings: [
         {
           category: HarmCategory.HARM_CATEGORY_HARASSMENT,

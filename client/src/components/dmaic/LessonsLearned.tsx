@@ -180,7 +180,7 @@ export default function LessonsLearned({ projectId }: LessonsLearnedProps) {
         }
       }
       
-      if (saveCount > 0) {
+      if (saveCount >= 0) {
         toast({
           title: "Success",
           description: `Lessons learned have been saved (${saveCount} item${saveCount > 1 ? 's' : ''} updated)`,
