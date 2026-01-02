@@ -3075,3 +3075,29 @@ export const insertTransferToPOItemSchema = createInsertSchema(transferToPOItems
 
 export type InsertTransferToPOItem = z.infer<typeof insertTransferToPOItemSchema>;
 export type TransferToPOItem = typeof transferToPOItems.$inferSelect;
+
+// Financial Benefits Validation Items for Control Phase
+export const financialBenefitsItems = pgTable("financial_benefits_items", {
+  id: serial("id").primaryKey(),
+  organizationId: integer("organization_id")
+    .references(() => organizations.id)
+    .notNull(),
+  projectId: integer("project_id").notNull(),
+  
+  typeofBenefits: text("type_of_benefits").default(""),
+  benefits: text("benefits").default(""),
+  comments: text("comments").default(""),
+  validation: text("validation").default("No"),
+  
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertFinancialBenefitsItemSchema = createInsertSchema(financialBenefitsItems).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertFinancialBenefitsItem = z.infer<typeof insertFinancialBenefitsItemSchema>;
+export type FinancialBenefitsItem = typeof financialBenefitsItems.$inferSelect;
