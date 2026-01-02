@@ -26,154 +26,105 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Save, Loader2 } from "lucide-react";
-import type { FinancialBenefitsItem } from "@shared/schema";
+import type { FinancialBenefitsValidation as FinancialBenefitsValidationType } from "@shared/schema";
 
 interface FinancialBenefitsValidationProps {
   projectId: number;
   projectType: string;
 }
 
-const DEFAULT_BENEFIT_TYPES = [
-  "Quality Costs Savings",
-  "FTE Benefits",
-  "Working Capital Savings",
-  "Financial Savings",
-];
-
-interface LocalFinancialBenefitsItem {
-  id?: number;
-  typeofBenefits: string;
-  benefits: string;
-  comments: string;
-  validation: string;
-  isNew?: boolean;
-  isDirty?: boolean;
+interface LocalFormData {
+  qualityCostsSavings: string;
+  qualityCostsSavingsComments: string;
+  qualityCostsSavingsValidation: string;
+  fteBenefits: string;
+  fteBenefitsComments: string;
+  fteBenefitsValidation: string;
+  workingCapitalSavings: string;
+  workingCapitalSavingsComments: string;
+  workingCapitalSavingsValidation: string;
+  financialSavings: string;
+  financialSavingsComments: string;
+  financialSavingsValidation: string;
 }
+
+const defaultFormData: LocalFormData = {
+  qualityCostsSavings: "",
+  qualityCostsSavingsComments: "",
+  qualityCostsSavingsValidation: "No",
+  fteBenefits: "",
+  fteBenefitsComments: "",
+  fteBenefitsValidation: "No",
+  workingCapitalSavings: "",
+  workingCapitalSavingsComments: "",
+  workingCapitalSavingsValidation: "No",
+  financialSavings: "",
+  financialSavingsComments: "",
+  financialSavingsValidation: "No",
+};
 
 export default function FinancialBenefitsValidation({ projectId, projectType }: FinancialBenefitsValidationProps) {
   const { toast } = useToast();
   
-  const [localItems, setLocalItems] = useState<LocalFinancialBenefitsItem[]>([]);
+  const [formData, setFormData] = useState<LocalFormData>(defaultFormData);
+  const [isDirty, setIsDirty] = useState(false);
   
-  const { data: itemsData, isLoading } = useQuery<{ items: FinancialBenefitsItem[] }>({
-    queryKey: [`/api/projects/${projectId}/financial-benefits-items`],
+  const { data: validationData, isLoading } = useQuery<{ validation: FinancialBenefitsValidationType | null }>({
+    queryKey: [`/api/projects/${projectId}/financial-benefits-validation`],
     enabled: projectType === 'Black Belt' || projectType === 'Green Belt',
   });
 
   useEffect(() => {
-    if (itemsData?.items) {
-      if (itemsData.items.length > 0) {
-        const items: LocalFinancialBenefitsItem[] = itemsData.items.map(item => ({
-          id: item.id,
-          typeofBenefits: item.typeofBenefits || "",
-          benefits: item.benefits || "",
-          comments: item.comments || "",
-          validation: item.validation || "No",
-          isNew: false,
-          isDirty: false,
-        }));
-        setLocalItems(items);
-      } else {
-        const defaultItems: LocalFinancialBenefitsItem[] = DEFAULT_BENEFIT_TYPES.map(type => ({
-          typeofBenefits: type,
-          benefits: "",
-          comments: "",
-          validation: "No",
-          isNew: true,
-          isDirty: false,
-        }));
-        setLocalItems(defaultItems);
-      }
-    } else if (!isLoading && (projectType === 'Black Belt' || projectType === 'Green Belt')) {
-      const defaultItems: LocalFinancialBenefitsItem[] = DEFAULT_BENEFIT_TYPES.map(type => ({
-        typeofBenefits: type,
-        benefits: "",
-        comments: "",
-        validation: "No",
-        isNew: true,
-        isDirty: false,
-      }));
-      setLocalItems(defaultItems);
+    if (validationData?.validation) {
+      const v = validationData.validation;
+      setFormData({
+        qualityCostsSavings: v.qualityCostsSavings || "",
+        qualityCostsSavingsComments: v.qualityCostsSavingsComments || "",
+        qualityCostsSavingsValidation: v.qualityCostsSavingsValidation || "No",
+        fteBenefits: v.fteBenefits || "",
+        fteBenefitsComments: v.fteBenefitsComments || "",
+        fteBenefitsValidation: v.fteBenefitsValidation || "No",
+        workingCapitalSavings: v.workingCapitalSavings || "",
+        workingCapitalSavingsComments: v.workingCapitalSavingsComments || "",
+        workingCapitalSavingsValidation: v.workingCapitalSavingsValidation || "No",
+        financialSavings: v.financialSavings || "",
+        financialSavingsComments: v.financialSavingsComments || "",
+        financialSavingsValidation: v.financialSavingsValidation || "No",
+      });
+      setIsDirty(false);
     }
-  }, [itemsData, isLoading, projectType]);
+  }, [validationData]);
 
-  const createMutation = useMutation({
-    mutationFn: async (item: LocalFinancialBenefitsItem) => {
-      const response = await apiRequest('POST', `/api/projects/${projectId}/financial-benefits-items`, {
-        typeofBenefits: item.typeofBenefits,
-        benefits: item.benefits,
-        comments: item.comments,
-        validation: item.validation,
-      });
+  const saveMutation = useMutation({
+    mutationFn: async (data: LocalFormData) => {
+      const response = await apiRequest('POST', `/api/projects/${projectId}/financial-benefits-validation`, data);
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/financial-benefits-items`] });
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: async ({ id, item }: { id: number; item: LocalFinancialBenefitsItem }) => {
-      const response = await apiRequest('PUT', `/api/projects/${projectId}/financial-benefits-items/${id}`, {
-        typeofBenefits: item.typeofBenefits,
-        benefits: item.benefits,
-        comments: item.comments,
-        validation: item.validation,
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/financial-benefits-validation`] });
+      setIsDirty(false);
+      toast({
+        title: "Success",
+        description: "Financial benefits validation has been saved",
       });
-      return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/financial-benefits-items`] });
-    },
-  });
-
-  const updateLocalItem = (index: number, field: string, value: string) => {
-    const newItems = [...localItems];
-    newItems[index] = { 
-      ...newItems[index], 
-      [field]: value,
-      isDirty: true,
-    };
-    setLocalItems(newItems);
-  };
-
-  const handleSaveAll = async () => {
-    try {
-      let saveCount = 0;
-      
-      for (let i = 0; i < localItems.length; i++) {
-        const item = localItems[i];
-        
-        if (item.isNew) {
-          await createMutation.mutateAsync(item);
-          saveCount++;
-        } else if (item.id && item.isDirty) {
-          await updateMutation.mutateAsync({ id: item.id, item });
-          saveCount++;
-        }
-      }
-      
-      if (saveCount > 0) {
-        toast({
-          title: "Success",
-          description: `Financial benefits validation has been saved (${saveCount} item${saveCount > 1 ? 's' : ''} updated)`,
-        });
-      } else {
-        toast({
-          title: "No Changes",
-          description: "No changes to save",
-        });
-      }
-    } catch (error) {
+    onError: () => {
       toast({
         title: "Error",
         description: "Failed to save financial benefits",
         variant: "destructive",
       });
-    }
+    },
+  });
+
+  const updateField = (field: keyof LocalFormData, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    setIsDirty(true);
   };
 
-  const isSaving = createMutation.isPending || updateMutation.isPending;
+  const handleSave = () => {
+    saveMutation.mutate(formData);
+  };
 
   if (projectType !== 'Black Belt' && projectType !== 'Green Belt') {
     return null;
@@ -195,6 +146,33 @@ export default function FinancialBenefitsValidation({ projectId, projectType }: 
     );
   }
 
+  const benefitRows = [
+    {
+      label: "Quality Costs Savings",
+      benefitsField: "qualityCostsSavings" as keyof LocalFormData,
+      commentsField: "qualityCostsSavingsComments" as keyof LocalFormData,
+      validationField: "qualityCostsSavingsValidation" as keyof LocalFormData,
+    },
+    {
+      label: "FTE Benefits",
+      benefitsField: "fteBenefits" as keyof LocalFormData,
+      commentsField: "fteBenefitsComments" as keyof LocalFormData,
+      validationField: "fteBenefitsValidation" as keyof LocalFormData,
+    },
+    {
+      label: "Working Capital Savings",
+      benefitsField: "workingCapitalSavings" as keyof LocalFormData,
+      commentsField: "workingCapitalSavingsComments" as keyof LocalFormData,
+      validationField: "workingCapitalSavingsValidation" as keyof LocalFormData,
+    },
+    {
+      label: "Financial Savings",
+      benefitsField: "financialSavings" as keyof LocalFormData,
+      commentsField: "financialSavingsComments" as keyof LocalFormData,
+      validationField: "financialSavingsValidation" as keyof LocalFormData,
+    },
+  ];
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -215,16 +193,16 @@ export default function FinancialBenefitsValidation({ projectId, projectType }: 
               </TableRow>
             </TableHeader>
             <TableBody>
-              {localItems.map((item, index) => (
-                <TableRow key={item.id || `new-${index}`}>
-                  <TableCell>
-                    {item.typeofBenefits}
+              {benefitRows.map((row, index) => (
+                <TableRow key={row.label}>
+                  <TableCell className="font-medium">
+                    {row.label}
                   </TableCell>
                   <TableCell>
                     <Input
                       type="text"
-                      value={item.benefits}
-                      onChange={(e) => updateLocalItem(index, "benefits", e.target.value)}
+                      value={formData[row.benefitsField]}
+                      onChange={(e) => updateField(row.benefitsField, e.target.value)}
                       placeholder="Enter benefits per year. Ex. K$100, 2 FTE etc..."
                       data-testid={`input-financial-benefits-${index}`}
                     />
@@ -232,19 +210,19 @@ export default function FinancialBenefitsValidation({ projectId, projectType }: 
                   <TableCell>
                     <Input
                       type="text"
-                      value={item.comments}
-                      onChange={(e) => updateLocalItem(index, "comments", e.target.value)}
+                      value={formData[row.commentsField]}
+                      onChange={(e) => updateField(row.commentsField, e.target.value)}
                       placeholder="Enter your comments and assumptions"
                       data-testid={`input-financial-comments-${index}`}
                     />
                   </TableCell>
                   <TableCell>
                     <Select
-                      value={item.validation}
-                      onValueChange={(value) => updateLocalItem(index, "validation", value)}
+                      value={formData[row.validationField]}
+                      onValueChange={(value) => updateField(row.validationField, value)}
                     >
                       <SelectTrigger className="w-full" data-testid={`select-financial-validation-${index}`}>
-                        <SelectValue placeholder="Select validation by Finance Controller status" />
+                        <SelectValue placeholder="Select validation status" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Yes">Yes</SelectItem>
@@ -260,11 +238,11 @@ export default function FinancialBenefitsValidation({ projectId, projectType }: 
         
         <div className="mt-4">
           <Button 
-            onClick={handleSaveAll}
-            disabled={isSaving}
+            onClick={handleSave}
+            disabled={saveMutation.isPending}
             data-testid="button-save-financial-benefits"
           >
-            {isSaving ? (
+            {saveMutation.isPending ? (
               <>
                 <Loader2 className="h-4 w-4 mr-1 animate-spin" />
                 Saving...
