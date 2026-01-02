@@ -137,6 +137,8 @@ import {
   insertControlPlanItemSchema,
   auditPlanItems,
   insertAuditPlanItemSchema,
+  transferToPOItems,
+  insertTransferToPOItemSchema,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, asc, desc, ne, and, or, ilike, sql, inArray } from "drizzle-orm";
@@ -10208,6 +10210,198 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json({ success: true, deleted: deletedItem });
       } catch (err) {
         console.error("Audit plan item delete error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // ========== Transfer to Process Owner Items (Control Phase) ==========
+  
+  // GET all transfer to PO items for a project
+  app.get(
+    "/api/projects/:projectId/transfer-to-po-items",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res.status(400).json({ message: "User organization not found" });
+        }
+
+        const projectId = parseInt(req.params.projectId);
+        if (isNaN(projectId)) {
+          return res.status(400).json({ error: "Invalid project ID" });
+        }
+
+        const items = await db
+          .select()
+          .from(transferToPOItems)
+          .where(
+            and(
+              eq(transferToPOItems.projectId, projectId),
+              eq(transferToPOItems.organizationId, userRecord.organizationId),
+            ),
+          )
+          .orderBy(asc(transferToPOItems.id));
+
+        return res.json({ items });
+      } catch (err) {
+        console.error("Transfer to PO items fetch error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // POST create a new transfer to PO item
+  app.post(
+    "/api/projects/:projectId/transfer-to-po-items",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res.status(400).json({ message: "User organization not found" });
+        }
+
+        const projectId = parseInt(req.params.projectId);
+        if (isNaN(projectId)) {
+          return res.status(400).json({ error: "Invalid project ID" });
+        }
+
+        const { element, owner, date, status } = req.body;
+
+        const [newItem] = await db
+          .insert(transferToPOItems)
+          .values({
+            projectId,
+            organizationId: userRecord.organizationId,
+            element: element || "",
+            owner: owner || "",
+            date: date || "",
+            status: status || "Completed",
+          })
+          .returning();
+
+        return res.status(201).json(newItem);
+      } catch (err) {
+        console.error("Transfer to PO item create error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // PUT update a transfer to PO item
+  app.put(
+    "/api/projects/:projectId/transfer-to-po-items/:itemId",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res.status(400).json({ message: "User organization not found" });
+        }
+
+        const projectId = parseInt(req.params.projectId);
+        const itemId = parseInt(req.params.itemId);
+        if (isNaN(projectId) || isNaN(itemId)) {
+          return res.status(400).json({ error: "Invalid project ID or item ID" });
+        }
+
+        const { element, owner, date, status } = req.body;
+
+        const [updatedItem] = await db
+          .update(transferToPOItems)
+          .set({
+            element,
+            owner,
+            date,
+            status,
+            updatedAt: new Date(),
+          })
+          .where(
+            and(
+              eq(transferToPOItems.id, itemId),
+              eq(transferToPOItems.projectId, projectId),
+              eq(transferToPOItems.organizationId, userRecord.organizationId),
+            ),
+          )
+          .returning();
+
+        if (!updatedItem) {
+          return res.status(404).json({ error: "Transfer to PO item not found" });
+        }
+
+        return res.json(updatedItem);
+      } catch (err) {
+        console.error("Transfer to PO item update error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // DELETE a transfer to PO item
+  app.delete(
+    "/api/projects/:projectId/transfer-to-po-items/:itemId",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res.status(400).json({ message: "User organization not found" });
+        }
+
+        const projectId = parseInt(req.params.projectId);
+        const itemId = parseInt(req.params.itemId);
+        if (isNaN(projectId) || isNaN(itemId)) {
+          return res.status(400).json({ error: "Invalid project ID or item ID" });
+        }
+
+        const [deletedItem] = await db
+          .delete(transferToPOItems)
+          .where(
+            and(
+              eq(transferToPOItems.id, itemId),
+              eq(transferToPOItems.projectId, projectId),
+              eq(transferToPOItems.organizationId, userRecord.organizationId),
+            ),
+          )
+          .returning();
+
+        if (!deletedItem) {
+          return res.status(404).json({ error: "Transfer to PO item not found" });
+        }
+
+        return res.json({ success: true, deleted: deletedItem });
+      } catch (err) {
+        console.error("Transfer to PO item delete error:", err);
         return handleErrors(err, res);
       }
     },
