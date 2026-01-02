@@ -131,6 +131,8 @@ import {
   insertTrainingPlanElementSchema,
   workInstructionDocuments,
   insertWorkInstructionDocumentSchema,
+  lessonsLearned,
+  insertLessonLearnedSchema,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, asc, desc, ne, and, or, ilike, sql, inArray } from "drizzle-orm";
@@ -9614,6 +9616,194 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json({ success: true, deleted: deletedDocument });
       } catch (err) {
         console.error("Work instruction delete error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // ========== Lessons Learned (Control Phase) ==========
+  
+  // GET all lessons learned for a project
+  app.get(
+    "/api/projects/:projectId/lessons-learned",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res.status(400).json({ message: "User organization not found" });
+        }
+
+        const projectId = parseInt(req.params.projectId);
+        if (isNaN(projectId)) {
+          return res.status(400).json({ error: "Invalid project ID" });
+        }
+
+        const lessons = await db
+          .select()
+          .from(lessonsLearned)
+          .where(
+            and(
+              eq(lessonsLearned.projectId, projectId),
+              eq(lessonsLearned.organizationId, userRecord.organizationId),
+            ),
+          )
+          .orderBy(asc(lessonsLearned.id));
+
+        return res.json({ lessons });
+      } catch (err) {
+        console.error("Lessons learned fetch error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // POST create a new lesson learned
+  app.post(
+    "/api/projects/:projectId/lessons-learned",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res.status(400).json({ message: "User organization not found" });
+        }
+
+        const projectId = parseInt(req.params.projectId);
+        if (isNaN(projectId)) {
+          return res.status(400).json({ error: "Invalid project ID" });
+        }
+
+        const { lesson, comments } = req.body;
+
+        const [newLesson] = await db
+          .insert(lessonsLearned)
+          .values({
+            projectId,
+            organizationId: userRecord.organizationId,
+            lesson: lesson || "",
+            comments: comments || "",
+          })
+          .returning();
+
+        return res.status(201).json(newLesson);
+      } catch (err) {
+        console.error("Lesson learned create error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // PUT update a lesson learned
+  app.put(
+    "/api/projects/:projectId/lessons-learned/:lessonId",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res.status(400).json({ message: "User organization not found" });
+        }
+
+        const projectId = parseInt(req.params.projectId);
+        const lessonId = parseInt(req.params.lessonId);
+        if (isNaN(projectId) || isNaN(lessonId)) {
+          return res.status(400).json({ error: "Invalid project ID or lesson ID" });
+        }
+
+        const { lesson, comments } = req.body;
+
+        const [updatedLesson] = await db
+          .update(lessonsLearned)
+          .set({
+            lesson,
+            comments,
+            updatedAt: new Date(),
+          })
+          .where(
+            and(
+              eq(lessonsLearned.id, lessonId),
+              eq(lessonsLearned.projectId, projectId),
+              eq(lessonsLearned.organizationId, userRecord.organizationId),
+            ),
+          )
+          .returning();
+
+        if (!updatedLesson) {
+          return res.status(404).json({ error: "Lesson learned not found" });
+        }
+
+        return res.json(updatedLesson);
+      } catch (err) {
+        console.error("Lesson learned update error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // DELETE a lesson learned
+  app.delete(
+    "/api/projects/:projectId/lessons-learned/:lessonId",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res.status(400).json({ message: "User organization not found" });
+        }
+
+        const projectId = parseInt(req.params.projectId);
+        const lessonId = parseInt(req.params.lessonId);
+        if (isNaN(projectId) || isNaN(lessonId)) {
+          return res.status(400).json({ error: "Invalid project ID or lesson ID" });
+        }
+
+        const [deletedLesson] = await db
+          .delete(lessonsLearned)
+          .where(
+            and(
+              eq(lessonsLearned.id, lessonId),
+              eq(lessonsLearned.projectId, projectId),
+              eq(lessonsLearned.organizationId, userRecord.organizationId),
+            ),
+          )
+          .returning();
+
+        if (!deletedLesson) {
+          return res.status(404).json({ error: "Lesson learned not found" });
+        }
+
+        return res.json({ success: true, deleted: deletedLesson });
+      } catch (err) {
+        console.error("Lesson learned delete error:", err);
         return handleErrors(err, res);
       }
     },

@@ -2965,3 +2965,27 @@ export const insertWorkInstructionDocumentSchema = createInsertSchema(workInstru
 
 export type InsertWorkInstructionDocument = z.infer<typeof insertWorkInstructionDocumentSchema>;
 export type WorkInstructionDocument = typeof workInstructionDocuments.$inferSelect;
+
+// Lessons Learned for Control Phase
+export const lessonsLearned = pgTable("lessons_learned", {
+  id: serial("id").primaryKey(),
+  organizationId: integer("organization_id")
+    .references(() => organizations.id)
+    .notNull(),
+  projectId: integer("project_id").notNull(),
+  
+  lesson: text("lesson").default(""),
+  comments: text("comments").default(""),
+  
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertLessonLearnedSchema = createInsertSchema(lessonsLearned).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertLessonLearned = z.infer<typeof insertLessonLearnedSchema>;
+export type LessonLearned = typeof lessonsLearned.$inferSelect;
