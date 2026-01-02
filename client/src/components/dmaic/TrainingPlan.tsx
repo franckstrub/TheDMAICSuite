@@ -50,7 +50,7 @@ export default function TrainingPlan({ projectId }: TrainingPlanProps) {
   const [localElements, setLocalElements] = useState<LocalTrainingElement[]>([]);
   
   const { data: trainingData, isLoading } = useQuery<{ elements: TrainingPlanElement[] }>({
-    queryKey: ['/api/projects', projectId, 'training-plan'],
+    queryKey: [`/api/projects/${projectId}/training-plan`],
   });
 
   useEffect(() => {
@@ -108,7 +108,7 @@ export default function TrainingPlan({ projectId }: TrainingPlanProps) {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'training-plan'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/training-plan`] });
     },
   });
 
@@ -125,7 +125,7 @@ export default function TrainingPlan({ projectId }: TrainingPlanProps) {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'training-plan'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/training-plan`] });
     },
   });
 
@@ -135,7 +135,7 @@ export default function TrainingPlan({ projectId }: TrainingPlanProps) {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'training-plan'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/training-plan`] });
       toast({
         title: "Deleted",
         description: "Training plan item has been removed",
