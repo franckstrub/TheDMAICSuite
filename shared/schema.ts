@@ -3018,3 +3018,34 @@ export const insertControlPlanItemSchema = createInsertSchema(controlPlanItems).
 
 export type InsertControlPlanItem = z.infer<typeof insertControlPlanItemSchema>;
 export type ControlPlanItem = typeof controlPlanItems.$inferSelect;
+
+// Audit Plan Items for Control Phase
+export const auditPlanItems = pgTable("audit_plan_items", {
+  id: serial("id").primaryKey(),
+  organizationId: integer("organization_id")
+    .references(() => organizations.id)
+    .notNull(),
+  projectId: integer("project_id").notNull(),
+  
+  process: text("process").default(""),
+  objective: text("objective").default(""),
+  document: text("document").default(""),
+  version: text("version").default("1.0"),
+  responsible: text("responsible").default(""),
+  periodicity: text("periodicity").default("Yearly"),
+  lastcompletion: text("lastcompletion").default(""),
+  findings: text("findings").default(""),
+  postauditactions: text("postauditactions").default(""),
+  
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertAuditPlanItemSchema = createInsertSchema(auditPlanItems).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertAuditPlanItem = z.infer<typeof insertAuditPlanItemSchema>;
+export type AuditPlanItem = typeof auditPlanItems.$inferSelect;
