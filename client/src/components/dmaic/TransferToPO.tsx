@@ -203,7 +203,7 @@ export default function TransferToPO({ projectId, projectType }: TransferToPOPro
         }
       }
       
-      if (saveCount > 0) {
+      if (saveCount >= 0) {
         toast({
           title: "Success",
           description: `Transfer to Process Owner has been saved (${saveCount} item${saveCount > 1 ? 's' : ''} updated)`,
