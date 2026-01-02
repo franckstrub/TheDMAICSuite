@@ -3049,3 +3049,29 @@ export const insertAuditPlanItemSchema = createInsertSchema(auditPlanItems).omit
 
 export type InsertAuditPlanItem = z.infer<typeof insertAuditPlanItemSchema>;
 export type AuditPlanItem = typeof auditPlanItems.$inferSelect;
+
+// Transfer to Process Owner Items for Control Phase
+export const transferToPOItems = pgTable("transfer_to_po_items", {
+  id: serial("id").primaryKey(),
+  organizationId: integer("organization_id")
+    .references(() => organizations.id)
+    .notNull(),
+  projectId: integer("project_id").notNull(),
+  
+  element: text("element").default(""),
+  owner: text("owner").default(""),
+  date: text("date").default(""),
+  status: text("status").default("Completed"),
+  
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertTransferToPOItemSchema = createInsertSchema(transferToPOItems).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertTransferToPOItem = z.infer<typeof insertTransferToPOItemSchema>;
+export type TransferToPOItem = typeof transferToPOItems.$inferSelect;
