@@ -1,7 +1,4 @@
-import { useState, useEffect } from "react";
-import { useParams } from "wouter";
-import { useAppContext } from "@/store/AppContext";
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import {
   Card,
@@ -11,8 +8,6 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -28,18 +23,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
+interface WorkInstructionsProps {
+  projectId: number;
+}
 
-export default function WorkInstructions() {
-  const { user, currentProject } = useAppContext();
+export default function WorkInstructions({ projectId }: WorkInstructionsProps) {
   const { toast } = useToast();
-  const params = useParams<{ projectId?: string }>();
-  const urlProjectId = params.projectId;
-  
-  // Use URL project ID if available, otherwise fall back to current project
-  const projectId = urlProjectId ? parseInt(urlProjectId) : (currentProject?.id || 1);
-  
+    
    // Standardization Documents state
   const [standardDocs, setStandardDocs] = useState([
     {
@@ -106,27 +97,27 @@ export default function WorkInstructions() {
   const handleSaveDocs = () => {
     toast({
       title: "Success",
-      description: "Standardization documents have been saved successfully",
+      description: "Work Instructions and Standardization documents have been saved successfully",
     });
   };
 
   return (
     <div className="space-y-6">
-            {/* Work Instructions and Standardization Documents */}
+      {/* Work Instructions and Standardization Documents */}
       <Card>
         <CardHeader>
           <CardTitle>Work Instructions and Standardization Documents</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-gray-500 mb-4">
-            Track documentation used to standardize the improved process.
+            Track working instructions and documentation used to standardize the improved process.
           </p>
           
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Work Instructions/Document Name</TableHead>
+                  <TableHead>Work Instructions/Standard</TableHead>
                   <TableHead>Version</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Document Owner</TableHead>
@@ -197,7 +188,7 @@ export default function WorkInstructions() {
                         <SelectContent>
                           <SelectItem value="Draft">Draft</SelectItem>
                           <SelectItem value="Pending Approval">Pending Approval</SelectItem>
-                          <SelectItem value="Active">Active</SelectItem>
+                          <SelectItem value="Active">Approved</SelectItem>
                           <SelectItem value="Obsolete">Obsolete</SelectItem>
                         </SelectContent>
                       </Select>
@@ -225,7 +216,7 @@ export default function WorkInstructions() {
           
           <div className="mt-4">
             <Button onClick={handleSaveDocs}>
-              Save Documentation
+              Save Work Instructions and Standardization
             </Button>
           </div>
         </CardContent>

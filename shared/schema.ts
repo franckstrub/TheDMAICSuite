@@ -2908,3 +2908,31 @@ export const insertSimpleProofOfImprovementSchema = createInsertSchema(simplePro
 
 export type InsertSimpleProofOfImprovement = z.infer<typeof insertSimpleProofOfImprovementSchema>;
 export type SimpleProofOfImprovement = typeof simpleProofOfImprovement.$inferSelect;
+
+// Training Plan Elements for Control Phase
+export const trainingPlanElements = pgTable("training_plan_elements", {
+  id: serial("id").primaryKey(),
+  organizationId: integer("organization_id")
+    .references(() => organizations.id)
+    .notNull(),
+  projectId: integer("project_id").notNull(),
+  
+  topic: text("topic").default(""),
+  audience: text("audience").default(""),
+  trainer: text("trainer").default(""),
+  date: text("date").default(""),
+  duration: text("duration").default(""),
+  status: text("status").default("Not Scheduled"),
+  
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertTrainingPlanElementSchema = createInsertSchema(trainingPlanElements).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertTrainingPlanElement = z.infer<typeof insertTrainingPlanElementSchema>;
+export type TrainingPlanElement = typeof trainingPlanElements.$inferSelect;
