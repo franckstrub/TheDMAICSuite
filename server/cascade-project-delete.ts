@@ -40,7 +40,8 @@ import {
   beforeAfterContCTQTwoSampleTest,
   beforeAfterTwoProportionTest,
   beforeAfterChiSquareTest,
-  proofOfImprovementPreferences
+  proofOfImprovementPreferences,
+  trainingPlanElements
 } from '@shared/schema';
 
 /**
@@ -342,6 +343,14 @@ export async function permanentlyDeleteProject(projectId: number): Promise<numbe
     results['simpleProofOfImprovement'] = simpleProofResult.length;
     deletionCount += simpleProofResult.length > 0 ? 1 : 0;
     console.log(`Deleted ${simpleProofResult.length} simple proof of improvement records`);
+
+    // Delete Training Plan Elements (Control Phase)
+    const trainingPlanResult = await db.delete(trainingPlanElements)
+      .where(eq(trainingPlanElements.projectId, projectId))
+      .returning();
+    results['trainingPlanElements'] = trainingPlanResult.length;
+    deletionCount += trainingPlanResult.length > 0 ? 1 : 0;
+    console.log(`Deleted ${trainingPlanResult.length} training plan elements`);
 
     // Delete CTS characteristics
     const ctsResult = await db.delete(ctsCharacteristics)

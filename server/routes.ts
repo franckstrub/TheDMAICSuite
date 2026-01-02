@@ -127,6 +127,8 @@ import {
   doeFullFactorialConfig,
   logisticRegressionConfig,
   insertLogisticRegressionConfigSchema,
+  trainingPlanElements,
+  insertTrainingPlanElementSchema,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, asc, desc, ne, and, or, ilike, sql, inArray } from "drizzle-orm";
@@ -9216,6 +9218,202 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(201).json(savedRecord);
       } catch (err) {
         console.error("Simple proof of improvement save error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // ========== Training Plan Elements (Control Phase) ==========
+  
+  // GET all training plan elements for a project
+  app.get(
+    "/api/projects/:projectId/training-plan",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res.status(400).json({ message: "User organization not found" });
+        }
+
+        const projectId = parseInt(req.params.projectId);
+        if (isNaN(projectId)) {
+          return res.status(400).json({ error: "Invalid project ID" });
+        }
+
+        const elements = await db
+          .select()
+          .from(trainingPlanElements)
+          .where(
+            and(
+              eq(trainingPlanElements.projectId, projectId),
+              eq(trainingPlanElements.organizationId, userRecord.organizationId),
+            ),
+          )
+          .orderBy(asc(trainingPlanElements.id));
+
+        return res.json({ elements });
+      } catch (err) {
+        console.error("Training plan fetch error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // POST create a new training plan element
+  app.post(
+    "/api/projects/:projectId/training-plan",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res.status(400).json({ message: "User organization not found" });
+        }
+
+        const projectId = parseInt(req.params.projectId);
+        if (isNaN(projectId)) {
+          return res.status(400).json({ error: "Invalid project ID" });
+        }
+
+        const { topic, audience, trainer, date, duration, status } = req.body;
+
+        const [newElement] = await db
+          .insert(trainingPlanElements)
+          .values({
+            projectId,
+            organizationId: userRecord.organizationId,
+            topic: topic || "",
+            audience: audience || "",
+            trainer: trainer || "",
+            date: date || "",
+            duration: duration || "",
+            status: status || "Not Scheduled",
+          })
+          .returning();
+
+        return res.status(201).json(newElement);
+      } catch (err) {
+        console.error("Training plan create error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // PUT update a training plan element
+  app.put(
+    "/api/projects/:projectId/training-plan/:elementId",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res.status(400).json({ message: "User organization not found" });
+        }
+
+        const projectId = parseInt(req.params.projectId);
+        const elementId = parseInt(req.params.elementId);
+        if (isNaN(projectId) || isNaN(elementId)) {
+          return res.status(400).json({ error: "Invalid project ID or element ID" });
+        }
+
+        const { topic, audience, trainer, date, duration, status } = req.body;
+
+        const [updatedElement] = await db
+          .update(trainingPlanElements)
+          .set({
+            topic,
+            audience,
+            trainer,
+            date,
+            duration,
+            status,
+            updatedAt: new Date(),
+          })
+          .where(
+            and(
+              eq(trainingPlanElements.id, elementId),
+              eq(trainingPlanElements.projectId, projectId),
+              eq(trainingPlanElements.organizationId, userRecord.organizationId),
+            ),
+          )
+          .returning();
+
+        if (!updatedElement) {
+          return res.status(404).json({ error: "Training plan element not found" });
+        }
+
+        return res.json(updatedElement);
+      } catch (err) {
+        console.error("Training plan update error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // DELETE a training plan element
+  app.delete(
+    "/api/projects/:projectId/training-plan/:elementId",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res.status(400).json({ message: "User organization not found" });
+        }
+
+        const projectId = parseInt(req.params.projectId);
+        const elementId = parseInt(req.params.elementId);
+        if (isNaN(projectId) || isNaN(elementId)) {
+          return res.status(400).json({ error: "Invalid project ID or element ID" });
+        }
+
+        const [deletedElement] = await db
+          .delete(trainingPlanElements)
+          .where(
+            and(
+              eq(trainingPlanElements.id, elementId),
+              eq(trainingPlanElements.projectId, projectId),
+              eq(trainingPlanElements.organizationId, userRecord.organizationId),
+            ),
+          )
+          .returning();
+
+        if (!deletedElement) {
+          return res.status(404).json({ error: "Training plan element not found" });
+        }
+
+        return res.json({ success: true, deleted: deletedElement });
+      } catch (err) {
+        console.error("Training plan delete error:", err);
         return handleErrors(err, res);
       }
     },
