@@ -129,6 +129,8 @@ import {
   insertLogisticRegressionConfigSchema,
   trainingPlanElements,
   insertTrainingPlanElementSchema,
+  workInstructionDocuments,
+  insertWorkInstructionDocumentSchema,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, asc, desc, ne, and, or, ilike, sql, inArray } from "drizzle-orm";
@@ -9414,6 +9416,204 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json({ success: true, deleted: deletedElement });
       } catch (err) {
         console.error("Training plan delete error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // ========== Work Instruction Documents (Control Phase) ==========
+  
+  // GET all work instruction documents for a project
+  app.get(
+    "/api/projects/:projectId/work-instructions",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res.status(400).json({ message: "User organization not found" });
+        }
+
+        const projectId = parseInt(req.params.projectId);
+        if (isNaN(projectId)) {
+          return res.status(400).json({ error: "Invalid project ID" });
+        }
+
+        const documents = await db
+          .select()
+          .from(workInstructionDocuments)
+          .where(
+            and(
+              eq(workInstructionDocuments.projectId, projectId),
+              eq(workInstructionDocuments.organizationId, userRecord.organizationId),
+            ),
+          )
+          .orderBy(asc(workInstructionDocuments.id));
+
+        return res.json({ documents });
+      } catch (err) {
+        console.error("Work instructions fetch error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // POST create a new work instruction document
+  app.post(
+    "/api/projects/:projectId/work-instructions",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res.status(400).json({ message: "User organization not found" });
+        }
+
+        const projectId = parseInt(req.params.projectId);
+        if (isNaN(projectId)) {
+          return res.status(400).json({ error: "Invalid project ID" });
+        }
+
+        const { document, version, date, owner, location, approver, status } = req.body;
+
+        const [newDocument] = await db
+          .insert(workInstructionDocuments)
+          .values({
+            projectId,
+            organizationId: userRecord.organizationId,
+            document: document || "",
+            version: version || "",
+            date: date || "",
+            owner: owner || "",
+            location: location || "",
+            approver: approver || "",
+            status: status || "Draft",
+          })
+          .returning();
+
+        return res.status(201).json(newDocument);
+      } catch (err) {
+        console.error("Work instruction create error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // PUT update a work instruction document
+  app.put(
+    "/api/projects/:projectId/work-instructions/:documentId",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res.status(400).json({ message: "User organization not found" });
+        }
+
+        const projectId = parseInt(req.params.projectId);
+        const documentId = parseInt(req.params.documentId);
+        if (isNaN(projectId) || isNaN(documentId)) {
+          return res.status(400).json({ error: "Invalid project ID or document ID" });
+        }
+
+        const { document, version, date, owner, location, approver, status } = req.body;
+
+        const [updatedDocument] = await db
+          .update(workInstructionDocuments)
+          .set({
+            document,
+            version,
+            date,
+            owner,
+            location,
+            approver,
+            status,
+            updatedAt: new Date(),
+          })
+          .where(
+            and(
+              eq(workInstructionDocuments.id, documentId),
+              eq(workInstructionDocuments.projectId, projectId),
+              eq(workInstructionDocuments.organizationId, userRecord.organizationId),
+            ),
+          )
+          .returning();
+
+        if (!updatedDocument) {
+          return res.status(404).json({ error: "Work instruction document not found" });
+        }
+
+        return res.json(updatedDocument);
+      } catch (err) {
+        console.error("Work instruction update error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // DELETE a work instruction document
+  app.delete(
+    "/api/projects/:projectId/work-instructions/:documentId",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res.status(400).json({ message: "User organization not found" });
+        }
+
+        const projectId = parseInt(req.params.projectId);
+        const documentId = parseInt(req.params.documentId);
+        if (isNaN(projectId) || isNaN(documentId)) {
+          return res.status(400).json({ error: "Invalid project ID or document ID" });
+        }
+
+        const [deletedDocument] = await db
+          .delete(workInstructionDocuments)
+          .where(
+            and(
+              eq(workInstructionDocuments.id, documentId),
+              eq(workInstructionDocuments.projectId, projectId),
+              eq(workInstructionDocuments.organizationId, userRecord.organizationId),
+            ),
+          )
+          .returning();
+
+        if (!deletedDocument) {
+          return res.status(404).json({ error: "Work instruction document not found" });
+        }
+
+        return res.json({ success: true, deleted: deletedDocument });
+      } catch (err) {
+        console.error("Work instruction delete error:", err);
         return handleErrors(err, res);
       }
     },
