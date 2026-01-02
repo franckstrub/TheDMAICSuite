@@ -139,8 +139,8 @@ import {
   insertAuditPlanItemSchema,
   transferToPOItems,
   insertTransferToPOItemSchema,
-  financialBenefitsItems,
-  insertFinancialBenefitsItemSchema,
+  financialBenefitsValidations,
+  insertFinancialBenefitsValidationSchema,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, asc, desc, ne, and, or, ilike, sql, inArray } from "drizzle-orm";
@@ -10409,11 +10409,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     },
   );
 
-  // ========== Financial Benefits Validation Items (Control Phase) ==========
+  // ========== Financial Benefits Validation (Control Phase) ==========
   
-  // GET all financial benefits items for a project
+  // GET financial benefits validation for a project (single row)
   app.get(
-    "/api/projects/:projectId/financial-benefits-items",
+    "/api/projects/:projectId/financial-benefits-validation",
     isAuthenticated,
     async (req: Request, res: Response) => {
       try {
@@ -10434,28 +10434,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(400).json({ error: "Invalid project ID" });
         }
 
-        const items = await db
+        const [validation] = await db
           .select()
-          .from(financialBenefitsItems)
+          .from(financialBenefitsValidations)
           .where(
             and(
-              eq(financialBenefitsItems.projectId, projectId),
-              eq(financialBenefitsItems.organizationId, userRecord.organizationId),
+              eq(financialBenefitsValidations.projectId, projectId),
+              eq(financialBenefitsValidations.organizationId, userRecord.organizationId),
             ),
-          )
-          .orderBy(asc(financialBenefitsItems.id));
+          );
 
-        return res.json({ items });
+        return res.json({ validation: validation || null });
       } catch (err) {
-        console.error("Financial benefits items fetch error:", err);
+        console.error("Financial benefits validation fetch error:", err);
         return handleErrors(err, res);
       }
     },
   );
 
-  // POST create a new financial benefits item
+  // POST/PUT create or update financial benefits validation (upsert)
   app.post(
-    "/api/projects/:projectId/financial-benefits-items",
+    "/api/projects/:projectId/financial-benefits-validation",
     isAuthenticated,
     async (req: Request, res: Response) => {
       try {
@@ -10476,79 +10475,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(400).json({ error: "Invalid project ID" });
         }
 
-        const { typeofBenefits, benefits, comments, validation } = req.body;
+        const {
+          qualityCostsSavings,
+          qualityCostsSavingsComments,
+          qualityCostsSavingsValidation,
+          fteBenefits,
+          fteBenefitsComments,
+          fteBenefitsValidation,
+          workingCapitalSavings,
+          workingCapitalSavingsComments,
+          workingCapitalSavingsValidation,
+          financialSavings,
+          financialSavingsComments,
+          financialSavingsValidation,
+        } = req.body;
 
-        const [newItem] = await db
-          .insert(financialBenefitsItems)
-          .values({
-            projectId,
-            organizationId: userRecord.organizationId,
-            typeofBenefits: typeofBenefits || "",
-            benefits: benefits || "",
-            comments: comments || "",
-            validation: validation || "No",
-          })
-          .returning();
-
-        return res.status(201).json(newItem);
-      } catch (err) {
-        console.error("Financial benefits item create error:", err);
-        return handleErrors(err, res);
-      }
-    },
-  );
-
-  // PUT update a financial benefits item
-  app.put(
-    "/api/projects/:projectId/financial-benefits-items/:itemId",
-    isAuthenticated,
-    async (req: Request, res: Response) => {
-      try {
-        const userClaims = (req.user as any)?.claims;
-        const userId = userClaims?.sub;
-
-        if (!userId) {
-          return res.status(401).json({ message: "User not found in session" });
-        }
-
-        const userRecord = await storage.getUser(userId);
-        if (!userRecord || !userRecord.organizationId) {
-          return res.status(400).json({ message: "User organization not found" });
-        }
-
-        const projectId = parseInt(req.params.projectId);
-        const itemId = parseInt(req.params.itemId);
-        if (isNaN(projectId) || isNaN(itemId)) {
-          return res.status(400).json({ error: "Invalid project ID or item ID" });
-        }
-
-        const { typeofBenefits, benefits, comments, validation } = req.body;
-
-        const [updatedItem] = await db
-          .update(financialBenefitsItems)
-          .set({
-            typeofBenefits,
-            benefits,
-            comments,
-            validation,
-            updatedAt: new Date(),
-          })
+        // Check if record exists
+        const [existing] = await db
+          .select()
+          .from(financialBenefitsValidations)
           .where(
             and(
-              eq(financialBenefitsItems.id, itemId),
-              eq(financialBenefitsItems.projectId, projectId),
-              eq(financialBenefitsItems.organizationId, userRecord.organizationId),
+              eq(financialBenefitsValidations.projectId, projectId),
+              eq(financialBenefitsValidations.organizationId, userRecord.organizationId),
             ),
-          )
-          .returning();
+          );
 
-        if (!updatedItem) {
-          return res.status(404).json({ error: "Financial benefits item not found" });
+        let result;
+        if (existing) {
+          // Update existing record
+          [result] = await db
+            .update(financialBenefitsValidations)
+            .set({
+              qualityCostsSavings: qualityCostsSavings ?? "",
+              qualityCostsSavingsComments: qualityCostsSavingsComments ?? "",
+              qualityCostsSavingsValidation: qualityCostsSavingsValidation ?? "No",
+              fteBenefits: fteBenefits ?? "",
+              fteBenefitsComments: fteBenefitsComments ?? "",
+              fteBenefitsValidation: fteBenefitsValidation ?? "No",
+              workingCapitalSavings: workingCapitalSavings ?? "",
+              workingCapitalSavingsComments: workingCapitalSavingsComments ?? "",
+              workingCapitalSavingsValidation: workingCapitalSavingsValidation ?? "No",
+              financialSavings: financialSavings ?? "",
+              financialSavingsComments: financialSavingsComments ?? "",
+              financialSavingsValidation: financialSavingsValidation ?? "No",
+              updatedAt: new Date(),
+            })
+            .where(eq(financialBenefitsValidations.id, existing.id))
+            .returning();
+        } else {
+          // Create new record
+          [result] = await db
+            .insert(financialBenefitsValidations)
+            .values({
+              projectId,
+              organizationId: userRecord.organizationId,
+              qualityCostsSavings: qualityCostsSavings ?? "",
+              qualityCostsSavingsComments: qualityCostsSavingsComments ?? "",
+              qualityCostsSavingsValidation: qualityCostsSavingsValidation ?? "No",
+              fteBenefits: fteBenefits ?? "",
+              fteBenefitsComments: fteBenefitsComments ?? "",
+              fteBenefitsValidation: fteBenefitsValidation ?? "No",
+              workingCapitalSavings: workingCapitalSavings ?? "",
+              workingCapitalSavingsComments: workingCapitalSavingsComments ?? "",
+              workingCapitalSavingsValidation: workingCapitalSavingsValidation ?? "No",
+              financialSavings: financialSavings ?? "",
+              financialSavingsComments: financialSavingsComments ?? "",
+              financialSavingsValidation: financialSavingsValidation ?? "No",
+            })
+            .returning();
         }
 
-        return res.json(updatedItem);
+        return res.status(existing ? 200 : 201).json(result);
       } catch (err) {
-        console.error("Financial benefits item update error:", err);
+        console.error("Financial benefits validation save error:", err);
         return handleErrors(err, res);
       }
     },

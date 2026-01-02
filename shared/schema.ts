@@ -3076,28 +3076,39 @@ export const insertTransferToPOItemSchema = createInsertSchema(transferToPOItems
 export type InsertTransferToPOItem = z.infer<typeof insertTransferToPOItemSchema>;
 export type TransferToPOItem = typeof transferToPOItems.$inferSelect;
 
-// Financial Benefits Validation Items for Control Phase
-export const financialBenefitsItems = pgTable("financial_benefits_items", {
+// Financial Benefits Validation for Control Phase (one row per project)
+export const financialBenefitsValidations = pgTable("financial_benefits_validations", {
   id: serial("id").primaryKey(),
   organizationId: integer("organization_id")
     .references(() => organizations.id)
     .notNull(),
   projectId: integer("project_id").notNull(),
   
-  typeofBenefits: text("type_of_benefits").default(""),
-  benefits: text("benefits").default(""),
-  comments: text("comments").default(""),
-  validation: text("validation").default("No"),
+  qualityCostsSavings: text("quality_costs_savings").default(""),
+  qualityCostsSavingsComments: text("quality_costs_savings_comments").default(""),
+  qualityCostsSavingsValidation: text("quality_costs_savings_validation").default("No"),
+  
+  fteBenefits: text("fte_benefits").default(""),
+  fteBenefitsComments: text("fte_benefits_comments").default(""),
+  fteBenefitsValidation: text("fte_benefits_validation").default("No"),
+  
+  workingCapitalSavings: text("working_capital_savings").default(""),
+  workingCapitalSavingsComments: text("working_capital_savings_comments").default(""),
+  workingCapitalSavingsValidation: text("working_capital_savings_validation").default("No"),
+  
+  financialSavings: text("financial_savings").default(""),
+  financialSavingsComments: text("financial_savings_comments").default(""),
+  financialSavingsValidation: text("financial_savings_validation").default("No"),
   
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
-export const insertFinancialBenefitsItemSchema = createInsertSchema(financialBenefitsItems).omit({
+export const insertFinancialBenefitsValidationSchema = createInsertSchema(financialBenefitsValidations).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
 });
 
-export type InsertFinancialBenefitsItem = z.infer<typeof insertFinancialBenefitsItemSchema>;
-export type FinancialBenefitsItem = typeof financialBenefitsItems.$inferSelect;
+export type InsertFinancialBenefitsValidation = z.infer<typeof insertFinancialBenefitsValidationSchema>;
+export type FinancialBenefitsValidation = typeof financialBenefitsValidations.$inferSelect;
