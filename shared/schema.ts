@@ -2936,3 +2936,32 @@ export const insertTrainingPlanElementSchema = createInsertSchema(trainingPlanEl
 
 export type InsertTrainingPlanElement = z.infer<typeof insertTrainingPlanElementSchema>;
 export type TrainingPlanElement = typeof trainingPlanElements.$inferSelect;
+
+// Work Instruction Documents for Control Phase
+export const workInstructionDocuments = pgTable("work_instruction_documents", {
+  id: serial("id").primaryKey(),
+  organizationId: integer("organization_id")
+    .references(() => organizations.id)
+    .notNull(),
+  projectId: integer("project_id").notNull(),
+  
+  document: text("document").default(""),
+  version: text("version").default(""),
+  date: text("date").default(""),
+  owner: text("owner").default(""),
+  location: text("location").default(""),
+  approver: text("approver").default(""),
+  status: text("status").default("Draft"),
+  
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertWorkInstructionDocumentSchema = createInsertSchema(workInstructionDocuments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertWorkInstructionDocument = z.infer<typeof insertWorkInstructionDocumentSchema>;
+export type WorkInstructionDocument = typeof workInstructionDocuments.$inferSelect;
