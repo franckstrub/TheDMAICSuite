@@ -218,7 +218,7 @@ export default function ControlPlan({ projectId, projectType }: ControlPlanProps
         }
       }
       
-      if (saveCount > 0) {
+      if (saveCount >= 0) {
         toast({
           title: "Success",
           description: `Control plan has been saved (${saveCount} item${saveCount > 1 ? 's' : ''} updated)`,
