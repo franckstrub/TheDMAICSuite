@@ -217,7 +217,7 @@ export default function TrainingPlan({ projectId }: TrainingPlanProps) {
         }
       }
       
-      if (saveCount > 0) {
+      if (saveCount >= 0) {
         toast({
           title: "Success",
           description: `Training plan has been saved (${saveCount} item${saveCount > 1 ? 's' : ''} updated)`,
