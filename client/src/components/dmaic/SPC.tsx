@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import {
   Card,
@@ -7,156 +8,486 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { 
-  ResponsiveContainer, 
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend 
-} from "recharts";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BarChart3, Download, Loader2 } from "lucide-react";
 
 interface SPCProps {
   projectId: number;
   projectType: string;
 }
 
+interface CtqWithType {
+  ctq: string;
+  ctqType: "Attribute" | "Continuous";
+}
+
+interface ControlCardSelection {
+  [ctq: string]: {
+    c: boolean;
+    u: boolean;
+    np: boolean;
+    p: boolean;
+    imr: boolean;
+    xbarR: boolean;
+    xbarS: boolean;
+  };
+}
+
 export default function SPC({ projectId, projectType }: SPCProps) {
   const { toast } = useToast();
-  // SPC Data state
-  const [selectedMetric, setSelectedMetric] = useState("Processing Time");
-  
-  // Sample SPC data
-  const spcData = [
-    { date: "Week 1", value: 42, ucl: 60, lcl: 20, centerLine: 40 },
-    { date: "Week 2", value: 38, ucl: 60, lcl: 20, centerLine: 40 },
-    { date: "Week 3", value: 45, ucl: 60, lcl: 20, centerLine: 40 },
-    { date: "Week 4", value: 37, ucl: 60, lcl: 20, centerLine: 40 },
-    { date: "Week 5", value: 41, ucl: 60, lcl: 20, centerLine: 40 },
-    { date: "Week 6", value: 52, ucl: 60, lcl: 20, centerLine: 40 },
-    { date: "Week 7", value: 35, ucl: 60, lcl: 20, centerLine: 40 },
-    { date: "Week 8", value: 39, ucl: 60, lcl: 20, centerLine: 40 },
-  ];
+  const [activeTab, setActiveTab] = useState<string>("");
+  const [controlCardSelection, setControlCardSelection] = useState<ControlCardSelection>({});
 
-  const handleDownloadSPC = () => {
+  // Fetch CTS characteristics to get CTQs
+  const { data: ctsData, isLoading: ctsLoading } = useQuery<any>({
+    queryKey: [`/api/projects/${projectId}/cts-characteristics`],
+    enabled: projectType === 'Black Belt' || projectType === 'Green Belt',
+  });
+
+  // Get CTQs with types from CTS characteristics
+  const getCtqsWithTypes = (): CtqWithType[] => {
+    if (!ctsData?.characteristics) return [];
+    return ctsData.characteristics
+      .filter((char: any) => char.ctq && char.ctq.trim() !== "")
+      .map((char: any) => ({
+        ctq: char.ctq,
+        ctqType: char.ctqType || "Continuous"
+      }));
+  };
+
+  // Load saved tab from localStorage
+  useEffect(() => {
+    const savedTab = localStorage.getItem(`spc-active-tab-${projectId}`);
+    if (savedTab) {
+      setActiveTab(savedTab);
+    }
+  }, [projectId]);
+
+  // Initialize active tab and control card selections when CTQs are loaded
+  useEffect(() => {
+    const ctqs = getCtqsWithTypes();
+    if (ctqs.length > 0) {
+      // Set active tab if not already set or if current tab is invalid
+      if (!activeTab || !ctqs.some(c => c.ctq === activeTab)) {
+        const savedTab = localStorage.getItem(`spc-active-tab-${projectId}`);
+        const validSavedTab = savedTab && ctqs.some(c => c.ctq === savedTab);
+        setActiveTab(validSavedTab ? savedTab : ctqs[0].ctq);
+      }
+
+      // Initialize control card selections for each CTQ
+      const newSelections: ControlCardSelection = {};
+      ctqs.forEach(({ ctq }) => {
+        if (!controlCardSelection[ctq]) {
+          newSelections[ctq] = {
+            c: false,
+            u: false,
+            np: false,
+            p: false,
+            imr: false,
+            xbarR: false,
+            xbarS: false,
+          };
+        }
+      });
+      if (Object.keys(newSelections).length > 0) {
+        setControlCardSelection(prev => ({ ...prev, ...newSelections }));
+      }
+    }
+  }, [ctsData, projectId]);
+
+  const handleTabChange = (tabValue: string) => {
+    setActiveTab(tabValue);
+    localStorage.setItem(`spc-active-tab-${projectId}`, tabValue);
+  };
+
+  const toggleControlCard = (ctq: string, cardType: keyof ControlCardSelection[string]) => {
+    setControlCardSelection(prev => ({
+      ...prev,
+      [ctq]: {
+        ...prev[ctq],
+        [cardType]: !prev[ctq]?.[cardType]
+      }
+    }));
+  };
+
+  const handleDownloadControlCard = (ctq: string, cardType: string) => {
     toast({
       title: "Success",
-      description: "SPC chart data has been downloaded",
+      description: `${cardType} control card template downloaded for ${ctq}`,
     });
   };
 
- {/* Statistical Process Control */}
-  return (
-    <>
-    {(projectType === 'Black Belt' || projectType === 'Green Belt') && (
-      
+  // Check if this is a valid project type
+  if (projectType !== 'Black Belt' && projectType !== 'Green Belt') {
+    return null;
+  }
+
+  if (ctsLoading) {
+    return (
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Statistical Process Control</CardTitle>
-          <div className="flex gap-2">
-            <Select defaultValue={selectedMetric} onValueChange={setSelectedMetric}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select metric" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Processing Time">Processing Time</SelectItem>
-                <SelectItem value="Error Rate">Error Rate</SelectItem>
-                <SelectItem value="Customer Satisfaction">Customer Satisfaction</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button variant="outline" size="sm" onClick={handleDownloadSPC}>
-              <i className="fas fa-download mr-1"></i> Export
-            </Button>
-          </div>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="h-5 w-5" />
+            Statistical Process Control
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-gray-500 mb-4">
-            Monitor process performance using statistical process control charts.
-          </p>
-          
-          <div className="h-80 border border-gray-200 rounded-md">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart
-                data={spcData}
-                margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line 
-                  type="monotone" 
-                  dataKey="value" 
-                  stroke="#2563eb" 
-                  strokeWidth={2}
-                  name={selectedMetric}
-                  activeDot={{ r: 8 }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="ucl" 
-                  stroke="#ef4444" 
-                  strokeDasharray="5 5" 
-                  name="Upper Control Limit"
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="lcl" 
-                  stroke="#ef4444" 
-                  strokeDasharray="5 5" 
-                  name="Lower Control Limit"
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="centerLine" 
-                  stroke="#10b981" 
-                  strokeDasharray="3 3" 
-                  name="Center Line"
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-          
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4">
-            <div className="p-3 bg-gray-50 rounded-md text-center">
-              <p className="text-xs text-gray-500">Current Value</p>
-              <p className="text-lg font-semibold">39</p>
-            </div>
-            <div className="p-3 bg-gray-50 rounded-md text-center">
-              <p className="text-xs text-gray-500">Mean</p>
-              <p className="text-lg font-semibold">40</p>
-            </div>
-            <div className="p-3 bg-gray-50 rounded-md text-center">
-              <p className="text-xs text-gray-500">Standard Deviation</p>
-              <p className="text-lg font-semibold">6.67</p>
-            </div>
-            <div className="p-3 bg-gray-50 rounded-md text-center">
-              <p className="text-xs text-gray-500">Status</p>
-              <p className="text-lg font-semibold text-green-600">In Control</p>
-            </div>
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+            <span className="ml-2 text-gray-500">Loading SPC data...</span>
           </div>
         </CardContent>
       </Card>
-    )}
-  </>
+    );
+  }
+
+  const ctqList = getCtqsWithTypes();
+
+  if (ctqList.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="h-5 w-5" />
+            Statistical Process Control
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8 text-gray-500">
+            No CTQ available. Please define your CTQ(s) in CTS characteristics table to create SPC control charts.
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Render hard copy control card template
+  const renderControlCardTemplate = (ctq: string, cardType: string, cardLabel: string) => {
+    return (
+      <div className="border rounded-lg p-4 bg-white mt-4">
+        <div className="flex justify-between items-center mb-4">
+          <h4 className="font-semibold text-lg">{cardLabel} Control Card - {ctq}</h4>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleDownloadControlCard(ctq, cardLabel)}
+            data-testid={`button-download-${cardType}-${ctq}`}
+          >
+            <Download className="h-4 w-4 mr-1" />
+            Download Template
+          </Button>
+        </div>
+        
+        {/* Control Card Template */}
+        <div className="border-2 border-gray-300 rounded-lg overflow-hidden">
+          {/* Header Section */}
+          <div className="grid grid-cols-4 border-b-2 border-gray-300">
+            <div className="p-2 border-r border-gray-200 bg-gray-50">
+              <Label className="text-xs font-semibold">Process Name:</Label>
+              <div className="h-6 border-b border-dashed border-gray-300 mt-1"></div>
+            </div>
+            <div className="p-2 border-r border-gray-200 bg-gray-50">
+              <Label className="text-xs font-semibold">CTQ:</Label>
+              <div className="text-sm mt-1">{ctq}</div>
+            </div>
+            <div className="p-2 border-r border-gray-200 bg-gray-50">
+              <Label className="text-xs font-semibold">Chart Type:</Label>
+              <div className="text-sm mt-1">{cardLabel}</div>
+            </div>
+            <div className="p-2 bg-gray-50">
+              <Label className="text-xs font-semibold">Date:</Label>
+              <div className="h-6 border-b border-dashed border-gray-300 mt-1"></div>
+            </div>
+          </div>
+
+          {/* Control Limits Section */}
+          <div className="grid grid-cols-3 border-b-2 border-gray-300">
+            <div className="p-2 border-r border-gray-200 bg-blue-50">
+              <Label className="text-xs font-semibold text-blue-700">UCL:</Label>
+              <div className="h-6 border-b border-dashed border-blue-300 mt-1"></div>
+            </div>
+            <div className="p-2 border-r border-gray-200 bg-green-50">
+              <Label className="text-xs font-semibold text-green-700">Center Line:</Label>
+              <div className="h-6 border-b border-dashed border-green-300 mt-1"></div>
+            </div>
+            <div className="p-2 bg-red-50">
+              <Label className="text-xs font-semibold text-red-700">LCL:</Label>
+              <div className="h-6 border-b border-dashed border-red-300 mt-1"></div>
+            </div>
+          </div>
+
+          {/* Chart Grid Area */}
+          <div className="p-4">
+            <div className="border border-gray-300 h-48 relative bg-gray-50">
+              {/* Grid lines */}
+              <div className="absolute inset-0 grid grid-cols-10 grid-rows-5">
+                {Array.from({ length: 50 }).map((_, i) => (
+                  <div key={i} className="border border-gray-200"></div>
+                ))}
+              </div>
+              {/* UCL line */}
+              <div className="absolute w-full border-t-2 border-dashed border-red-500" style={{ top: '16.67%' }}>
+                <span className="text-xs text-red-500 absolute right-1 -top-4">UCL</span>
+              </div>
+              {/* Center line */}
+              <div className="absolute w-full border-t-2 border-green-500" style={{ top: '50%' }}>
+                <span className="text-xs text-green-500 absolute right-1 -top-4">CL</span>
+              </div>
+              {/* LCL line */}
+              <div className="absolute w-full border-t-2 border-dashed border-red-500" style={{ top: '83.33%' }}>
+                <span className="text-xs text-red-500 absolute right-1 -top-4">LCL</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Data Entry Section */}
+          <div className="border-t-2 border-gray-300">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="p-2 border-r border-gray-200 w-24">Sample #</th>
+                  {Array.from({ length: 10 }).map((_, i) => (
+                    <th key={i} className="p-2 border-r border-gray-200">{i + 1}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td className="p-2 border-r border-gray-200 bg-gray-50 font-semibold">Value</td>
+                  {Array.from({ length: 10 }).map((_, i) => (
+                    <td key={i} className="p-2 border-r border-gray-200 h-8"></td>
+                  ))}
+                </tr>
+                <tr className="border-t border-gray-200">
+                  <td className="p-2 border-r border-gray-200 bg-gray-50 font-semibold">Date/Time</td>
+                  {Array.from({ length: 10 }).map((_, i) => (
+                    <td key={i} className="p-2 border-r border-gray-200 h-8"></td>
+                  ))}
+                </tr>
+                <tr className="border-t border-gray-200">
+                  <td className="p-2 border-r border-gray-200 bg-gray-50 font-semibold">Operator</td>
+                  {Array.from({ length: 10 }).map((_, i) => (
+                    <td key={i} className="p-2 border-r border-gray-200 h-8"></td>
+                  ))}
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Notes Section */}
+          <div className="border-t-2 border-gray-300 p-3 bg-gray-50">
+            <Label className="text-xs font-semibold">Notes / Out of Control Actions:</Label>
+            <div className="h-16 border border-dashed border-gray-300 mt-2 bg-white rounded"></div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <BarChart3 className="h-5 w-5" />
+          Statistical Process Control
+        </CardTitle>
+        <p className="text-sm text-gray-600 mt-2">
+          One SPC control chart per CTQ defined in CTS Characteristics table
+        </p>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm text-gray-500 mb-4">
+          Select the appropriate control chart type based on your CTQ data type and generate hard copy templates for shop floor monitoring.
+        </p>
+
+        {/* Show scroll indicator if 6+ CTQs */}
+        {ctqList.length >= 6 && (
+          <div className="relative">
+            <div className="absolute top-0 right-0 bg-blue-100 text-blue-600 px-2 py-1 text-xs rounded-bl z-10">
+              ← Scroll horizontally →
+            </div>
+          </div>
+        )}
+
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full pt-[25px]">
+          <div className="w-full overflow-x-auto">
+            <TabsList className="flex w-max min-w-full justify-start">
+              {ctqList.map((ctqWithType: CtqWithType) => (
+                <TabsTrigger
+                  key={ctqWithType.ctq}
+                  value={ctqWithType.ctq}
+                  className="px-4 py-2 min-w-max flex flex-col items-center border border-gray-200 data-[state=active]:border-none"
+                  data-testid={`tab-spc-${ctqWithType.ctq}`}
+                >
+                  <span className="font-medium truncate min-w-[150px]">{ctqWithType.ctq}</span>
+                  <span className="text-xs text-gray-600">{ctqWithType.ctqType}</span>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
+
+          {ctqList.map((ctqWithType: CtqWithType) => {
+            const ctq = ctqWithType.ctq;
+            const selection = controlCardSelection[ctq] || {};
+
+            return (
+              <TabsContent key={ctq} value={ctq} className="mt-6">
+                <div className="space-y-6">
+                  {/* Attribute CTQ Control Cards */}
+                  {ctqWithType.ctqType === "Attribute" && (
+                    <div className="space-y-6">
+                      {/* Defects Section */}
+                      <div className="border rounded-lg p-4 bg-gray-50">
+                        <h3 className="font-semibold text-lg mb-4 text-gray-800">Defects</h3>
+                        <p className="text-sm text-gray-600 mb-4">
+                          Use these charts when counting the number of defects (flaws, errors, issues) per unit or per inspection area.
+                        </p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="flex items-center space-x-3 p-3 bg-white rounded border">
+                            <Checkbox
+                              id={`c-card-${ctq}`}
+                              checked={selection.c || false}
+                              onCheckedChange={() => toggleControlCard(ctq, 'c')}
+                              data-testid={`checkbox-c-card-${ctq}`}
+                            />
+                            <div>
+                              <Label htmlFor={`c-card-${ctq}`} className="font-medium cursor-pointer">
+                                C Control Card
+                              </Label>
+                              <p className="text-xs text-gray-500">Count of defects per unit (constant sample size)</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-3 p-3 bg-white rounded border">
+                            <Checkbox
+                              id={`u-card-${ctq}`}
+                              checked={selection.u || false}
+                              onCheckedChange={() => toggleControlCard(ctq, 'u')}
+                              data-testid={`checkbox-u-card-${ctq}`}
+                            />
+                            <div>
+                              <Label htmlFor={`u-card-${ctq}`} className="font-medium cursor-pointer">
+                                U Control Card
+                              </Label>
+                              <p className="text-xs text-gray-500">Defects per unit (variable sample size)</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Defective Units Section */}
+                      <div className="border rounded-lg p-4 bg-gray-50">
+                        <h3 className="font-semibold text-lg mb-4 text-gray-800">Defective Units</h3>
+                        <p className="text-sm text-gray-600 mb-4">
+                          Use these charts when classifying units as either defective or non-defective (pass/fail, good/bad).
+                        </p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="flex items-center space-x-3 p-3 bg-white rounded border">
+                            <Checkbox
+                              id={`np-card-${ctq}`}
+                              checked={selection.np || false}
+                              onCheckedChange={() => toggleControlCard(ctq, 'np')}
+                              data-testid={`checkbox-np-card-${ctq}`}
+                            />
+                            <div>
+                              <Label htmlFor={`np-card-${ctq}`} className="font-medium cursor-pointer">
+                                NP Control Card
+                              </Label>
+                              <p className="text-xs text-gray-500">Number of defective units (constant sample size)</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-3 p-3 bg-white rounded border">
+                            <Checkbox
+                              id={`p-card-${ctq}`}
+                              checked={selection.p || false}
+                              onCheckedChange={() => toggleControlCard(ctq, 'p')}
+                              data-testid={`checkbox-p-card-${ctq}`}
+                            />
+                            <div>
+                              <Label htmlFor={`p-card-${ctq}`} className="font-medium cursor-pointer">
+                                P Control Card
+                              </Label>
+                              <p className="text-xs text-gray-500">Proportion of defective units (variable sample size)</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Render selected control card templates */}
+                      {selection.c && renderControlCardTemplate(ctq, 'c', 'C Chart')}
+                      {selection.u && renderControlCardTemplate(ctq, 'u', 'U Chart')}
+                      {selection.np && renderControlCardTemplate(ctq, 'np', 'NP Chart')}
+                      {selection.p && renderControlCardTemplate(ctq, 'p', 'P Chart')}
+                    </div>
+                  )}
+
+                  {/* Continuous CTQ Control Cards */}
+                  {ctqWithType.ctqType === "Continuous" && (
+                    <div className="space-y-6">
+                      <div className="border rounded-lg p-4 bg-gray-50">
+                        <h3 className="font-semibold text-lg mb-4 text-gray-800">Continuous Data Control Charts</h3>
+                        <p className="text-sm text-gray-600 mb-4">
+                          Select the appropriate control chart based on your subgroup size and data collection method.
+                        </p>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div className="flex items-center space-x-3 p-3 bg-white rounded border">
+                            <Checkbox
+                              id={`imr-card-${ctq}`}
+                              checked={selection.imr || false}
+                              onCheckedChange={() => toggleControlCard(ctq, 'imr')}
+                              data-testid={`checkbox-imr-card-${ctq}`}
+                            />
+                            <div>
+                              <Label htmlFor={`imr-card-${ctq}`} className="font-medium cursor-pointer">
+                                I-MR Control Card
+                              </Label>
+                              <p className="text-xs text-gray-500">Individual & Moving Range (n=1)</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-3 p-3 bg-white rounded border">
+                            <Checkbox
+                              id={`xbar-r-card-${ctq}`}
+                              checked={selection.xbarR || false}
+                              onCheckedChange={() => toggleControlCard(ctq, 'xbarR')}
+                              data-testid={`checkbox-xbar-r-card-${ctq}`}
+                            />
+                            <div>
+                              <Label htmlFor={`xbar-r-card-${ctq}`} className="font-medium cursor-pointer">
+                                Xbar-R Control Card
+                              </Label>
+                              <p className="text-xs text-gray-500">Mean & Range (n=2 to 10)</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-3 p-3 bg-white rounded border">
+                            <Checkbox
+                              id={`xbar-s-card-${ctq}`}
+                              checked={selection.xbarS || false}
+                              onCheckedChange={() => toggleControlCard(ctq, 'xbarS')}
+                              data-testid={`checkbox-xbar-s-card-${ctq}`}
+                            />
+                            <div>
+                              <Label htmlFor={`xbar-s-card-${ctq}`} className="font-medium cursor-pointer">
+                                Xbar-S Control Card
+                              </Label>
+                              <p className="text-xs text-gray-500">Mean & Std Dev (n≥10)</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Render selected control card templates */}
+                      {selection.imr && renderControlCardTemplate(ctq, 'imr', 'I-MR Chart')}
+                      {selection.xbarR && renderControlCardTemplate(ctq, 'xbarR', 'Xbar-R Chart')}
+                      {selection.xbarS && renderControlCardTemplate(ctq, 'xbarS', 'Xbar-S Chart')}
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+            );
+          })}
+        </Tabs>
+      </CardContent>
+    </Card>
   );
 }
