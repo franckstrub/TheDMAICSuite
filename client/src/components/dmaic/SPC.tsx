@@ -151,7 +151,7 @@ export default function SPC({ projectId, projectType }: SPCProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BarChart3 className="h-5 w-5" />
-            Statistical Process Control
+            Statistical Process Control (SPC)
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -291,15 +291,15 @@ export default function SPC({ projectId, projectType }: SPCProps) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <BarChart3 className="h-5 w-5" />
-          Statistical Process Control
+          Statistical Process Control (SPC)
         </CardTitle>
         <p className="text-sm text-gray-600 mt-2">
-          One SPC control chart per CTQ defined in CTS Characteristics table
+          One SPC per CTQ defined in CTS Characteristics table
         </p>
       </CardHeader>
       <CardContent>
         <p className="text-sm text-gray-500 mb-4">
-          Select the appropriate control chart type based on your CTQ data type and generate hard copy templates for shop floor monitoring.
+          Select the appropriate control chart(s) type based on your CTQ data type and definition, enter data and generate control charts.
         </p>
 
         {/* Show scroll indicator if 6+ CTQs */}
@@ -380,7 +380,7 @@ export default function SPC({ projectId, projectType }: SPCProps) {
                       <div className="border rounded-lg p-4 bg-gray-50">
                         <h3 className="font-semibold text-lg mb-4 text-gray-800">Defective Units</h3>
                         <p className="text-sm text-gray-600 mb-4">
-                          Use these charts when classifying units as either defective or non-defective (pass/fail, good/bad).
+                          Use these charts when classifying units as either defective or non-defective (pass/fail, good/bad, conform/non-conform).
                         </p>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="flex items-center space-x-3 p-3 bg-white rounded border">
@@ -414,11 +414,21 @@ export default function SPC({ projectId, projectType }: SPCProps) {
                         </div>
                       </div>
 
-                      {/* Render selected control card templates */}
-                      {selection.c && renderControlCardTemplate(ctq, 'c', 'C Chart')}
-                      {selection.u && renderControlCardTemplate(ctq, 'u', 'U Chart')}
-                      {selection.np && renderControlCardTemplate(ctq, 'np', 'NP Chart')}
-                      {selection.p && renderControlCardTemplate(ctq, 'p', 'P Chart')}
+                      {/* Render selected control card templates in tabs */}
+                      {(selection.c || selection.u || selection.np || selection.p) && (
+                        <Tabs defaultValue={selection.c ? 'c' : selection.u ? 'u' : selection.np ? 'np' : 'p'} className="mt-4">
+                          <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${[selection.c, selection.u, selection.np, selection.p].filter(Boolean).length}, 1fr)` }}>
+                            {selection.c && <TabsTrigger value="c">C</TabsTrigger>}
+                            {selection.u && <TabsTrigger value="u">U</TabsTrigger>}
+                            {selection.np && <TabsTrigger value="np">NP</TabsTrigger>}
+                            {selection.p && <TabsTrigger value="p">P</TabsTrigger>}
+                          </TabsList>
+                          {selection.c && <TabsContent value="c">{renderControlCardTemplate(ctq, 'c', 'C Chart')}</TabsContent>}
+                          {selection.u && <TabsContent value="u">{renderControlCardTemplate(ctq, 'u', 'U Chart')}</TabsContent>}
+                          {selection.np && <TabsContent value="np">{renderControlCardTemplate(ctq, 'np', 'NP Chart')}</TabsContent>}
+                          {selection.p && <TabsContent value="p">{renderControlCardTemplate(ctq, 'p', 'P Chart')}</TabsContent>}
+                        </Tabs>
+                      )}
                     </div>
                   )}
 
@@ -456,7 +466,7 @@ export default function SPC({ projectId, projectType }: SPCProps) {
                               <Label htmlFor={`xbar-r-card-${ctq}`} className="font-medium cursor-pointer">
                                 Xbar-R Control Card
                               </Label>
-                              <p className="text-xs text-gray-500">Mean & Range (n=2 to 10)</p>
+                              <p className="text-xs text-gray-500">Mean of subgroup & Range (max - min) (n=2 to 4)</p>
                             </div>
                           </div>
                           <div className="flex items-center space-x-3 p-3 bg-white rounded border">
@@ -470,16 +480,25 @@ export default function SPC({ projectId, projectType }: SPCProps) {
                               <Label htmlFor={`xbar-s-card-${ctq}`} className="font-medium cursor-pointer">
                                 Xbar-S Control Card
                               </Label>
-                              <p className="text-xs text-gray-500">Mean & Std Dev (n≥10)</p>
+                              <p className="text-xs text-gray-500">Mean of subgroup & Standard Deviation (n≥5)</p>
                             </div>
                           </div>
                         </div>
                       </div>
 
-                      {/* Render selected control card templates */}
-                      {selection.imr && renderControlCardTemplate(ctq, 'imr', 'I-MR Chart')}
-                      {selection.xbarR && renderControlCardTemplate(ctq, 'xbarR', 'Xbar-R Chart')}
-                      {selection.xbarS && renderControlCardTemplate(ctq, 'xbarS', 'Xbar-S Chart')}
+                      {/* Render selected control card templates in tabs */}
+                      {(selection.imr || selection.xbarR || selection.xbarS) && (
+                        <Tabs defaultValue={selection.imr ? 'imr' : selection.xbarR ? 'xbarR' : 'xbarS'} className="mt-4">
+                          <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${[selection.imr, selection.xbarR, selection.xbarS].filter(Boolean).length}, 1fr)` }}>
+                            {selection.imr && <TabsTrigger value="imr">I-MR</TabsTrigger>}
+                            {selection.xbarR && <TabsTrigger value="xbarR">Xbar-R</TabsTrigger>}
+                            {selection.xbarS && <TabsTrigger value="xbarS">Xbar-S</TabsTrigger>}
+                          </TabsList>
+                          {selection.imr && <TabsContent value="imr">{renderControlCardTemplate(ctq, 'imr', 'I-MR Chart')}</TabsContent>}
+                          {selection.xbarR && <TabsContent value="xbarR">{renderControlCardTemplate(ctq, 'xbarR', 'Xbar-R Chart')}</TabsContent>}
+                          {selection.xbarS && <TabsContent value="xbarS">{renderControlCardTemplate(ctq, 'xbarS', 'Xbar-S Chart')}</TabsContent>}
+                        </Tabs>
+                      )}
                     </div>
                   )}
                 </div>
