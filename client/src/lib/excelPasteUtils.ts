@@ -44,10 +44,17 @@ export function detectDelimiter(text: string): string {
   }
   
   if (firstLine.includes(',')) {
-    const commaPattern = /^\s*-?\d+,\d+\s*$/;
-    const allLinesAreFrenchDecimals = lines.every(line => commaPattern.test(line.trim()));
+    const frenchDecimalPattern = /^\s*-?\d+,\d+\s*$/;
+    const integerPattern = /^\s*-?\d+\s*$/;
     
-    if (allLinesAreFrenchDecimals) {
+    const allLinesAreSingleValues = lines.every(line => {
+      const trimmed = line.trim();
+      return frenchDecimalPattern.test(trimmed) || integerPattern.test(trimmed);
+    });
+    
+    const hasAnyFrenchDecimal = lines.some(line => frenchDecimalPattern.test(line.trim()));
+    
+    if (allLinesAreSingleValues && hasAnyFrenchDecimal) {
       return '\n';
     }
     
