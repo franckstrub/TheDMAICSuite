@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect, useRef } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import {
   Card,
   CardContent,
@@ -40,11 +41,25 @@ export default function SPC({ projectId, projectType }: SPCProps) {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<string>("");
   const [controlCardSelection, setControlCardSelection] = useState<ControlCardSelection>({});
+  const selectionsLoadedRef = useRef(false);
 
   // Fetch CTS characteristics to get CTQs
   const { data: ctsData, isLoading: ctsLoading } = useQuery<any>({
     queryKey: [`/api/projects/${projectId}/cts-characteristics`],
     enabled: projectType === 'Black Belt' || projectType === 'Green Belt',
+  });
+
+  // Fetch saved control card selections
+  const { data: selectionsData } = useQuery<any>({
+    queryKey: [`/api/projects/${projectId}/spc/selections`],
+    enabled: projectType === 'Black Belt' || projectType === 'Green Belt',
+  });
+
+  // Mutation for autosave
+  const saveMutation = useMutation({
+    mutationFn: async ({ ctqName, selection }: { ctqName: string; selection: any }) => {
+      return apiRequest('POST', `/api/projects/${projectId}/spc/selections/${encodeURIComponent(ctqName)}`, selection);
+    },
   });
 
   // Get CTQs with types from CTS characteristics
@@ -66,6 +81,26 @@ export default function SPC({ projectId, projectType }: SPCProps) {
     }
   }, [projectId]);
 
+  // Load saved selections from database
+  useEffect(() => {
+    if (selectionsData?.selections && !selectionsLoadedRef.current) {
+      selectionsLoadedRef.current = true;
+      const savedSelections: ControlCardSelection = {};
+      selectionsData.selections.forEach((sel: any) => {
+        savedSelections[sel.ctqName] = {
+          c: sel.cCard ?? false,
+          u: sel.uCard ?? false,
+          np: sel.npCard ?? false,
+          p: sel.pCard ?? false,
+          imr: sel.imrCard ?? false,
+          xbarR: sel.xbarRCard ?? false,
+          xbarS: sel.xbarSCard ?? false,
+        };
+      });
+      setControlCardSelection(prev => ({ ...prev, ...savedSelections }));
+    }
+  }, [selectionsData]);
+
   // Initialize active tab and control card selections when CTQs are loaded
   useEffect(() => {
     const ctqs = getCtqsWithTypes();
@@ -77,7 +112,7 @@ export default function SPC({ projectId, projectType }: SPCProps) {
         setActiveTab(validSavedTab ? savedTab : ctqs[0].ctq);
       }
 
-      // Initialize control card selections for each CTQ
+      // Initialize control card selections for each CTQ (only for CTQs not already loaded)
       const newSelections: ControlCardSelection = {};
       ctqs.forEach(({ ctq }) => {
         if (!controlCardSelection[ctq]) {
@@ -104,13 +139,32 @@ export default function SPC({ projectId, projectType }: SPCProps) {
   };
 
   const toggleControlCard = (ctq: string, cardType: keyof ControlCardSelection[string]) => {
+    const newValue = !controlCardSelection[ctq]?.[cardType];
+    
     setControlCardSelection(prev => ({
       ...prev,
       [ctq]: {
         ...prev[ctq],
-        [cardType]: !prev[ctq]?.[cardType]
+        [cardType]: newValue
       }
     }));
+
+    // Map local state keys to API keys
+    const apiKeyMap: Record<string, string> = {
+      c: 'cCard',
+      u: 'uCard',
+      np: 'npCard',
+      p: 'pCard',
+      imr: 'imrCard',
+      xbarR: 'xbarRCard',
+      xbarS: 'xbarSCard',
+    };
+
+    // Autosave to database
+    saveMutation.mutate({
+      ctqName: ctq,
+      selection: { [apiKeyMap[cardType]]: newValue }
+    });
   };
 
   const handleDownloadControlCard = (ctq: string, cardType: string) => {

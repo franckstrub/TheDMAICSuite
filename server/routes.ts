@@ -143,6 +143,7 @@ import {
   insertFinancialBenefitsValidationSchema,
   imrControlCardData,
   insertImrControlCardDataSchema,
+  spcControlCardSelections,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, asc, desc, ne, and, or, ilike, sql, inArray } from "drizzle-orm";
@@ -10665,6 +10666,121 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(existing ? 200 : 201).json(result);
       } catch (err) {
         console.error("I-MR data save error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // ========== SPC Control Card Selections ==========
+
+  // GET all control card selections for a project
+  app.get(
+    "/api/projects/:projectId/spc/selections",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        
+        if (isNaN(projectId)) {
+          return res.status(400).json({ error: "Invalid project ID" });
+        }
+
+        const userId = (req.user as any)?.claims?.sub;
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord?.organizationId) {
+          return res.status(401).json({ error: "Unauthorized" });
+        }
+
+        const selections = await db
+          .select()
+          .from(spcControlCardSelections)
+          .where(
+            and(
+              eq(spcControlCardSelections.projectId, projectId),
+              eq(spcControlCardSelections.organizationId, userRecord.organizationId),
+            ),
+          );
+
+        return res.json({ selections });
+      } catch (err) {
+        console.error("SPC selections fetch error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // POST/PUT SPC control card selection for a CTQ (upsert)
+  app.post(
+    "/api/projects/:projectId/spc/selections/:ctqName",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        const ctqName = decodeURIComponent(req.params.ctqName);
+        
+        if (isNaN(projectId)) {
+          return res.status(400).json({ error: "Invalid project ID" });
+        }
+
+        const userId = (req.user as any)?.claims?.sub;
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord?.organizationId) {
+          return res.status(401).json({ error: "Unauthorized" });
+        }
+
+        const { cCard, uCard, npCard, pCard, imrCard, xbarRCard, xbarSCard } = req.body;
+
+        // Check if record exists
+        const [existing] = await db
+          .select()
+          .from(spcControlCardSelections)
+          .where(
+            and(
+              eq(spcControlCardSelections.projectId, projectId),
+              eq(spcControlCardSelections.ctqName, ctqName),
+              eq(spcControlCardSelections.organizationId, userRecord.organizationId),
+            ),
+          );
+
+        let result;
+        if (existing) {
+          // Update existing record
+          [result] = await db
+            .update(spcControlCardSelections)
+            .set({
+              cCard: cCard ?? existing.cCard,
+              uCard: uCard ?? existing.uCard,
+              npCard: npCard ?? existing.npCard,
+              pCard: pCard ?? existing.pCard,
+              imrCard: imrCard ?? existing.imrCard,
+              xbarRCard: xbarRCard ?? existing.xbarRCard,
+              xbarSCard: xbarSCard ?? existing.xbarSCard,
+              updatedAt: new Date(),
+            })
+            .where(eq(spcControlCardSelections.id, existing.id))
+            .returning();
+        } else {
+          // Create new record
+          [result] = await db
+            .insert(spcControlCardSelections)
+            .values({
+              projectId,
+              ctqName,
+              organizationId: userRecord.organizationId,
+              cCard: cCard ?? false,
+              uCard: uCard ?? false,
+              npCard: npCard ?? false,
+              pCard: pCard ?? false,
+              imrCard: imrCard ?? false,
+              xbarRCard: xbarRCard ?? false,
+              xbarSCard: xbarSCard ?? false,
+            })
+            .returning();
+        }
+
+        return res.status(existing ? 200 : 201).json(result);
+      } catch (err) {
+        console.error("SPC selection save error:", err);
         return handleErrors(err, res);
       }
     },
