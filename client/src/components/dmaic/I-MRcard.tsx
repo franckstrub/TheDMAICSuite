@@ -91,6 +91,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
     const previousState = dataHistory[dataHistory.length - 1];
     setDataValues([...previousState.values]);
     setDataHistory(prev => prev.slice(0, -1));
+    setLastSavedState('');
     
     toast({
       title: "Undo successful",
