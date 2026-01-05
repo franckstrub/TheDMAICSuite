@@ -29,19 +29,32 @@ export function parseNumericValue(value: string | number): number {
 /**
  * Detects the delimiter used in pasted data
  * Excel uses tabs, CSV uses commas
+ * Smart detection to avoid confusing French decimal comma with column delimiter
  */
 export function detectDelimiter(text: string): string {
-  const firstLine = text.split('\n')[0];
+  const lines = text.split('\n').filter(line => line.trim() !== '');
+  const firstLine = lines[0] || '';
   
   if (firstLine.includes('\t')) {
     return '\t';
   }
   
+  if (firstLine.includes(';')) {
+    return ';';
+  }
+  
   if (firstLine.includes(',')) {
+    const commaPattern = /^\s*-?\d+,\d+\s*$/;
+    const allLinesAreFrenchDecimals = lines.every(line => commaPattern.test(line.trim()));
+    
+    if (allLinesAreFrenchDecimals) {
+      return '\n';
+    }
+    
     return ',';
   }
   
-  return '\t';
+  return '\n';
 }
 
 /**
@@ -67,7 +80,7 @@ export function parseExcelPaste(pastedText: string): ParsedExcelData {
   
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    const cells = line.split(delimiter);
+    const cells = delimiter === '\n' ? [line] : line.split(delimiter);
     const row: number[] = [];
     
     for (let j = 0; j < cells.length; j++) {
