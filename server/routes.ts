@@ -141,6 +141,8 @@ import {
   insertTransferToPOItemSchema,
   financialBenefitsValidations,
   insertFinancialBenefitsValidationSchema,
+  imrControlCardData,
+  insertImrControlCardDataSchema,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, asc, desc, ne, and, or, ilike, sql, inArray } from "drizzle-orm";
@@ -10549,6 +10551,111 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(existing ? 200 : 201).json(result);
       } catch (err) {
         console.error("Financial benefits validation save error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // ========== I-MR Control Card Data (SPC) ==========
+
+  // GET I-MR control card data for a specific CTQ
+  app.get(
+    "/api/projects/:projectId/spc/imr/:ctqName",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        const ctqName = decodeURIComponent(req.params.ctqName);
+        
+        if (isNaN(projectId)) {
+          return res.status(400).json({ error: "Invalid project ID" });
+        }
+
+        const userId = (req.user as any)?.id;
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord?.organizationId) {
+          return res.status(401).json({ error: "Unauthorized" });
+        }
+
+        const [data] = await db
+          .select()
+          .from(imrControlCardData)
+          .where(
+            and(
+              eq(imrControlCardData.projectId, projectId),
+              eq(imrControlCardData.ctqName, ctqName),
+              eq(imrControlCardData.organizationId, userRecord.organizationId),
+            ),
+          );
+
+        return res.json(data || null);
+      } catch (err) {
+        console.error("I-MR data fetch error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // POST/PUT I-MR control card data (upsert)
+  app.post(
+    "/api/projects/:projectId/spc/imr/:ctqName",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        const ctqName = decodeURIComponent(req.params.ctqName);
+        
+        if (isNaN(projectId)) {
+          return res.status(400).json({ error: "Invalid project ID" });
+        }
+
+        const userId = (req.user as any)?.id;
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord?.organizationId) {
+          return res.status(401).json({ error: "Unauthorized" });
+        }
+
+        const { dataValues } = req.body;
+
+        // Check if record exists
+        const [existing] = await db
+          .select()
+          .from(imrControlCardData)
+          .where(
+            and(
+              eq(imrControlCardData.projectId, projectId),
+              eq(imrControlCardData.ctqName, ctqName),
+              eq(imrControlCardData.organizationId, userRecord.organizationId),
+            ),
+          );
+
+        let result;
+        if (existing) {
+          // Update existing record
+          [result] = await db
+            .update(imrControlCardData)
+            .set({
+              dataValues: dataValues || [],
+              updatedAt: new Date(),
+            })
+            .where(eq(imrControlCardData.id, existing.id))
+            .returning();
+        } else {
+          // Create new record
+          [result] = await db
+            .insert(imrControlCardData)
+            .values({
+              projectId,
+              ctqName,
+              organizationId: userRecord.organizationId,
+              dataValues: dataValues || [],
+            })
+            .returning();
+        }
+
+        return res.status(existing ? 200 : 201).json(result);
+      } catch (err) {
+        console.error("I-MR data save error:", err);
         return handleErrors(err, res);
       }
     },
