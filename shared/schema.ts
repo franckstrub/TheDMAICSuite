@@ -3112,3 +3112,34 @@ export const insertFinancialBenefitsValidationSchema = createInsertSchema(financ
 
 export type InsertFinancialBenefitsValidation = z.infer<typeof insertFinancialBenefitsValidationSchema>;
 export type FinancialBenefitsValidation = typeof financialBenefitsValidations.$inferSelect;
+
+// I-MR Control Card Data for SPC (Statistical Process Control)
+export const imrControlCardData = pgTable(
+  "imr_control_card_data",
+  {
+    id: serial("id").primaryKey(),
+    organizationId: integer("organization_id")
+      .references(() => organizations.id)
+      .notNull(),
+    projectId: integer("project_id").notNull(),
+    ctqName: text("ctq_name").notNull(),
+    
+    // Data array stored as JSON (array of numbers)
+    dataValues: jsonb("data_values").$type<number[]>().default([]),
+    
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    uniqueProjectCtq: unique().on(table.projectId, table.ctqName),
+  }),
+);
+
+export const insertImrControlCardDataSchema = createInsertSchema(imrControlCardData).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertImrControlCardData = z.infer<typeof insertImrControlCardDataSchema>;
+export type ImrControlCardData = typeof imrControlCardData.$inferSelect;
