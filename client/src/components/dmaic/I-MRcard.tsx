@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Save, Undo, Clipboard } from "lucide-react";
+import { Loader2, Save, Undo, Clipboard, Trash2 } from "lucide-react";
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { parseSingleColumnPaste, parseNumericValue } from '@/lib/excelPasteUtils';
@@ -206,6 +206,22 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
     saveMutation.mutate(validValues);
   }, [dataValues, saveMutation, toast]);
 
+  const handleClearAllData = useCallback(() => {
+    if (dataValues.filter(v => !isNaN(v)).length === 0) {
+      toast({
+        title: "No data to clear",
+        description: "The data is already empty",
+      });
+      return;
+    }
+    saveToHistory();
+    setDataValues([NaN, NaN, NaN]);
+    toast({
+      title: "Data cleared",
+      description: "All data has been cleared. Use Undo to restore.",
+    });
+  }, [dataValues, saveToHistory, toast]);
+
   const validDataValues = dataValues.filter(v => !isNaN(v));
   const hasValidData = validDataValues.length >= 2;
 
@@ -261,6 +277,18 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
           <CardTitle className="text-lg flex items-center justify-between">
             <span>I-MR Control Chart Data Input</span>
             <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleClearAllData}
+                disabled={validDataValues.length === 0}
+                className="text-red-600 hover:text-red-800 hover:bg-red-50 border-red-300"
+                title="Clear all data (can be undone)"
+                data-testid="btn-clear-imr"
+              >
+                <Trash2 className="h-4 w-4 mr-1" />
+                Clear All Data
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
