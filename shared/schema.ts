@@ -3143,3 +3143,40 @@ export const insertImrControlCardDataSchema = createInsertSchema(imrControlCardD
 
 export type InsertImrControlCardData = z.infer<typeof insertImrControlCardDataSchema>;
 export type ImrControlCardData = typeof imrControlCardData.$inferSelect;
+
+// SPC Control Card Selection (stores checkbox selections for each CTQ)
+export const spcControlCardSelections = pgTable(
+  "spc_control_card_selections",
+  {
+    id: serial("id").primaryKey(),
+    organizationId: integer("organization_id")
+      .references(() => organizations.id)
+      .notNull(),
+    projectId: integer("project_id").notNull(),
+    ctqName: text("ctq_name").notNull(),
+    
+    // Control card checkbox selections
+    cCard: boolean("c_card").default(false),
+    uCard: boolean("u_card").default(false),
+    npCard: boolean("np_card").default(false),
+    pCard: boolean("p_card").default(false),
+    imrCard: boolean("imr_card").default(false),
+    xbarRCard: boolean("xbar_r_card").default(false),
+    xbarSCard: boolean("xbar_s_card").default(false),
+    
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    uniqueProjectCtq: unique().on(table.projectId, table.ctqName),
+  }),
+);
+
+export const insertSpcControlCardSelectionSchema = createInsertSchema(spcControlCardSelections).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertSpcControlCardSelection = z.infer<typeof insertSpcControlCardSelectionSchema>;
+export type SpcControlCardSelection = typeof spcControlCardSelections.$inferSelect;
