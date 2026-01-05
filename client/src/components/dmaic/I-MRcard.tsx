@@ -265,6 +265,54 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
 
   const stats = calculateIMRStats();
 
+  // Helper function to detect out-of-control points
+  const isOutOfControl = (value: number, ucl: number, lcl: number): boolean => {
+    return value > ucl || value < lcl;
+  };
+
+  // Get arrays of in-control and out-of-control points for I chart
+  const getIChartPointArrays = () => {
+    if (!stats) return { inControl: { x: [], y: [] }, outOfControl: { x: [], y: [] } };
+    
+    const inControl: { x: number[]; y: number[] } = { x: [], y: [] };
+    const outOfControl: { x: number[]; y: number[] } = { x: [], y: [] };
+    
+    validDataValues.forEach((value, i) => {
+      if (isOutOfControl(value, stats.iUCL, stats.iLCL)) {
+        outOfControl.x.push(i + 1);
+        outOfControl.y.push(value);
+      } else {
+        inControl.x.push(i + 1);
+        inControl.y.push(value);
+      }
+    });
+    
+    return { inControl, outOfControl };
+  };
+
+  // Get arrays of in-control and out-of-control points for MR chart
+  const getMRChartPointArrays = () => {
+    if (!stats) return { inControl: { x: [], y: [] }, outOfControl: { x: [], y: [] } };
+    
+    const inControl: { x: number[]; y: number[] } = { x: [], y: [] };
+    const outOfControl: { x: number[]; y: number[] } = { x: [], y: [] };
+    
+    stats.movingRanges.forEach((value, i) => {
+      if (isOutOfControl(value, stats.mrUCL, stats.mrLCL)) {
+        outOfControl.x.push(i + 2);
+        outOfControl.y.push(value);
+      } else {
+        inControl.x.push(i + 2);
+        inControl.y.push(value);
+      }
+    });
+    
+    return { inControl, outOfControl };
+  };
+
+  const iChartPoints = getIChartPointArrays();
+  const mrChartPoints = getMRChartPointArrays();
+
   const displayValues = [...dataValues];
   if (displayValues.length < 3 || !isNaN(displayValues[displayValues.length - 1])) {
     displayValues.push(NaN);
@@ -398,11 +446,27 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                     x: validDataValues.map((_, i) => i + 1),
                     y: validDataValues,
                     type: 'scatter',
-                    mode: 'lines+markers',
+                    mode: 'lines',
                     name: 'Individual Values',
                     line: { color: '#2563eb', width: 1.5 },
-                    marker: { color: '#2563eb', size: 6 },
+                    showlegend: false,
                   },
+                  {
+                    x: iChartPoints.inControl.x,
+                    y: iChartPoints.inControl.y,
+                    type: 'scatter',
+                    mode: 'markers',
+                    name: 'In Control',
+                    marker: { color: '#2563eb', size: 8, symbol: 'circle' },
+                  },
+                  ...(iChartPoints.outOfControl.x.length > 0 ? [{
+                    x: iChartPoints.outOfControl.x,
+                    y: iChartPoints.outOfControl.y,
+                    type: 'scatter' as const,
+                    mode: 'markers' as const,
+                    name: 'Out of Control',
+                    marker: { color: '#dc2626', size: 10, symbol: 'square' },
+                  }] : []),
                   {
                     x: [1, validDataValues.length],
                     y: [stats.iCL, stats.iCL],
@@ -516,11 +580,27 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                     x: stats.movingRanges.map((_, i) => i + 2),
                     y: stats.movingRanges,
                     type: 'scatter',
-                    mode: 'lines+markers',
+                    mode: 'lines',
                     name: 'Moving Range',
                     line: { color: '#7c3aed', width: 1.5 },
-                    marker: { color: '#7c3aed', size: 6 },
+                    showlegend: false,
                   },
+                  {
+                    x: mrChartPoints.inControl.x,
+                    y: mrChartPoints.inControl.y,
+                    type: 'scatter',
+                    mode: 'markers',
+                    name: 'In Control',
+                    marker: { color: '#7c3aed', size: 8, symbol: 'circle' },
+                  },
+                  ...(mrChartPoints.outOfControl.x.length > 0 ? [{
+                    x: mrChartPoints.outOfControl.x,
+                    y: mrChartPoints.outOfControl.y,
+                    type: 'scatter' as const,
+                    mode: 'markers' as const,
+                    name: 'Out of Control',
+                    marker: { color: '#dc2626', size: 10, symbol: 'square' },
+                  }] : []),
                   {
                     x: [2, validDataValues.length],
                     y: [stats.mrCL, stats.mrCL],
