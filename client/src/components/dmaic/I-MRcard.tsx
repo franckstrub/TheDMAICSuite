@@ -493,7 +493,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                   },
                 ]}
                 layout={{
-                  title: { text: 'I Chart - Individual Values' },
+                  title: { text: `I Chart of ${ctqName}` },
                   xaxis: { title: { text: 'Observation' }, dtick: 1 },
                   yaxis: { title: { text: 'Value' } },
                   showlegend: true,
@@ -627,7 +627,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                   },
                 ]}
                 layout={{
-                  title: { text: 'MR Chart - Moving Range' },
+                  title: { text: `MR Chart of ${ctqName}` },
                   xaxis: { title: { text: 'Observation' }, dtick: 1 },
                   yaxis: { title: { text: 'Moving Range' }, rangemode: 'tozero' },
                   showlegend: true,
