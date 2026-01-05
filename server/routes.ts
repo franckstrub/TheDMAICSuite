@@ -10571,7 +10571,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(400).json({ error: "Invalid project ID" });
         }
 
-        const userId = (req.user as any)?.id;
+        const userId = (req.user as any)?.claims?.sub;
         const userRecord = await storage.getUser(userId);
         if (!userRecord?.organizationId) {
           return res.status(401).json({ error: "Unauthorized" });
@@ -10609,7 +10609,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(400).json({ error: "Invalid project ID" });
         }
 
-        const userId = (req.user as any)?.id;
+        const userId = (req.user as any)?.claims?.sub;
         const userRecord = await storage.getUser(userId);
         if (!userRecord?.organizationId) {
           return res.status(401).json({ error: "Unauthorized" });
