@@ -10617,6 +10617,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         const { dataValues } = req.body;
 
+        // Validate dataValues is an array of numbers
+        if (dataValues !== undefined && !Array.isArray(dataValues)) {
+          return res.status(400).json({ error: "dataValues must be an array" });
+        }
+        
+        const validatedData = Array.isArray(dataValues) 
+          ? dataValues.filter((v: any) => typeof v === 'number' && !isNaN(v))
+          : [];
+
         // Check if record exists
         const [existing] = await db
           .select()
@@ -10635,7 +10644,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           [result] = await db
             .update(imrControlCardData)
             .set({
-              dataValues: dataValues || [],
+              dataValues: validatedData,
               updatedAt: new Date(),
             })
             .where(eq(imrControlCardData.id, existing.id))
@@ -10648,7 +10657,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               projectId,
               ctqName,
               organizationId: userRecord.organizationId,
-              dataValues: dataValues || [],
+              dataValues: validatedData,
             })
             .returning();
         }

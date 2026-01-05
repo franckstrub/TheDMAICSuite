@@ -12,6 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart3, Download, Loader2 } from "lucide-react";
+import { IMRCard } from "./I-MRcard";
 
 interface SPCProps {
   projectId: number;
@@ -494,7 +495,7 @@ export default function SPC({ projectId, projectType }: SPCProps) {
                             {selection.xbarR && <TabsTrigger value="xbarR">Xbar-R</TabsTrigger>}
                             {selection.xbarS && <TabsTrigger value="xbarS">Xbar-S</TabsTrigger>}
                           </TabsList>
-                          {selection.imr && <TabsContent value="imr">{renderControlCardTemplate(ctq, 'imr', 'I-MR Chart')}</TabsContent>}
+                          {selection.imr && <TabsContent value="imr"><IMRCard projectId={projectId} ctqName={ctq} /></TabsContent>}
                           {selection.xbarR && <TabsContent value="xbarR">{renderControlCardTemplate(ctq, 'xbarR', 'Xbar-R Chart')}</TabsContent>}
                           {selection.xbarS && <TabsContent value="xbarS">{renderControlCardTemplate(ctq, 'xbarS', 'Xbar-S Chart')}</TabsContent>}
                         </Tabs>
