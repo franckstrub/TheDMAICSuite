@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -41,7 +41,6 @@ export default function SPC({ projectId, projectType }: SPCProps) {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<string>("");
   const [controlCardSelection, setControlCardSelection] = useState<ControlCardSelection>({});
-  const selectionsLoadedRef = useRef(false);
 
   // Fetch CTS characteristics to get CTQs
   const { data: ctsData, isLoading: ctsLoading } = useQuery<any>({
@@ -50,7 +49,7 @@ export default function SPC({ projectId, projectType }: SPCProps) {
   });
 
   // Fetch saved control card selections
-  const { data: selectionsData } = useQuery<any>({
+  const { data: selectionsData, isLoading: selectionsLoading } = useQuery<any>({
     queryKey: [`/api/projects/${projectId}/spc/selections`],
     enabled: projectType === 'Black Belt' || projectType === 'Green Belt',
   });
@@ -81,13 +80,16 @@ export default function SPC({ projectId, projectType }: SPCProps) {
     }
   }, [projectId]);
 
-  // Load saved selections from database
+  // Initialize control card selections when both CTQs and saved selections are loaded
   useEffect(() => {
-    if (selectionsData?.selections && !selectionsLoadedRef.current) {
-      selectionsLoadedRef.current = true;
-      const savedSelections: ControlCardSelection = {};
+    const ctqs = getCtqsWithTypes();
+    if (ctqs.length === 0 || selectionsLoading) return;
+
+    // Build saved selections map from database
+    const savedSelectionsMap: ControlCardSelection = {};
+    if (selectionsData?.selections) {
       selectionsData.selections.forEach((sel: any) => {
-        savedSelections[sel.ctqName] = {
+        savedSelectionsMap[sel.ctqName] = {
           c: sel.cCard ?? false,
           u: sel.uCard ?? false,
           np: sel.npCard ?? false,
@@ -97,41 +99,35 @@ export default function SPC({ projectId, projectType }: SPCProps) {
           xbarS: sel.xbarSCard ?? false,
         };
       });
-      setControlCardSelection(prev => ({ ...prev, ...savedSelections }));
     }
-  }, [selectionsData]);
 
-  // Initialize active tab and control card selections when CTQs are loaded
-  useEffect(() => {
-    const ctqs = getCtqsWithTypes();
-    if (ctqs.length > 0) {
-      // Set active tab if not already set or if current tab is invalid
-      if (!activeTab || !ctqs.some(c => c.ctq === activeTab)) {
-        const savedTab = localStorage.getItem(`spc-active-tab-${projectId}`);
-        const validSavedTab = savedTab && ctqs.some(c => c.ctq === savedTab);
-        setActiveTab(validSavedTab ? savedTab : ctqs[0].ctq);
+    // Initialize all CTQs, using saved data if available, otherwise defaults
+    const newSelections: ControlCardSelection = {};
+    ctqs.forEach(({ ctq }) => {
+      if (savedSelectionsMap[ctq]) {
+        newSelections[ctq] = savedSelectionsMap[ctq];
+      } else {
+        newSelections[ctq] = {
+          c: false,
+          u: false,
+          np: false,
+          p: false,
+          imr: false,
+          xbarR: false,
+          xbarS: false,
+        };
       }
+    });
+    
+    setControlCardSelection(newSelections);
 
-      // Initialize control card selections for each CTQ (only for CTQs not already loaded)
-      const newSelections: ControlCardSelection = {};
-      ctqs.forEach(({ ctq }) => {
-        if (!controlCardSelection[ctq]) {
-          newSelections[ctq] = {
-            c: false,
-            u: false,
-            np: false,
-            p: false,
-            imr: false,
-            xbarR: false,
-            xbarS: false,
-          };
-        }
-      });
-      if (Object.keys(newSelections).length > 0) {
-        setControlCardSelection(prev => ({ ...prev, ...newSelections }));
-      }
+    // Set active tab if not already set or if current tab is invalid
+    if (!activeTab || !ctqs.some(c => c.ctq === activeTab)) {
+      const savedTab = localStorage.getItem(`spc-active-tab-${projectId}`);
+      const validSavedTab = savedTab && ctqs.some(c => c.ctq === savedTab);
+      setActiveTab(validSavedTab ? savedTab : ctqs[0].ctq);
     }
-  }, [ctsData, projectId]);
+  }, [ctsData, selectionsData, selectionsLoading, projectId]);
 
   const handleTabChange = (tabValue: string) => {
     setActiveTab(tabValue);

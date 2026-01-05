@@ -278,11 +278,10 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
             <span>I-MR Control Chart Data Input</span>
             <div className="flex items-center gap-2">
               <Button
-                variant="outline"
+                variant="destructive"
                 size="sm"
                 onClick={handleClearAllData}
-                disabled={validDataValues.length === 0}
-                className="text-red-600 hover:text-red-800 hover:bg-red-50 border-red-300"
+                disabled={validDataValues.length === 0}               
                 title="Clear all data (can be undone)"
                 data-testid="btn-clear-imr"
               >
