@@ -201,8 +201,17 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
   const handlePaste = useCallback((e: React.ClipboardEvent) => {
     e.preventDefault();
     const pastedText = e.clipboardData.getData('text');
+    const target = e.target as HTMLInputElement;
+    const focusedCol = target?.getAttribute('data-cell-col') || 'value';
+    const focusedIndex = parseInt(target?.getAttribute('data-cell-index') || '0', 10);
     
-    const lines = pastedText.split(/\r?\n/).filter(line => line.trim() !== '');
+    // Split by newlines but keep empty lines to preserve cell positions
+    let lines = pastedText.split(/\r?\n/);
+    // Remove trailing empty line if exists (common with Excel copy)
+    if (lines.length > 0 && lines[lines.length - 1] === '') {
+      lines = lines.slice(0, -1);
+    }
+    
     if (lines.length === 0) {
       toast({
         title: "Paste error",
@@ -215,6 +224,68 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
     saveToHistory();
     
     const hasXScale = xScaleType !== 'index';
+    
+    // Check if pasting multi-column data (has tabs)
+    const hasMultipleColumns = lines.some(line => line.includes('\t'));
+    
+    if (focusedCol === 'xscale' && hasXScale && !hasMultipleColumns) {
+      // Pasting single column into x-scale column - only update x-scale values
+      const newXScaleValues = [...xScaleValues];
+      lines.forEach((line, i) => {
+        const targetIndex = focusedIndex + i;
+        // Expand arrays if needed
+        while (newXScaleValues.length <= targetIndex) {
+          newXScaleValues.push('');
+        }
+        while (dataValues.length <= targetIndex) {
+          setDataValues(prev => [...prev, NaN]);
+          setRawInputValues(prev => [...prev, '']);
+        }
+        newXScaleValues[targetIndex] = line;
+      });
+      setXScaleValues(newXScaleValues);
+      // Ensure dataValues and rawInputValues arrays are long enough
+      if (focusedIndex + lines.length > dataValues.length) {
+        const needed = focusedIndex + lines.length - dataValues.length;
+        setDataValues(prev => [...prev, ...Array(needed).fill(NaN)]);
+        setRawInputValues(prev => [...prev, ...Array(needed).fill('')]);
+      }
+      toast({
+        title: "Data pasted",
+        description: `Successfully pasted ${lines.length} x-scale values`,
+      });
+      return;
+    }
+    
+    if (focusedCol === 'value' && !hasMultipleColumns) {
+      // Pasting single column into value column - only update values
+      const newDataValues = [...dataValues];
+      const newRawValues = [...rawInputValues];
+      lines.forEach((line, i) => {
+        const targetIndex = focusedIndex + i;
+        // Expand arrays if needed
+        while (newDataValues.length <= targetIndex) {
+          newDataValues.push(NaN);
+          newRawValues.push('');
+        }
+        newRawValues[targetIndex] = line;
+        newDataValues[targetIndex] = parseNumericValue(line);
+      });
+      setDataValues(newDataValues);
+      setRawInputValues(newRawValues);
+      // Ensure xScaleValues array is long enough
+      if (hasXScale && focusedIndex + lines.length > xScaleValues.length) {
+        const needed = focusedIndex + lines.length - xScaleValues.length;
+        setXScaleValues(prev => [...prev, ...Array(needed).fill('')]);
+      }
+      toast({
+        title: "Data pasted",
+        description: `Successfully pasted ${lines.length} data points`,
+      });
+      return;
+    }
+    
+    // Multi-column paste - replace all data
     const newXScaleValues: string[] = [];
     const newDataValues: number[] = [];
     const newRawValues: string[] = [];
@@ -223,17 +294,17 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
       const cells = line.split(/\t/);
       
       if (hasXScale && cells.length >= 2) {
-        newXScaleValues.push(cells[0].trim());
-        const rawValue = cells[1].trim();
+        newXScaleValues.push(cells[0]);
+        const rawValue = cells[1];
         newRawValues.push(rawValue);
         newDataValues.push(parseNumericValue(rawValue));
       } else if (hasXScale && cells.length === 1) {
         newXScaleValues.push('');
-        const rawValue = cells[0].trim();
+        const rawValue = cells[0];
         newRawValues.push(rawValue);
         newDataValues.push(parseNumericValue(rawValue));
       } else {
-        const rawValue = cells[0].trim();
+        const rawValue = cells[0];
         newRawValues.push(rawValue);
         newDataValues.push(parseNumericValue(rawValue));
       }
@@ -249,7 +320,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
       title: "Data pasted",
       description: `Successfully pasted ${newDataValues.length} data points`,
     });
-  }, [saveToHistory, toast, xScaleType]);
+  }, [saveToHistory, toast, xScaleType, dataValues, rawInputValues, xScaleValues]);
 
   const handlePasteFromClipboard = useCallback(async () => {
     try {
