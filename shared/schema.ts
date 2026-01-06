@@ -3124,6 +3124,9 @@ export const imrControlCardData = pgTable(
     projectId: integer("project_id").notNull(),
     ctqName: text("ctq_name").notNull(),
     
+    // Indicator name to monitor (defaults to CTQ name but can be customized)
+    indicatorName: text("indicator_name").default(""),
+    
     // Data array stored as JSON (array of numbers)
     dataValues: jsonb("data_values").$type<number[]>().default([]),
     
