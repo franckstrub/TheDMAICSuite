@@ -10616,7 +10616,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(401).json({ error: "Unauthorized" });
         }
 
-        const { dataValues, indicatorName, chartDate } = req.body;
+        const { dataValues, indicatorName, chartDate, xScaleType, xScaleValues } = req.body;
 
         // Validate dataValues is an array of numbers
         if (dataValues !== undefined && !Array.isArray(dataValues)) {
@@ -10629,6 +10629,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         const validatedIndicatorName = typeof indicatorName === 'string' ? indicatorName : "";
         const validatedChartDate = typeof chartDate === 'string' ? chartDate : "";
+        const validatedXScaleType = ['index', 'freeform', 'date'].includes(xScaleType) ? xScaleType : "index";
+        const validatedXScaleValues = Array.isArray(xScaleValues) 
+          ? xScaleValues.map((v: any) => String(v))
+          : [];
 
         // Check if record exists
         const [existing] = await db
@@ -10651,6 +10655,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               dataValues: validatedData,
               indicatorName: validatedIndicatorName,
               chartDate: validatedChartDate,
+              xScaleType: validatedXScaleType,
+              xScaleValues: validatedXScaleValues,
               updatedAt: new Date(),
             })
             .where(eq(imrControlCardData.id, existing.id))
@@ -10666,6 +10672,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               dataValues: validatedData,
               indicatorName: validatedIndicatorName,
               chartDate: validatedChartDate,
+              xScaleType: validatedXScaleType,
+              xScaleValues: validatedXScaleValues,
             })
             .returning();
         }
