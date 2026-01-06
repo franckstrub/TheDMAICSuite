@@ -11,6 +11,74 @@ import { apiRequest, queryClient } from '@/lib/queryClient';
 import { parseNumericValue } from '@/lib/excelPasteUtils';
 import Plot from 'react-plotly.js';
 
+// Helper to normalize various date formats to YYYY-MM-DD
+function normalizeDate(dateStr: string): string {
+  if (!dateStr || !dateStr.trim()) return '';
+  const trimmed = dateStr.trim();
+  
+  // Already in YYYY-MM-DD format
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    return trimmed;
+  }
+  
+  // Excel serial number (days since 1899-12-30)
+  if (/^\d{5}$/.test(trimmed)) {
+    const serial = parseInt(trimmed, 10);
+    const date = new Date((serial - 25569) * 86400 * 1000);
+    return date.toISOString().split('T')[0];
+  }
+  
+  // Try parsing with Date constructor
+  const parsed = new Date(trimmed);
+  if (!isNaN(parsed.getTime())) {
+    return parsed.toISOString().split('T')[0];
+  }
+  
+  // Try common formats manually
+  // M/D/YYYY or MM/DD/YYYY
+  let match = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (match) {
+    const [, m, d, y] = match;
+    return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+  }
+  
+  // D/M/YYYY (European) - assume if day > 12
+  match = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (match) {
+    const [, first, second, y] = match;
+    const firstNum = parseInt(first, 10);
+    const secondNum = parseInt(second, 10);
+    if (firstNum > 12 && secondNum <= 12) {
+      return `${y}-${second.padStart(2, '0')}-${first.padStart(2, '0')}`;
+    }
+  }
+  
+  // D-M-YYYY or DD-MM-YYYY
+  match = trimmed.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+  if (match) {
+    const [, d, m, y] = match;
+    return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+  }
+  
+  // DD-Mon-YY or DD-Mon-YYYY (e.g., 15-Jan-24)
+  match = trimmed.match(/^(\d{1,2})-([A-Za-z]{3})-(\d{2,4})$/);
+  if (match) {
+    const [, d, mon, y] = match;
+    const months: Record<string, string> = {
+      jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06',
+      jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12'
+    };
+    const monthNum = months[mon.toLowerCase()];
+    if (monthNum) {
+      const year = y.length === 2 ? (parseInt(y) > 50 ? '19' + y : '20' + y) : y;
+      return `${year}-${monthNum}-${d.padStart(2, '0')}`;
+    }
+  }
+  
+  // Return original if we can't parse
+  return trimmed;
+}
+
 interface IMRCardProps {
   projectId: number;
   ctqName: string;
@@ -241,7 +309,8 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
           setDataValues(prev => [...prev, NaN]);
           setRawInputValues(prev => [...prev, '']);
         }
-        newXScaleValues[targetIndex] = line;
+        // Normalize dates if date scale type is selected
+        newXScaleValues[targetIndex] = xScaleType === 'date' ? normalizeDate(line) : line;
       });
       setXScaleValues(newXScaleValues);
       // Ensure dataValues and rawInputValues arrays are long enough
@@ -294,7 +363,9 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
       const cells = line.split(/\t/);
       
       if (hasXScale && cells.length >= 2) {
-        newXScaleValues.push(cells[0]);
+        // Normalize dates if date scale type is selected
+        const xScaleVal = xScaleType === 'date' ? normalizeDate(cells[0]) : cells[0];
+        newXScaleValues.push(xScaleVal);
         const rawValue = cells[1];
         newRawValues.push(rawValue);
         newDataValues.push(parseNumericValue(rawValue));
@@ -672,14 +743,22 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                     {xScaleType !== 'index' && (
                       <td className="px-4 py-1">
                         <Input
-                          type={xScaleType === 'date' ? 'date' : 'text'}
+                          type="text"
                           value={xScaleValues[index] ?? ''}
                           onChange={(e) => handleXScaleChange(index, e.target.value)}
                           onKeyDown={(e) => handleKeyDown(e, index, 'xscale')}
                           onFocus={() => setFocusedCell({ row: index, col: 'xscale' })}
-                          onBlur={() => setFocusedCell(null)}
+                          onBlur={() => {
+                            setFocusedCell(null);
+                            if (xScaleType === 'date' && xScaleValues[index]) {
+                              const normalized = normalizeDate(xScaleValues[index]);
+                              if (normalized !== xScaleValues[index]) {
+                                handleXScaleChange(index, normalized);
+                              }
+                            }
+                          }}
                           className="h-8 text-sm"
-                          placeholder={xScaleType === 'date' ? '' : 'Enter label'}
+                          placeholder={xScaleType === 'date' ? 'YYYY-MM-DD' : 'Enter label'}
                           data-cell-index={index}
                           data-cell-col="xscale"
                           data-testid={`input-imr-xscale-${index}`}
