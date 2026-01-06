@@ -29,6 +29,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
   const [focusedCell, setFocusedCell] = useState<number | null>(null);
   const [lastSavedState, setLastSavedState] = useState<string>('');
   const [indicatorName, setIndicatorName] = useState<string>(ctqName);
+  const [chartDate, setChartDate] = useState<string>('');
 
   const dataQuery = useQuery({
     queryKey: [`/api/projects/${projectId}/spc/imr/${encodeURIComponent(ctqName)}`],
@@ -45,15 +46,18 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
       if (data?.indicatorName) {
         setIndicatorName(data.indicatorName);
       }
+      if (data?.chartDate) {
+        setChartDate(data.chartDate);
+      }
     }
   }, [dataQuery.data]);
 
   const saveMutation = useMutation({
-    mutationFn: async (payload: { values: number[]; indicatorName: string }) => {
+    mutationFn: async (payload: { values: number[]; indicatorName: string; chartDate: string }) => {
       return apiRequest(
         'POST',
         `/api/projects/${projectId}/spc/imr/${encodeURIComponent(ctqName)}`,
-        { dataValues: payload.values, indicatorName: payload.indicatorName }
+        { dataValues: payload.values, indicatorName: payload.indicatorName, chartDate: payload.chartDate }
       );
     },
     onSuccess: () => {
@@ -207,8 +211,8 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
       });
       return;
     }
-    saveMutation.mutate({ values: validValues, indicatorName });
-  }, [dataValues, indicatorName, saveMutation, toast]);
+    saveMutation.mutate({ values: validValues, indicatorName, chartDate });
+  }, [dataValues, indicatorName, chartDate, saveMutation, toast]);
 
   const handleClearAllData = useCallback(() => {
     if (dataValues.filter(v => !isNaN(v)).length === 0) {
@@ -380,18 +384,32 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
             Enter individual measurements. Supports Excel copy/paste (Ctrl+V). Use Ctrl+Z to undo.
           </div>
           
-          <div className="mb-4">
-            <Label htmlFor="indicator-name" className="text-sm font-medium">Indicator to Monitor</Label>
-            <Input
-              id="indicator-name"
-              type="text"
-              value={indicatorName}
-              onChange={(e) => setIndicatorName(e.target.value)}
-              className="mt-1 max-w-md"
-              placeholder="Enter indicator name"
-              data-testid="input-indicator-name"
-            />
-            <p className="text-xs text-gray-500 mt-1">This name will appear in the chart titles</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <Label htmlFor="indicator-name" className="text-sm font-medium">Indicator to Monitor</Label>
+              <Input
+                id="indicator-name"
+                type="text"
+                value={indicatorName}
+                onChange={(e) => setIndicatorName(e.target.value)}
+                className="mt-1"
+                placeholder="Enter indicator name"
+                data-testid="input-indicator-name"
+              />
+              <p className="text-xs text-gray-500 mt-1">This name will appear in the chart titles</p>
+            </div>
+            <div>
+              <Label htmlFor="chart-date" className="text-sm font-medium">Chart Date</Label>
+              <Input
+                id="chart-date"
+                type="date"
+                value={chartDate}
+                onChange={(e) => setChartDate(e.target.value)}
+                className="mt-1"
+                data-testid="input-chart-date"
+              />
+              <p className="text-xs text-gray-500 mt-1">Date shown on the control charts</p>
+            </div>
           </div>
           
           <div 
@@ -516,9 +534,20 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                   yaxis: { title: { text: 'Value' } },
                   showlegend: true,
                   legend: { orientation: 'h', y: -0.2 },
-                  margin: { t: 40, b: 80, l: 60, r: 100 },
+                  margin: { t: 50, b: 80, l: 60, r: 100 },
                   height: 350,
                   annotations: [
+                    ...(chartDate ? [{
+                      x: 1,
+                      y: 1.12,
+                      xref: 'paper' as const,
+                      yref: 'paper' as const,
+                      text: `Date: ${chartDate}`,
+                      showarrow: false,
+                      xanchor: 'right' as const,
+                      yanchor: 'top' as const,
+                      font: { color: '#374151', size: 11 },
+                    }] : []),
                     {
                       x: validDataValues.length,
                       y: stats.iUCL,
@@ -661,9 +690,20 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                   yaxis: { title: { text: 'Moving Range' }, rangemode: 'tozero' },
                   showlegend: true,
                   legend: { orientation: 'h', y: -0.2 },
-                  margin: { t: 40, b: 80, l: 60, r: 100 },
+                  margin: { t: 50, b: 80, l: 60, r: 100 },
                   height: 350,
                   annotations: [
+                    ...(chartDate ? [{
+                      x: 1,
+                      y: 1.12,
+                      xref: 'paper' as const,
+                      yref: 'paper' as const,
+                      text: `Date: ${chartDate}`,
+                      showarrow: false,
+                      xanchor: 'right' as const,
+                      yanchor: 'top' as const,
+                      font: { color: '#374151', size: 11 },
+                    }] : []),
                     {
                       x: validDataValues.length,
                       y: stats.mrUCL,
