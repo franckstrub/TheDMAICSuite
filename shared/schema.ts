@@ -3139,6 +3139,12 @@ export const imrControlCardData = pgTable(
     // Data array stored as JSON (array of numbers)
     dataValues: jsonb("data_values").$type<number[]>().default([]),
     
+    // Stages feature - enables per-stage control limits
+    stagesEnabled: boolean("stages_enabled").default(false),
+    
+    // Stage values (array of positive integers, sequential - same or +1)
+    stageValues: jsonb("stage_values").$type<number[]>().default([]),
+    
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
