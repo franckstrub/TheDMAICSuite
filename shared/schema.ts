@@ -3130,6 +3130,12 @@ export const imrControlCardData = pgTable(
     // Chart date
     chartDate: text("chart_date").default(""),
     
+    // X-axis scale type: 'index' (default 1,2,3...) or 'freeform' (custom text) or 'date'
+    xScaleType: text("x_scale_type").default("index"),
+    
+    // Custom x-scale values (array of strings for freeform or date values)
+    xScaleValues: jsonb("x_scale_values").$type<string[]>().default([]),
+    
     // Data array stored as JSON (array of numbers)
     dataValues: jsonb("data_values").$type<number[]>().default([]),
     
