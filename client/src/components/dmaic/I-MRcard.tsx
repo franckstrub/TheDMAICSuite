@@ -28,6 +28,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
   const [dataHistory, setDataHistory] = useState<DataHistory[]>([]);
   const [focusedCell, setFocusedCell] = useState<number | null>(null);
   const [lastSavedState, setLastSavedState] = useState<string>('');
+  const [indicatorName, setIndicatorName] = useState<string>(ctqName);
 
   const dataQuery = useQuery({
     queryKey: [`/api/projects/${projectId}/spc/imr/${encodeURIComponent(ctqName)}`],
@@ -41,15 +42,18 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
       if (data?.dataValues && data.dataValues.length > 0) {
         setDataValues(data.dataValues);
       }
+      if (data?.indicatorName) {
+        setIndicatorName(data.indicatorName);
+      }
     }
   }, [dataQuery.data]);
 
   const saveMutation = useMutation({
-    mutationFn: async (values: number[]) => {
+    mutationFn: async (payload: { values: number[]; indicatorName: string }) => {
       return apiRequest(
         'POST',
         `/api/projects/${projectId}/spc/imr/${encodeURIComponent(ctqName)}`,
-        { dataValues: values }
+        { dataValues: payload.values, indicatorName: payload.indicatorName }
       );
     },
     onSuccess: () => {
@@ -203,8 +207,8 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
       });
       return;
     }
-    saveMutation.mutate(validValues);
-  }, [dataValues, saveMutation, toast]);
+    saveMutation.mutate({ values: validValues, indicatorName });
+  }, [dataValues, indicatorName, saveMutation, toast]);
 
   const handleClearAllData = useCallback(() => {
     if (dataValues.filter(v => !isNaN(v)).length === 0) {
@@ -376,6 +380,20 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
             Enter individual measurements. Supports Excel copy/paste (Ctrl+V). Use Ctrl+Z to undo.
           </div>
           
+          <div className="mb-4">
+            <Label htmlFor="indicator-name" className="text-sm font-medium">Indicator to Monitor</Label>
+            <Input
+              id="indicator-name"
+              type="text"
+              value={indicatorName}
+              onChange={(e) => setIndicatorName(e.target.value)}
+              className="mt-1 max-w-md"
+              placeholder="Enter indicator name"
+              data-testid="input-indicator-name"
+            />
+            <p className="text-xs text-gray-500 mt-1">This name will appear in the chart titles</p>
+          </div>
+          
           <div 
             ref={tableRef}
             className="border rounded-lg overflow-hidden max-h-[400px] overflow-y-auto"
@@ -493,7 +511,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                   },
                 ]}
                 layout={{
-                  title: { text: `I Chart of ${ctqName}` },
+                  title: { text: `I Chart of ${indicatorName || ctqName}` },
                   xaxis: { title: { text: 'Observation' }, dtick: 1 },
                   yaxis: { title: { text: 'Value' } },
                   showlegend: true,
@@ -548,7 +566,18 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                     },
                   ],
                 }}
-                config={{ responsive: true, displayModeBar: false }}
+              config={{
+                responsive: true,
+                displayModeBar: true,
+                displaylogo: false,
+                toImageButtonOptions: {
+                  format: 'png',
+                  filename: `I_Control_Card_of_${ctqName}`,
+                  height: 500,
+                  width: 800,
+                  scale: 1
+                }
+              }}
                 style={{ width: '100%' }}
               />
             </CardContent>
@@ -627,7 +656,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                   },
                 ]}
                 layout={{
-                  title: { text: `MR Chart of ${ctqName}` },
+                  title: { text: `MR Chart of ${indicatorName || ctqName}` },
                   xaxis: { title: { text: 'Observation' }, dtick: 1 },
                   yaxis: { title: { text: 'Moving Range' }, rangemode: 'tozero' },
                   showlegend: true,
@@ -682,7 +711,18 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                     },
                   ],
                 }}
-                config={{ responsive: true, displayModeBar: false }}
+              config={{
+                responsive: true,
+                displayModeBar: true,
+                displaylogo: false,
+                toImageButtonOptions: {
+                  format: 'png',
+                  filename: `MR_Control_Card_of_${ctqName}`,
+                  height: 500,
+                  width: 800,
+                  scale: 1
+                }
+              }}
                 style={{ width: '100%' }}
               />
             </CardContent>
