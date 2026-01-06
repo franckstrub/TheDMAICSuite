@@ -411,10 +411,11 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
 
   // Get the x-axis values for charts based on scale type
   const getChartXValues = (): (string | number)[] => {
-    if (xScaleType === 'index' || xScaleValues.filter(v => v.trim() !== '').length === 0) {
+    if (xScaleType === 'index') {
       return validDataValues.map((_, i) => i + 1);
     }
-    return validIndices.map((idx, i) => xScaleValues[idx] || `${i + 1}`);
+    // For freeform and date, show blank when no value is provided
+    return validIndices.map((idx) => xScaleValues[idx] || '');
   };
 
   const chartXValues = getChartXValues();
