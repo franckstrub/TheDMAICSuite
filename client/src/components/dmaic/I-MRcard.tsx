@@ -409,26 +409,25 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
   // Get valid indices where data values are not NaN
   const validIndices = dataValues.map((v, i) => (!isNaN(v) ? i : -1)).filter(i => i !== -1);
 
-  // Get the x-axis values for charts based on scale type
-  const getChartXValues = (): (string | number)[] => {
-    if (xScaleType === 'index') {
-      return validDataValues.map((_, i) => i + 1);
-    }
-    // For freeform and date, show blank when no value is provided
+  // Always use numeric indices for data point positioning
+  const chartXIndices = validDataValues.map((_, i) => i + 1);
+  
+  // Get custom tick labels for freeform/date modes (blank where no value provided)
+  const getCustomTickLabels = (): string[] => {
     return validIndices.map((idx) => xScaleValues[idx] || '');
   };
-
-  const chartXValues = getChartXValues();
+  
+  const customTickLabels = getCustomTickLabels();
 
   // Get arrays of in-control and out-of-control points for I chart
   const getIChartPointArrays = () => {
-    if (!stats) return { inControl: { x: [] as (string | number)[], y: [] as number[] }, outOfControl: { x: [] as (string | number)[], y: [] as number[] } };
+    if (!stats) return { inControl: { x: [] as number[], y: [] as number[] }, outOfControl: { x: [] as number[], y: [] as number[] } };
     
-    const inControl: { x: (string | number)[]; y: number[] } = { x: [], y: [] };
-    const outOfControl: { x: (string | number)[]; y: number[] } = { x: [], y: [] };
+    const inControl: { x: number[]; y: number[] } = { x: [], y: [] };
+    const outOfControl: { x: number[]; y: number[] } = { x: [], y: [] };
     
     validDataValues.forEach((value, i) => {
-      const xVal = chartXValues[i];
+      const xVal = chartXIndices[i];
       if (isOutOfControl(value, stats.iUCL, stats.iLCL)) {
         outOfControl.x.push(xVal);
         outOfControl.y.push(value);
@@ -443,13 +442,13 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
 
   // Get arrays of in-control and out-of-control points for MR chart
   const getMRChartPointArrays = () => {
-    if (!stats) return { inControl: { x: [] as (string | number)[], y: [] as number[] }, outOfControl: { x: [] as (string | number)[], y: [] as number[] } };
+    if (!stats) return { inControl: { x: [] as number[], y: [] as number[] }, outOfControl: { x: [] as number[], y: [] as number[] } };
     
-    const inControl: { x: (string | number)[]; y: number[] } = { x: [], y: [] };
-    const outOfControl: { x: (string | number)[]; y: number[] } = { x: [], y: [] };
+    const inControl: { x: number[]; y: number[] } = { x: [], y: [] };
+    const outOfControl: { x: number[]; y: number[] } = { x: [], y: [] };
     
     stats.movingRanges.forEach((value, i) => {
-      const xVal = chartXValues[i + 1];
+      const xVal = chartXIndices[i + 1];
       if (isOutOfControl(value, stats.mrUCL, stats.mrLCL)) {
         outOfControl.x.push(xVal);
         outOfControl.y.push(value);
@@ -668,7 +667,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
               <Plot
                 data={[
                   {
-                    x: chartXValues,
+                    x: chartXIndices,
                     y: validDataValues,
                     type: 'scatter',
                     mode: 'lines',
@@ -693,7 +692,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                     marker: { color: '#dc2626', size: 10, symbol: 'square' },
                   }] : []),
                   {
-                    x: [chartXValues[0], chartXValues[chartXValues.length - 1]],
+                    x: [1, chartXIndices.length],
                     y: [stats.iCL, stats.iCL],
                     type: 'scatter',
                     mode: 'lines',
@@ -701,7 +700,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                     line: { color: '#16a34a', width: 2 },
                   },
                   {
-                    x: [chartXValues[0], chartXValues[chartXValues.length - 1]],
+                    x: [1, chartXIndices.length],
                     y: [stats.iUCL, stats.iUCL],
                     type: 'scatter',
                     mode: 'lines',
@@ -709,7 +708,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                     line: { color: '#dc2626', width: 2, dash: 'dash' },
                   },
                   {
-                    x: [chartXValues[0], chartXValues[chartXValues.length - 1]],
+                    x: [1, chartXIndices.length],
                     y: [stats.iLCL, stats.iLCL],
                     type: 'scatter',
                     mode: 'lines',
@@ -721,7 +720,14 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                   title: { text: `I Chart of ${indicatorName || ctqName}` },
                   xaxis: { 
                     title: { text: xScaleType === 'date' ? 'Date' : (xScaleType === 'freeform' ? 'Label' : 'Observation') }, 
-                    ...(xScaleType === 'index' ? { dtick: 1, tick0: 1, rangemode: 'nonnegative' as const } : { type: 'category' as const })
+                    dtick: 1, 
+                    tick0: 1, 
+                    rangemode: 'nonnegative' as const,
+                    ...(xScaleType !== 'index' ? { 
+                      tickmode: 'array' as const, 
+                      tickvals: chartXIndices, 
+                      ticktext: customTickLabels 
+                    } : {})
                   },
                   yaxis: { title: { text: 'Value' } },
                   showlegend: true,
@@ -741,7 +747,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                       font: { color: '#374151', size: 11 },
                     }] : []),
                     {
-                      x: chartXValues[chartXValues.length - 1],
+                      x: chartXIndices.length,
                       y: stats.iUCL,
                       xref: 'x',
                       yref: 'y',
@@ -756,7 +762,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                       borderpad: 3,
                     },
                     {
-                      x: chartXValues[chartXValues.length - 1],
+                      x: chartXIndices.length,
                       y: stats.iCL,
                       xref: 'x',
                       yref: 'y',
@@ -771,7 +777,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                       borderpad: 3,
                     },
                     {
-                      x: chartXValues[chartXValues.length - 1],
+                      x: chartXIndices.length,
                       y: stats.iLCL,
                       xref: 'x',
                       yref: 'y',
@@ -827,7 +833,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
               <Plot
                 data={[
                   {
-                    x: chartXValues.slice(1),
+                    x: chartXIndices.slice(1),
                     y: stats.movingRanges,
                     type: 'scatter',
                     mode: 'lines',
@@ -852,7 +858,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                     marker: { color: '#dc2626', size: 10, symbol: 'square' },
                   }] : []),
                   {
-                    x: [chartXValues[1], chartXValues[chartXValues.length - 1]],
+                    x: [2, chartXIndices.length],
                     y: [stats.mrCL, stats.mrCL],
                     type: 'scatter',
                     mode: 'lines',
@@ -860,7 +866,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                     line: { color: '#16a34a', width: 2 },
                   },
                   {
-                    x: [chartXValues[1], chartXValues[chartXValues.length - 1]],
+                    x: [2, chartXIndices.length],
                     y: [stats.mrUCL, stats.mrUCL],
                     type: 'scatter',
                     mode: 'lines',
@@ -868,7 +874,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                     line: { color: '#dc2626', width: 2, dash: 'dash' },
                   },
                   {
-                    x: [chartXValues[1], chartXValues[chartXValues.length - 1]],
+                    x: [2, chartXIndices.length],
                     y: [stats.mrLCL, stats.mrLCL],
                     type: 'scatter',
                     mode: 'lines',
@@ -880,7 +886,14 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                   title: { text: `MR Chart of ${indicatorName || ctqName}` },
                   xaxis: { 
                     title: { text: xScaleType === 'date' ? 'Date' : (xScaleType === 'freeform' ? 'Label' : 'Observation') }, 
-                    ...(xScaleType === 'index' ? { dtick: 1, tick0: 2, rangemode: 'nonnegative' as const } : { type: 'category' as const })
+                    dtick: 1, 
+                    tick0: 2, 
+                    rangemode: 'nonnegative' as const,
+                    ...(xScaleType !== 'index' ? { 
+                      tickmode: 'array' as const, 
+                      tickvals: chartXIndices.slice(1), 
+                      ticktext: customTickLabels.slice(1) 
+                    } : {})
                   },
                   yaxis: { title: { text: 'Moving Range' }, rangemode: 'tozero' },
                   showlegend: true,
@@ -900,7 +913,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                       font: { color: '#374151', size: 11 },
                     }] : []),
                     {
-                      x: chartXValues[chartXValues.length - 1],
+                      x: chartXIndices.length,
                       y: stats.mrUCL,
                       xref: 'x',
                       yref: 'y',
@@ -915,7 +928,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                       borderpad: 3,
                     },
                     {
-                      x: chartXValues[chartXValues.length - 1],
+                      x: chartXIndices.length,
                       y: stats.mrCL,
                       xref: 'x',
                       yref: 'y',
@@ -930,7 +943,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                       borderpad: 3,
                     },
                     {
-                      x: chartXValues[chartXValues.length - 1],
+                      x: chartXIndices.length,
                       y: stats.mrLCL,
                       xref: 'x',
                       yref: 'y',
