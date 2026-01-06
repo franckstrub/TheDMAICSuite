@@ -10616,7 +10616,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(401).json({ error: "Unauthorized" });
         }
 
-        const { dataValues } = req.body;
+        const { dataValues, indicatorName } = req.body;
 
         // Validate dataValues is an array of numbers
         if (dataValues !== undefined && !Array.isArray(dataValues)) {
@@ -10626,6 +10626,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const validatedData = Array.isArray(dataValues) 
           ? dataValues.filter((v: any) => typeof v === 'number' && !isNaN(v))
           : [];
+        
+        const validatedIndicatorName = typeof indicatorName === 'string' ? indicatorName : "";
 
         // Check if record exists
         const [existing] = await db
@@ -10646,6 +10648,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             .update(imrControlCardData)
             .set({
               dataValues: validatedData,
+              indicatorName: validatedIndicatorName,
               updatedAt: new Date(),
             })
             .where(eq(imrControlCardData.id, existing.id))
@@ -10659,6 +10662,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               ctqName,
               organizationId: userRecord.organizationId,
               dataValues: validatedData,
+              indicatorName: validatedIndicatorName,
             })
             .returning();
         }
