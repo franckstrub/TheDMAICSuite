@@ -25,6 +25,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
   const tableRef = useRef<HTMLDivElement>(null);
   
   const [dataValues, setDataValues] = useState<number[]>([NaN, NaN, NaN]);
+  const [rawInputValues, setRawInputValues] = useState<string[]>(['', '', '']);
   const [dataHistory, setDataHistory] = useState<DataHistory[]>([]);
   const [focusedCell, setFocusedCell] = useState<number | null>(null);
   const [lastSavedState, setLastSavedState] = useState<string>('');
@@ -42,6 +43,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
       const data = dataQuery.data as any;
       if (data?.dataValues && data.dataValues.length > 0) {
         setDataValues(data.dataValues);
+        setRawInputValues(data.dataValues.map((v: number) => isNaN(v) ? '' : v.toString()));
       }
       if (data?.indicatorName) {
         setIndicatorName(data.indicatorName);
@@ -98,6 +100,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
 
     const previousState = dataHistory[dataHistory.length - 1];
     setDataValues([...previousState.values]);
+    setRawInputValues(previousState.values.map(v => isNaN(v) ? '' : v.toString()));
     setDataHistory(prev => prev.slice(0, -1));
     setLastSavedState('');
     
@@ -109,8 +112,17 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
 
   const handleDataChange = useCallback((index: number, value: string) => {
     saveToHistory();
-    const numValue = parseNumericValue(value);
     
+    setRawInputValues(prev => {
+      const newRaw = [...prev];
+      while (newRaw.length <= index) {
+        newRaw.push('');
+      }
+      newRaw[index] = value;
+      return newRaw;
+    });
+    
+    const numValue = parseNumericValue(value);
     setDataValues(prev => {
       const newValues = [...prev];
       while (newValues.length <= index) {
@@ -133,6 +145,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
       } else {
         saveToHistory();
         setDataValues(prev => [...prev, NaN]);
+        setRawInputValues(prev => [...prev, '']);
         setTimeout(() => {
           const newInput = document.querySelector(`[data-cell-index="${index + 1}"]`) as HTMLInputElement;
           if (newInput) newInput.focus();
@@ -163,6 +176,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
     saveToHistory();
     const newValues = result.data[0];
     setDataValues(newValues);
+    setRawInputValues(newValues.map(v => isNaN(v) ? '' : v.toString()));
     
     toast({
       title: "Data pasted",
@@ -187,6 +201,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
       saveToHistory();
       const newValues = result.data[0];
       setDataValues(newValues);
+      setRawInputValues(newValues.map(v => isNaN(v) ? '' : v.toString()));
       
       toast({
         title: "Data pasted",
@@ -224,6 +239,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
     }
     saveToHistory();
     setDataValues([NaN, NaN, NaN]);
+    setRawInputValues(['', '', '']);
     toast({
       title: "Data cleared",
       description: "All data has been cleared. Use Undo to restore.",
@@ -421,7 +437,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
               <thead className="bg-gray-100 sticky top-0">
                 <tr>
                   <th className="px-4 py-2 text-left text-sm font-medium text-gray-700 w-20">Index</th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">CTQ Value</th>
+                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Indicator Value</th>
                 </tr>
               </thead>
               <tbody>
@@ -431,7 +447,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                     <td className="px-4 py-1">
                       <Input
                         type="text"
-                        value={isNaN(value) ? '' : value.toString()}
+                        value={rawInputValues[index] ?? (isNaN(value) ? '' : value.toString())}
                         onChange={(e) => handleDataChange(index, e.target.value)}
                         onKeyDown={(e) => handleKeyDown(e, index)}
                         onFocus={() => setFocusedCell(index)}
