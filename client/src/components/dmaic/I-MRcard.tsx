@@ -3,11 +3,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Save, Undo, Clipboard, Trash2 } from "lucide-react";
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
-import { parseSingleColumnPaste, parseNumericValue } from '@/lib/excelPasteUtils';
+import { parseNumericValue } from '@/lib/excelPasteUtils';
 import Plot from 'react-plotly.js';
 
 interface IMRCardProps {
@@ -17,7 +18,10 @@ interface IMRCardProps {
 
 interface DataHistory {
   values: number[];
+  xScaleValues: string[];
 }
+
+type XScaleType = 'index' | 'freeform' | 'date';
 
 export function IMRCard({ projectId, ctqName }: IMRCardProps) {
   const { toast } = useToast();
@@ -26,8 +30,10 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
   
   const [dataValues, setDataValues] = useState<number[]>([NaN, NaN, NaN]);
   const [rawInputValues, setRawInputValues] = useState<string[]>(['', '', '']);
+  const [xScaleType, setXScaleType] = useState<XScaleType>('index');
+  const [xScaleValues, setXScaleValues] = useState<string[]>(['', '', '']);
   const [dataHistory, setDataHistory] = useState<DataHistory[]>([]);
-  const [focusedCell, setFocusedCell] = useState<number | null>(null);
+  const [focusedCell, setFocusedCell] = useState<{ row: number; col: 'xscale' | 'value' } | null>(null);
   const [lastSavedState, setLastSavedState] = useState<string>('');
   const [indicatorName, setIndicatorName] = useState<string>(ctqName);
   const [chartDate, setChartDate] = useState<string>('');
@@ -51,15 +57,27 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
       if (data?.chartDate) {
         setChartDate(data.chartDate);
       }
+      if (data?.xScaleType && ['index', 'freeform', 'date'].includes(data.xScaleType)) {
+        setXScaleType(data.xScaleType as XScaleType);
+      }
+      if (data?.xScaleValues && Array.isArray(data.xScaleValues)) {
+        setXScaleValues(data.xScaleValues);
+      }
     }
   }, [dataQuery.data]);
 
   const saveMutation = useMutation({
-    mutationFn: async (payload: { values: number[]; indicatorName: string; chartDate: string }) => {
+    mutationFn: async (payload: { values: number[]; indicatorName: string; chartDate: string; xScaleType: XScaleType; xScaleValues: string[] }) => {
       return apiRequest(
         'POST',
         `/api/projects/${projectId}/spc/imr/${encodeURIComponent(ctqName)}`,
-        { dataValues: payload.values, indicatorName: payload.indicatorName, chartDate: payload.chartDate }
+        { 
+          dataValues: payload.values, 
+          indicatorName: payload.indicatorName, 
+          chartDate: payload.chartDate,
+          xScaleType: payload.xScaleType,
+          xScaleValues: payload.xScaleValues,
+        }
       );
     },
     onSuccess: () => {
@@ -81,12 +99,12 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
   });
 
   const saveToHistory = useCallback(() => {
-    const currentState = JSON.stringify(dataValues);
+    const currentState = JSON.stringify({ dataValues, xScaleValues });
     if (currentState !== lastSavedState) {
-      setDataHistory(prev => [...prev.slice(-19), { values: [...dataValues] }]);
+      setDataHistory(prev => [...prev.slice(-19), { values: [...dataValues], xScaleValues: [...xScaleValues] }]);
       setLastSavedState(currentState);
     }
-  }, [dataValues, lastSavedState]);
+  }, [dataValues, xScaleValues, lastSavedState]);
 
   const handleUndo = useCallback(() => {
     if (dataHistory.length === 0) {
@@ -101,6 +119,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
     const previousState = dataHistory[dataHistory.length - 1];
     setDataValues([...previousState.values]);
     setRawInputValues(previousState.values.map(v => isNaN(v) ? '' : v.toString()));
+    setXScaleValues([...previousState.xScaleValues]);
     setDataHistory(prev => prev.slice(0, -1));
     setLastSavedState('');
     
@@ -133,28 +152,49 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
     });
   }, [saveToHistory]);
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+  const handleXScaleChange = useCallback((index: number, value: string) => {
+    saveToHistory();
+    setXScaleValues(prev => {
+      const newValues = [...prev];
+      while (newValues.length <= index) {
+        newValues.push('');
+      }
+      newValues[index] = value;
+      return newValues;
+    });
+  }, [saveToHistory]);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>, index: number, col: 'xscale' | 'value') => {
     if (e.key === 'z' && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
       handleUndo();
     } else if (e.key === 'Enter' || e.key === 'ArrowDown') {
       e.preventDefault();
-      const nextInput = document.querySelector(`[data-cell-index="${index + 1}"]`) as HTMLInputElement;
+      const nextInput = document.querySelector(`[data-cell-index="${index + 1}"][data-cell-col="${col}"]`) as HTMLInputElement;
       if (nextInput) {
         nextInput.focus();
       } else {
         saveToHistory();
         setDataValues(prev => [...prev, NaN]);
         setRawInputValues(prev => [...prev, '']);
+        setXScaleValues(prev => [...prev, '']);
         setTimeout(() => {
-          const newInput = document.querySelector(`[data-cell-index="${index + 1}"]`) as HTMLInputElement;
+          const newInput = document.querySelector(`[data-cell-index="${index + 1}"][data-cell-col="${col}"]`) as HTMLInputElement;
           if (newInput) newInput.focus();
         }, 0);
       }
     } else if (e.key === 'ArrowUp' && index > 0) {
       e.preventDefault();
-      const prevInput = document.querySelector(`[data-cell-index="${index - 1}"]`) as HTMLInputElement;
+      const prevInput = document.querySelector(`[data-cell-index="${index - 1}"][data-cell-col="${col}"]`) as HTMLInputElement;
       if (prevInput) prevInput.focus();
+    } else if (e.key === 'Tab' && !e.shiftKey && col === 'xscale') {
+      e.preventDefault();
+      const valueInput = document.querySelector(`[data-cell-index="${index}"][data-cell-col="value"]`) as HTMLInputElement;
+      if (valueInput) valueInput.focus();
+    } else if (e.key === 'Tab' && e.shiftKey && col === 'value') {
+      e.preventDefault();
+      const xscaleInput = document.querySelector(`[data-cell-index="${index}"][data-cell-col="xscale"]`) as HTMLInputElement;
+      if (xscaleInput) xscaleInput.focus();
     }
   }, [handleUndo, saveToHistory]);
 
@@ -162,50 +202,105 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
     e.preventDefault();
     const pastedText = e.clipboardData.getData('text');
     
-    const result = parseSingleColumnPaste(pastedText);
-    
-    if (!result.success || result.data[0].length === 0) {
+    const lines = pastedText.split(/\r?\n/).filter(line => line.trim() !== '');
+    if (lines.length === 0) {
       toast({
         title: "Paste error",
-        description: result.errors.join(', ') || "No valid data found",
+        description: "No valid data found",
         variant: "destructive",
       });
       return;
     }
     
     saveToHistory();
-    const newValues = result.data[0];
-    setDataValues(newValues);
-    setRawInputValues(newValues.map(v => isNaN(v) ? '' : v.toString()));
+    
+    const hasXScale = xScaleType !== 'index';
+    const newXScaleValues: string[] = [];
+    const newDataValues: number[] = [];
+    const newRawValues: string[] = [];
+    
+    lines.forEach(line => {
+      const cells = line.split(/\t/);
+      
+      if (hasXScale && cells.length >= 2) {
+        newXScaleValues.push(cells[0].trim());
+        const rawValue = cells[1].trim();
+        newRawValues.push(rawValue);
+        newDataValues.push(parseNumericValue(rawValue));
+      } else if (hasXScale && cells.length === 1) {
+        newXScaleValues.push('');
+        const rawValue = cells[0].trim();
+        newRawValues.push(rawValue);
+        newDataValues.push(parseNumericValue(rawValue));
+      } else {
+        const rawValue = cells[0].trim();
+        newRawValues.push(rawValue);
+        newDataValues.push(parseNumericValue(rawValue));
+      }
+    });
+    
+    setDataValues(newDataValues);
+    setRawInputValues(newRawValues);
+    if (hasXScale) {
+      setXScaleValues(newXScaleValues);
+    }
     
     toast({
       title: "Data pasted",
-      description: `Successfully pasted ${newValues.length} data points`,
+      description: `Successfully pasted ${newDataValues.length} data points`,
     });
-  }, [saveToHistory, toast]);
+  }, [saveToHistory, toast, xScaleType]);
 
   const handlePasteFromClipboard = useCallback(async () => {
     try {
       const text = await navigator.clipboard.readText();
-      const result = parseSingleColumnPaste(text);
       
-      if (!result.success || result.data[0].length === 0) {
+      const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
+      if (lines.length === 0) {
         toast({
           title: "Paste error",
-          description: result.errors.join(', ') || "No valid data found",
+          description: "No valid data found",
           variant: "destructive",
         });
         return;
       }
       
       saveToHistory();
-      const newValues = result.data[0];
-      setDataValues(newValues);
-      setRawInputValues(newValues.map(v => isNaN(v) ? '' : v.toString()));
+      
+      const hasXScale = xScaleType !== 'index';
+      const newXScaleValues: string[] = [];
+      const newDataValues: number[] = [];
+      const newRawValues: string[] = [];
+      
+      lines.forEach(line => {
+        const cells = line.split(/\t/);
+        
+        if (hasXScale && cells.length >= 2) {
+          newXScaleValues.push(cells[0].trim());
+          const rawValue = cells[1].trim();
+          newRawValues.push(rawValue);
+          newDataValues.push(parseNumericValue(rawValue));
+        } else if (hasXScale && cells.length === 1) {
+          newXScaleValues.push('');
+          const rawValue = cells[0].trim();
+          newRawValues.push(rawValue);
+          newDataValues.push(parseNumericValue(rawValue));
+        } else {
+          const rawValue = cells[0].trim();
+          newRawValues.push(rawValue);
+          newDataValues.push(parseNumericValue(rawValue));
+        }
+      });
+      
+      setDataValues(newDataValues);
+      setRawInputValues(newRawValues);
+      if (hasXScale) {
+        setXScaleValues(newXScaleValues);
+      }
       
       toast({
         title: "Data pasted",
-        description: `Successfully pasted ${newValues.length} data points`,
+        description: `Successfully pasted ${newDataValues.length} data points`,
       });
     } catch (err) {
       toast({
@@ -214,10 +309,15 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
         variant: "destructive",
       });
     }
-  }, [saveToHistory, toast]);
+  }, [saveToHistory, toast, xScaleType]);
 
   const handleSaveData = useCallback(() => {
-    const validValues = dataValues.filter(v => !isNaN(v));
+    const validIndices: number[] = [];
+    dataValues.forEach((v, i) => {
+      if (!isNaN(v)) validIndices.push(i);
+    });
+    const validValues = validIndices.map(i => dataValues[i]);
+    
     if (validValues.length < 2) {
       toast({
         title: "Insufficient data",
@@ -226,8 +326,19 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
       });
       return;
     }
-    saveMutation.mutate({ values: validValues, indicatorName, chartDate });
-  }, [dataValues, indicatorName, chartDate, saveMutation, toast]);
+    
+    const validXScaleValues = xScaleType !== 'index' 
+      ? validIndices.map(i => xScaleValues[i] || '') 
+      : [];
+    
+    saveMutation.mutate({ 
+      values: validValues, 
+      indicatorName, 
+      chartDate, 
+      xScaleType, 
+      xScaleValues: validXScaleValues 
+    });
+  }, [dataValues, indicatorName, chartDate, xScaleType, xScaleValues, saveMutation, toast]);
 
   const handleClearAllData = useCallback(() => {
     if (dataValues.filter(v => !isNaN(v)).length === 0) {
@@ -240,6 +351,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
     saveToHistory();
     setDataValues([NaN, NaN, NaN]);
     setRawInputValues(['', '', '']);
+    setXScaleValues(['', '', '']);
     toast({
       title: "Data cleared",
       description: "All data has been cleared. Use Undo to restore.",
@@ -294,19 +406,33 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
     return value > ucl || value < lcl;
   };
 
+  // Get valid indices where data values are not NaN
+  const validIndices = dataValues.map((v, i) => (!isNaN(v) ? i : -1)).filter(i => i !== -1);
+
+  // Get the x-axis values for charts based on scale type
+  const getChartXValues = (): (string | number)[] => {
+    if (xScaleType === 'index' || xScaleValues.filter(v => v.trim() !== '').length === 0) {
+      return validDataValues.map((_, i) => i + 1);
+    }
+    return validIndices.map((idx, i) => xScaleValues[idx] || `${i + 1}`);
+  };
+
+  const chartXValues = getChartXValues();
+
   // Get arrays of in-control and out-of-control points for I chart
   const getIChartPointArrays = () => {
-    if (!stats) return { inControl: { x: [], y: [] }, outOfControl: { x: [], y: [] } };
+    if (!stats) return { inControl: { x: [] as (string | number)[], y: [] as number[] }, outOfControl: { x: [] as (string | number)[], y: [] as number[] } };
     
-    const inControl: { x: number[]; y: number[] } = { x: [], y: [] };
-    const outOfControl: { x: number[]; y: number[] } = { x: [], y: [] };
+    const inControl: { x: (string | number)[]; y: number[] } = { x: [], y: [] };
+    const outOfControl: { x: (string | number)[]; y: number[] } = { x: [], y: [] };
     
     validDataValues.forEach((value, i) => {
+      const xVal = chartXValues[i];
       if (isOutOfControl(value, stats.iUCL, stats.iLCL)) {
-        outOfControl.x.push(i + 1);
+        outOfControl.x.push(xVal);
         outOfControl.y.push(value);
       } else {
-        inControl.x.push(i + 1);
+        inControl.x.push(xVal);
         inControl.y.push(value);
       }
     });
@@ -316,17 +442,18 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
 
   // Get arrays of in-control and out-of-control points for MR chart
   const getMRChartPointArrays = () => {
-    if (!stats) return { inControl: { x: [], y: [] }, outOfControl: { x: [], y: [] } };
+    if (!stats) return { inControl: { x: [] as (string | number)[], y: [] as number[] }, outOfControl: { x: [] as (string | number)[], y: [] as number[] } };
     
-    const inControl: { x: number[]; y: number[] } = { x: [], y: [] };
-    const outOfControl: { x: number[]; y: number[] } = { x: [], y: [] };
+    const inControl: { x: (string | number)[]; y: number[] } = { x: [], y: [] };
+    const outOfControl: { x: (string | number)[]; y: number[] } = { x: [], y: [] };
     
     stats.movingRanges.forEach((value, i) => {
+      const xVal = chartXValues[i + 1];
       if (isOutOfControl(value, stats.mrUCL, stats.mrLCL)) {
-        outOfControl.x.push(i + 2);
+        outOfControl.x.push(xVal);
         outOfControl.y.push(value);
       } else {
-        inControl.x.push(i + 2);
+        inControl.x.push(xVal);
         inControl.y.push(value);
       }
     });
@@ -400,7 +527,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
             Enter individual measurements. Supports Excel copy/paste (Ctrl+V). Use Ctrl+Z to undo.
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             <div>
               <Label htmlFor="indicator-name" className="text-sm font-medium">Indicator to Monitor</Label>
               <Input
@@ -426,6 +553,28 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
               />
               <p className="text-xs text-gray-500 mt-1">Date shown on the control charts</p>
             </div>
+            <div>
+              <Label className="text-sm font-medium">X-Axis Scale Type</Label>
+              <RadioGroup 
+                value={xScaleType} 
+                onValueChange={(v) => setXScaleType(v as XScaleType)}
+                className="mt-2 flex gap-4"
+                data-testid="radio-xscale-type"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="index" id="xscale-index" />
+                  <Label htmlFor="xscale-index" className="text-sm cursor-pointer">Default Index</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="freeform" id="xscale-freeform" />
+                  <Label htmlFor="xscale-freeform" className="text-sm cursor-pointer">Free Form</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="date" id="xscale-date" />
+                  <Label htmlFor="xscale-date" className="text-sm cursor-pointer">Date</Label>
+                </div>
+              </RadioGroup>
+            </div>
           </div>
           
           <div 
@@ -437,6 +586,11 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
               <thead className="bg-gray-100 sticky top-0">
                 <tr>
                   <th className="px-4 py-2 text-left text-sm font-medium text-gray-700 w-20">Index</th>
+                  {xScaleType !== 'index' && (
+                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700 w-40">
+                      {xScaleType === 'date' ? 'Date' : 'X-Scale Label'}
+                    </th>
+                  )}
                   <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Indicator Value</th>
                 </tr>
               </thead>
@@ -444,17 +598,35 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                 {displayValues.map((value, index) => (
                   <tr key={index} className="border-t hover:bg-gray-50">
                     <td className="px-4 py-1 text-sm text-gray-600 font-medium">{index + 1}</td>
+                    {xScaleType !== 'index' && (
+                      <td className="px-4 py-1">
+                        <Input
+                          type={xScaleType === 'date' ? 'date' : 'text'}
+                          value={xScaleValues[index] ?? ''}
+                          onChange={(e) => handleXScaleChange(index, e.target.value)}
+                          onKeyDown={(e) => handleKeyDown(e, index, 'xscale')}
+                          onFocus={() => setFocusedCell({ row: index, col: 'xscale' })}
+                          onBlur={() => setFocusedCell(null)}
+                          className="h-8 text-sm"
+                          placeholder={xScaleType === 'date' ? '' : 'Enter label'}
+                          data-cell-index={index}
+                          data-cell-col="xscale"
+                          data-testid={`input-imr-xscale-${index}`}
+                        />
+                      </td>
+                    )}
                     <td className="px-4 py-1">
                       <Input
                         type="text"
                         value={rawInputValues[index] ?? (isNaN(value) ? '' : value.toString())}
                         onChange={(e) => handleDataChange(index, e.target.value)}
-                        onKeyDown={(e) => handleKeyDown(e, index)}
-                        onFocus={() => setFocusedCell(index)}
+                        onKeyDown={(e) => handleKeyDown(e, index, 'value')}
+                        onFocus={() => setFocusedCell({ row: index, col: 'value' })}
                         onBlur={() => setFocusedCell(null)}
                         className="h-8 text-sm"
                         placeholder="Enter value"
                         data-cell-index={index}
+                        data-cell-col="value"
                         data-testid={`input-imr-value-${index}`}
                       />
                     </td>
@@ -495,7 +667,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
               <Plot
                 data={[
                   {
-                    x: validDataValues.map((_, i) => i + 1),
+                    x: chartXValues,
                     y: validDataValues,
                     type: 'scatter',
                     mode: 'lines',
@@ -520,7 +692,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                     marker: { color: '#dc2626', size: 10, symbol: 'square' },
                   }] : []),
                   {
-                    x: [1, validDataValues.length],
+                    x: [chartXValues[0], chartXValues[chartXValues.length - 1]],
                     y: [stats.iCL, stats.iCL],
                     type: 'scatter',
                     mode: 'lines',
@@ -528,7 +700,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                     line: { color: '#16a34a', width: 2 },
                   },
                   {
-                    x: [1, validDataValues.length],
+                    x: [chartXValues[0], chartXValues[chartXValues.length - 1]],
                     y: [stats.iUCL, stats.iUCL],
                     type: 'scatter',
                     mode: 'lines',
@@ -536,7 +708,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                     line: { color: '#dc2626', width: 2, dash: 'dash' },
                   },
                   {
-                    x: [1, validDataValues.length],
+                    x: [chartXValues[0], chartXValues[chartXValues.length - 1]],
                     y: [stats.iLCL, stats.iLCL],
                     type: 'scatter',
                     mode: 'lines',
@@ -546,7 +718,10 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                 ]}
                 layout={{
                   title: { text: `I Chart of ${indicatorName || ctqName}` },
-                  xaxis: { title: { text: 'Observation' }, dtick: 1, tick0: 1, rangemode: 'nonnegative' },
+                  xaxis: { 
+                    title: { text: xScaleType === 'date' ? 'Date' : (xScaleType === 'freeform' ? 'Label' : 'Observation') }, 
+                    ...(xScaleType === 'index' ? { dtick: 1, tick0: 1, rangemode: 'nonnegative' as const } : { type: 'category' as const })
+                  },
                   yaxis: { title: { text: 'Value' } },
                   showlegend: true,
                   legend: { orientation: 'h', y: -0.2 },
@@ -565,7 +740,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                       font: { color: '#374151', size: 11 },
                     }] : []),
                     {
-                      x: validDataValues.length,
+                      x: chartXValues[chartXValues.length - 1],
                       y: stats.iUCL,
                       xref: 'x',
                       yref: 'y',
@@ -580,7 +755,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                       borderpad: 3,
                     },
                     {
-                      x: validDataValues.length,
+                      x: chartXValues[chartXValues.length - 1],
                       y: stats.iCL,
                       xref: 'x',
                       yref: 'y',
@@ -595,7 +770,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                       borderpad: 3,
                     },
                     {
-                      x: validDataValues.length,
+                      x: chartXValues[chartXValues.length - 1],
                       y: stats.iLCL,
                       xref: 'x',
                       yref: 'y',
@@ -651,7 +826,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
               <Plot
                 data={[
                   {
-                    x: stats.movingRanges.map((_, i) => i + 2),
+                    x: chartXValues.slice(1),
                     y: stats.movingRanges,
                     type: 'scatter',
                     mode: 'lines',
@@ -676,7 +851,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                     marker: { color: '#dc2626', size: 10, symbol: 'square' },
                   }] : []),
                   {
-                    x: [2, validDataValues.length],
+                    x: [chartXValues[1], chartXValues[chartXValues.length - 1]],
                     y: [stats.mrCL, stats.mrCL],
                     type: 'scatter',
                     mode: 'lines',
@@ -684,7 +859,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                     line: { color: '#16a34a', width: 2 },
                   },
                   {
-                    x: [2, validDataValues.length],
+                    x: [chartXValues[1], chartXValues[chartXValues.length - 1]],
                     y: [stats.mrUCL, stats.mrUCL],
                     type: 'scatter',
                     mode: 'lines',
@@ -692,7 +867,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                     line: { color: '#dc2626', width: 2, dash: 'dash' },
                   },
                   {
-                    x: [2, validDataValues.length],
+                    x: [chartXValues[1], chartXValues[chartXValues.length - 1]],
                     y: [stats.mrLCL, stats.mrLCL],
                     type: 'scatter',
                     mode: 'lines',
@@ -702,7 +877,10 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                 ]}
                 layout={{
                   title: { text: `MR Chart of ${indicatorName || ctqName}` },
-                  xaxis: { title: { text: 'Observation' }, dtick: 1, tick0: 2, rangemode: 'nonnegative' },
+                  xaxis: { 
+                    title: { text: xScaleType === 'date' ? 'Date' : (xScaleType === 'freeform' ? 'Label' : 'Observation') }, 
+                    ...(xScaleType === 'index' ? { dtick: 1, tick0: 2, rangemode: 'nonnegative' as const } : { type: 'category' as const })
+                  },
                   yaxis: { title: { text: 'Moving Range' }, rangemode: 'tozero' },
                   showlegend: true,
                   legend: { orientation: 'h', y: -0.2 },
@@ -721,7 +899,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                       font: { color: '#374151', size: 11 },
                     }] : []),
                     {
-                      x: validDataValues.length,
+                      x: chartXValues[chartXValues.length - 1],
                       y: stats.mrUCL,
                       xref: 'x',
                       yref: 'y',
@@ -736,7 +914,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                       borderpad: 3,
                     },
                     {
-                      x: validDataValues.length,
+                      x: chartXValues[chartXValues.length - 1],
                       y: stats.mrCL,
                       xref: 'x',
                       yref: 'y',
@@ -751,7 +929,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                       borderpad: 3,
                     },
                     {
-                      x: validDataValues.length,
+                      x: chartXValues[chartXValues.length - 1],
                       y: stats.mrLCL,
                       xref: 'x',
                       yref: 'y',
