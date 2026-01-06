@@ -87,6 +87,8 @@ interface IMRCardProps {
 interface DataHistory {
   values: number[];
   xScaleValues: string[];
+  stageValues: number[];
+  stagesEnabled: boolean;
 }
 
 type XScaleType = 'index' | 'freeform' | 'date';
@@ -101,10 +103,12 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
   const [xScaleType, setXScaleType] = useState<XScaleType>('index');
   const [xScaleValues, setXScaleValues] = useState<string[]>(['', '', '']);
   const [dataHistory, setDataHistory] = useState<DataHistory[]>([]);
-  const [focusedCell, setFocusedCell] = useState<{ row: number; col: 'xscale' | 'value' } | null>(null);
+  const [focusedCell, setFocusedCell] = useState<{ row: number; col: 'xscale' | 'value' | 'stage' } | null>(null);
   const [lastSavedState, setLastSavedState] = useState<string>('');
   const [indicatorName, setIndicatorName] = useState<string>(ctqName);
   const [chartDate, setChartDate] = useState<string>('');
+  const [stagesEnabled, setStagesEnabled] = useState<boolean>(false);
+  const [stageValues, setStageValues] = useState<number[]>([]);
 
   const dataQuery = useQuery({
     queryKey: [`/api/projects/${projectId}/spc/imr/${encodeURIComponent(ctqName)}`],
@@ -131,11 +135,17 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
       if (data?.xScaleValues && Array.isArray(data.xScaleValues)) {
         setXScaleValues(data.xScaleValues);
       }
+      if (typeof data?.stagesEnabled === 'boolean') {
+        setStagesEnabled(data.stagesEnabled);
+      }
+      if (data?.stageValues && Array.isArray(data.stageValues)) {
+        setStageValues(data.stageValues);
+      }
     }
   }, [dataQuery.data]);
 
   const saveMutation = useMutation({
-    mutationFn: async (payload: { values: number[]; indicatorName: string; chartDate: string; xScaleType: XScaleType; xScaleValues: string[] }) => {
+    mutationFn: async (payload: { values: number[]; indicatorName: string; chartDate: string; xScaleType: XScaleType; xScaleValues: string[]; stagesEnabled: boolean; stageValues: number[] }) => {
       return apiRequest(
         'POST',
         `/api/projects/${projectId}/spc/imr/${encodeURIComponent(ctqName)}`,
@@ -145,6 +155,8 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
           chartDate: payload.chartDate,
           xScaleType: payload.xScaleType,
           xScaleValues: payload.xScaleValues,
+          stagesEnabled: payload.stagesEnabled,
+          stageValues: payload.stageValues,
         }
       );
     },
@@ -167,12 +179,12 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
   });
 
   const saveToHistory = useCallback(() => {
-    const currentState = JSON.stringify({ dataValues, xScaleValues });
+    const currentState = JSON.stringify({ dataValues, xScaleValues, stageValues, stagesEnabled });
     if (currentState !== lastSavedState) {
-      setDataHistory(prev => [...prev.slice(-19), { values: [...dataValues], xScaleValues: [...xScaleValues] }]);
+      setDataHistory(prev => [...prev.slice(-19), { values: [...dataValues], xScaleValues: [...xScaleValues], stageValues: [...stageValues], stagesEnabled }]);
       setLastSavedState(currentState);
     }
-  }, [dataValues, xScaleValues, lastSavedState]);
+  }, [dataValues, xScaleValues, stageValues, stagesEnabled, lastSavedState]);
 
   const handleUndo = useCallback(() => {
     if (dataHistory.length === 0) {
@@ -188,6 +200,8 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
     setDataValues([...previousState.values]);
     setRawInputValues(previousState.values.map(v => isNaN(v) ? '' : v.toString()));
     setXScaleValues([...previousState.xScaleValues]);
+    setStageValues([...previousState.stageValues]);
+    setStagesEnabled(previousState.stagesEnabled);
     setDataHistory(prev => prev.slice(0, -1));
     setLastSavedState('');
     
@@ -232,7 +246,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
     });
   }, [saveToHistory]);
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>, index: number, col: 'xscale' | 'value') => {
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>, index: number, col: 'xscale' | 'value' | 'stage') => {
     if (e.key === 'z' && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
       handleUndo();
@@ -246,6 +260,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
         setDataValues(prev => [...prev, NaN]);
         setRawInputValues(prev => [...prev, '']);
         setXScaleValues(prev => [...prev, '']);
+        setStageValues(prev => [...prev, 0]);
         setTimeout(() => {
           const newInput = document.querySelector(`[data-cell-index="${index + 1}"][data-cell-col="${col}"]`) as HTMLInputElement;
           if (newInput) newInput.focus();
@@ -263,8 +278,16 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
       e.preventDefault();
       const xscaleInput = document.querySelector(`[data-cell-index="${index}"][data-cell-col="xscale"]`) as HTMLInputElement;
       if (xscaleInput) xscaleInput.focus();
+    } else if (e.key === 'Tab' && !e.shiftKey && col === 'value' && stagesEnabled) {
+      e.preventDefault();
+      const stageInput = document.querySelector(`[data-cell-index="${index}"][data-cell-col="stage"]`) as HTMLInputElement;
+      if (stageInput) stageInput.focus();
+    } else if (e.key === 'Tab' && e.shiftKey && col === 'stage') {
+      e.preventDefault();
+      const valueInput = document.querySelector(`[data-cell-index="${index}"][data-cell-col="value"]`) as HTMLInputElement;
+      if (valueInput) valueInput.focus();
     }
-  }, [handleUndo, saveToHistory]);
+  }, [handleUndo, saveToHistory, stagesEnabled]);
 
   const handlePaste = useCallback((e: React.ClipboardEvent) => {
     e.preventDefault();
@@ -453,6 +476,40 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
     }
   }, [saveToHistory, toast, xScaleType]);
 
+  const handleStageChange = useCallback((index: number, value: string) => {
+    saveToHistory();
+    const numVal = parseInt(value, 10);
+    
+    setStageValues(prev => {
+      const newStages = [...prev];
+      while (newStages.length <= index) {
+        newStages.push(0);
+      }
+      
+      if (value === '' || isNaN(numVal) || numVal < 1) {
+        newStages[index] = 0;
+      } else {
+        // Validate: must be >= 1 and either equal to previous or previous + 1
+        const prevStage = index > 0 ? newStages[index - 1] : 0;
+        if (prevStage === 0) {
+          // First stage or after empty - allow 1 or continue from last valid
+          newStages[index] = Math.max(1, numVal);
+        } else if (numVal === prevStage || numVal === prevStage + 1) {
+          newStages[index] = numVal;
+        } else {
+          // Invalid: default to previous stage value
+          newStages[index] = prevStage;
+          toast({
+            title: "Invalid stage",
+            description: `Stage must be ${prevStage} or ${prevStage + 1}`,
+            variant: "destructive",
+          });
+        }
+      }
+      return newStages;
+    });
+  }, [saveToHistory, toast]);
+
   const handleSaveData = useCallback(() => {
     const validIndices: number[] = [];
     dataValues.forEach((v, i) => {
@@ -473,14 +530,20 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
       ? validIndices.map(i => xScaleValues[i] || '') 
       : [];
     
+    const validStageValues = stagesEnabled
+      ? validIndices.map(i => stageValues[i] || 0)
+      : [];
+    
     saveMutation.mutate({ 
       values: validValues, 
       indicatorName, 
       chartDate, 
       xScaleType, 
-      xScaleValues: validXScaleValues 
+      xScaleValues: validXScaleValues,
+      stagesEnabled,
+      stageValues: validStageValues,
     });
-  }, [dataValues, indicatorName, chartDate, xScaleType, xScaleValues, saveMutation, toast]);
+  }, [dataValues, indicatorName, chartDate, xScaleType, xScaleValues, stagesEnabled, stageValues, saveMutation, toast]);
 
   const handleClearAllData = useCallback(() => {
     if (dataValues.filter(v => !isNaN(v)).length === 0) {
@@ -494,6 +557,8 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
     setDataValues([NaN, NaN, NaN]);
     setRawInputValues(['', '', '']);
     setXScaleValues(['', '', '']);
+    setStageValues([]);
+    setStagesEnabled(false);
     toast({
       title: "Data cleared",
       description: "All data has been cleared. Use Undo to restore.",
@@ -550,6 +615,89 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
 
   // Get valid indices where data values are not NaN
   const validIndices = dataValues.map((v, i) => (!isNaN(v) ? i : -1)).filter(i => i !== -1);
+  
+  // Get valid stage values aligned with valid data indices
+  const validStageValuesAligned = stagesEnabled 
+    ? validIndices.map(i => stageValues[i] || 0)
+    : [];
+
+  // Calculate per-stage statistics
+  interface StageStats {
+    stageNum: number;
+    startIdx: number;  // Index in validDataValues array (1-based for chart)
+    endIdx: number;
+    values: number[];
+    mean: number;
+    avgMR: number;
+    iUCL: number;
+    iLCL: number;
+    iCL: number;
+    mrUCL: number;
+    mrLCL: number;
+    mrCL: number;
+    movingRanges: number[];
+  }
+
+  const calculateStageStats = useCallback((): StageStats[] => {
+    if (!stagesEnabled || validStageValuesAligned.length === 0) return [];
+    
+    const stages: StageStats[] = [];
+    let currentStage = validStageValuesAligned[0];
+    let stageStartIdx = 0;
+    
+    const d2 = 1.128;
+    const D3 = 0;
+    const D4 = 3.267;
+    const E2 = 2.660;
+    
+    const processStage = (stageNum: number, startIdx: number, endIdx: number) => {
+      const stageValues = validDataValues.slice(startIdx, endIdx + 1);
+      if (stageValues.length < 2) return null;
+      
+      const mean = stageValues.reduce((a, b) => a + b, 0) / stageValues.length;
+      
+      const movingRanges: number[] = [];
+      for (let i = 1; i < stageValues.length; i++) {
+        movingRanges.push(Math.abs(stageValues[i] - stageValues[i - 1]));
+      }
+      const avgMR = movingRanges.length > 0 
+        ? movingRanges.reduce((a, b) => a + b, 0) / movingRanges.length 
+        : 0;
+      
+      return {
+        stageNum,
+        startIdx: startIdx + 1,  // Convert to 1-based for chart
+        endIdx: endIdx + 1,
+        values: stageValues,
+        mean,
+        avgMR,
+        iUCL: mean + E2 * avgMR,
+        iLCL: mean - E2 * avgMR,
+        iCL: mean,
+        mrUCL: D4 * avgMR,
+        mrLCL: D3 * avgMR,
+        mrCL: avgMR,
+        movingRanges,
+      };
+    };
+    
+    for (let i = 1; i <= validStageValuesAligned.length; i++) {
+      const nextStage = i < validStageValuesAligned.length ? validStageValuesAligned[i] : -1;
+      
+      if (nextStage !== currentStage || i === validStageValuesAligned.length) {
+        if (currentStage > 0) {
+          const stageStats = processStage(currentStage, stageStartIdx, i - 1);
+          if (stageStats) stages.push(stageStats);
+        }
+        stageStartIdx = i;
+        currentStage = nextStage;
+      }
+    }
+    
+    return stages;
+  }, [stagesEnabled, validStageValuesAligned, validDataValues]);
+
+  const stageStatsList = calculateStageStats();
 
   // Always use numeric indices for data point positioning
   const chartXIndices = validDataValues.map((_, i) => i + 1);
@@ -561,6 +709,19 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
   
   const customTickLabels = getCustomTickLabels();
 
+  // Helper to check if a chart index belongs to a valid stage (stage value > 0)
+  const isInValidStage = (chartIdx: number) => {
+    const arrayIdx = chartIdx - 1; // Convert 1-based chart index to 0-based array index
+    if (arrayIdx < 0 || arrayIdx >= validStageValuesAligned.length) return false;
+    return validStageValuesAligned[arrayIdx] > 0;
+  };
+  
+  // Helper to find stage stats for a given chart index (1-based)
+  const getStageStatsForIndex = (chartIdx: number) => {
+    if (!stagesEnabled || stageStatsList.length === 0) return null;
+    return stageStatsList.find(s => chartIdx >= s.startIdx && chartIdx <= s.endIdx) || null;
+  };
+
   // Get arrays of in-control and out-of-control points for I chart
   const getIChartPointArrays = () => {
     if (!stats) return { inControl: { x: [] as number[], y: [] as number[] }, outOfControl: { x: [] as number[], y: [] as number[] } };
@@ -570,7 +731,27 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
     
     validDataValues.forEach((value, i) => {
       const xVal = chartXIndices[i];
-      if (isOutOfControl(value, stats.iUCL, stats.iLCL)) {
+      
+      // Default to global stats
+      let ucl = stats.iUCL;
+      let lcl = stats.iLCL;
+      let skipOOCCheck = false;
+      
+      if (stagesEnabled) {
+        const stageStats = getStageStatsForIndex(xVal);
+        if (stageStats) {
+          // Point is in a stage with computed stats - use per-stage limits
+          ucl = stageStats.iUCL;
+          lcl = stageStats.iLCL;
+        } else if (isInValidStage(xVal)) {
+          // Point is in a valid stage (>0) but stage has insufficient data (single point)
+          // Skip OOC check for this point - indeterminate status
+          skipOOCCheck = true;
+        }
+        // If stage value is 0/unset, use global limits (no change to ucl/lcl)
+      }
+      
+      if (!skipOOCCheck && isOutOfControl(value, ucl, lcl)) {
         outOfControl.x.push(xVal);
         outOfControl.y.push(value);
       } else {
@@ -591,7 +772,27 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
     
     stats.movingRanges.forEach((value, i) => {
       const xVal = chartXIndices[i + 1];
-      if (isOutOfControl(value, stats.mrUCL, stats.mrLCL)) {
+      
+      // Default to global stats
+      let ucl = stats.mrUCL;
+      let lcl = stats.mrLCL;
+      let skipOOCCheck = false;
+      
+      if (stagesEnabled) {
+        const stageStats = getStageStatsForIndex(xVal);
+        if (stageStats) {
+          // Point is in a stage with computed stats - use per-stage limits
+          ucl = stageStats.mrUCL;
+          lcl = stageStats.mrLCL;
+        } else if (isInValidStage(xVal)) {
+          // Point is in a valid stage (>0) but stage has insufficient data (single point)
+          // Skip OOC check for this point - indeterminate status
+          skipOOCCheck = true;
+        }
+        // If stage value is 0/unset, use global limits (no change to ucl/lcl)
+      }
+      
+      if (!skipOOCCheck && isOutOfControl(value, ucl, lcl)) {
         outOfControl.x.push(xVal);
         outOfControl.y.push(value);
       } else {
@@ -605,6 +806,170 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
 
   const iChartPoints = getIChartPointArrays();
   const mrChartPoints = getMRChartPointArrays();
+
+  // Generate per-stage control limit traces for I chart
+  const generateIChartStageTraces = () => {
+    if (!stagesEnabled || stageStatsList.length === 0) return [];
+    
+    const traces: any[] = [];
+    const colors = ['#16a34a', '#dc2626', '#dc2626']; // CL green, UCL/LCL red
+    
+    stageStatsList.forEach((stageStat, idx) => {
+      // Centerline for this stage
+      traces.push({
+        x: [stageStat.startIdx, stageStat.endIdx],
+        y: [stageStat.iCL, stageStat.iCL],
+        type: 'scatter',
+        mode: 'lines',
+        name: idx === 0 ? 'Centerline (X̄)' : undefined,
+        showlegend: idx === 0,
+        line: { color: '#16a34a', width: 2 },
+        hoverinfo: 'y',
+      });
+      // UCL for this stage
+      traces.push({
+        x: [stageStat.startIdx, stageStat.endIdx],
+        y: [stageStat.iUCL, stageStat.iUCL],
+        type: 'scatter',
+        mode: 'lines',
+        name: idx === 0 ? 'UCL (+3σ)' : undefined,
+        showlegend: idx === 0,
+        line: { color: '#dc2626', width: 2, dash: 'dash' },
+        hoverinfo: 'y',
+      });
+      // LCL for this stage
+      traces.push({
+        x: [stageStat.startIdx, stageStat.endIdx],
+        y: [stageStat.iLCL, stageStat.iLCL],
+        type: 'scatter',
+        mode: 'lines',
+        name: idx === 0 ? 'LCL (-3σ)' : undefined,
+        showlegend: idx === 0,
+        line: { color: '#dc2626', width: 2, dash: 'dash' },
+        hoverinfo: 'y',
+      });
+    });
+    
+    return traces;
+  };
+
+  // Generate per-stage control limit traces for MR chart
+  const generateMRChartStageTraces = () => {
+    if (!stagesEnabled || stageStatsList.length === 0) return [];
+    
+    const traces: any[] = [];
+    
+    stageStatsList.forEach((stageStat, idx) => {
+      const mrStartIdx = Math.max(stageStat.startIdx, 2); // MR starts at index 2
+      // Centerline for this stage
+      traces.push({
+        x: [mrStartIdx, stageStat.endIdx],
+        y: [stageStat.mrCL, stageStat.mrCL],
+        type: 'scatter',
+        mode: 'lines',
+        name: idx === 0 ? 'Centerline (R̄)' : undefined,
+        showlegend: idx === 0,
+        line: { color: '#16a34a', width: 2 },
+        hoverinfo: 'y',
+      });
+      // UCL for this stage
+      traces.push({
+        x: [mrStartIdx, stageStat.endIdx],
+        y: [stageStat.mrUCL, stageStat.mrUCL],
+        type: 'scatter',
+        mode: 'lines',
+        name: idx === 0 ? 'UCL' : undefined,
+        showlegend: idx === 0,
+        line: { color: '#dc2626', width: 2, dash: 'dash' },
+        hoverinfo: 'y',
+      });
+      // LCL for this stage (usually 0)
+      traces.push({
+        x: [mrStartIdx, stageStat.endIdx],
+        y: [stageStat.mrLCL, stageStat.mrLCL],
+        type: 'scatter',
+        mode: 'lines',
+        name: idx === 0 ? 'LCL' : undefined,
+        showlegend: idx === 0,
+        line: { color: '#dc2626', width: 2, dash: 'dash' },
+        hoverinfo: 'y',
+      });
+    });
+    
+    return traces;
+  };
+
+  // Generate vertical dashed lines between stages (uses raw stage values, not stageStatsList)
+  const generateStageSeparatorShapes = () => {
+    if (!stagesEnabled || validStageValuesAligned.length === 0) return [];
+    
+    const shapes: any[] = [];
+    
+    // Find all stage transition points (where stage number changes)
+    for (let i = 1; i < validStageValuesAligned.length; i++) {
+      const prevStage = validStageValuesAligned[i - 1];
+      const currStage = validStageValuesAligned[i];
+      
+      // Add separator when stage changes (and both are valid stage numbers > 0)
+      if (prevStage > 0 && currStage > 0 && prevStage !== currStage) {
+        const xPos = i + 0.5; // Position between points (i is 0-based, chart is 1-based)
+        shapes.push({
+          type: 'line',
+          x0: xPos,
+          x1: xPos,
+          y0: 0,
+          y1: 1,
+          xref: 'x',
+          yref: 'paper',
+          line: {
+            color: '#6b7280',
+            width: 2,
+            dash: 'dash',
+          },
+        });
+      }
+    }
+    
+    return shapes;
+  };
+
+  // Generate stage annotations showing stage numbers (uses raw stage values for all transitions)
+  const generateStageAnnotations = () => {
+    if (!stagesEnabled || validStageValuesAligned.length === 0) return [];
+    
+    // Group contiguous points by stage number
+    const stageRanges: { stageNum: number; startIdx: number; endIdx: number }[] = [];
+    let currentStage = validStageValuesAligned[0];
+    let startIdx = 0;
+    
+    for (let i = 1; i <= validStageValuesAligned.length; i++) {
+      const nextStage = i < validStageValuesAligned.length ? validStageValuesAligned[i] : -1;
+      if (nextStage !== currentStage) {
+        if (currentStage > 0) {
+          stageRanges.push({
+            stageNum: currentStage,
+            startIdx: startIdx + 1, // 1-based for chart
+            endIdx: i, // 1-based for chart
+          });
+        }
+        startIdx = i;
+        currentStage = nextStage;
+      }
+    }
+    
+    return stageRanges.map(range => ({
+      x: (range.startIdx + range.endIdx) / 2,
+      y: 1.05,
+      xref: 'x' as const,
+      yref: 'paper' as const,
+      text: `Stage ${range.stageNum}`,
+      showarrow: false,
+      font: { color: '#6b7280', size: 10 },
+    }));
+  };
+
+  const iChartStageTraces = generateIChartStageTraces();
+  const mrChartStageTraces = generateMRChartStageTraces();
 
   const displayValues = [...dataValues];
   if (displayValues.length < 3 || !isNaN(displayValues[displayValues.length - 1])) {
@@ -717,6 +1082,18 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                 </div>
               </RadioGroup>
             </div>
+            <div className="flex items-center space-x-2 mt-4">
+              <input
+                type="checkbox"
+                id="stages-enabled"
+                checked={stagesEnabled}
+                onChange={(e) => setStagesEnabled(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                data-testid="checkbox-stages-enabled"
+              />
+              <Label htmlFor="stages-enabled" className="text-sm cursor-pointer">Enable Stages</Label>
+              <span className="text-xs text-gray-500">(Display separate control limits per stage)</span>
+            </div>
           </div>
           
           <div 
@@ -734,6 +1111,9 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                     </th>
                   )}
                   <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Indicator Value</th>
+                  {stagesEnabled && (
+                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700 w-24">Stage</th>
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -780,6 +1160,24 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                         data-testid={`input-imr-value-${index}`}
                       />
                     </td>
+                    {stagesEnabled && (
+                      <td className="px-4 py-1">
+                        <Input
+                          type="number"
+                          min="1"
+                          value={stageValues[index] > 0 ? stageValues[index] : ''}
+                          onChange={(e) => handleStageChange(index, e.target.value)}
+                          onKeyDown={(e) => handleKeyDown(e, index, 'stage')}
+                          onFocus={() => setFocusedCell({ row: index, col: 'stage' })}
+                          onBlur={() => setFocusedCell(null)}
+                          className="h-8 text-sm w-16"
+                          placeholder="1"
+                          data-cell-index={index}
+                          data-cell-col="stage"
+                          data-testid={`input-imr-stage-${index}`}
+                        />
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -841,30 +1239,33 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                     name: 'Out of Control',
                     marker: { color: '#dc2626', size: 10, symbol: 'square' },
                   }] : []),
-                  {
-                    x: [1, chartXIndices.length],
-                    y: [stats.iCL, stats.iCL],
-                    type: 'scatter',
-                    mode: 'lines',
-                    name: 'Centerline (X̄)',
-                    line: { color: '#16a34a', width: 2 },
-                  },
-                  {
-                    x: [1, chartXIndices.length],
-                    y: [stats.iUCL, stats.iUCL],
-                    type: 'scatter',
-                    mode: 'lines',
-                    name: 'UCL (+3σ)',
-                    line: { color: '#dc2626', width: 2, dash: 'dash' },
-                  },
-                  {
-                    x: [1, chartXIndices.length],
-                    y: [stats.iLCL, stats.iLCL],
-                    type: 'scatter',
-                    mode: 'lines',
-                    name: 'LCL (-3σ)',
-                    line: { color: '#dc2626', width: 2, dash: 'dash' },
-                  },
+                  // Use per-stage control limits if stages enabled, otherwise use global stats
+                  ...(stagesEnabled && iChartStageTraces.length > 0 ? iChartStageTraces : [
+                    {
+                      x: [1, chartXIndices.length],
+                      y: [stats.iCL, stats.iCL],
+                      type: 'scatter',
+                      mode: 'lines',
+                      name: 'Centerline (X̄)',
+                      line: { color: '#16a34a', width: 2 },
+                    },
+                    {
+                      x: [1, chartXIndices.length],
+                      y: [stats.iUCL, stats.iUCL],
+                      type: 'scatter',
+                      mode: 'lines',
+                      name: 'UCL (+3σ)',
+                      line: { color: '#dc2626', width: 2, dash: 'dash' },
+                    },
+                    {
+                      x: [1, chartXIndices.length],
+                      y: [stats.iLCL, stats.iLCL],
+                      type: 'scatter',
+                      mode: 'lines',
+                      name: 'LCL (-3σ)',
+                      line: { color: '#dc2626', width: 2, dash: 'dash' },
+                    },
+                  ]),
                 ]}
                 layout={{
                   title: { text: `I Chart of ${indicatorName || ctqName}` },
@@ -882,8 +1283,9 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                   yaxis: { title: { text: 'Value' } },
                   showlegend: true,
                   legend: { orientation: 'h', y: -0.2 },
-                  margin: { t: 50, b: 80, l: 60, r: 100 },
+                  margin: { t: 60, b: 80, l: 60, r: 100 },
                   height: 350,
+                  shapes: generateStageSeparatorShapes(),
                   annotations: [
                     ...(chartDate ? [{
                       x: 1,
@@ -896,51 +1298,55 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                       yanchor: 'top' as const,
                       font: { color: '#374151', size: 11 },
                     }] : []),
-                    {
-                      x: chartXIndices.length,
-                      y: stats.iUCL,
-                      xref: 'x',
-                      yref: 'y',
-                      text: `UCL=${stats.iUCL.toFixed(2)}`,
-                      showarrow: false,
-                      xanchor: 'left',
-                      yanchor: 'middle',
-                      font: { color: '#dc2626', size: 11 },
-                      bgcolor: 'rgba(255,255,255,0.9)',
-                      bordercolor: '#dc2626',
-                      borderwidth: 1,
-                      borderpad: 3,
-                    },
-                    {
-                      x: chartXIndices.length,
-                      y: stats.iCL,
-                      xref: 'x',
-                      yref: 'y',
-                      text: `CL=${stats.iCL.toFixed(2)}`,
-                      showarrow: false,
-                      xanchor: 'left',
-                      yanchor: 'middle',
-                      font: { color: '#16a34a', size: 11 },
-                      bgcolor: 'rgba(255,255,255,0.9)',
-                      bordercolor: '#16a34a',
-                      borderwidth: 1,
-                      borderpad: 3,
-                    },
-                    {
-                      x: chartXIndices.length,
-                      y: stats.iLCL,
-                      xref: 'x',
-                      yref: 'y',
-                      text: `LCL=${stats.iLCL.toFixed(2)}`,
-                      showarrow: false,
-                      xanchor: 'left',
-                      yanchor: 'middle',
-                      font: { color: '#dc2626', size: 11 },
-                      bgcolor: 'rgba(255,255,255,0.9)',
-                      bordercolor: '#dc2626',
-                      borderwidth: 1,
-                      borderpad: 3,
-                    },
+                    ...generateStageAnnotations(),
+                    // Only show global stats labels if stages not enabled
+                    ...(!stagesEnabled ? [
+                      {
+                        x: chartXIndices.length,
+                        y: stats.iUCL,
+                        xref: 'x' as const,
+                        yref: 'y' as const,
+                        text: `UCL=${stats.iUCL.toFixed(2)}`,
+                        showarrow: false,
+                        xanchor: 'left' as const,
+                        yanchor: 'middle' as const,
+                        font: { color: '#dc2626', size: 11 },
+                        bgcolor: 'rgba(255,255,255,0.9)',
+                        bordercolor: '#dc2626',
+                        borderwidth: 1,
+                        borderpad: 3,
+                      },
+                      {
+                        x: chartXIndices.length,
+                        y: stats.iCL,
+                        xref: 'x' as const,
+                        yref: 'y' as const,
+                        text: `CL=${stats.iCL.toFixed(2)}`,
+                        showarrow: false,
+                        xanchor: 'left' as const,
+                        yanchor: 'middle' as const,
+                        font: { color: '#16a34a', size: 11 },
+                        bgcolor: 'rgba(255,255,255,0.9)',
+                        bordercolor: '#16a34a',
+                        borderwidth: 1,
+                        borderpad: 3,
+                      },
+                      {
+                        x: chartXIndices.length,
+                        y: stats.iLCL,
+                        xref: 'x' as const,
+                        yref: 'y' as const,
+                        text: `LCL=${stats.iLCL.toFixed(2)}`,
+                        showarrow: false,
+                        xanchor: 'left' as const,
+                        yanchor: 'middle' as const,
+                        font: { color: '#dc2626', size: 11 },
+                        bgcolor: 'rgba(255,255,255,0.9)',
+                        bordercolor: '#dc2626',
+                        borderwidth: 1,
+                        borderpad: 3,
+                      },
+                    ] : []),
                   ],
                 }}
               config={{
@@ -1007,30 +1413,33 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                     name: 'Out of Control',
                     marker: { color: '#dc2626', size: 10, symbol: 'square' },
                   }] : []),
-                  {
-                    x: [2, chartXIndices.length],
-                    y: [stats.mrCL, stats.mrCL],
-                    type: 'scatter',
-                    mode: 'lines',
-                    name: 'Centerline (MR̄)',
-                    line: { color: '#16a34a', width: 2 },
-                  },
-                  {
-                    x: [2, chartXIndices.length],
-                    y: [stats.mrUCL, stats.mrUCL],
-                    type: 'scatter',
-                    mode: 'lines',
-                    name: 'UCL (+3σ)',
-                    line: { color: '#dc2626', width: 2, dash: 'dash' },
-                  },
-                  {
-                    x: [2, chartXIndices.length],
-                    y: [stats.mrLCL, stats.mrLCL],
-                    type: 'scatter',
-                    mode: 'lines',
-                    name: 'LCL',
-                    line: { color: '#dc2626', width: 2, dash: 'dash' },
-                  },
+                  // Use per-stage control limits if stages enabled, otherwise use global stats
+                  ...(stagesEnabled && mrChartStageTraces.length > 0 ? mrChartStageTraces : [
+                    {
+                      x: [2, chartXIndices.length],
+                      y: [stats.mrCL, stats.mrCL],
+                      type: 'scatter',
+                      mode: 'lines',
+                      name: 'Centerline (MR̄)',
+                      line: { color: '#16a34a', width: 2 },
+                    },
+                    {
+                      x: [2, chartXIndices.length],
+                      y: [stats.mrUCL, stats.mrUCL],
+                      type: 'scatter',
+                      mode: 'lines',
+                      name: 'UCL (+3σ)',
+                      line: { color: '#dc2626', width: 2, dash: 'dash' },
+                    },
+                    {
+                      x: [2, chartXIndices.length],
+                      y: [stats.mrLCL, stats.mrLCL],
+                      type: 'scatter',
+                      mode: 'lines',
+                      name: 'LCL',
+                      line: { color: '#dc2626', width: 2, dash: 'dash' },
+                    },
+                  ]),
                 ]}
                 layout={{
                   title: { text: `MR Chart of ${indicatorName || ctqName}` },
@@ -1048,8 +1457,9 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                   yaxis: { title: { text: 'Moving Range' }, rangemode: 'tozero' },
                   showlegend: true,
                   legend: { orientation: 'h', y: -0.2 },
-                  margin: { t: 50, b: 80, l: 60, r: 100 },
+                  margin: { t: 60, b: 80, l: 60, r: 100 },
                   height: 350,
+                  shapes: generateStageSeparatorShapes(),
                   annotations: [
                     ...(chartDate ? [{
                       x: 1,
@@ -1062,51 +1472,55 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                       yanchor: 'top' as const,
                       font: { color: '#374151', size: 11 },
                     }] : []),
-                    {
-                      x: chartXIndices.length,
-                      y: stats.mrUCL,
-                      xref: 'x',
-                      yref: 'y',
-                      text: `UCL=${stats.mrUCL.toFixed(2)}`,
-                      showarrow: false,
-                      xanchor: 'left',
-                      yanchor: 'middle',
-                      font: { color: '#dc2626', size: 11 },
-                      bgcolor: 'rgba(255,255,255,0.9)',
-                      bordercolor: '#dc2626',
-                      borderwidth: 1,
-                      borderpad: 3,
-                    },
-                    {
-                      x: chartXIndices.length,
-                      y: stats.mrCL,
-                      xref: 'x',
-                      yref: 'y',
-                      text: `CL=${stats.mrCL.toFixed(2)}`,
-                      showarrow: false,
-                      xanchor: 'left',
-                      yanchor: 'middle',
-                      font: { color: '#16a34a', size: 11 },
-                      bgcolor: 'rgba(255,255,255,0.9)',
-                      bordercolor: '#16a34a',
-                      borderwidth: 1,
-                      borderpad: 3,
-                    },
-                    {
-                      x: chartXIndices.length,
-                      y: stats.mrLCL,
-                      xref: 'x',
-                      yref: 'y',
-                      text: `LCL=${stats.mrLCL.toFixed(2)}`,
-                      showarrow: false,
-                      xanchor: 'left',
-                      yanchor: 'middle',
-                      font: { color: '#dc2626', size: 11 },
-                      bgcolor: 'rgba(255,255,255,0.9)',
-                      bordercolor: '#dc2626',
-                      borderwidth: 1,
-                      borderpad: 3,
-                    },
+                    ...generateStageAnnotations(),
+                    // Only show global stats labels if stages not enabled
+                    ...(!stagesEnabled ? [
+                      {
+                        x: chartXIndices.length,
+                        y: stats.mrUCL,
+                        xref: 'x' as const,
+                        yref: 'y' as const,
+                        text: `UCL=${stats.mrUCL.toFixed(2)}`,
+                        showarrow: false,
+                        xanchor: 'left' as const,
+                        yanchor: 'middle' as const,
+                        font: { color: '#dc2626', size: 11 },
+                        bgcolor: 'rgba(255,255,255,0.9)',
+                        bordercolor: '#dc2626',
+                        borderwidth: 1,
+                        borderpad: 3,
+                      },
+                      {
+                        x: chartXIndices.length,
+                        y: stats.mrCL,
+                        xref: 'x' as const,
+                        yref: 'y' as const,
+                        text: `CL=${stats.mrCL.toFixed(2)}`,
+                        showarrow: false,
+                        xanchor: 'left' as const,
+                        yanchor: 'middle' as const,
+                        font: { color: '#16a34a', size: 11 },
+                        bgcolor: 'rgba(255,255,255,0.9)',
+                        bordercolor: '#16a34a',
+                        borderwidth: 1,
+                        borderpad: 3,
+                      },
+                      {
+                        x: chartXIndices.length,
+                        y: stats.mrLCL,
+                        xref: 'x' as const,
+                        yref: 'y' as const,
+                        text: `LCL=${stats.mrLCL.toFixed(2)}`,
+                        showarrow: false,
+                        xanchor: 'left' as const,
+                        yanchor: 'middle' as const,
+                        font: { color: '#dc2626', size: 11 },
+                        bgcolor: 'rgba(255,255,255,0.9)',
+                        bordercolor: '#dc2626',
+                        borderwidth: 1,
+                        borderpad: 3,
+                      },
+                    ] : []),
                   ],
                 }}
               config={{
