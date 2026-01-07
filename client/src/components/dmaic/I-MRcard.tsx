@@ -148,6 +148,9 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
       if (data?.stageValues && Array.isArray(data.stageValues)) {
         setStageValues(data.stageValues);
       }
+      if (data?.aiAnalysis && typeof data.aiAnalysis === 'string') {
+        setAiAnalysis(data.aiAnalysis);
+      }
     }
   }, [dataQuery.data]);
 
@@ -181,6 +184,32 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
       toast({
         title: "Error",
         description: error.message || "Failed to save data.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const saveAiAnalysisMutation = useMutation({
+    mutationFn: async (analysis: string) => {
+      return apiRequest(
+        'PATCH',
+        `/api/projects/${projectId}/spc/imr/${encodeURIComponent(ctqName)}/ai-analysis`,
+        { aiAnalysis: analysis }
+      );
+    },
+    onSuccess: () => {
+      toast({
+        title: "AI Analysis saved",
+        description: "Control card AI analysis saved successfully.",
+      });
+      queryClient.invalidateQueries({
+        queryKey: [`/api/projects/${projectId}/spc/imr/${encodeURIComponent(ctqName)}`]
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save AI analysis.",
         variant: "destructive",
       });
     },
@@ -1934,27 +1963,50 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                   <Sparkles className="h-4 w-4 text-purple-600" />
                   AI Control Card Analysis
                 </h3>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    generateAIAnalysis();
-                  }}
-                  disabled={isGeneratingAnalysis || validDataValues.length < 10}
-                  data-testid="btn-ai-control-analysis"
-                >
-                  {isGeneratingAnalysis ? (
-                    <RefreshCw className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Sparkles className="h-4 w-4 text-purple-600" />
-                  )}
-                  <span className="ml-1">
-                    {isGeneratingAnalysis ? "Generating..." : "Generate Analysis"}
-                  </span>
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      generateAIAnalysis();
+                    }}
+                    disabled={isGeneratingAnalysis || validDataValues.length < 10}
+                    data-testid="btn-ai-control-analysis"
+                  >
+                    {isGeneratingAnalysis ? (
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-4 w-4 text-purple-600" />
+                    )}
+                    <span className="ml-1">
+                      {isGeneratingAnalysis ? "Generating..." : "Generate Analysis"}
+                    </span>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="default"
+                    size="sm"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      saveAiAnalysisMutation.mutate(aiAnalysis);
+                    }}
+                    disabled={saveAiAnalysisMutation.isPending || !aiAnalysis.trim()}
+                    data-testid="btn-save-ai-analysis"
+                  >
+                    {saveAiAnalysisMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Save className="h-4 w-4" />
+                    )}
+                    <span className="ml-1">
+                      {saveAiAnalysisMutation.isPending ? "Saving..." : "Save AI-Analysis"}
+                    </span>
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="p-4 pt-3">

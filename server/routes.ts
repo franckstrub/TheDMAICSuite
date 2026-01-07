@@ -10739,6 +10739,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
     },
   );
 
+  // PATCH I-MR AI Analysis - Save AI analysis to database
+  app.patch(
+    "/api/projects/:projectId/spc/imr/:ctqName/ai-analysis",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        const ctqName = decodeURIComponent(req.params.ctqName);
+        
+        if (isNaN(projectId)) {
+          return res.status(400).json({ error: "Invalid project ID" });
+        }
+
+        const userId = (req.user as any)?.claims?.sub;
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord?.organizationId) {
+          return res.status(401).json({ error: "Unauthorized" });
+        }
+
+        const { aiAnalysis } = req.body;
+
+        if (typeof aiAnalysis !== 'string') {
+          return res.status(400).json({ error: "aiAnalysis must be a string" });
+        }
+
+        // Limit AI analysis length to 10000 characters
+        const validatedAiAnalysis = aiAnalysis.slice(0, 10000);
+
+        // Update the AI analysis field
+        const [updated] = await db
+          .update(imrControlCardData)
+          .set({
+            aiAnalysis: validatedAiAnalysis,
+            updatedAt: new Date(),
+          })
+          .where(
+            and(
+              eq(imrControlCardData.projectId, projectId),
+              eq(imrControlCardData.ctqName, ctqName),
+              eq(imrControlCardData.organizationId, userRecord.organizationId),
+            ),
+          )
+          .returning();
+
+        if (!updated) {
+          return res.status(404).json({ error: "Control card data not found" });
+        }
+
+        return res.status(200).json({
+          success: true,
+          aiAnalysis: updated.aiAnalysis,
+        });
+      } catch (err) {
+        console.error("Error saving AI control card analysis:", err);
+        return res.status(500).json({
+          error: "Failed to save AI control card analysis",
+          details: err instanceof Error ? err.message : "Unknown error",
+        });
+      }
+    },
+  );
+
   // ========== SPC Control Card Selections ==========
 
   // GET all control card selections for a project
