@@ -3168,6 +3168,71 @@ export const insertImrControlCardDataSchema = createInsertSchema(imrControlCardD
 export type InsertImrControlCardData = z.infer<typeof insertImrControlCardDataSchema>;
 export type ImrControlCardData = typeof imrControlCardData.$inferSelect;
 
+// Xbar-R Control Card Data for SPC (Statistical Process Control)
+export const xbarRControlCardData = pgTable(
+  "xbar_r_control_card_data",
+  {
+    id: serial("id").primaryKey(),
+    organizationId: integer("organization_id")
+      .references(() => organizations.id)
+      .notNull(),
+    projectId: integer("project_id").notNull(),
+    ctqName: text("ctq_name").notNull(),
+    
+    // Indicator name to monitor (defaults to CTQ name but can be customized)
+    indicatorName: text("indicator_name").default(""),
+    
+    // Chart date
+    chartDate: text("chart_date").default(""),
+    
+    // X-axis scale type: 'index' (default 1,2,3...) or 'freeform' (custom text) or 'date'
+    xScaleType: text("x_scale_type").default("index"),
+    
+    // Custom x-axis label (when using freeform type, e.g., "Batch", "Week", "Sample ID")
+    xAxisLabel: text("x_axis_label").default(""),
+    
+    // Custom x-scale values (array of strings for freeform or date values)
+    xScaleValues: jsonb("x_scale_values").$type<string[]>().default([]),
+    
+    // Data array stored as JSON (array of numbers - individual measurements)
+    dataValues: jsonb("data_values").$type<number[]>().default([]),
+    
+    // Constant subgroup size checkbox - if true, all subgroups have same size
+    constantSubgroupSize: boolean("constant_subgroup_size").default(false),
+    
+    // Subgroup size (used when constantSubgroupSize is true, typically 2-10)
+    subgroupSize: integer("subgroup_size").default(5),
+    
+    // Subgroup index values (array of positive integers, when not using constant subgroup size)
+    // Similar to stage logic: same or +1, defines which subgroup each measurement belongs to
+    subgroupIndexValues: jsonb("subgroup_index_values").$type<number[]>().default([]),
+    
+    // Stages feature - enables per-stage control limits
+    stagesEnabled: boolean("stages_enabled").default(false),
+    
+    // Stage values (array of positive integers, sequential - same or +1)
+    stageValues: jsonb("stage_values").$type<number[]>().default([]),
+    
+    // AI-generated control card analysis
+    aiAnalysis: text("ai_analysis").default(""),
+    
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    uniqueProjectCtq: unique().on(table.projectId, table.ctqName),
+  }),
+);
+
+export const insertXbarRControlCardDataSchema = createInsertSchema(xbarRControlCardData).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertXbarRControlCardData = z.infer<typeof insertXbarRControlCardDataSchema>;
+export type XbarRControlCardData = typeof xbarRControlCardData.$inferSelect;
+
 // SPC Control Card Selection (stores checkbox selections for each CTQ)
 export const spcControlCardSelections = pgTable(
   "spc_control_card_selections",

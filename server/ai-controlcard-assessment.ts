@@ -66,7 +66,7 @@ export async function generateControlCardAssessment(
       : `The process has OUT OF CONTROL signals: ${individualOOC} individual value(s) and ${mrOOC} moving range value(s) outside control limits.`;
 
     const stageInfo = stats.stagesEnabled && stats.stageStats && stats.stageStats.length > 1
-      ? `\nMulti-Stage Analysis:\n${stats.stageStats.map(s => 
+      ? `\nMulti-Stage Analysis:\nNumber of stages=stats.stageStats.length\n${stats.stageStats.map(s => 
           `- Stage ${s.stageNumber}: ${s.count} points, Mean=${s.mean.toFixed(4)}, UCL=${s.ucl.toFixed(4)}, LCL=${s.lcl.toFixed(4)}`
         ).join('\n')}`
       : '';
@@ -77,7 +77,7 @@ export async function generateControlCardAssessment(
 - MR chart: Points at indices ${stats.outOfControlMR.length > 0 ? stats.outOfControlMR.join(', ') : 'none'}`
       : '';
 
-    const prompt = `As a Lean Six Sigma Master Black Belt expert, provide a comprehensive I-MR (Individual-Moving Range) control chart analysis for the process characteristic "${context.indicatorName || context.ctqName}".
+    const prompt = `As a Lean Six Sigma Master Black Belt expert, provide a comprehensive and concise I-MR (Individual-Moving Range) control chart analysis for the process characteristic "${context.indicatorName || context.ctqName}".
 
 Statistical Summary:
 - Sample size: ${sampleSize}
@@ -93,7 +93,7 @@ Control Status:
 ${controlStatus}
 ${oocDetails}
 
-Please provide a structured analysis following these steps:
+Please provide a structured analysis "${stats.stageStats && stats.stageStats.length > 1 ? 'for each stage' : ''}" following these steps:
 
 1. **Process Stability Assessment**
    - Is the process statistically stable (in control)?
@@ -120,7 +120,7 @@ Please provide a structured analysis following these steps:
    - Priority items to address
    - Monitoring recommendations going forward
 
-Keep the analysis concise, professional, data-driven, and actionable for process improvement teams. Focus on practical insights that operators and engineers can use immediately.`;
+Keep the analysis professional, and actionable for process monitoring teams. Focus on practical insights that operators and engineers can use immediately.`;
 
     console.log("Sending request to Google AI API for control card analysis...");
 
