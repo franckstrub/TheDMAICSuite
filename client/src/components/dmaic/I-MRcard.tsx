@@ -531,7 +531,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
       : [];
     
     const validStageValues = stagesEnabled
-      ? validIndices.map(i => stageValues[i] || 0)
+      ? validIndices.map(i => stageValues[i] || 1) // Default to 1 if unset
       : [];
     
     saveMutation.mutate({ 
@@ -709,17 +709,22 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
   
   const customTickLabels = getCustomTickLabels();
 
-  // Helper to check if a chart index belongs to a valid stage (stage value > 0)
-  const isInValidStage = (chartIdx: number) => {
-    const arrayIdx = chartIdx - 1; // Convert 1-based chart index to 0-based array index
-    if (arrayIdx < 0 || arrayIdx >= validStageValuesAligned.length) return false;
-    return validStageValuesAligned[arrayIdx] > 0;
-  };
-  
   // Helper to find stage stats for a given chart index (1-based)
+  // Returns the stage stats if the point belongs to a stage with computed limits, null otherwise
   const getStageStatsForIndex = (chartIdx: number) => {
     if (!stagesEnabled || stageStatsList.length === 0) return null;
     return stageStatsList.find(s => chartIdx >= s.startIdx && chartIdx <= s.endIdx) || null;
+  };
+  
+  // Helper to check if a chart index is in a single-point stage (stage >= 1 but no stats)
+  const isInSinglePointStage = (chartIdx: number) => {
+    const arrayIdx = chartIdx - 1; // Convert 1-based chart index to 0-based array index
+    if (arrayIdx < 0 || arrayIdx >= validStageValuesAligned.length) return false;
+    const stageNum = validStageValuesAligned[arrayIdx];
+    if (stageNum < 1) return false; // Invalid stage
+    // Check if this stage has stats (meaning it has 2+ points)
+    const hasStats = stageStatsList.some(s => chartIdx >= s.startIdx && chartIdx <= s.endIdx);
+    return !hasStats; // Single-point stage if no stats
   };
 
   // Get arrays of in-control and out-of-control points for I chart
@@ -743,12 +748,10 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
           // Point is in a stage with computed stats - use per-stage limits
           ucl = stageStats.iUCL;
           lcl = stageStats.iLCL;
-        } else if (isInValidStage(xVal)) {
-          // Point is in a valid stage (>0) but stage has insufficient data (single point)
-          // Skip OOC check for this point - indeterminate status
+        } else if (isInSinglePointStage(xVal)) {
+          // Point is in a single-point stage - skip OOC check (indeterminate)
           skipOOCCheck = true;
         }
-        // If stage value is 0/unset, use global limits (no change to ucl/lcl)
       }
       
       if (!skipOOCCheck && isOutOfControl(value, ucl, lcl)) {
@@ -784,12 +787,10 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
           // Point is in a stage with computed stats - use per-stage limits
           ucl = stageStats.mrUCL;
           lcl = stageStats.mrLCL;
-        } else if (isInValidStage(xVal)) {
-          // Point is in a valid stage (>0) but stage has insufficient data (single point)
-          // Skip OOC check for this point - indeterminate status
+        } else if (isInSinglePointStage(xVal)) {
+          // Point is in a single-point stage - skip OOC check (indeterminate)
           skipOOCCheck = true;
         }
-        // If stage value is 0/unset, use global limits (no change to ucl/lcl)
       }
       
       if (!skipOOCCheck && isOutOfControl(value, ucl, lcl)) {
@@ -1087,7 +1088,15 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                 type="checkbox"
                 id="stages-enabled"
                 checked={stagesEnabled}
-                onChange={(e) => setStagesEnabled(e.target.checked)}
+                onChange={(e) => {
+                  const enabled = e.target.checked;
+                  setStagesEnabled(enabled);
+                  if (enabled) {
+                    // Set all stage cells to 1 by default when enabling stages
+                    const numRows = Math.max(dataValues.length, 3);
+                    setStageValues(Array(numRows).fill(1));
+                  }
+                }}
                 className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                 data-testid="checkbox-stages-enabled"
               />
