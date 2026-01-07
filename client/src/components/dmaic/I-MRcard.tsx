@@ -577,27 +577,26 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
       if (value === '' || isNaN(numVal) || numVal < 1) {
         newStages[index] = 0;
       } else {
-        // Validate: must be >= 1 and either equal to previous or previous + 1
-        const prevStage = index > 0 ? newStages[index - 1] : 1;
-        if (prevStage === 0 || prevStage === 1) {
-          // First stage or after empty - allow 1 or continue from last valid
-          newStages[index] = Math.max(1, numVal);
-        } else if (numVal === prevStage || numVal === prevStage + 1) {
+        // Find the last non-zero stage before this index
+        let lastStage = 1;
+        for (let i = index - 1; i >= 0; i--) {
+          if (newStages[i] > 0) { lastStage = newStages[i]; break; }
+        }
+        
+        if (numVal === lastStage || numVal === lastStage + 1) {
           newStages[index] = numVal;
-        } else if (numVal < prevStage) {
-          // Value is less than previous - default to previous
-          newStages[index] = prevStage;
+        } else if (numVal < lastStage) {
+          newStages[index] = lastStage;
           toast({
             title: "Invalid stage",
-            description: `Stage must be at least ${prevStage} (minimum based on previous stage)`,
+            description: `Stage must be at least ${lastStage}`,
             variant: "destructive",
           });
         } else {
-          // Value is greater than prevStage + 1 - default to prevStage + 1
-          newStages[index] = prevStage + 1;
+          newStages[index] = lastStage + 1;
           toast({
             title: "Invalid stage",
-            description: `Stage must be ${prevStage} or ${prevStage + 1}`,
+            description: `Stage must be ${lastStage} or ${lastStage + 1}`,
             variant: "destructive",
           });
         }
@@ -1513,20 +1512,22 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                       />
                     </td>
                     {stagesEnabled && (() => {
-                      const prevStage = index > 0 ? (stageValues[index - 1] || 1) : 1;
-                      const minStage = Math.max(1, prevStage);
+                      let lastStage = 1;
+                      for (let i = index - 1; i >= 0; i--) {
+                        if (stageValues[i] > 0) { lastStage = stageValues[i]; break; }
+                      }
                       return (
                         <td className="px-4 py-1">
                           <Input
                             type="number"
-                            min={minStage}
+                            min={lastStage}
                             value={stageValues[index] > 0 ? stageValues[index] : ''}
                             onChange={(e) => handleStageChange(index, e.target.value)}
                             onKeyDown={(e) => handleKeyDown(e, index, 'stage')}
                             onFocus={() => setFocusedCell({ row: index, col: 'stage' })}
                             onBlur={() => setFocusedCell(null)}
                             className="h-8 text-sm w-16"
-                            placeholder={String(minStage)}
+                            placeholder={String(lastStage)}
                             data-cell-index={index}
                             data-cell-col="stage"
                             data-testid={`input-imr-stage-${index}`}
