@@ -1317,26 +1317,27 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
             </CardHeader>
             <CardContent>
               {stagesEnabled && stageStatsList.length > 0 ? (
-                <div className="mb-4 space-y-2">
-                  {stageStatsList.map(stageStat => (
-                    <div key={stageStat.stageNum} className="border rounded-lg p-3">
-                      <div className="text-sm font-medium text-gray-700 mb-2">Stage {stageStat.stageNum}</div>
-                      <div className="grid grid-cols-3 gap-3 text-sm">
-                        <div className="bg-blue-50 p-2 rounded">
-                          <Label className="text-xs text-gray-600">UCL</Label>
-                          <div className="font-semibold text-blue-700">{stageStat.iUCL.toFixed(4)}</div>
-                        </div>
-                        <div className="bg-green-50 p-2 rounded">
-                          <Label className="text-xs text-gray-600">CL (X̄)</Label>
-                          <div className="font-semibold text-green-700">{stageStat.iCL.toFixed(4)}</div>
-                        </div>
-                        <div className="bg-blue-50 p-2 rounded">
-                          <Label className="text-xs text-gray-600">LCL</Label>
-                          <div className="font-semibold text-blue-700">{stageStat.iLCL.toFixed(4)}</div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                <div className="mb-4 border rounded-lg overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-100">
+                      <tr>
+                        <th className="px-3 py-2 text-left font-medium text-gray-700">Stage</th>
+                        <th className="px-3 py-2 text-left font-medium text-gray-700">LCL</th>
+                        <th className="px-3 py-2 text-left font-medium text-gray-700">CL (X̄)</th>
+                        <th className="px-3 py-2 text-left font-medium text-gray-700">UCL</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {stageStatsList.map(stageStat => (
+                        <tr key={stageStat.stageNum} className="border-t">
+                          <td className="px-3 py-2 font-medium">{stageStat.stageNum}</td>
+                          <td className="px-3 py-2 text-blue-700">{stageStat.iLCL.toFixed(4)}</td>
+                          <td className="px-3 py-2 text-green-700">{stageStat.iCL.toFixed(4)}</td>
+                          <td className="px-3 py-2 text-blue-700">{stageStat.iUCL.toFixed(4)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               ) : (
                 <div className="grid grid-cols-3 gap-4 mb-4 text-sm">
@@ -1516,26 +1517,27 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
             </CardHeader>
             <CardContent>
               {stagesEnabled && stageStatsList.length > 0 ? (
-                <div className="mb-4 space-y-2">
-                  {stageStatsList.map(stageStat => (
-                    <div key={stageStat.stageNum} className="border rounded-lg p-3">
-                      <div className="text-sm font-medium text-gray-700 mb-2">Stage {stageStat.stageNum}</div>
-                      <div className="grid grid-cols-3 gap-3 text-sm">
-                        <div className="bg-blue-50 p-2 rounded">
-                          <Label className="text-xs text-gray-600">UCL</Label>
-                          <div className="font-semibold text-blue-700">{stageStat.mrUCL.toFixed(4)}</div>
-                        </div>
-                        <div className="bg-green-50 p-2 rounded">
-                          <Label className="text-xs text-gray-600">CL (MR̄)</Label>
-                          <div className="font-semibold text-green-700">{stageStat.mrCL.toFixed(4)}</div>
-                        </div>
-                        <div className="bg-blue-50 p-2 rounded">
-                          <Label className="text-xs text-gray-600">LCL</Label>
-                          <div className="font-semibold text-blue-700">{stageStat.mrLCL.toFixed(4)}</div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                <div className="mb-4 border rounded-lg overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-100">
+                      <tr>
+                        <th className="px-3 py-2 text-left font-medium text-gray-700">Stage</th>
+                        <th className="px-3 py-2 text-left font-medium text-gray-700">LCL</th>
+                        <th className="px-3 py-2 text-left font-medium text-gray-700">CL (MR̄)</th>
+                        <th className="px-3 py-2 text-left font-medium text-gray-700">UCL</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {stageStatsList.map(stageStat => (
+                        <tr key={stageStat.stageNum} className="border-t">
+                          <td className="px-3 py-2 font-medium">{stageStat.stageNum}</td>
+                          <td className="px-3 py-2 text-blue-700">{stageStat.mrLCL.toFixed(4)}</td>
+                          <td className="px-3 py-2 text-green-700">{stageStat.mrCL.toFixed(4)}</td>
+                          <td className="px-3 py-2 text-blue-700">{stageStat.mrUCL.toFixed(4)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               ) : (
                 <div className="grid grid-cols-3 gap-4 mb-4 text-sm">
