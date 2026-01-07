@@ -101,6 +101,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
   const [dataValues, setDataValues] = useState<number[]>([NaN, NaN, NaN]);
   const [rawInputValues, setRawInputValues] = useState<string[]>(['', '', '']);
   const [xScaleType, setXScaleType] = useState<XScaleType>('index');
+  const [xAxisLabel, setXAxisLabel] = useState<string>('');
   const [xScaleValues, setXScaleValues] = useState<string[]>(['', '', '']);
   const [dataHistory, setDataHistory] = useState<DataHistory[]>([]);
   const [focusedCell, setFocusedCell] = useState<{ row: number; col: 'xscale' | 'value' | 'stage' } | null>(null);
@@ -132,6 +133,9 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
       if (data?.xScaleType && ['index', 'freeform', 'date'].includes(data.xScaleType)) {
         setXScaleType(data.xScaleType as XScaleType);
       }
+      if (data?.xAxisLabel) {
+        setXAxisLabel(data.xAxisLabel);
+      }
       if (data?.xScaleValues && Array.isArray(data.xScaleValues)) {
         setXScaleValues(data.xScaleValues);
       }
@@ -145,7 +149,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
   }, [dataQuery.data]);
 
   const saveMutation = useMutation({
-    mutationFn: async (payload: { values: number[]; indicatorName: string; chartDate: string; xScaleType: XScaleType; xScaleValues: string[]; stagesEnabled: boolean; stageValues: number[] }) => {
+    mutationFn: async (payload: { values: number[]; indicatorName: string; chartDate: string; xScaleType: XScaleType; xAxisLabel: string; xScaleValues: string[]; stagesEnabled: boolean; stageValues: number[] }) => {
       return apiRequest(
         'POST',
         `/api/projects/${projectId}/spc/imr/${encodeURIComponent(ctqName)}`,
@@ -154,6 +158,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
           indicatorName: payload.indicatorName, 
           chartDate: payload.chartDate,
           xScaleType: payload.xScaleType,
+          xAxisLabel: payload.xAxisLabel,
           xScaleValues: payload.xScaleValues,
           stagesEnabled: payload.stagesEnabled,
           stageValues: payload.stageValues,
@@ -598,11 +603,12 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
       indicatorName, 
       chartDate, 
       xScaleType, 
+      xAxisLabel,
       xScaleValues: validXScaleValues,
       stagesEnabled,
       stageValues: validStageValues,
     });
-  }, [dataValues, indicatorName, chartDate, xScaleType, xScaleValues, stagesEnabled, stageValues, saveMutation, toast]);
+  }, [dataValues, indicatorName, chartDate, xScaleType, xAxisLabel, xScaleValues, stagesEnabled, stageValues, saveMutation, toast]);
 
   const handleClearAllData = useCallback(() => {
     if (dataValues.filter(v => !isNaN(v)).length === 0) {
@@ -1253,6 +1259,20 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                   <Label htmlFor="xscale-date" className="text-sm cursor-pointer">Date</Label>
                 </div>
               </RadioGroup>
+              {xScaleType === 'freeform' && (
+                <div className="mt-3">
+                  <Label htmlFor="x-axis-label" className="text-sm font-medium">X-Axis Label</Label>
+                  <Input
+                    id="x-axis-label"
+                    type="text"
+                    value={xAxisLabel}
+                    onChange={(e) => setXAxisLabel(e.target.value)}
+                    placeholder="e.g., Batch, Week, Sample ID..."
+                    className="mt-1 max-w-xs"
+                    data-testid="input-x-axis-label"
+                  />
+                </div>
+              )}
             </div>
             <div className="flex items-center space-x-2 mt-4">
               <input
@@ -1287,7 +1307,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                   <th className="px-4 py-2 text-left text-sm font-medium text-gray-700 w-20">Index</th>
                   {xScaleType !== 'index' && (
                     <th className="px-4 py-2 text-left text-sm font-medium text-gray-700 w-40">
-                      {xScaleType === 'date' ? 'Date' : 'X-Scale Label'}
+                      {xScaleType === 'date' ? 'Date' : (xAxisLabel || 'Label')}
                     </th>
                   )}
                   <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Indicator Value</th>
@@ -1481,7 +1501,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                 layout={{
                   title: { text: `I Chart of ${indicatorName || ctqName}` },
                   xaxis: { 
-                    title: { text: xScaleType === 'date' ? 'Date' : (xScaleType === 'freeform' ? 'Label' : 'Observation') }, 
+                    title: { text: xScaleType === 'date' ? 'Date' : (xScaleType === 'freeform' ? (xAxisLabel || 'Label') : 'Observation') }, 
                     dtick: 1, 
                     tick0: 1, 
                     rangemode: 'nonnegative' as const,
@@ -1495,7 +1515,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                   showlegend: true,
                   legend: { orientation: 'h', y: -0.2 },
                   margin: { t: 60, b: 80, l: 60, r: 100 },
-                  height: 350,
+                  height: 380,
                   shapes: generateStageSeparatorShapes(),
                   annotations: [
                     ...(chartDate ? [{
@@ -1686,7 +1706,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                 layout={{
                   title: { text: `MR Chart of ${indicatorName || ctqName}` },
                   xaxis: { 
-                    title: { text: xScaleType === 'date' ? 'Date' : (xScaleType === 'freeform' ? 'Label' : 'Observation') }, 
+                    title: { text: xScaleType === 'date' ? 'Date' : (xScaleType === 'freeform' ? (xAxisLabel || 'Label') : 'Observation') }, 
                     dtick: 1, 
                     tick0: 2, 
                     rangemode: 'nonnegative' as const,
@@ -1700,7 +1720,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                   showlegend: true,
                   legend: { orientation: 'h', y: -0.2 },
                   margin: { t: 60, b: 80, l: 60, r: 100 },
-                  height: 350,
+                  height: 380,
                   shapes: generateStageSeparatorShapes(),
                   annotations: [
                     ...(chartDate ? [{
