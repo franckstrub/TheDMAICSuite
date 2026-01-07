@@ -377,10 +377,41 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
       return;
     }
     
+    if (focusedCol === 'stage' && stagesEnabled && !hasMultipleColumns) {
+      // Pasting single column into stage column - only update stage values
+      const newStageValues = [...stageValues];
+      lines.forEach((line, i) => {
+        const targetIndex = focusedIndex + i;
+        // Expand array if needed
+        while (newStageValues.length <= targetIndex) {
+          newStageValues.push(1);
+        }
+        const parsed = parseInt(line.trim(), 10);
+        if (!isNaN(parsed) && parsed >= 1) {
+          newStageValues[targetIndex] = parsed;
+        }
+      });
+      setStageValues(newStageValues);
+      toast({
+        title: "Data pasted",
+        description: `Successfully pasted ${lines.length} stage values`,
+      });
+      return;
+    }
+    
     // Multi-column paste - replace all data
     const newXScaleValues: string[] = [];
     const newDataValues: number[] = [];
     const newRawValues: string[] = [];
+    const newStageValues: number[] = [];
+    
+    // Determine expected column count based on current settings
+    const expectedColsWithStage = hasXScale ? 3 : 2; // xscale + value + stage OR value + stage
+    const expectedColsWithoutStage = hasXScale ? 2 : 1;
+    
+    // Check if the pasted data includes stage column (detect by column count)
+    const firstLine = lines[0]?.split(/\t/) || [];
+    const hasStageColumn = stagesEnabled && firstLine.length >= expectedColsWithStage;
     
     lines.forEach(line => {
       const cells = line.split(/\t/);
@@ -392,15 +423,32 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
         const rawValue = cells[1];
         newRawValues.push(rawValue);
         newDataValues.push(parseNumericValue(rawValue));
+        // Check for stage value in 3rd column
+        if (hasStageColumn && cells.length >= 3) {
+          const stageVal = parseInt(cells[2].trim(), 10);
+          newStageValues.push(!isNaN(stageVal) && stageVal >= 1 ? stageVal : 1);
+        } else if (stagesEnabled) {
+          newStageValues.push(1);
+        }
       } else if (hasXScale && cells.length === 1) {
         newXScaleValues.push('');
         const rawValue = cells[0];
         newRawValues.push(rawValue);
         newDataValues.push(parseNumericValue(rawValue));
+        if (stagesEnabled) {
+          newStageValues.push(1);
+        }
       } else {
         const rawValue = cells[0];
         newRawValues.push(rawValue);
         newDataValues.push(parseNumericValue(rawValue));
+        // Check for stage value in 2nd column (no xscale)
+        if (hasStageColumn && cells.length >= 2) {
+          const stageVal = parseInt(cells[1].trim(), 10);
+          newStageValues.push(!isNaN(stageVal) && stageVal >= 1 ? stageVal : 1);
+        } else if (stagesEnabled) {
+          newStageValues.push(1);
+        }
       }
     });
     
@@ -409,12 +457,15 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
     if (hasXScale) {
       setXScaleValues(newXScaleValues);
     }
+    if (stagesEnabled && newStageValues.length > 0) {
+      setStageValues(newStageValues);
+    }
     
     toast({
       title: "Data pasted",
       description: `Successfully pasted ${newDataValues.length} data points`,
     });
-  }, [saveToHistory, toast, xScaleType, dataValues, rawInputValues, xScaleValues]);
+  }, [saveToHistory, toast, xScaleType, dataValues, rawInputValues, xScaleValues, stagesEnabled, stageValues]);
 
   const handlePasteFromClipboard = useCallback(async () => {
     try {
