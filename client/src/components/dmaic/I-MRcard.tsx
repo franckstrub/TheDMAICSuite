@@ -1316,20 +1316,44 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
               <CardTitle className="text-lg">I Chart (Individuals)</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-3 gap-4 mb-4 text-sm">
-                <div className="bg-blue-50 p-3 rounded">
-                  <Label className="text-xs text-gray-600">UCL</Label>
-                  <div className="font-semibold text-blue-700">{stats.iUCL.toFixed(4)}</div>
+              {stagesEnabled && stageStatsList.length > 0 ? (
+                <div className="mb-4 space-y-2">
+                  {stageStatsList.map(stageStat => (
+                    <div key={stageStat.stageNum} className="border rounded-lg p-3">
+                      <div className="text-sm font-medium text-gray-700 mb-2">Stage {stageStat.stageNum}</div>
+                      <div className="grid grid-cols-3 gap-3 text-sm">
+                        <div className="bg-blue-50 p-2 rounded">
+                          <Label className="text-xs text-gray-600">UCL</Label>
+                          <div className="font-semibold text-blue-700">{stageStat.iUCL.toFixed(4)}</div>
+                        </div>
+                        <div className="bg-green-50 p-2 rounded">
+                          <Label className="text-xs text-gray-600">CL (X̄)</Label>
+                          <div className="font-semibold text-green-700">{stageStat.iCL.toFixed(4)}</div>
+                        </div>
+                        <div className="bg-blue-50 p-2 rounded">
+                          <Label className="text-xs text-gray-600">LCL</Label>
+                          <div className="font-semibold text-blue-700">{stageStat.iLCL.toFixed(4)}</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div className="bg-green-50 p-3 rounded">
-                  <Label className="text-xs text-gray-600">Centerline (X̄)</Label>
-                  <div className="font-semibold text-green-700">{stats.iCL.toFixed(4)}</div>
+              ) : (
+                <div className="grid grid-cols-3 gap-4 mb-4 text-sm">
+                  <div className="bg-blue-50 p-3 rounded">
+                    <Label className="text-xs text-gray-600">UCL</Label>
+                    <div className="font-semibold text-blue-700">{stats.iUCL.toFixed(4)}</div>
+                  </div>
+                  <div className="bg-green-50 p-3 rounded">
+                    <Label className="text-xs text-gray-600">Centerline (X̄)</Label>
+                    <div className="font-semibold text-green-700">{stats.iCL.toFixed(4)}</div>
+                  </div>
+                  <div className="bg-blue-50 p-3 rounded">
+                    <Label className="text-xs text-gray-600">LCL</Label>
+                    <div className="font-semibold text-blue-700">{stats.iLCL.toFixed(4)}</div>
+                  </div>
                 </div>
-                <div className="bg-blue-50 p-3 rounded">
-                  <Label className="text-xs text-gray-600">LCL</Label>
-                  <div className="font-semibold text-blue-700">{stats.iLCL.toFixed(4)}</div>
-                </div>
-              </div>
+              )}
               
               <Plot
                 data={[
@@ -1491,20 +1515,44 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
               <CardTitle className="text-lg">MR Chart (Moving Range)</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-3 gap-4 mb-4 text-sm">
-                <div className="bg-blue-50 p-3 rounded">
-                  <Label className="text-xs text-gray-600">UCL</Label>
-                  <div className="font-semibold text-blue-700">{stats.mrUCL.toFixed(4)}</div>
+              {stagesEnabled && stageStatsList.length > 0 ? (
+                <div className="mb-4 space-y-2">
+                  {stageStatsList.map(stageStat => (
+                    <div key={stageStat.stageNum} className="border rounded-lg p-3">
+                      <div className="text-sm font-medium text-gray-700 mb-2">Stage {stageStat.stageNum}</div>
+                      <div className="grid grid-cols-3 gap-3 text-sm">
+                        <div className="bg-blue-50 p-2 rounded">
+                          <Label className="text-xs text-gray-600">UCL</Label>
+                          <div className="font-semibold text-blue-700">{stageStat.mrUCL.toFixed(4)}</div>
+                        </div>
+                        <div className="bg-green-50 p-2 rounded">
+                          <Label className="text-xs text-gray-600">CL (MR̄)</Label>
+                          <div className="font-semibold text-green-700">{stageStat.mrCL.toFixed(4)}</div>
+                        </div>
+                        <div className="bg-blue-50 p-2 rounded">
+                          <Label className="text-xs text-gray-600">LCL</Label>
+                          <div className="font-semibold text-blue-700">{stageStat.mrLCL.toFixed(4)}</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div className="bg-green-50 p-3 rounded">
-                  <Label className="text-xs text-gray-600">Centerline (MR̄)</Label>
-                  <div className="font-semibold text-green-700">{stats.mrCL.toFixed(4)}</div>
+              ) : (
+                <div className="grid grid-cols-3 gap-4 mb-4 text-sm">
+                  <div className="bg-blue-50 p-3 rounded">
+                    <Label className="text-xs text-gray-600">UCL</Label>
+                    <div className="font-semibold text-blue-700">{stats.mrUCL.toFixed(4)}</div>
+                  </div>
+                  <div className="bg-green-50 p-3 rounded">
+                    <Label className="text-xs text-gray-600">Centerline (MR̄)</Label>
+                    <div className="font-semibold text-green-700">{stats.mrCL.toFixed(4)}</div>
+                  </div>
+                  <div className="bg-blue-50 p-3 rounded">
+                    <Label className="text-xs text-gray-600">LCL</Label>
+                    <div className="font-semibold text-blue-700">{stats.mrLCL.toFixed(4)}</div>
+                  </div>
                 </div>
-                <div className="bg-blue-50 p-3 rounded">
-                  <Label className="text-xs text-gray-600">LCL</Label>
-                  <div className="font-semibold text-blue-700">{stats.mrLCL.toFixed(4)}</div>
-                </div>
-              </div>
+              )}
               
               <Plot
                 data={[
