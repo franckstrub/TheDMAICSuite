@@ -93,7 +93,7 @@ Control Status:
 ${controlStatus}
 ${oocDetails}
 
-Please provide a structured analysis "${stats.stageStats && stats.stageStats.length > 1 ? 'for each stage' : ''}" following these steps:
+Please provide a structured analysis "${stats.stageStats && stats.stageStats.length > 0 ? 'for each stage' : ''}" following these steps:
 
 1. **Process Stability Assessment**
    - Is the process statistically stable (in control)?
