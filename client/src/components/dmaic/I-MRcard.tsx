@@ -496,9 +496,17 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
           newStages[index] = Math.max(1, numVal);
         } else if (numVal === prevStage || numVal === prevStage + 1) {
           newStages[index] = numVal;
-        } else {
-          // Invalid: default to previous stage value
+        } else if (numVal < prevStage) {
+          // Value is less than previous - default to previous
           newStages[index] = prevStage;
+          toast({
+            title: "Invalid stage",
+            description: `Stage must be at least ${prevStage} (minimum based on previous stage)`,
+            variant: "destructive",
+          });
+        } else {
+          // Value is greater than prevStage + 1 - default to prevStage + 1
+          newStages[index] = prevStage + 1;
           toast({
             title: "Invalid stage",
             description: `Stage must be ${prevStage} or ${prevStage + 1}`,
