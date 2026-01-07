@@ -872,41 +872,46 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
     if (!stagesEnabled || stageStatsList.length === 0) return [];
     
     const traces: any[] = [];
-    const colors = ['#16a34a', '#dc2626', '#dc2626']; // CL green, UCL/LCL red
     
     stageStatsList.forEach((stageStat, idx) => {
+      // Generate x array with all points in this stage range
+      const xPoints: number[] = [];
+      for (let i = stageStat.startIdx; i <= stageStat.endIdx; i++) {
+        xPoints.push(i);
+      }
+      
       // Centerline for this stage
       traces.push({
-        x: [stageStat.startIdx, stageStat.endIdx],
-        y: [stageStat.iCL, stageStat.iCL],
+        x: xPoints,
+        y: xPoints.map(() => stageStat.iCL),
         type: 'scatter',
         mode: 'lines',
         name: idx === 0 ? 'Centerline (X̄)' : undefined,
         showlegend: idx === 0,
         line: { color: '#16a34a', width: 2 },
-        hoverinfo: 'y',
+        hovertemplate: `CL: ${stageStat.iCL.toFixed(4)}<extra></extra>`,
       });
       // UCL for this stage
       traces.push({
-        x: [stageStat.startIdx, stageStat.endIdx],
-        y: [stageStat.iUCL, stageStat.iUCL],
+        x: xPoints,
+        y: xPoints.map(() => stageStat.iUCL),
         type: 'scatter',
         mode: 'lines',
         name: idx === 0 ? 'UCL (+3σ)' : undefined,
         showlegend: idx === 0,
         line: { color: '#dc2626', width: 2, dash: 'dash' },
-        hoverinfo: 'y',
+        hovertemplate: `UCL: ${stageStat.iUCL.toFixed(4)}<extra></extra>`,
       });
       // LCL for this stage
       traces.push({
-        x: [stageStat.startIdx, stageStat.endIdx],
-        y: [stageStat.iLCL, stageStat.iLCL],
+        x: xPoints,
+        y: xPoints.map(() => stageStat.iLCL),
         type: 'scatter',
         mode: 'lines',
         name: idx === 0 ? 'LCL (-3σ)' : undefined,
         showlegend: idx === 0,
         line: { color: '#dc2626', width: 2, dash: 'dash' },
-        hoverinfo: 'y',
+        hovertemplate: `LCL: ${stageStat.iLCL.toFixed(4)}<extra></extra>`,
       });
     });
     
@@ -921,38 +926,47 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
     
     stageStatsList.forEach((stageStat, idx) => {
       const mrStartIdx = Math.max(stageStat.startIdx, 2); // MR starts at index 2
+      
+      // Generate x array with all points in this stage range (MR starts at 2)
+      const xPoints: number[] = [];
+      for (let i = mrStartIdx; i <= stageStat.endIdx; i++) {
+        xPoints.push(i);
+      }
+      
+      if (xPoints.length === 0) return; // Skip if no points in range
+      
       // Centerline for this stage
       traces.push({
-        x: [mrStartIdx, stageStat.endIdx],
-        y: [stageStat.mrCL, stageStat.mrCL],
+        x: xPoints,
+        y: xPoints.map(() => stageStat.mrCL),
         type: 'scatter',
         mode: 'lines',
         name: idx === 0 ? 'Centerline (R̄)' : undefined,
         showlegend: idx === 0,
         line: { color: '#16a34a', width: 2 },
-        hoverinfo: 'y',
+        hovertemplate: `CL: ${stageStat.mrCL.toFixed(4)}<extra></extra>`,
       });
       // UCL for this stage
       traces.push({
-        x: [mrStartIdx, stageStat.endIdx],
-        y: [stageStat.mrUCL, stageStat.mrUCL],
+        x: xPoints,
+        y: xPoints.map(() => stageStat.mrUCL),
         type: 'scatter',
         mode: 'lines',
         name: idx === 0 ? 'UCL' : undefined,
         showlegend: idx === 0,
         line: { color: '#dc2626', width: 2, dash: 'dash' },
-        hoverinfo: 'y',
+        hovertemplate: `UCL: ${stageStat.mrUCL.toFixed(4)}<extra></extra>`,
       });
       // LCL for this stage (usually 0)
       traces.push({
-        x: [mrStartIdx, stageStat.endIdx],
-        y: [stageStat.mrLCL, stageStat.mrLCL],
+        x: xPoints,
+        y: xPoints.map(() => stageStat.mrLCL),
         type: 'scatter',
         mode: 'lines',
         name: idx === 0 ? 'LCL' : undefined,
         showlegend: idx === 0,
         line: { color: '#dc2626', width: 2, dash: 'dash' },
-        hoverinfo: 'y',
+        hovertemplate: `LCL: ${stageStat.mrLCL.toFixed(4)}<extra></extra>`,
       });
     });
     
@@ -1436,28 +1450,31 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                   // Use per-stage control limits if stages enabled, otherwise use global stats
                   ...(stagesEnabled && iChartStageTraces.length > 0 ? iChartStageTraces : [
                     {
-                      x: [1, chartXIndices.length],
-                      y: [stats.iCL, stats.iCL],
+                      x: chartXIndices,
+                      y: chartXIndices.map(() => stats.iCL),
                       type: 'scatter',
                       mode: 'lines',
                       name: 'Centerline (X̄)',
                       line: { color: '#16a34a', width: 2 },
+                      hovertemplate: `CL: ${stats.iCL.toFixed(4)}<extra></extra>`,
                     },
                     {
-                      x: [1, chartXIndices.length],
-                      y: [stats.iUCL, stats.iUCL],
+                      x: chartXIndices,
+                      y: chartXIndices.map(() => stats.iUCL),
                       type: 'scatter',
                       mode: 'lines',
                       name: 'UCL (+3σ)',
                       line: { color: '#dc2626', width: 2, dash: 'dash' },
+                      hovertemplate: `UCL: ${stats.iUCL.toFixed(4)}<extra></extra>`,
                     },
                     {
-                      x: [1, chartXIndices.length],
-                      y: [stats.iLCL, stats.iLCL],
+                      x: chartXIndices,
+                      y: chartXIndices.map(() => stats.iLCL),
                       type: 'scatter',
                       mode: 'lines',
                       name: 'LCL (-3σ)',
                       line: { color: '#dc2626', width: 2, dash: 'dash' },
+                      hovertemplate: `LCL: ${stats.iLCL.toFixed(4)}<extra></extra>`,
                     },
                   ]),
                 ]}
@@ -1633,32 +1650,38 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                     marker: { color: '#dc2626', size: 10, symbol: 'square' },
                   }] : []),
                   // Use per-stage control limits if stages enabled, otherwise use global stats
-                  ...(stagesEnabled && mrChartStageTraces.length > 0 ? mrChartStageTraces : [
-                    {
-                      x: [2, chartXIndices.length],
-                      y: [stats.mrCL, stats.mrCL],
-                      type: 'scatter',
-                      mode: 'lines',
-                      name: 'Centerline (MR̄)',
-                      line: { color: '#16a34a', width: 2 },
-                    },
-                    {
-                      x: [2, chartXIndices.length],
-                      y: [stats.mrUCL, stats.mrUCL],
-                      type: 'scatter',
-                      mode: 'lines',
-                      name: 'UCL (+3σ)',
-                      line: { color: '#dc2626', width: 2, dash: 'dash' },
-                    },
-                    {
-                      x: [2, chartXIndices.length],
-                      y: [stats.mrLCL, stats.mrLCL],
-                      type: 'scatter',
-                      mode: 'lines',
-                      name: 'LCL',
-                      line: { color: '#dc2626', width: 2, dash: 'dash' },
-                    },
-                  ]),
+                  ...(stagesEnabled && mrChartStageTraces.length > 0 ? mrChartStageTraces : (() => {
+                    const mrXIndices = chartXIndices.slice(1); // MR starts at index 2
+                    return [
+                      {
+                        x: mrXIndices,
+                        y: mrXIndices.map(() => stats.mrCL),
+                        type: 'scatter',
+                        mode: 'lines',
+                        name: 'Centerline (MR̄)',
+                        line: { color: '#16a34a', width: 2 },
+                        hovertemplate: `CL: ${stats.mrCL.toFixed(4)}<extra></extra>`,
+                      },
+                      {
+                        x: mrXIndices,
+                        y: mrXIndices.map(() => stats.mrUCL),
+                        type: 'scatter',
+                        mode: 'lines',
+                        name: 'UCL (+3σ)',
+                        line: { color: '#dc2626', width: 2, dash: 'dash' },
+                        hovertemplate: `UCL: ${stats.mrUCL.toFixed(4)}<extra></extra>`,
+                      },
+                      {
+                        x: mrXIndices,
+                        y: mrXIndices.map(() => stats.mrLCL),
+                        type: 'scatter',
+                        mode: 'lines',
+                        name: 'LCL',
+                        line: { color: '#dc2626', width: 2, dash: 'dash' },
+                        hovertemplate: `LCL: ${stats.mrLCL.toFixed(4)}<extra></extra>`,
+                      },
+                    ];
+                  })()),
                 ]}
                 layout={{
                   title: { text: `MR Chart of ${indicatorName || ctqName}` },
