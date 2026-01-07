@@ -4,8 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Save, Undo, Clipboard, Trash2 } from "lucide-react";
+import { Loader2, Save, Undo, Clipboard, Trash2, Sparkles, RefreshCw } from "lucide-react";
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { parseNumericValue } from '@/lib/excelPasteUtils';
@@ -110,6 +111,8 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
   const [chartDate, setChartDate] = useState<string>('');
   const [stagesEnabled, setStagesEnabled] = useState<boolean>(false);
   const [stageValues, setStageValues] = useState<number[]>([]);
+  const [aiAnalysis, setAiAnalysis] = useState<string>('');
+  const [isGeneratingAnalysis, setIsGeneratingAnalysis] = useState<boolean>(false);
 
   const dataQuery = useQuery({
     queryKey: [`/api/projects/${projectId}/spc/imr/${encodeURIComponent(ctqName)}`],
@@ -629,6 +632,126 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
       description: "All data has been cleared. Use Undo to restore.",
     });
   }, [dataValues, saveToHistory, toast]);
+
+  const generateAIAnalysis = useCallback(async () => {
+    const validData = dataValues.filter(v => !isNaN(v));
+    if (validData.length < 10) {
+      toast({
+        title: "Insufficient Data",
+        description: `At least 10 data points are required for AI control card analysis. Current: ${validData.length}`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsGeneratingAnalysis(true);
+    try {
+      const movingRanges: number[] = [];
+      for (let i = 1; i < validData.length; i++) {
+        movingRanges.push(Math.abs(validData[i] - validData[i - 1]));
+      }
+      
+      const mean = validData.reduce((a, b) => a + b, 0) / validData.length;
+      const mrMean = movingRanges.length > 0 
+        ? movingRanges.reduce((a, b) => a + b, 0) / movingRanges.length 
+        : 0;
+      
+      const E2 = 2.660;
+      const D4 = 3.267;
+      const ucl = mean + E2 * mrMean;
+      const lcl = mean - E2 * mrMean;
+      const mrUcl = D4 * mrMean;
+      const mrLcl = 0;
+      
+      const outOfControlIndividuals = validData
+        .map((v, i) => (v > ucl || v < lcl) ? i + 1 : -1)
+        .filter(i => i !== -1);
+      const outOfControlMR = movingRanges
+        .map((v, i) => v > mrUcl ? i + 2 : -1)
+        .filter(i => i !== -1);
+
+      const localValidIndices = dataValues.map((v, i) => (!isNaN(v) ? i : -1)).filter(i => i !== -1);
+      const stageStatsForAI = stagesEnabled && localValidIndices.length > 0 ? (() => {
+        const stageMap = new Map<number, number[]>();
+        localValidIndices.forEach((originalIdx, validIdx) => {
+          const stage = stageValues[originalIdx] || 1;
+          if (!stageMap.has(stage)) stageMap.set(stage, []);
+          stageMap.get(stage)!.push(validData[validIdx]);
+        });
+        return Array.from(stageMap.entries()).map(([stageNum, values]) => {
+          const stageMean = values.reduce((a, b) => a + b, 0) / values.length;
+          const stageMRs: number[] = [];
+          for (let i = 1; i < values.length; i++) {
+            stageMRs.push(Math.abs(values[i] - values[i - 1]));
+          }
+          const stageMrMean = stageMRs.length > 0 ? stageMRs.reduce((a, b) => a + b, 0) / stageMRs.length : 0;
+          return {
+            stageNumber: stageNum,
+            count: values.length,
+            mean: stageMean,
+            ucl: stageMean + E2 * stageMrMean,
+            lcl: stageMean - E2 * stageMrMean,
+            mrMean: stageMrMean,
+            mrUcl: D4 * stageMrMean,
+            mrLcl: 0,
+          };
+        });
+      })() : undefined;
+
+      const statsPayload = {
+        dataValues: validData,
+        movingRanges,
+        mean,
+        mrMean,
+        ucl,
+        lcl,
+        mrUcl,
+        mrLcl,
+        outOfControlIndividuals,
+        outOfControlMR,
+        stagesEnabled,
+        stageStats: stageStatsForAI,
+      };
+
+      const contextPayload = {
+        ctqName,
+        indicatorName,
+        chartDate,
+        xScaleType,
+        xAxisLabel,
+      };
+
+      const response = await fetch(`/api/projects/${projectId}/spc/imr/${encodeURIComponent(ctqName)}/ai-analysis`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ stats: statsPayload, context: contextPayload }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (data?.assessment) {
+        setAiAnalysis(data.assessment);
+        toast({
+          title: "AI Analysis Generated",
+          description: "Control card analysis has been generated successfully",
+        });
+      } else {
+        throw new Error("No analysis received from server");
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to generate AI analysis",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingAnalysis(false);
+    }
+  }, [dataValues, stagesEnabled, stageValues, ctqName, indicatorName, chartDate, xScaleType, xAxisLabel, projectId, toast]);
 
   const validDataValues = dataValues.filter(v => !isNaN(v));
   const hasValidData = validDataValues.length >= 2;
@@ -1799,6 +1922,51 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                 }
               }}
                 style={{ width: '100%' }}
+              />
+            </CardContent>
+          </Card>
+
+          {/* AI Control Card Analysis */}
+          <Card className="mt-4">
+            <CardHeader className="py-3 px-4 border-b">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-medium flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-purple-600" />
+                  AI Control Card Analysis
+                </h3>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    generateAIAnalysis();
+                  }}
+                  disabled={isGeneratingAnalysis || validDataValues.length < 10}
+                  data-testid="btn-ai-control-analysis"
+                >
+                  {isGeneratingAnalysis ? (
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-4 w-4 text-purple-600" />
+                  )}
+                  <span className="ml-1">
+                    {isGeneratingAnalysis ? "Generating..." : "Generate Analysis"}
+                  </span>
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="p-4 pt-3">
+              <Textarea
+                value={aiAnalysis}
+                onChange={(e) => setAiAnalysis(e.target.value)}
+                placeholder={validDataValues.length < 10 
+                  ? "Enter at least 10 data points to enable AI control card analysis..."
+                  : "Click 'Generate Analysis' to get AI-powered insights about your control chart data, including process stability, patterns, and recommendations..."
+                }
+                className="min-h-[200px] w-full font-mono text-sm"
+                data-testid="textarea-ai-control-analysis"
               />
             </CardContent>
           </Card>
