@@ -1651,7 +1651,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                   ]),
                 ]}
                 layout={{
-                  title: { text: `I Chart of ${indicatorName || ctqName}` },
+                  title: { text: `I Chart (Individuals) of ${indicatorName || ctqName}` },
                   xaxis: { 
                     title: { text: xScaleType === 'date' ? 'Date' : (xScaleType === 'freeform' ? (xAxisLabel || 'Label') : 'Observation') }, 
                     dtick: 1, 
@@ -1667,7 +1667,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                   showlegend: true,
                   legend: { orientation: 'h', y: -0.2 },
                   margin: { t: 60, b: 80, l: 60, r: 100 },
-                  height: 380,
+                  height: 400,
                   shapes: generateStageSeparatorShapes(),
                   annotations: [
                     ...(chartDate ? [{
@@ -1856,7 +1856,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                   })()),
                 ]}
                 layout={{
-                  title: { text: `MR Chart of ${indicatorName || ctqName}` },
+                  title: { text: `MR Chart (Moving Range) of ${indicatorName || ctqName}` },
                   xaxis: { 
                     title: { text: xScaleType === 'date' ? 'Date' : (xScaleType === 'freeform' ? (xAxisLabel || 'Label') : 'Observation') }, 
                     dtick: 1, 
