@@ -3133,6 +3133,9 @@ export const imrControlCardData = pgTable(
     // X-axis scale type: 'index' (default 1,2,3...) or 'freeform' (custom text) or 'date'
     xScaleType: text("x_scale_type").default("index"),
     
+    // Custom x-axis label (when using freeform type, e.g., "Batch", "Week", "Sample ID")
+    xAxisLabel: text("x_axis_label").default(""),
+    
     // Custom x-scale values (array of strings for freeform or date values)
     xScaleValues: jsonb("x_scale_values").$type<string[]>().default([]),
     
