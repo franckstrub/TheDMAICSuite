@@ -490,8 +490,8 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
         newStages[index] = 0;
       } else {
         // Validate: must be >= 1 and either equal to previous or previous + 1
-        const prevStage = index > 0 ? newStages[index - 1] : 0;
-        if (prevStage === 0) {
+        const prevStage = index > 0 ? newStages[index - 1] : 1;
+        if (prevStage === 0 || prevStage === 1) {
           // First stage or after empty - allow 1 or continue from last valid
           newStages[index] = Math.max(1, numVal);
         } else if (numVal === prevStage || numVal === prevStage + 1) {
@@ -1177,24 +1177,28 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                         data-testid={`input-imr-value-${index}`}
                       />
                     </td>
-                    {stagesEnabled && (
-                      <td className="px-4 py-1">
-                        <Input
-                          type="number"
-                          min="1"
-                          value={stageValues[index] > 0 ? stageValues[index] : ''}
-                          onChange={(e) => handleStageChange(index, e.target.value)}
-                          onKeyDown={(e) => handleKeyDown(e, index, 'stage')}
-                          onFocus={() => setFocusedCell({ row: index, col: 'stage' })}
-                          onBlur={() => setFocusedCell(null)}
-                          className="h-8 text-sm w-16"
-                          placeholder="1"
-                          data-cell-index={index}
-                          data-cell-col="stage"
-                          data-testid={`input-imr-stage-${index}`}
-                        />
-                      </td>
-                    )}
+                    {stagesEnabled && (() => {
+                      const prevStage = index > 0 ? (stageValues[index - 1] || 1) : 1;
+                      const minStage = Math.max(1, prevStage);
+                      return (
+                        <td className="px-4 py-1">
+                          <Input
+                            type="number"
+                            min={minStage}
+                            value={stageValues[index] > 0 ? stageValues[index] : ''}
+                            onChange={(e) => handleStageChange(index, e.target.value)}
+                            onKeyDown={(e) => handleKeyDown(e, index, 'stage')}
+                            onFocus={() => setFocusedCell({ row: index, col: 'stage' })}
+                            onBlur={() => setFocusedCell(null)}
+                            className="h-8 text-sm w-16"
+                            placeholder={String(minStage)}
+                            data-cell-index={index}
+                            data-cell-col="stage"
+                            data-testid={`input-imr-stage-${index}`}
+                          />
+                        </td>
+                      );
+                    })()}
                   </tr>
                 ))}
               </tbody>
