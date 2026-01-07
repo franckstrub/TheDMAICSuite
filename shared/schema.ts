@@ -3148,6 +3148,9 @@ export const imrControlCardData = pgTable(
     // Stage values (array of positive integers, sequential - same or +1)
     stageValues: jsonb("stage_values").$type<number[]>().default([]),
     
+    // AI-generated control card analysis
+    aiAnalysis: text("ai_analysis").default(""),
+    
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
