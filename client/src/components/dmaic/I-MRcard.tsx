@@ -1872,7 +1872,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                   showlegend: true,
                   legend: { orientation: 'h', y: -0.2 },
                   margin: { t: 60, b: 80, l: 60, r: 100 },
-                  height: 380,
+                  height: 400,
                   shapes: generateStageSeparatorShapes(),
                   annotations: [
                     ...(chartDate ? [{
