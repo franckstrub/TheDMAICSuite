@@ -977,6 +977,104 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
     }));
   };
 
+  // Generate UCL, CL, LCL labels at the right end of each stage (for I chart)
+  const generateIChartStageLimitLabels = () => {
+    if (!stagesEnabled || stageStatsList.length === 0) return [];
+    
+    const annotations: any[] = [];
+    stageStatsList.forEach(stageStat => {
+      const xPos = stageStat.endIdx + 0.3; // Position slightly to the right of last point
+      annotations.push(
+        {
+          x: xPos,
+          y: stageStat.iUCL,
+          xref: 'x' as const,
+          yref: 'y' as const,
+          text: `UCL=${stageStat.iUCL.toFixed(2)}`,
+          showarrow: false,
+          xanchor: 'left' as const,
+          yanchor: 'middle' as const,
+          font: { color: '#dc2626', size: 9 },
+          bgcolor: 'rgba(255,255,255,0.9)',
+        },
+        {
+          x: xPos,
+          y: stageStat.iCL,
+          xref: 'x' as const,
+          yref: 'y' as const,
+          text: `CL=${stageStat.iCL.toFixed(2)}`,
+          showarrow: false,
+          xanchor: 'left' as const,
+          yanchor: 'middle' as const,
+          font: { color: '#16a34a', size: 9 },
+          bgcolor: 'rgba(255,255,255,0.9)',
+        },
+        {
+          x: xPos,
+          y: stageStat.iLCL,
+          xref: 'x' as const,
+          yref: 'y' as const,
+          text: `LCL=${stageStat.iLCL.toFixed(2)}`,
+          showarrow: false,
+          xanchor: 'left' as const,
+          yanchor: 'middle' as const,
+          font: { color: '#dc2626', size: 9 },
+          bgcolor: 'rgba(255,255,255,0.9)',
+        }
+      );
+    });
+    return annotations;
+  };
+
+  // Generate UCL, CL, LCL labels at the right end of each stage (for MR chart)
+  const generateMRChartStageLimitLabels = () => {
+    if (!stagesEnabled || stageStatsList.length === 0) return [];
+    
+    const annotations: any[] = [];
+    stageStatsList.forEach(stageStat => {
+      const xPos = stageStat.endIdx + 0.3; // Position slightly to the right of last point
+      annotations.push(
+        {
+          x: xPos,
+          y: stageStat.mrUCL,
+          xref: 'x' as const,
+          yref: 'y' as const,
+          text: `UCL=${stageStat.mrUCL.toFixed(2)}`,
+          showarrow: false,
+          xanchor: 'left' as const,
+          yanchor: 'middle' as const,
+          font: { color: '#dc2626', size: 9 },
+          bgcolor: 'rgba(255,255,255,0.9)',
+        },
+        {
+          x: xPos,
+          y: stageStat.mrCL,
+          xref: 'x' as const,
+          yref: 'y' as const,
+          text: `CL=${stageStat.mrCL.toFixed(2)}`,
+          showarrow: false,
+          xanchor: 'left' as const,
+          yanchor: 'middle' as const,
+          font: { color: '#16a34a', size: 9 },
+          bgcolor: 'rgba(255,255,255,0.9)',
+        },
+        {
+          x: xPos,
+          y: stageStat.mrLCL,
+          xref: 'x' as const,
+          yref: 'y' as const,
+          text: `LCL=${stageStat.mrLCL.toFixed(2)}`,
+          showarrow: false,
+          xanchor: 'left' as const,
+          yanchor: 'middle' as const,
+          font: { color: '#dc2626', size: 9 },
+          bgcolor: 'rgba(255,255,255,0.9)',
+        }
+      );
+    });
+    return annotations;
+  };
+
   const iChartStageTraces = generateIChartStageTraces();
   const mrChartStageTraces = generateMRChartStageTraces();
 
@@ -1320,6 +1418,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                       font: { color: '#374151', size: 11 },
                     }] : []),
                     ...generateStageAnnotations(),
+                    ...generateIChartStageLimitLabels(),
                     // Only show global stats labels if stages not enabled
                     ...(!stagesEnabled ? [
                       {
@@ -1494,6 +1593,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                       font: { color: '#374151', size: 11 },
                     }] : []),
                     ...generateStageAnnotations(),
+                    ...generateMRChartStageLimitLabels(),
                     // Only show global stats labels if stages not enabled
                     ...(!stagesEnabled ? [
                       {
