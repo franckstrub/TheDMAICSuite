@@ -10616,7 +10616,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(401).json({ error: "Unauthorized" });
         }
 
-        const { dataValues, indicatorName, chartDate, xScaleType, xScaleValues, stagesEnabled, stageValues } = req.body;
+        const { dataValues, indicatorName, chartDate, xScaleType, xAxisLabel, xScaleValues, stagesEnabled, stageValues } = req.body;
 
         // Validate dataValues is an array of numbers
         if (dataValues !== undefined && !Array.isArray(dataValues)) {
@@ -10630,6 +10630,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const validatedIndicatorName = typeof indicatorName === 'string' ? indicatorName : "";
         const validatedChartDate = typeof chartDate === 'string' ? chartDate : "";
         const validatedXScaleType = ['index', 'freeform', 'date'].includes(xScaleType) ? xScaleType : "index";
+        const validatedXAxisLabel = typeof xAxisLabel === 'string' ? xAxisLabel : "";
         const validatedXScaleValues = Array.isArray(xScaleValues) 
           ? xScaleValues.map((v: any) => String(v))
           : [];
@@ -10660,6 +10661,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               indicatorName: validatedIndicatorName,
               chartDate: validatedChartDate,
               xScaleType: validatedXScaleType,
+              xAxisLabel: validatedXAxisLabel,
               xScaleValues: validatedXScaleValues,
               stagesEnabled: validatedStagesEnabled,
               stageValues: validatedStageValues,
@@ -10679,6 +10681,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               indicatorName: validatedIndicatorName,
               chartDate: validatedChartDate,
               xScaleType: validatedXScaleType,
+              xAxisLabel: validatedXAxisLabel,
               xScaleValues: validatedXScaleValues,
               stagesEnabled: validatedStagesEnabled,
               stageValues: validatedStageValues,
