@@ -1202,6 +1202,9 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
           yanchor: 'middle' as const,
           font: { color: '#dc2626', size: 9 },
           bgcolor: 'rgba(255,255,255,0.9)',
+          bordercolor: '#dc2626',
+          borderwidth: 1,
+          borderpad: 2,
         },
         {
           x: xPos,
@@ -1214,6 +1217,9 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
           yanchor: 'middle' as const,
           font: { color: '#16a34a', size: 9 },
           bgcolor: 'rgba(255,255,255,0.9)',
+          bordercolor: '#16a34a',
+          borderwidth: 1,
+          borderpad: 2,
         },
         {
           x: xPos,
@@ -1226,6 +1232,9 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
           yanchor: 'middle' as const,
           font: { color: '#dc2626', size: 9 },
           bgcolor: 'rgba(255,255,255,0.9)',
+          bordercolor: '#dc2626',
+          borderwidth: 1,
+          borderpad: 2,
         }
       );
     });
@@ -1251,6 +1260,9 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
           yanchor: 'middle' as const,
           font: { color: '#dc2626', size: 9 },
           bgcolor: 'rgba(255,255,255,0.9)',
+          bordercolor: '#dc2626',
+          borderwidth: 1,
+          borderpad: 2,
         },
         {
           x: xPos,
@@ -1263,6 +1275,9 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
           yanchor: 'middle' as const,
           font: { color: '#16a34a', size: 9 },
           bgcolor: 'rgba(255,255,255,0.9)',
+          bordercolor: '#16a34a',
+          borderwidth: 1,
+          borderpad: 2,
         },
         {
           x: xPos,
@@ -1275,6 +1290,9 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
           yanchor: 'middle' as const,
           font: { color: '#dc2626', size: 9 },
           bgcolor: 'rgba(255,255,255,0.9)',
+          bordercolor: '#dc2626',
+          borderwidth: 1,
+          borderpad: 2,
         }
       );
     });
