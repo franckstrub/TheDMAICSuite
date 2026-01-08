@@ -88,7 +88,7 @@ interface IMRCardProps {
 interface DataHistory {
   values: number[];
   xScaleValues: string[];
-  stageValues: number[];
+  stageValues: string[];
   stagesEnabled: boolean;
 }
 
@@ -110,7 +110,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
   const [indicatorName, setIndicatorName] = useState<string>(ctqName);
   const [chartDate, setChartDate] = useState<string>('');
   const [stagesEnabled, setStagesEnabled] = useState<boolean>(false);
-  const [stageValues, setStageValues] = useState<number[]>([]);
+  const [stageValues, setStageValues] = useState<string[]>([]);
   const [aiAnalysis, setAiAnalysis] = useState<string>('');
   const [isGeneratingAnalysis, setIsGeneratingAnalysis] = useState<boolean>(false);
 
@@ -155,7 +155,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
   }, [dataQuery.data]);
 
   const saveMutation = useMutation({
-    mutationFn: async (payload: { values: number[]; indicatorName: string; chartDate: string; xScaleType: XScaleType; xAxisLabel: string; xScaleValues: string[]; stagesEnabled: boolean; stageValues: number[] }) => {
+    mutationFn: async (payload: { values: number[]; indicatorName: string; chartDate: string; xScaleType: XScaleType; xAxisLabel: string; xScaleValues: string[]; stagesEnabled: boolean; stageValues: string[] }) => {
       return apiRequest(
         'POST',
         `/api/projects/${projectId}/spc/imr/${encodeURIComponent(ctqName)}`,
@@ -297,7 +297,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
         setDataValues(prev => [...prev, NaN]);
         setRawInputValues(prev => [...prev, '']);
         setXScaleValues(prev => [...prev, '']);
-        setStageValues(prev => [...prev, 0]);
+        setStageValues(prev => [...prev, '']);
         setTimeout(() => {
           const newInput = document.querySelector(`[data-cell-index="${index + 1}"][data-cell-col="${col}"]`) as HTMLInputElement;
           if (newInput) newInput.focus();
@@ -415,18 +415,15 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
     }
     
     if (focusedCol === 'stage' && stagesEnabled && !hasMultipleColumns) {
-      // Pasting single column into stage column - only update stage values
+      // Pasting single column into stage column - only update stage values (free-form strings)
       const newStageValues = [...stageValues];
       lines.forEach((line, i) => {
         const targetIndex = focusedIndex + i;
         // Expand array if needed
         while (newStageValues.length <= targetIndex) {
-          newStageValues.push(1);
+          newStageValues.push('');
         }
-        const parsed = parseInt(line.trim(), 10);
-        if (!isNaN(parsed) && parsed >= 1) {
-          newStageValues[targetIndex] = parsed;
-        }
+        newStageValues[targetIndex] = line.trim();
       });
       setStageValues(newStageValues);
       toast({
@@ -440,7 +437,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
     const newXScaleValues: string[] = [];
     const newDataValues: number[] = [];
     const newRawValues: string[] = [];
-    const newStageValues: number[] = [];
+    const newStageValues: string[] = [];
     
     // Determine expected column count based on current settings
     const expectedColsWithStage = hasXScale ? 3 : 2; // xscale + value + stage OR value + stage
@@ -460,12 +457,11 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
         const rawValue = cells[1];
         newRawValues.push(rawValue);
         newDataValues.push(parseNumericValue(rawValue));
-        // Check for stage value in 3rd column
+        // Check for stage value in 3rd column (free-form string)
         if (hasStageColumn && cells.length >= 3) {
-          const stageVal = parseInt(cells[2].trim(), 10);
-          newStageValues.push(!isNaN(stageVal) && stageVal >= 1 ? stageVal : 1);
+          newStageValues.push(cells[2].trim());
         } else if (stagesEnabled) {
-          newStageValues.push(1);
+          newStageValues.push('');
         }
       } else if (hasXScale && cells.length === 1) {
         newXScaleValues.push('');
@@ -473,18 +469,17 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
         newRawValues.push(rawValue);
         newDataValues.push(parseNumericValue(rawValue));
         if (stagesEnabled) {
-          newStageValues.push(1);
+          newStageValues.push('');
         }
       } else {
         const rawValue = cells[0];
         newRawValues.push(rawValue);
         newDataValues.push(parseNumericValue(rawValue));
-        // Check for stage value in 2nd column (no xscale)
+        // Check for stage value in 2nd column (no xscale, free-form string)
         if (hasStageColumn && cells.length >= 2) {
-          const stageVal = parseInt(cells[1].trim(), 10);
-          newStageValues.push(!isNaN(stageVal) && stageVal >= 1 ? stageVal : 1);
+          newStageValues.push(cells[1].trim());
         } else if (stagesEnabled) {
-          newStageValues.push(1);
+          newStageValues.push('');
         }
       }
     });
@@ -566,45 +561,15 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
 
   const handleStageChange = useCallback((index: number, value: string) => {
     saveToHistory();
-    const numVal = parseInt(value, 10);
-    
     setStageValues(prev => {
       const newStages = [...prev];
       while (newStages.length <= index) {
-        newStages.push(0);
+        newStages.push('');
       }
-      
-      if (value === '' || isNaN(numVal) || numVal < 1) {
-        newStages[index] = 0;
-      } else {
-        // Validate: must be >= 1 and either equal to previous or previous + 1
-        const prevStage = index > 0 ? newStages[index - 1] : 1;
-        if (prevStage === 0 || prevStage === 1) {
-          // First stage or after empty - allow 1 or continue from last valid
-          newStages[index] = Math.max(1, numVal);
-        } else if (numVal === prevStage || numVal === prevStage + 1) {
-          newStages[index] = numVal;
-        } else if (numVal < prevStage) {
-          // Value is less than previous - default to previous
-          newStages[index] = prevStage;
-          toast({
-            title: "Invalid stage",
-            description: `Stage must be at least ${prevStage} (minimum based on previous stage)`,
-            variant: "destructive",
-          });
-        } else {
-          // Value is greater than prevStage + 1 - default to prevStage + 1
-          newStages[index] = prevStage + 1;
-          toast({
-            title: "Invalid stage",
-            description: `Stage must be ${prevStage} or ${prevStage + 1}`,
-            variant: "destructive",
-          });
-        }
-      }
+      newStages[index] = value;
       return newStages;
     });
-  }, [saveToHistory, toast]);
+  }, [saveToHistory]);
 
   const handleSaveData = useCallback(() => {
     const validIndices: number[] = [];
@@ -627,7 +592,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
       : [];
     
     const validStageValues = stagesEnabled
-      ? validIndices.map(i => stageValues[i] || 1) // Default to 1 if unset
+      ? validIndices.map(i => stageValues[i] || '') // Default to empty if unset
       : [];
     
     saveMutation.mutate({ 
@@ -701,13 +666,14 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
 
       const localValidIndices = dataValues.map((v, i) => (!isNaN(v) ? i : -1)).filter(i => i !== -1);
       const stageStatsForAI = stagesEnabled && localValidIndices.length > 0 ? (() => {
-        const stageMap = new Map<number, number[]>();
+        const stageMap = new Map<string, number[]>();
         localValidIndices.forEach((originalIdx, validIdx) => {
-          const stage = stageValues[originalIdx] || 1;
+          const stage = stageValues[originalIdx] || '';
+          if (stage === '') return;
           if (!stageMap.has(stage)) stageMap.set(stage, []);
           stageMap.get(stage)!.push(validData[validIdx]);
         });
-        return Array.from(stageMap.entries()).map(([stageNum, values]) => {
+        return Array.from(stageMap.entries()).map(([stageName, values]) => {
           const stageMean = values.reduce((a, b) => a + b, 0) / values.length;
           const stageMRs: number[] = [];
           for (let i = 1; i < values.length; i++) {
@@ -715,7 +681,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
           }
           const stageMrMean = stageMRs.length > 0 ? stageMRs.reduce((a, b) => a + b, 0) / stageMRs.length : 0;
           return {
-            stageNumber: stageNum,
+            stageName,
             count: values.length,
             mean: stageMean,
             ucl: stageMean + E2 * stageMrMean,
@@ -835,12 +801,12 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
   
   // Get valid stage values aligned with valid data indices
   const validStageValuesAligned = stagesEnabled 
-    ? validIndices.map(i => stageValues[i] || 0)
+    ? validIndices.map(i => stageValues[i] || '')
     : [];
 
   // Calculate per-stage statistics
   interface StageStats {
-    stageNum: number;
+    stageName: string;
     startIdx: number;  // Index in validDataValues array (1-based for chart)
     endIdx: number;
     values: number[];
@@ -867,25 +833,25 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
     const D4 = 3.267;
     const E2 = 2.660;
     
-    const processStage = (stageNum: number, startIdx: number, endIdx: number) => {
-      const stageValues = validDataValues.slice(startIdx, endIdx + 1);
-      if (stageValues.length < 2) return null;
+    const processStage = (stageName: string, startIdx: number, endIdx: number) => {
+      const stageDataValues = validDataValues.slice(startIdx, endIdx + 1);
+      if (stageDataValues.length < 2) return null;
       
-      const mean = stageValues.reduce((a, b) => a + b, 0) / stageValues.length;
+      const mean = stageDataValues.reduce((a, b) => a + b, 0) / stageDataValues.length;
       
       const movingRanges: number[] = [];
-      for (let i = 1; i < stageValues.length; i++) {
-        movingRanges.push(Math.abs(stageValues[i] - stageValues[i - 1]));
+      for (let i = 1; i < stageDataValues.length; i++) {
+        movingRanges.push(Math.abs(stageDataValues[i] - stageDataValues[i - 1]));
       }
       const avgMR = movingRanges.length > 0 
         ? movingRanges.reduce((a, b) => a + b, 0) / movingRanges.length 
         : 0;
       
       return {
-        stageNum,
+        stageName,
         startIdx: startIdx + 1,  // Convert to 1-based for chart
         endIdx: endIdx + 1,
-        values: stageValues,
+        values: stageDataValues,
         mean,
         avgMR,
         iUCL: mean + E2 * avgMR,
@@ -899,10 +865,10 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
     };
     
     for (let i = 1; i <= validStageValuesAligned.length; i++) {
-      const nextStage = i < validStageValuesAligned.length ? validStageValuesAligned[i] : -1;
+      const nextStage = i < validStageValuesAligned.length ? validStageValuesAligned[i] : '';
       
       if (nextStage !== currentStage || i === validStageValuesAligned.length) {
-        if (currentStage > 0) {
+        if (currentStage !== '') {
           const stageStats = processStage(currentStage, stageStartIdx, i - 1);
           if (stageStats) stages.push(stageStats);
         }
@@ -933,12 +899,12 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
     return stageStatsList.find(s => chartIdx >= s.startIdx && chartIdx <= s.endIdx) || null;
   };
   
-  // Helper to check if a chart index is in a single-point stage (stage >= 1 but no stats)
+  // Helper to check if a chart index is in a single-point stage (has stage name but no stats)
   const isInSinglePointStage = (chartIdx: number) => {
     const arrayIdx = chartIdx - 1; // Convert 1-based chart index to 0-based array index
     if (arrayIdx < 0 || arrayIdx >= validStageValuesAligned.length) return false;
-    const stageNum = validStageValuesAligned[arrayIdx];
-    if (stageNum < 1) return false; // Invalid stage
+    const stageName = validStageValuesAligned[arrayIdx];
+    if (stageName === '') return false; // No stage assigned
     // Check if this stage has stats (meaning it has 2+ points)
     const hasStats = stageStatsList.some(s => chartIdx >= s.startIdx && chartIdx <= s.endIdx);
     return !hasStats; // Single-point stage if no stats
@@ -1137,13 +1103,13 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
     
     const shapes: any[] = [];
     
-    // Find all stage transition points (where stage number changes)
+    // Find all stage transition points (where stage name changes)
     for (let i = 1; i < validStageValuesAligned.length; i++) {
       const prevStage = validStageValuesAligned[i - 1];
       const currStage = validStageValuesAligned[i];
       
-      // Add separator when stage changes (and both are valid stage numbers > 0)
-      if (prevStage > 0 && currStage > 0 && prevStage !== currStage) {
+      // Add separator when stage changes (and both have valid stage names)
+      if (prevStage !== '' && currStage !== '' && prevStage !== currStage) {
         const xPos = i + 0.5; // Position between points (i is 0-based, chart is 1-based)
         shapes.push({
           type: 'line',
@@ -1165,21 +1131,21 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
     return shapes;
   };
 
-  // Generate stage annotations showing stage numbers (uses raw stage values for all transitions)
+  // Generate stage annotations showing stage names (uses raw stage values for all transitions)
   const generateStageAnnotations = () => {
     if (!stagesEnabled || validStageValuesAligned.length === 0) return [];
     
-    // Group contiguous points by stage number
-    const stageRanges: { stageNum: number; startIdx: number; endIdx: number }[] = [];
+    // Group contiguous points by stage name
+    const stageRanges: { stageName: string; startIdx: number; endIdx: number }[] = [];
     let currentStage = validStageValuesAligned[0];
     let startIdx = 0;
     
     for (let i = 1; i <= validStageValuesAligned.length; i++) {
-      const nextStage = i < validStageValuesAligned.length ? validStageValuesAligned[i] : -1;
+      const nextStage = i < validStageValuesAligned.length ? validStageValuesAligned[i] : '';
       if (nextStage !== currentStage) {
-        if (currentStage > 0) {
+        if (currentStage !== '') {
           stageRanges.push({
-            stageNum: currentStage,
+            stageName: currentStage,
             startIdx: startIdx + 1, // 1-based for chart
             endIdx: i, // 1-based for chart
           });
@@ -1194,7 +1160,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
       y: 1.05,
       xref: 'x' as const,
       yref: 'paper' as const,
-      text: `Stage ${range.stageNum}`,
+      text: range.stageName,
       showarrow: false,
       font: { color: '#6b7280', size: 10 },
     }));
@@ -1512,28 +1478,23 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                         data-testid={`input-imr-value-${index}`}
                       />
                     </td>
-                    {stagesEnabled && (() => {
-                      const prevStage = index > 0 ? (stageValues[index - 1] || 1) : 1;
-                      const minStage = Math.max(1, prevStage);
-                      return (
+                    {stagesEnabled && (
                         <td className="px-4 py-1">
                           <Input
-                            type="number"
-                            min={minStage}
-                            value={stageValues[index] > 0 ? stageValues[index] : ''}
+                            type="text"
+                            value={stageValues[index] || ''}
                             onChange={(e) => handleStageChange(index, e.target.value)}
                             onKeyDown={(e) => handleKeyDown(e, index, 'stage')}
                             onFocus={() => setFocusedCell({ row: index, col: 'stage' })}
                             onBlur={() => setFocusedCell(null)}
-                            className="h-8 text-sm w-16"
-                            placeholder={String(minStage)}
+                            className="h-8 text-sm w-24"
+                            placeholder="Stage"
                             data-cell-index={index}
                             data-cell-col="stage"
                             data-testid={`input-imr-stage-${index}`}
                           />
                         </td>
-                      );
-                    })()}
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -1556,8 +1517,8 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
               {stagesEnabled && stageStatsList.length > 0 ? (
                 <div className="mb-4 space-y-2">
                   {stageStatsList.map(stageStat => (
-                    <div key={stageStat.stageNum} className="border rounded-lg p-3">
-                      <div className="text-sm font-medium text-gray-700 mb-2">Stage {stageStat.stageNum}</div>
+                    <div key={stageStat.stageName} className="border rounded-lg p-3">
+                      <div className="text-sm font-medium text-gray-700 mb-2">{stageStat.stageName}</div>
                       <div className="grid grid-cols-3 gap-3 text-sm">
                         <div className="bg-blue-50 p-2 rounded">
                           <Label className="text-xs text-gray-600">UCL</Label>
@@ -1758,8 +1719,8 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
               {stagesEnabled && stageStatsList.length > 0 ? (
                 <div className="mb-4 space-y-2">
                   {stageStatsList.map(stageStat => (
-                    <div key={stageStat.stageNum} className="border rounded-lg p-3">
-                      <div className="text-sm font-medium text-gray-700 mb-2">Stage {stageStat.stageNum}</div>
+                    <div key={stageStat.stageName} className="border rounded-lg p-3">
+                      <div className="text-sm font-medium text-gray-700 mb-2">{stageStat.stageName}</div>
                       <div className="grid grid-cols-3 gap-3 text-sm">
                         <div className="bg-blue-50 p-2 rounded">
                           <Label className="text-xs text-gray-600">UCL</Label>
