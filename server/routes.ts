@@ -10897,7 +10897,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ? Math.floor(subgroupSize) 
           : 5;
         const validatedSubgroupIndexValues = Array.isArray(subgroupIndexValues) 
-          ? subgroupIndexValues.map((v: any) => typeof v === 'number' && v > 0 ? Math.floor(v) : 1)
+          ? subgroupIndexValues.map((v: any) => String(v ?? ''))
           : [];
         const validatedStagesEnabled = typeof stagesEnabled === 'boolean' ? stagesEnabled : false;
         const validatedStageValues = Array.isArray(stageValues) 
