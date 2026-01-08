@@ -1283,102 +1283,67 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
           <Card>
             <CardHeader className="py-3 px-4 border-b">
               <h3 className="text-sm font-medium">
-                Xbar-R Control Chart Statistics
+                Xbar-R Control Chart Summary
                 {chartDate && <span className="text-gray-500 ml-2">({chartDate})</span>}
               </h3>
             </CardHeader>
             <CardContent className="p-4 pt-3">
-              {stagesEnabled && stageStatsList.length > 0 ? (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div className="p-3 bg-blue-50 rounded-lg">
-                      <div className="text-gray-600">Total Subgroups</div>
-                      <div className="text-lg font-semibold">{stats.subgroupCount}</div>
-                    </div>
-                    <div className="p-3 bg-blue-50 rounded-lg">
-                      <div className="text-gray-600">Subgroup Size (n)</div>
-                      <div className="text-lg font-semibold">{constantSubgroupSize ? effectiveSubgroupSize : 'variable'}</div>
-                    </div>
-                  </div>
-                  <div className="text-sm font-medium text-gray-700 mt-4">Per-Stage Control Limits:</div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {stageStatsList.map(stageStat => (
-                      <div key={stageStat.stageName} className="border rounded-lg p-3 bg-gray-50">
-                        <div className="font-semibold text-gray-800 mb-2 border-b pb-1">{stageStat.stageName}</div>
-                        <div className="grid grid-cols-2 gap-2 text-xs">
-                          <div className="p-2 bg-green-50 rounded">
-                            <div className="text-gray-600">X̄</div>
-                            <div className="font-semibold">{stageStat.xbarCL.toFixed(4)}</div>
-                          </div>
-                          <div className="p-2 bg-green-50 rounded">
-                            <div className="text-gray-600">R̄</div>
-                            <div className="font-semibold">{stageStat.rCL.toFixed(4)}</div>
-                          </div>
-                          <div className="p-2 bg-red-50 rounded">
-                            <div className="text-gray-600">X̄ UCL</div>
-                            <div className="font-semibold text-red-600">{stageStat.xbarUCL.toFixed(4)}</div>
-                          </div>
-                          <div className="p-2 bg-red-50 rounded">
-                            <div className="text-gray-600">X̄ LCL</div>
-                            <div className="font-semibold text-red-600">{stageStat.xbarLCL.toFixed(4)}</div>
-                          </div>
-                          <div className="p-2 bg-orange-50 rounded">
-                            <div className="text-gray-600">R UCL</div>
-                            <div className="font-semibold text-orange-600">{stageStat.rUCL.toFixed(4)}</div>
-                          </div>
-                          <div className="p-2 bg-orange-50 rounded">
-                            <div className="text-gray-600">R LCL</div>
-                            <div className="font-semibold text-orange-600">{stageStat.rLCL.toFixed(4)}</div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="p-3 bg-blue-50 rounded-lg">
+                  <div className="text-gray-600">Total Subgroups</div>
+                  <div className="text-lg font-semibold">{stats.subgroupCount}</div>
                 </div>
-              ) : (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                  <div className="p-3 bg-blue-50 rounded-lg">
-                    <div className="text-gray-600">Subgroups</div>
-                    <div className="text-lg font-semibold">{stats.subgroupCount}</div>
-                  </div>
-                  <div className="p-3 bg-blue-50 rounded-lg">
-                    <div className="text-gray-600">Subgroup Size (n)</div>
-                    <div className="text-lg font-semibold">{constantSubgroupSize ? effectiveSubgroupSize : 'variable'}</div>
-                  </div>
-                  <div className="p-3 bg-green-50 rounded-lg">
-                    <div className="text-gray-600">X̄ (Grand Mean)</div>
-                    <div className="text-lg font-semibold">{stats.xbarBar.toFixed(4)}</div>
-                  </div>
-                  <div className="p-3 bg-green-50 rounded-lg">
-                    <div className="text-gray-600">R̄ (Avg Range)</div>
-                    <div className="text-lg font-semibold">{stats.rBar.toFixed(4)}</div>
-                  </div>
-                  <div className="p-3 bg-red-50 rounded-lg">
-                    <div className="text-gray-600">X̄ UCL</div>
-                    <div className="text-lg font-semibold text-red-600">{stats.xbarUCL.toFixed(4)}</div>
-                  </div>
-                  <div className="p-3 bg-red-50 rounded-lg">
-                    <div className="text-gray-600">X̄ LCL</div>
-                    <div className="text-lg font-semibold text-red-600">{stats.xbarLCL.toFixed(4)}</div>
-                  </div>
-                  <div className="p-3 bg-orange-50 rounded-lg">
-                    <div className="text-gray-600">R UCL</div>
-                    <div className="text-lg font-semibold text-orange-600">{stats.rUCL.toFixed(4)}</div>
-                  </div>
-                  <div className="p-3 bg-orange-50 rounded-lg">
-                    <div className="text-gray-600">R LCL</div>
-                    <div className="text-lg font-semibold text-orange-600">{stats.rLCL.toFixed(4)}</div>
-                  </div>
+                <div className="p-3 bg-blue-50 rounded-lg">
+                  <div className="text-gray-600">Subgroup Size (n)</div>
+                  <div className="text-lg font-semibold">{constantSubgroupSize ? effectiveSubgroupSize : 'variable'}</div>
                 </div>
-              )}
+              </div>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader className="py-3 px-4 border-b">
-              <h3 className="text-sm font-medium">X̄ Chart - {indicatorName || ctqName}</h3>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">X̄ Chart (Subgroup Means)</CardTitle>
             </CardHeader>
-            <CardContent className="p-4 pt-3">
+            <CardContent>
+              {stagesEnabled && stageStatsList.length > 0 ? (
+                <div className="mb-4 space-y-2">
+                  {stageStatsList.map(stageStat => (
+                    <div key={stageStat.stageName} className="border rounded-lg p-3">
+                      <div className="text-sm font-medium text-gray-700 mb-2">{stageStat.stageName}</div>
+                      <div className="grid grid-cols-3 gap-3 text-sm">
+                        <div className="bg-blue-50 p-2 rounded">
+                          <Label className="text-xs text-gray-600">UCL</Label>
+                          <div className="font-semibold text-blue-700">{stageStat.xbarUCL.toFixed(4)}</div>
+                        </div>
+                        <div className="bg-green-50 p-2 rounded">
+                          <Label className="text-xs text-gray-600">CL (X̄)</Label>
+                          <div className="font-semibold text-green-700">{stageStat.xbarCL.toFixed(4)}</div>
+                        </div>
+                        <div className="bg-blue-50 p-2 rounded">
+                          <Label className="text-xs text-gray-600">LCL</Label>
+                          <div className="font-semibold text-blue-700">{stageStat.xbarLCL.toFixed(4)}</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-3 gap-4 mb-4 text-sm">
+                  <div className="bg-blue-50 p-3 rounded">
+                    <Label className="text-xs text-gray-600">UCL</Label>
+                    <div className="font-semibold text-blue-700">{stats.xbarUCL.toFixed(4)}</div>
+                  </div>
+                  <div className="bg-green-50 p-3 rounded">
+                    <Label className="text-xs text-gray-600">Centerline (X̄)</Label>
+                    <div className="font-semibold text-green-700">{stats.xbarCL.toFixed(4)}</div>
+                  </div>
+                  <div className="bg-blue-50 p-3 rounded">
+                    <Label className="text-xs text-gray-600">LCL</Label>
+                    <div className="font-semibold text-blue-700">{stats.xbarLCL.toFixed(4)}</div>
+                  </div>
+                </div>
+              )}
               <Plot
                 data={[
                   { x: xbarChartPoints.inControl.x, y: xbarChartPoints.inControl.y, type: 'scatter', mode: 'markers', name: 'In Control', marker: { color: '#2563eb', size: 8 } },
@@ -1467,10 +1432,48 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
           </Card>
 
           <Card>
-            <CardHeader className="py-3 px-4 border-b">
-              <h3 className="text-sm font-medium">R Chart - {indicatorName || ctqName}</h3>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">R Chart (Range)</CardTitle>
             </CardHeader>
-            <CardContent className="p-4 pt-3">
+            <CardContent>
+              {stagesEnabled && stageStatsList.length > 0 ? (
+                <div className="mb-4 space-y-2">
+                  {stageStatsList.map(stageStat => (
+                    <div key={stageStat.stageName} className="border rounded-lg p-3">
+                      <div className="text-sm font-medium text-gray-700 mb-2">{stageStat.stageName}</div>
+                      <div className="grid grid-cols-3 gap-3 text-sm">
+                        <div className="bg-blue-50 p-2 rounded">
+                          <Label className="text-xs text-gray-600">UCL</Label>
+                          <div className="font-semibold text-blue-700">{stageStat.rUCL.toFixed(4)}</div>
+                        </div>
+                        <div className="bg-green-50 p-2 rounded">
+                          <Label className="text-xs text-gray-600">CL (R̄)</Label>
+                          <div className="font-semibold text-green-700">{stageStat.rCL.toFixed(4)}</div>
+                        </div>
+                        <div className="bg-blue-50 p-2 rounded">
+                          <Label className="text-xs text-gray-600">LCL</Label>
+                          <div className="font-semibold text-blue-700">{stageStat.rLCL.toFixed(4)}</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-3 gap-4 mb-4 text-sm">
+                  <div className="bg-blue-50 p-3 rounded">
+                    <Label className="text-xs text-gray-600">UCL</Label>
+                    <div className="font-semibold text-blue-700">{stats.rUCL.toFixed(4)}</div>
+                  </div>
+                  <div className="bg-green-50 p-3 rounded">
+                    <Label className="text-xs text-gray-600">Centerline (R̄)</Label>
+                    <div className="font-semibold text-green-700">{stats.rCL.toFixed(4)}</div>
+                  </div>
+                  <div className="bg-blue-50 p-3 rounded">
+                    <Label className="text-xs text-gray-600">LCL</Label>
+                    <div className="font-semibold text-blue-700">{stats.rLCL.toFixed(4)}</div>
+                  </div>
+                </div>
+              )}
               <Plot
                 data={[
                   { x: rChartPoints.inControl.x, y: rChartPoints.inControl.y, type: 'scatter', mode: 'markers', name: 'In Control', marker: { color: '#2563eb', size: 8 } },
