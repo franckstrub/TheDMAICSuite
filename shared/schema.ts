@@ -3203,9 +3203,9 @@ export const xbarRControlCardData = pgTable(
     // Subgroup size (used when constantSubgroupSize is true, typically 2-10)
     subgroupSize: integer("subgroup_size").default(5),
     
-    // Subgroup index values (array of positive integers, when not using constant subgroup size)
-    // Similar to stage logic: same or +1, defines which subgroup each measurement belongs to
-    subgroupIndexValues: jsonb("subgroup_index_values").$type<number[]>().default([]),
+    // Subgroup values (array of strings, when not using constant subgroup size)
+    // Rows with the same subgroup name are grouped together
+    subgroupIndexValues: jsonb("subgroup_index_values").$type<string[]>().default([]),
     
     // Stages feature - enables per-stage control limits
     stagesEnabled: boolean("stages_enabled").default(false),
