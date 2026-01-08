@@ -893,7 +893,7 @@ export function XbarSCard({ projectId, ctqName }: XbarSCardProps) {
         y: xPoints.map(() => stageStat.sCL),
         type: 'scatter',
         mode: 'lines',
-        name: idx === 0 ? 'CL (Sbar)' : undefined,
+        name: idx === 0 ? 'CL (S̄)' : undefined,
         showlegend: idx === 0,
         line: { color: '#16a34a', width: 2 },
         hovertemplate: `CL: ${stageStat.sCL.toFixed(4)}<extra></extra>`,
@@ -1448,7 +1448,7 @@ export function XbarSCard({ projectId, ctqName }: XbarSCardProps) {
                           <div className="font-semibold text-blue-700">{stageStat.sUCL.toFixed(4)}</div>
                         </div>
                         <div className="bg-green-50 p-2 rounded">
-                          <Label className="text-xs text-gray-600">CL (Sbar)</Label>
+                          <Label className="text-xs text-gray-600">CL (S̄)</Label>
                           <div className="font-semibold text-green-700">{stageStat.sCL.toFixed(4)}</div>
                         </div>
                         <div className="bg-blue-50 p-2 rounded">
@@ -1466,7 +1466,7 @@ export function XbarSCard({ projectId, ctqName }: XbarSCardProps) {
                     <div className="font-semibold text-blue-700">{stats.sUCL.toFixed(4)}</div>
                   </div>
                   <div className="bg-green-50 p-3 rounded">
-                    <Label className="text-xs text-gray-600">Centerline (Sbar)</Label>
+                    <Label className="text-xs text-gray-600">Centerline (S̄)</Label>
                     <div className="font-semibold text-green-700">{stats.sCL.toFixed(4)}</div>
                   </div>
                   <div className="bg-blue-50 p-3 rounded">
@@ -1483,7 +1483,7 @@ export function XbarSCard({ projectId, ctqName }: XbarSCardProps) {
                   ...(stagesEnabled && stageStatsList.length > 0 
                     ? generateSChartStageTraces()
                     : [
-                        { x: chartXIndices, y: chartXIndices.map(() => stats.sCL), type: 'scatter', mode: 'lines', name: 'CL (Sbar)', line: { color: '#16a34a', width: 2 }, hovertemplate: `CL: ${stats.sCL.toFixed(4)}<extra></extra>` },
+                        { x: chartXIndices, y: chartXIndices.map(() => stats.sCL), type: 'scatter', mode: 'lines', name: 'CL (S̄)', line: { color: '#16a34a', width: 2 }, hovertemplate: `CL: ${stats.sCL.toFixed(4)}<extra></extra>` },
                         { x: chartXIndices, y: chartXIndices.map(() => stats.sUCL), type: 'scatter', mode: 'lines', name: 'UCL', line: { color: '#dc2626', width: 2, dash: 'dash' }, hovertemplate: `UCL: ${stats.sUCL.toFixed(4)}<extra></extra>` },
                         { x: chartXIndices, y: chartXIndices.map(() => stats.sLCL), type: 'scatter', mode: 'lines', name: 'LCL', line: { color: '#dc2626', width: 2, dash: 'dash' }, hovertemplate: `LCL: ${stats.sLCL.toFixed(4)}<extra></extra>` },
                       ]
