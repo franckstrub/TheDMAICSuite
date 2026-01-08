@@ -984,6 +984,116 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
     }));
   };
 
+  const generateXbarChartStageLimitLabels = () => {
+    if (!stagesEnabled || stageStatsList.length === 0) return [];
+    const annotations: any[] = [];
+    stageStatsList.forEach(stageStat => {
+      annotations.push(
+        {
+          x: stageStat.endIdx,
+          y: stageStat.xbarUCL,
+          xref: 'x' as const,
+          yref: 'y' as const,
+          text: `UCL=${stageStat.xbarUCL.toFixed(2)}`,
+          showarrow: false,
+          xanchor: 'left' as const,
+          yanchor: 'middle' as const,
+          font: { color: '#dc2626', size: 10 },
+          bgcolor: 'rgba(255,255,255,0.9)',
+          bordercolor: '#dc2626',
+          borderwidth: 1,
+          borderpad: 2,
+        },
+        {
+          x: stageStat.endIdx,
+          y: stageStat.xbarCL,
+          xref: 'x' as const,
+          yref: 'y' as const,
+          text: `CL=${stageStat.xbarCL.toFixed(2)}`,
+          showarrow: false,
+          xanchor: 'left' as const,
+          yanchor: 'middle' as const,
+          font: { color: '#16a34a', size: 10 },
+          bgcolor: 'rgba(255,255,255,0.9)',
+          bordercolor: '#16a34a',
+          borderwidth: 1,
+          borderpad: 2,
+        },
+        {
+          x: stageStat.endIdx,
+          y: stageStat.xbarLCL,
+          xref: 'x' as const,
+          yref: 'y' as const,
+          text: `LCL=${stageStat.xbarLCL.toFixed(2)}`,
+          showarrow: false,
+          xanchor: 'left' as const,
+          yanchor: 'middle' as const,
+          font: { color: '#dc2626', size: 10 },
+          bgcolor: 'rgba(255,255,255,0.9)',
+          bordercolor: '#dc2626',
+          borderwidth: 1,
+          borderpad: 2,
+        }
+      );
+    });
+    return annotations;
+  };
+
+  const generateRChartStageLimitLabels = () => {
+    if (!stagesEnabled || stageStatsList.length === 0) return [];
+    const annotations: any[] = [];
+    stageStatsList.forEach(stageStat => {
+      annotations.push(
+        {
+          x: stageStat.endIdx,
+          y: stageStat.rUCL,
+          xref: 'x' as const,
+          yref: 'y' as const,
+          text: `UCL=${stageStat.rUCL.toFixed(2)}`,
+          showarrow: false,
+          xanchor: 'left' as const,
+          yanchor: 'middle' as const,
+          font: { color: '#dc2626', size: 10 },
+          bgcolor: 'rgba(255,255,255,0.9)',
+          bordercolor: '#dc2626',
+          borderwidth: 1,
+          borderpad: 2,
+        },
+        {
+          x: stageStat.endIdx,
+          y: stageStat.rCL,
+          xref: 'x' as const,
+          yref: 'y' as const,
+          text: `CL=${stageStat.rCL.toFixed(2)}`,
+          showarrow: false,
+          xanchor: 'left' as const,
+          yanchor: 'middle' as const,
+          font: { color: '#16a34a', size: 10 },
+          bgcolor: 'rgba(255,255,255,0.9)',
+          bordercolor: '#16a34a',
+          borderwidth: 1,
+          borderpad: 2,
+        },
+        {
+          x: stageStat.endIdx,
+          y: stageStat.rLCL,
+          xref: 'x' as const,
+          yref: 'y' as const,
+          text: `LCL=${stageStat.rLCL.toFixed(2)}`,
+          showarrow: false,
+          xanchor: 'left' as const,
+          yanchor: 'middle' as const,
+          font: { color: '#dc2626', size: 10 },
+          bgcolor: 'rgba(255,255,255,0.9)',
+          bordercolor: '#dc2626',
+          borderwidth: 1,
+          borderpad: 2,
+        }
+      );
+    });
+    return annotations;
+  };
+
   const displayValues = [...dataValues];
   if (displayValues.length < 3 || !isNaN(displayValues[displayValues.length - 1])) {
     displayValues.push(NaN);
@@ -1286,7 +1396,7 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
                 layout={{
                   autosize: true,
                   height: 350,
-                  margin: { l: 60, r: 30, t: 50, b: 50 },
+                  margin: { l: 60, r: 100, t: 50, b: 50 },
                   title: { text: `X̄ Chart - ${indicatorName || ctqName}`, font: { size: 14 } },
                   xaxis: {
                     title: { text: getXAxisTitle(), font: { size: 12 } },
@@ -1298,7 +1408,57 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
                   legend: { orientation: 'h', y: -0.2 },
                   showlegend: true,
                   shapes: generateStageSeparatorShapes(),
-                  annotations: generateStageAnnotations(),
+                  annotations: [
+                    ...generateStageAnnotations(),
+                    ...generateXbarChartStageLimitLabels(),
+                    ...(!stagesEnabled ? [
+                      {
+                        x: chartXIndices.length,
+                        y: stats.xbarUCL,
+                        xref: 'x' as const,
+                        yref: 'y' as const,
+                        text: `UCL=${stats.xbarUCL.toFixed(2)}`,
+                        showarrow: false,
+                        xanchor: 'left' as const,
+                        yanchor: 'middle' as const,
+                        font: { color: '#dc2626', size: 11 },
+                        bgcolor: 'rgba(255,255,255,0.9)',
+                        bordercolor: '#dc2626',
+                        borderwidth: 1,
+                        borderpad: 3,
+                      },
+                      {
+                        x: chartXIndices.length,
+                        y: stats.xbarCL,
+                        xref: 'x' as const,
+                        yref: 'y' as const,
+                        text: `CL=${stats.xbarCL.toFixed(2)}`,
+                        showarrow: false,
+                        xanchor: 'left' as const,
+                        yanchor: 'middle' as const,
+                        font: { color: '#16a34a', size: 11 },
+                        bgcolor: 'rgba(255,255,255,0.9)',
+                        bordercolor: '#16a34a',
+                        borderwidth: 1,
+                        borderpad: 3,
+                      },
+                      {
+                        x: chartXIndices.length,
+                        y: stats.xbarLCL,
+                        xref: 'x' as const,
+                        yref: 'y' as const,
+                        text: `LCL=${stats.xbarLCL.toFixed(2)}`,
+                        showarrow: false,
+                        xanchor: 'left' as const,
+                        yanchor: 'middle' as const,
+                        font: { color: '#dc2626', size: 11 },
+                        bgcolor: 'rgba(255,255,255,0.9)',
+                        bordercolor: '#dc2626',
+                        borderwidth: 1,
+                        borderpad: 3,
+                      },
+                    ] : []),
+                  ],
                 }}
                 config={{ responsive: true, displayModeBar: true, modeBarButtonsToRemove: ['lasso2d', 'select2d'], displaylogo: false, toImageButtonOptions: { format: 'png', filename: `xbar_chart_${indicatorName || ctqName}`, scale: 1 } }}
                 style={{ width: '100%' }}
@@ -1328,7 +1488,7 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
                 layout={{
                   autosize: true,
                   height: 350,
-                  margin: { l: 60, r: 30, t: 50, b: 50 },
+                  margin: { l: 60, r: 100, t: 50, b: 50 },
                   title: { text: `R Chart - ${indicatorName || ctqName}`, font: { size: 14 } },
                   xaxis: {
                     title: { text: getXAxisTitle(), font: { size: 12 } },
@@ -1340,7 +1500,57 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
                   legend: { orientation: 'h', y: -0.2 },
                   showlegend: true,
                   shapes: generateStageSeparatorShapes(),
-                  annotations: generateStageAnnotations(),
+                  annotations: [
+                    ...generateStageAnnotations(),
+                    ...generateRChartStageLimitLabels(),
+                    ...(!stagesEnabled ? [
+                      {
+                        x: chartXIndices.length,
+                        y: stats.rUCL,
+                        xref: 'x' as const,
+                        yref: 'y' as const,
+                        text: `UCL=${stats.rUCL.toFixed(2)}`,
+                        showarrow: false,
+                        xanchor: 'left' as const,
+                        yanchor: 'middle' as const,
+                        font: { color: '#dc2626', size: 11 },
+                        bgcolor: 'rgba(255,255,255,0.9)',
+                        bordercolor: '#dc2626',
+                        borderwidth: 1,
+                        borderpad: 3,
+                      },
+                      {
+                        x: chartXIndices.length,
+                        y: stats.rCL,
+                        xref: 'x' as const,
+                        yref: 'y' as const,
+                        text: `CL=${stats.rCL.toFixed(2)}`,
+                        showarrow: false,
+                        xanchor: 'left' as const,
+                        yanchor: 'middle' as const,
+                        font: { color: '#16a34a', size: 11 },
+                        bgcolor: 'rgba(255,255,255,0.9)',
+                        bordercolor: '#16a34a',
+                        borderwidth: 1,
+                        borderpad: 3,
+                      },
+                      {
+                        x: chartXIndices.length,
+                        y: stats.rLCL,
+                        xref: 'x' as const,
+                        yref: 'y' as const,
+                        text: `LCL=${stats.rLCL.toFixed(2)}`,
+                        showarrow: false,
+                        xanchor: 'left' as const,
+                        yanchor: 'middle' as const,
+                        font: { color: '#dc2626', size: 11 },
+                        bgcolor: 'rgba(255,255,255,0.9)',
+                        bordercolor: '#dc2626',
+                        borderwidth: 1,
+                        borderpad: 3,
+                      },
+                    ] : []),
+                  ],
                 }}
                 config={{ responsive: true, displayModeBar: true, modeBarButtonsToRemove: ['lasso2d', 'select2d'], displaylogo: false, toImageButtonOptions: { format: 'png', filename: `r_chart_${indicatorName || ctqName}`, scale: 1 } }}
                 style={{ width: '100%' }}
