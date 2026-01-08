@@ -42,6 +42,7 @@ export default function SPC({ projectId, projectType }: SPCProps) {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<string>("");
   const [controlCardSelection, setControlCardSelection] = useState<ControlCardSelection>({});
+  const [controlCardActiveTab, setControlCardActiveTab] = useState<{ [ctq: string]: string }>({});
 
   // Fetch CTS characteristics to get CTQs
   const { data: ctsData, isLoading: ctsLoading } = useQuery<any>({
@@ -79,7 +80,46 @@ export default function SPC({ projectId, projectType }: SPCProps) {
     if (savedTab) {
       setActiveTab(savedTab);
     }
+    // Load saved control card tabs
+    const savedControlCardTabs = localStorage.getItem(`spc-control-card-tabs-${projectId}`);
+    if (savedControlCardTabs) {
+      try {
+        setControlCardActiveTab(JSON.parse(savedControlCardTabs));
+      } catch (e) {
+        // Ignore parse errors
+      }
+    }
   }, [projectId]);
+
+  // Handler for control card tab changes
+  const handleControlCardTabChange = (ctq: string, tabValue: string) => {
+    setControlCardActiveTab(prev => {
+      const updated = { ...prev, [ctq]: tabValue };
+      localStorage.setItem(`spc-control-card-tabs-${projectId}`, JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  // Get the active control card tab for a CTQ, with fallback to first available
+  const getControlCardTab = (ctq: string, selection: any, isAttribute: boolean) => {
+    const savedTab = controlCardActiveTab[ctq];
+    if (isAttribute) {
+      const availableTabs = [];
+      if (selection.c) availableTabs.push('c');
+      if (selection.u) availableTabs.push('u');
+      if (selection.np) availableTabs.push('np');
+      if (selection.p) availableTabs.push('p');
+      if (savedTab && availableTabs.includes(savedTab)) return savedTab;
+      return availableTabs[0] || 'c';
+    } else {
+      const availableTabs = [];
+      if (selection.imr) availableTabs.push('imr');
+      if (selection.xbarR) availableTabs.push('xbarR');
+      if (selection.xbarS) availableTabs.push('xbarS');
+      if (savedTab && availableTabs.includes(savedTab)) return savedTab;
+      return availableTabs[0] || 'imr';
+    }
+  };
 
   // Initialize control card selections when both CTQs and saved selections are loaded
   useEffect(() => {
@@ -468,7 +508,11 @@ export default function SPC({ projectId, projectType }: SPCProps) {
 
                       {/* Render selected control card templates in tabs */}
                       {(selection.c || selection.u || selection.np || selection.p) && (
-                        <Tabs defaultValue={selection.c ? 'c' : selection.u ? 'u' : selection.np ? 'np' : 'p'} className="mt-4">
+                        <Tabs 
+                          value={getControlCardTab(ctq, selection, true)} 
+                          onValueChange={(val) => handleControlCardTabChange(ctq, val)} 
+                          className="mt-4"
+                        >
                           <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${[selection.c, selection.u, selection.np, selection.p].filter(Boolean).length}, 1fr)` }}>
                             {selection.c && <TabsTrigger value="c">C</TabsTrigger>}
                             {selection.u && <TabsTrigger value="u">U</TabsTrigger>}
@@ -540,7 +584,11 @@ export default function SPC({ projectId, projectType }: SPCProps) {
 
                       {/* Render selected control card templates in tabs */}
                       {(selection.imr || selection.xbarR || selection.xbarS) && (
-                        <Tabs defaultValue={selection.imr ? 'imr' : selection.xbarR ? 'xbarR' : 'xbarS'} className="mt-4">
+                        <Tabs 
+                          value={getControlCardTab(ctq, selection, false)} 
+                          onValueChange={(val) => handleControlCardTabChange(ctq, val)} 
+                          className="mt-4"
+                        >
                           <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${[selection.imr, selection.xbarR, selection.xbarS].filter(Boolean).length}, 1fr)` }}>
                             {selection.imr && <TabsTrigger value="imr">I-MR</TabsTrigger>}
                             {selection.xbarR && <TabsTrigger value="xbarR">Xbar-R</TabsTrigger>}
