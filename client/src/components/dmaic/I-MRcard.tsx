@@ -710,6 +710,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
       })() : undefined;
 
       const statsPayload = {
+        chartType: 'I-MR' as const,
         dataValues: validData,
         movingRanges,
         mean,

@@ -5,7 +5,28 @@ if (process.env.GOOGLE_AI_API_KEY) {
   genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
 }
 
-export interface ControlCardStats {
+// Base interface for common fields
+interface BaseControlCardStats {
+  stagesEnabled: boolean;
+  stageStats?: {
+    stageName?: string;
+    stageNumber?: number;
+    count: number;
+    mean: number;
+    ucl: number;
+    lcl: number;
+    mrMean?: number;
+    mrUcl?: number;
+    mrLcl?: number;
+    rBar?: number;
+    rUCL?: number;
+    rLCL?: number;
+  }[];
+}
+
+// I-MR specific stats
+export interface IMRControlCardStats extends BaseControlCardStats {
+  chartType: 'I-MR';
   dataValues: number[];
   movingRanges: number[];
   mean: number;
@@ -16,25 +37,167 @@ export interface ControlCardStats {
   mrLcl: number;
   outOfControlIndividuals: number[];
   outOfControlMR: number[];
-  stagesEnabled: boolean;
-  stageStats?: {
-    stageNumber: number;
-    count: number;
-    mean: number;
-    ucl: number;
-    lcl: number;
-    mrMean: number;
-    mrUcl: number;
-    mrLcl: number;
-  }[];
 }
 
+// Xbar-R specific stats
+export interface XbarRControlCardStats extends BaseControlCardStats {
+  chartType: 'Xbar-R';
+  subgroupCount: number;
+  subgroupSize: number;
+  xbars: number[];
+  ranges: number[];
+  xbarBar: number;
+  rBar: number;
+  xbarUCL: number;
+  xbarLCL: number;
+  rUCL: number;
+  rLCL: number;
+  outOfControlXbar: number[];
+  outOfControlR: number[];
+}
+
+// Legacy stats (for backward compatibility - defaults to I-MR)
+export interface LegacyControlCardStats {
+  dataValues?: number[];
+  movingRanges?: number[];
+  mean?: number;
+  mrMean?: number;
+  ucl?: number;
+  lcl?: number;
+  mrUcl?: number;
+  mrLcl?: number;
+  outOfControlIndividuals?: number[];
+  outOfControlMR?: number[];
+  stagesEnabled?: boolean;
+  stageStats?: any[];
+}
+
+export type ControlCardStats = IMRControlCardStats | XbarRControlCardStats | LegacyControlCardStats;
+
 export interface ControlCardContext {
-  ctqName: string;
-  indicatorName: string;
+  ctqName?: string;
+  indicatorName?: string;
   chartDate?: string;
-  xScaleType: string;
+  xScaleType?: string;
   xAxisLabel?: string;
+}
+
+// Type guard functions
+function isXbarRStats(stats: ControlCardStats): stats is XbarRControlCardStats {
+  return 'chartType' in stats && stats.chartType === 'Xbar-R';
+}
+
+function isIMRStats(stats: ControlCardStats): stats is IMRControlCardStats {
+  return ('chartType' in stats && stats.chartType === 'I-MR') || !('chartType' in stats);
+}
+
+// Chart-type specific configuration
+interface ChartTypeConfig {
+  chartName: string;
+  chartDescription: string;
+  primaryChartName: string;
+  secondaryChartName: string;
+  variationComparisonText: string;
+}
+
+function getChartConfig(stats: ControlCardStats): ChartTypeConfig {
+  if (isXbarRStats(stats)) {
+    return {
+      chartName: 'Xbar-R (X̄-R)',
+      chartDescription: 'Xbar-R control chart for subgrouped data',
+      primaryChartName: 'X̄ (Xbar) chart',
+      secondaryChartName: 'R (Range) chart',
+      variationComparisonText: 'Compare R chart behavior to X̄ chart',
+    };
+  }
+  return {
+    chartName: 'I-MR (Individual-Moving Range)',
+    chartDescription: 'I-MR control chart for individual measurements',
+    primaryChartName: 'Individual (I) chart',
+    secondaryChartName: 'Moving Range (MR) chart',
+    variationComparisonText: 'Compare MR chart behavior to Individual chart',
+  };
+}
+
+function buildStatisticalSummary(stats: ControlCardStats): string {
+  if (isXbarRStats(stats)) {
+    return `- Number of subgroups: ${stats.subgroupCount}
+- Subgroup size (n): ${stats.subgroupSize}
+- Grand mean (X̿): ${stats.xbarBar.toFixed(4)}
+- Average range (R̄): ${stats.rBar.toFixed(4)}
+- X̄ chart UCL: ${stats.xbarUCL.toFixed(4)}
+- X̄ chart LCL: ${stats.xbarLCL.toFixed(4)}
+- R chart UCL: ${stats.rUCL.toFixed(4)}
+- R chart LCL: ${stats.rLCL.toFixed(4)}`;
+  }
+  
+  // I-MR or legacy stats
+  const imrStats = stats as IMRControlCardStats | LegacyControlCardStats;
+  const sampleSize = imrStats.dataValues?.length || 0;
+  return `- Sample size: ${sampleSize}
+- Process mean (X̄): ${(imrStats.mean || 0).toFixed(4)}
+- Individual chart UCL: ${(imrStats.ucl || 0).toFixed(4)}
+- Individual chart LCL: ${(imrStats.lcl || 0).toFixed(4)}
+- Moving Range mean (MR̄): ${(imrStats.mrMean || 0).toFixed(4)}
+- MR chart UCL: ${(imrStats.mrUcl || 0).toFixed(4)}
+- MR chart LCL: ${(imrStats.mrLcl || 0).toFixed(4)}`;
+}
+
+function buildControlStatus(stats: ControlCardStats, config: ChartTypeConfig): { status: string; details: string } {
+  if (isXbarRStats(stats)) {
+    const xbarOOC = stats.outOfControlXbar?.length || 0;
+    const rOOC = stats.outOfControlR?.length || 0;
+    const totalOOC = xbarOOC + rOOC;
+    
+    const status = totalOOC === 0
+      ? "The process appears to be IN CONTROL with no points outside control limits."
+      : `The process has OUT OF CONTROL signals: ${xbarOOC} X̄ value(s) and ${rOOC} Range value(s) outside control limits.`;
+    
+    const details = totalOOC > 0
+      ? `\nOut-of-Control Points:
+- X̄ chart: Subgroups at indices ${xbarOOC > 0 ? stats.outOfControlXbar.join(', ') : 'none'}
+- R chart: Subgroups at indices ${rOOC > 0 ? stats.outOfControlR.join(', ') : 'none'}`
+      : '';
+    
+    return { status, details };
+  }
+  
+  // I-MR or legacy stats
+  const imrStats = stats as IMRControlCardStats | LegacyControlCardStats;
+  const individualOOC = imrStats.outOfControlIndividuals?.length || 0;
+  const mrOOC = imrStats.outOfControlMR?.length || 0;
+  const totalOOC = individualOOC + mrOOC;
+  
+  const status = totalOOC === 0
+    ? "The process appears to be IN CONTROL with no points outside control limits."
+    : `The process has OUT OF CONTROL signals: ${individualOOC} individual value(s) and ${mrOOC} moving range value(s) outside control limits.`;
+  
+  const details = totalOOC > 0
+    ? `\nOut-of-Control Points:
+- Individual chart: Points at indices ${individualOOC > 0 ? imrStats.outOfControlIndividuals!.join(', ') : 'none'}
+- MR chart: Points at indices ${mrOOC > 0 ? imrStats.outOfControlMR!.join(', ') : 'none'}`
+    : '';
+  
+  return { status, details };
+}
+
+function buildStageInfo(stats: ControlCardStats): string {
+  const stagesEnabled = 'stagesEnabled' in stats ? stats.stagesEnabled : false;
+  const stageStats = 'stageStats' in stats ? stats.stageStats : undefined;
+  
+  if (!stagesEnabled || !stageStats || stageStats.length <= 1) {
+    return '';
+  }
+  
+  const isXbarR = isXbarRStats(stats);
+  
+  return `\nMulti-Stage Analysis:\nNumber of stages: ${stageStats.length}\n${stageStats.map(s => {
+    const stageName = s.stageName || `Stage ${s.stageNumber || '?'}`;
+    if (isXbarR) {
+      return `- ${stageName}: ${s.count} subgroups, X̄=${s.mean.toFixed(4)}, X̄ UCL=${s.ucl.toFixed(4)}, X̄ LCL=${s.lcl.toFixed(4)}, R̄=${(s.rBar || 0).toFixed(4)}`;
+    }
+    return `- ${stageName}: ${s.count} points, Mean=${s.mean.toFixed(4)}, UCL=${s.ucl.toFixed(4)}, LCL=${s.lcl.toFixed(4)}`;
+  }).join('\n')}`;
 }
 
 export async function generateControlCardAssessment(
@@ -42,7 +205,8 @@ export async function generateControlCardAssessment(
   context: ControlCardContext
 ): Promise<string> {
   try {
-    console.log(`Generating control card analysis for CTQ: "${context.ctqName}"`);
+    const indicatorName = context.indicatorName || context.ctqName || 'Process Characteristic';
+    console.log(`Generating control card analysis for: "${indicatorName}"`);
     
     if (!process.env.GOOGLE_AI_API_KEY) {
       console.error('GOOGLE_AI_API_KEY is not set in environment variables');
@@ -53,47 +217,26 @@ export async function generateControlCardAssessment(
       throw new Error('Google AI client not initialized. Check your API key.');
     }
 
-    console.log("Using Google AI API to generate control card assessment analysis");
-
-    const sampleSize = stats.dataValues.length;
-    const individualOOC = stats.outOfControlIndividuals.length;
-    const mrOOC = stats.outOfControlMR.length;
-    const totalOOC = individualOOC + mrOOC;
+    const config = getChartConfig(stats);
+    const statisticalSummary = buildStatisticalSummary(stats);
+    const { status: controlStatus, details: oocDetails } = buildControlStatus(stats, config);
+    const stageInfo = buildStageInfo(stats);
     
-    const isInControl = totalOOC === 0;
-    const controlStatus = isInControl 
-      ? "The process appears to be IN CONTROL with no points outside control limits."
-      : `The process has OUT OF CONTROL signals: ${individualOOC} individual value(s) and ${mrOOC} moving range value(s) outside control limits.`;
+    const hasMultipleStages = 'stageStats' in stats && stats.stageStats && stats.stageStats.length > 1;
 
-    const stageInfo = stats.stagesEnabled && stats.stageStats && stats.stageStats.length > 1
-      ? `\nMulti-Stage Analysis:\nNumber of stages=stats.stageStats.length\n${stats.stageStats.map(s => 
-          `- Stage ${s.stageNumber}: ${s.count} points, Mean=${s.mean.toFixed(4)}, UCL=${s.ucl.toFixed(4)}, LCL=${s.lcl.toFixed(4)}`
-        ).join('\n')}`
-      : '';
+    console.log(`Using Google AI API to generate ${config.chartName} control card assessment analysis`);
 
-    const oocDetails = totalOOC > 0 
-      ? `\nOut-of-Control Points:
-- Individual chart: Points at indices ${stats.outOfControlIndividuals.length > 0 ? stats.outOfControlIndividuals.join(', ') : 'none'}
-- MR chart: Points at indices ${stats.outOfControlMR.length > 0 ? stats.outOfControlMR.join(', ') : 'none'}`
-      : '';
-
-    const prompt = `As a Lean Six Sigma Master Black Belt expert, provide a comprehensive and concise I-MR (Individual-Moving Range) control chart analysis for the process characteristic "${context.indicatorName || context.ctqName}".
+    const prompt = `As a Lean Six Sigma Master Black Belt expert, provide a comprehensive and concise ${config.chartName} control chart analysis for the process characteristic "${indicatorName}".
 
 Statistical Summary:
-- Sample size: ${sampleSize}
-- Process mean (X̄): ${stats.mean.toFixed(4)}
-- Individual chart UCL: ${stats.ucl.toFixed(4)}
-- Individual chart LCL: ${stats.lcl.toFixed(4)}
-- Moving Range mean (MR̄): ${stats.mrMean.toFixed(4)}
-- MR chart UCL: ${stats.mrUcl.toFixed(4)}
-- MR chart LCL: ${stats.mrLcl.toFixed(4)}
+${statisticalSummary}
 ${stageInfo}
 
 Control Status:
 ${controlStatus}
 ${oocDetails}
 
-Please provide a structured analysis "${stats.stageStats && stats.stageStats.length > 1 ? 'for each stage' : ''}" following these steps:
+Please provide a structured analysis ${hasMultipleStages ? 'for each stage' : ''} following these steps:
 
 1. **Process Stability Assessment**
    - Is the process statistically stable (in control)?
@@ -108,7 +251,7 @@ Please provide a structured analysis "${stats.stageStats && stats.stageStats.len
 
 3. **Variation Analysis**
    - Assess the magnitude of process variation
-   - Compare MR chart behavior to Individual chart
+   - ${config.variationComparisonText}
    - Identify if variation is consistent or changing
 
 4. **Out-of-Control Investigation** (if applicable)
