@@ -323,7 +323,7 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
     const newDataValues: number[] = [];
     const newRawValues: string[] = [];
     const newSubgroupIndexValues: number[] = [];
-    const newStageValues: number[] = [];
+    const newStageValues: string[] = [];
     
     lines.forEach((line, lineIdx) => {
       const cells = line.split(/\t/);
@@ -768,8 +768,9 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
                 const enabled = checked === true;
                 setStagesEnabled(enabled);
                 if (enabled) {
+                  // Initialize empty stage values when enabling stages
                   const numRows = Math.max(dataValues.length, 3);
-                  setStageValues(Array(numRows).fill(1));
+                  setStageValues(Array(numRows).fill(''));
                 }
               }} data-testid="checkbox-xbarr-stages-enabled" />
               <div>
