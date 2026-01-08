@@ -1521,7 +1521,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                           <Input
                             type="number"
                             min={lastStage}
-                            value={stageValues[index] > 0 ? stageValues[index] : ''}
+                            value={stageValues[index] > 0 ? stageValues[index] : lastStage}
                             onChange={(e) => handleStageChange(index, e.target.value)}
                             onKeyDown={(e) => handleKeyDown(e, index, 'stage')}
                             onFocus={() => setFocusedCell({ row: index, col: 'stage' })}
