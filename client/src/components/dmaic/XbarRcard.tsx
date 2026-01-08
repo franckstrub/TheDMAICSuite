@@ -291,10 +291,16 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
     saveToHistory();
     setDataValues(prev => prev.filter((_, i) => i !== index));
     setRawInputValues(prev => prev.filter((_, i) => i !== index));
-    setXScaleValues(prev => prev.filter((_, i) => i !== index));
-    setSubgroupIndexValues(prev => prev.filter((_, i) => i !== index));
-    setStageValues(prev => prev.filter((_, i) => i !== index));
-  }, [saveToHistory]);
+    if (xScaleType !== 'index') {
+      setXScaleValues(prev => prev.filter((_, i) => i !== index));
+    }
+    if (!constantSubgroupSize) {
+      setSubgroupIndexValues(prev => prev.filter((_, i) => i !== index));
+    }
+    if (stagesEnabled) {
+      setStageValues(prev => prev.filter((_, i) => i !== index));
+    }
+  }, [saveToHistory, xScaleType, constantSubgroupSize, stagesEnabled]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>, index: number, col: 'xscale' | 'value' | 'subgroup' | 'stage') => {
     if (e.key === 'ArrowDown' || e.key === 'Enter') {

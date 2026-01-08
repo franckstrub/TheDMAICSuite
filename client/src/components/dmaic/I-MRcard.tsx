@@ -579,9 +579,13 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
     saveToHistory();
     setDataValues(prev => prev.filter((_, i) => i !== index));
     setRawInputValues(prev => prev.filter((_, i) => i !== index));
-    setXScaleValues(prev => prev.filter((_, i) => i !== index));
-    setStageValues(prev => prev.filter((_, i) => i !== index));
-  }, [saveToHistory]);
+    if (xScaleType !== 'index') {
+      setXScaleValues(prev => prev.filter((_, i) => i !== index));
+    }
+    if (stagesEnabled) {
+      setStageValues(prev => prev.filter((_, i) => i !== index));
+    }
+  }, [saveToHistory, xScaleType, stagesEnabled]);
 
   const handleSaveData = useCallback(() => {
     const validIndices: number[] = [];
