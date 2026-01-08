@@ -86,7 +86,7 @@ interface XbarRCardProps {
 interface DataHistory {
   values: number[];
   xScaleValues: string[];
-  subgroupIndexValues: number[];
+  subgroupIndexValues: string[];
   stageValues: string[];
   stagesEnabled: boolean;
   constantSubgroupSize: boolean;
@@ -96,7 +96,7 @@ interface DataHistory {
 type XScaleType = 'index' | 'freeform' | 'date';
 
 interface SubgroupData {
-  subgroupIndex: number;
+  subgroupIndex: string;
   values: number[];
   xbar: number;
   range: number;
@@ -138,7 +138,7 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
   const [stageValues, setStageValues] = useState<string[]>([]);
   const [constantSubgroupSize, setConstantSubgroupSize] = useState<boolean>(false);
   const [subgroupSize, setSubgroupSize] = useState<number>(5);
-  const [subgroupIndexValues, setSubgroupIndexValues] = useState<number[]>([]);
+  const [subgroupIndexValues, setSubgroupIndexValues] = useState<string[]>([]);
   const [aiAnalysis, setAiAnalysis] = useState<string>('');
   const [isGeneratingAnalysis, setIsGeneratingAnalysis] = useState<boolean>(false);
 
@@ -270,27 +270,13 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
 
   const handleSubgroupIndexChange = useCallback((index: number, value: string) => {
     saveToHistory();
-    const numVal = parseInt(value, 10);
     setSubgroupIndexValues(prev => {
       const newValues = [...prev];
-      while (newValues.length <= index) newValues.push(1);
-      if (value === '' || isNaN(numVal) || numVal < 1) {
-        newValues[index] = 1;
-      } else {
-        const prevIdx = index > 0 ? newValues[index - 1] : 1;
-        if (numVal === prevIdx || numVal === prevIdx + 1) {
-          newValues[index] = numVal;
-        } else if (numVal < prevIdx) {
-          newValues[index] = prevIdx;
-          toast({ title: "Invalid subgroup index", description: `Index must be at least ${prevIdx}`, variant: "destructive" });
-        } else {
-          newValues[index] = prevIdx + 1;
-          toast({ title: "Invalid subgroup index", description: `Index must be ${prevIdx} or ${prevIdx + 1}`, variant: "destructive" });
-        }
-      }
+      while (newValues.length <= index) newValues.push('');
+      newValues[index] = value;
       return newValues;
     });
-  }, [saveToHistory, toast]);
+  }, [saveToHistory]);
 
   const handleStageChange = useCallback((index: number, value: string) => {
     saveToHistory();
@@ -405,12 +391,11 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
         const newSubgroupValues = [...subgroupIndexValues];
         lines.forEach((line, i) => {
           const targetIndex = focusedIndex + i;
-          while (newSubgroupValues.length <= targetIndex) newSubgroupValues.push(1);
-          const val = parseInt(line.trim(), 10);
-          newSubgroupValues[targetIndex] = !isNaN(val) && val >= 1 ? val : 1;
+          while (newSubgroupValues.length <= targetIndex) newSubgroupValues.push('');
+          newSubgroupValues[targetIndex] = line.trim();
         });
         setSubgroupIndexValues(newSubgroupValues);
-        toast({ title: "Data pasted", description: `Pasted ${lines.length} subgroup indices` });
+        toast({ title: "Data pasted", description: `Pasted ${lines.length} subgroup values` });
         return;
       }
       if (focusedCol === 'stage' && hasStageColumn) {
@@ -444,7 +429,7 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
         newRawValues.push('');
       }
       if (hasXScale) while (newXScaleValues.length <= targetIndex) newXScaleValues.push('');
-      if (hasSubgroupCol) while (newSubgroupIndexValues.length <= targetIndex) newSubgroupIndexValues.push(1);
+      if (hasSubgroupCol) while (newSubgroupIndexValues.length <= targetIndex) newSubgroupIndexValues.push('');
       if (hasStageColumn) while (newStageValues.length <= targetIndex) newStageValues.push('');
       
       if (hasXScale && cells.length > cellIdx) {
@@ -460,8 +445,7 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
       }
       
       if (hasSubgroupCol && cells.length > cellIdx) {
-        const subgroupVal = parseInt(cells[cellIdx].trim(), 10);
-        newSubgroupIndexValues[targetIndex] = !isNaN(subgroupVal) && subgroupVal >= 1 ? subgroupVal : 1;
+        newSubgroupIndexValues[targetIndex] = cells[cellIdx].trim();
         cellIdx++;
       }
       
@@ -581,34 +565,36 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
         const xScaleLabel = xScaleValues[groupIndices[0]] || '';
         const stageName = stagesEnabled ? (stageValues[groupIndices[0]] || '') : '';
         
-        subgroups.push({ subgroupIndex: subgroupIdx, values, xbar, range, xScaleLabel, stageName });
+        subgroups.push({ subgroupIndex: String(subgroupIdx), values, xbar, range, xScaleLabel, stageName });
         subgroupIdx++;
       }
     } else {
-      // Group by subgroup index column
-      const subgroupMap = new Map<number, { indices: number[]; values: number[] }>();
+      // Group by subgroup column (textual - groups by same string value)
+      const subgroupMap = new Map<string, { indices: number[]; values: number[]; firstIndex: number }>();
+      const subgroupOrder: string[] = [];
       
       validIndices.forEach(idx => {
-        const subgroupIdx = subgroupIndexValues[idx] || 1;
-        if (!subgroupMap.has(subgroupIdx)) {
-          subgroupMap.set(subgroupIdx, { indices: [], values: [] });
+        const subgroupKey = subgroupIndexValues[idx] || '';
+        if (!subgroupMap.has(subgroupKey)) {
+          subgroupMap.set(subgroupKey, { indices: [], values: [], firstIndex: idx });
+          subgroupOrder.push(subgroupKey);
         }
-        subgroupMap.get(subgroupIdx)!.indices.push(idx);
-        subgroupMap.get(subgroupIdx)!.values.push(dataValues[idx]);
+        subgroupMap.get(subgroupKey)!.indices.push(idx);
+        subgroupMap.get(subgroupKey)!.values.push(dataValues[idx]);
       });
       
-      Array.from(subgroupMap.entries())
-        .sort((a, b) => a[0] - b[0])
-        .forEach(([subgroupIdx, { indices, values }]) => {
-          if (values.length < 2) return; // Skip single-point subgroups
-          
-          const xbar = values.reduce((a, b) => a + b, 0) / values.length;
-          const range = Math.max(...values) - Math.min(...values);
-          const xScaleLabel = xScaleValues[indices[0]] || '';
-          const stageName = stagesEnabled ? (stageValues[indices[0]] || '') : '';
-          
-          subgroups.push({ subgroupIndex: subgroupIdx, values, xbar, range, xScaleLabel, stageName });
-        });
+      // Maintain order of first appearance
+      subgroupOrder.forEach(subgroupKey => {
+        const { indices, values } = subgroupMap.get(subgroupKey)!;
+        if (values.length < 2) return; // Skip single-point subgroups
+        
+        const xbar = values.reduce((a, b) => a + b, 0) / values.length;
+        const range = Math.max(...values) - Math.min(...values);
+        const xScaleLabel = xScaleValues[indices[0]] || '';
+        const stageName = stagesEnabled ? (stageValues[indices[0]] || '') : '';
+        
+        subgroups.push({ subgroupIndex: subgroupKey, values, xbar, range, xScaleLabel, stageName });
+      });
     }
     
     return subgroups;
@@ -1127,7 +1113,7 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
                   )}
                   <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Indicator Value</th>
                   {!constantSubgroupSize && (
-                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700 w-32">Subgroup Index</th>
+                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700 w-32">Subgroup</th>
                   )}
                   {stagesEnabled && (
                     <th className="px-4 py-2 text-left text-sm font-medium text-gray-700 w-24">Stage</th>
@@ -1153,14 +1139,11 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
                     <td className="px-4 py-1">
                       <Input type="text" value={rawInputValues[index] ?? (isNaN(value) ? '' : value.toString())} onChange={(e) => handleDataChange(index, e.target.value)} onKeyDown={(e) => handleKeyDown(e, index, 'value')} onFocus={() => setFocusedCell({ row: index, col: 'value' })} onBlur={() => setFocusedCell(null)} className="h-8 text-sm" placeholder="Enter value" data-cell-index={index} data-cell-col="value" data-testid={`input-xbarr-value-${index}`} />
                     </td>
-                    {!constantSubgroupSize && (() => {
-                      const prevIdx = index > 0 ? (subgroupIndexValues[index - 1] || 1) : 1;
-                      return (
-                        <td className="px-4 py-1">
-                          <Input type="number" min={1} value={subgroupIndexValues[index] > 0 ? subgroupIndexValues[index] : ''} onChange={(e) => handleSubgroupIndexChange(index, e.target.value)} onKeyDown={(e) => handleKeyDown(e, index, 'subgroup')} onFocus={() => setFocusedCell({ row: index, col: 'subgroup' })} onBlur={() => setFocusedCell(null)} className="h-8 text-sm w-20" placeholder={String(prevIdx)} data-cell-index={index} data-cell-col="subgroup" data-testid={`input-xbarr-subgroup-${index}`} />
-                        </td>
-                      );
-                    })()}
+                    {!constantSubgroupSize && (
+                      <td className="px-4 py-1">
+                        <Input type="text" value={subgroupIndexValues[index] || ''} onChange={(e) => handleSubgroupIndexChange(index, e.target.value)} onKeyDown={(e) => handleKeyDown(e, index, 'subgroup')} onFocus={() => setFocusedCell({ row: index, col: 'subgroup' })} onBlur={() => setFocusedCell(null)} className="h-8 text-sm w-24" placeholder="Subgroup" data-cell-index={index} data-cell-col="subgroup" data-testid={`input-xbarr-subgroup-${index}`} />
+                      </td>
+                    )}
                     {stagesEnabled && (
                         <td className="px-4 py-1">
                           <Input type="text" value={stageValues[index] || ''} onChange={(e) => handleStageChange(index, e.target.value)} onKeyDown={(e) => handleKeyDown(e, index, 'stage')} onFocus={() => setFocusedCell({ row: index, col: 'stage' })} onBlur={() => setFocusedCell(null)} className="h-8 text-sm w-24" placeholder="Stage" data-cell-index={index} data-cell-col="stage" data-testid={`input-xbarr-stage-${index}`} />
