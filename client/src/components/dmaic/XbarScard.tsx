@@ -12,6 +12,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { parseNumericValue } from '@/lib/excelPasteUtils';
 import Plot from 'react-plotly.js';
+import jStat from 'jstat';
 
 function normalizeDate(dateStr: string): string {
   if (!dateStr || !dateStr.trim()) return '';
@@ -50,8 +51,8 @@ function normalizeDate(dateStr: string): string {
   return trimmed;
 }
 
-// Xbar-R constants based on subgroup size (n=2 to n=25)
-const XBAR_R_CONSTANTS: Record<number, { A2: number; D3: number; D4: number; d2: number }> = {
+// Xbar-S constants based on subgroup size (n=2 to n=25)
+const XBAR_S_CONSTANTS: Record<number, { A2: number; D3: number; D4: number; d2: number }> = {
   2: { A2: 1.880, D3: 0, D4: 3.267, d2: 1.128 },
   3: { A2: 1.023, D3: 0, D4: 2.574, d2: 1.693 },
   4: { A2: 0.729, D3: 0, D4: 2.282, d2: 2.059 },
@@ -78,7 +79,7 @@ const XBAR_R_CONSTANTS: Record<number, { A2: number; D3: number; D4: number; d2:
   25: { A2: 0.153, D3: 0.459, D4: 1.541, d2: 3.931 },
 };
 
-interface XbarRCardProps {
+interface XbarSCardProps {
   projectId: number;
   ctqName: string;
 }
@@ -99,7 +100,7 @@ interface SubgroupData {
   subgroupIndex: string;
   values: number[];
   xbar: number;
-  range: number;
+  stdev: number;
   xScaleLabel: string;
   stageName: string;
 }
@@ -110,16 +111,16 @@ interface StageStats {
   endIdx: number;
   subgroups: SubgroupData[];
   xbarBar: number;
-  rBar: number;
+  sBar: number;
   xbarUCL: number;
   xbarLCL: number;
   xbarCL: number;
-  rUCL: number;
-  rLCL: number;
-  rCL: number;
+  sUCL: number;
+  sLCL: number;
+  sCL: number;
 }
 
-export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
+export function XbarSCard({ projectId, ctqName }: XbarSCardProps) {
   const { toast } = useToast();
   const loadedRef = useRef(false);
   const tableRef = useRef<HTMLDivElement>(null);
@@ -186,7 +187,7 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
       );
     },
     onSuccess: () => {
-      toast({ title: "Data saved", description: "Xbar-R control card data saved successfully." });
+      toast({ title: "Data saved", description: "Xbar-S control card data saved successfully." });
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/spc/xbar-r/${encodeURIComponent(ctqName)}`] });
     },
     onError: (error: any) => {
@@ -506,7 +507,7 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
     const validValues = validIndices.map(i => dataValues[i]);
     
     if (validValues.length < 2) {
-      toast({ title: "Insufficient data", description: "Need at least 2 data points for Xbar-R chart", variant: "destructive" });
+      toast({ title: "Insufficient data", description: "Need at least 2 data points for Xbar-S chart", variant: "destructive" });
       return;
     }
     
@@ -561,11 +562,11 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
         if (values.length < 2) continue; // Skip incomplete subgroups
         
         const xbar = values.reduce((a, b) => a + b, 0) / values.length;
-        const range = Math.max(...values) - Math.min(...values);
+        const stdev =jStat.stdev(values);
         const xScaleLabel = xScaleValues[groupIndices[0]] || '';
         const stageName = stagesEnabled ? (stageValues[groupIndices[0]] || '') : '';
         
-        subgroups.push({ subgroupIndex: String(subgroupIdx), values, xbar, range, xScaleLabel, stageName });
+        subgroups.push({ subgroupIndex: String(subgroupIdx), values, xbar, stdev, xScaleLabel, stageName });
         subgroupIdx++;
       }
     } else {
@@ -589,11 +590,11 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
         if (values.length < 2) return; // Skip single-point subgroups
         
         const xbar = values.reduce((a, b) => a + b, 0) / values.length;
-        const range = Math.max(...values) - Math.min(...values);
+        const stdev =jStat.stdev(values);
         const xScaleLabel = xScaleValues[indices[0]] || '';
         const stageName = stagesEnabled ? (stageValues[indices[0]] || '') : '';
         
-        subgroups.push({ subgroupIndex: subgroupKey, values, xbar, range, xScaleLabel, stageName });
+        subgroups.push({ subgroupIndex: subgroupKey, values, xbar, stdev, xScaleLabel, stageName });
       });
     }
     
@@ -614,41 +615,41 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
   };
   
   const effectiveSubgroupSize = getEffectiveSubgroupSize();
-  const constants = XBAR_R_CONSTANTS[effectiveSubgroupSize] || XBAR_R_CONSTANTS[5];
+  const constants = XBAR_S_CONSTANTS[effectiveSubgroupSize] || XBAR_S_CONSTANTS[5];
 
-  // Calculate Xbar-R statistics
+  // Calculate Xbar-S statistics
   const calculateStats = useCallback(() => {
     if (subgroups.length < 2) return null;
     
     const xbars = subgroups.map(sg => sg.xbar);
-    const ranges = subgroups.map(sg => sg.range);
+    const stdevs = subgroups.map(sg => sg.stdev);
     
     const xbarBar = xbars.reduce((a, b) => a + b, 0) / xbars.length; // Grand mean
-    const rBar = ranges.reduce((a, b) => a + b, 0) / ranges.length; // Average range
+    const sBar = stdevs.reduce((a, b) => a + b, 0) / stdevs.length; // Average range
     
-    const xbarUCL = xbarBar + constants.A2 * rBar;
-    const xbarLCL = xbarBar - constants.A2 * rBar;
-    const rUCL = constants.D4 * rBar;
-    const rLCL = constants.D3 * rBar;
+    const xbarUCL = xbarBar + constants.A2 * sBar;
+    const xbarLCL = xbarBar - constants.A2 * sBar;
+    const sUCL = constants.D4 * sBar;
+    const sLCL = constants.D3 * sBar;
     
     return {
       xbarBar,
-      rBar,
+      sBar,
       xbarUCL,
       xbarLCL,
       xbarCL: xbarBar,
-      rUCL,
-      rLCL,
-      rCL: rBar,
+      sUCL,
+      sLCL,
+      sCL: sBar,
       xbars,
-      ranges,
+      stdevs,
       subgroupCount: subgroups.length,
     };
   }, [subgroups, constants]);
 
   const stats = calculateStats();
 
-  // Calculate per-stage statistics for Xbar-R charts
+  // Calculate per-stage statistics for Xbar-S charts
   const calculateStageStats = useCallback((): StageStats[] => {
     if (!stagesEnabled || subgroups.length < 2) return [];
     
@@ -661,10 +662,10 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
       if (stageSubgroups.length < 2) return null; // Need at least 2 subgroups for control limits
       
       const xbars = stageSubgroups.map(sg => sg.xbar);
-      const ranges = stageSubgroups.map(sg => sg.range);
+      const stdevs = stageSubgroups.map(sg => sg.stdev);
       
       const xbarBar = xbars.reduce((a, b) => a + b, 0) / xbars.length;
-      const rBar = ranges.reduce((a, b) => a + b, 0) / ranges.length;
+      const sBar = stdevs.reduce((a, b) => a + b, 0) / stdevs.length;
       
       return {
         stageName,
@@ -672,13 +673,13 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
         endIdx: endIdx + 1,
         subgroups: stageSubgroups,
         xbarBar,
-        rBar,
-        xbarUCL: xbarBar + constants.A2 * rBar,
-        xbarLCL: xbarBar - constants.A2 * rBar,
+        sBar,
+        xbarUCL: xbarBar + constants.A2 * sBar,
+        xbarLCL: xbarBar - constants.A2 * sBar,
         xbarCL: xbarBar,
-        rUCL: constants.D4 * rBar,
-        rLCL: constants.D3 * rBar,
-        rCL: rBar,
+        sUCL: constants.D4 * sBar,
+        sLCL: constants.D3 * sBar,
+        sCL: sBar,
       };
     };
     
@@ -719,22 +720,22 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
     setIsGeneratingAnalysis(true);
     try {
       const outOfControlXbar = stats.xbars.map((v, i) => (v > stats.xbarUCL || v < stats.xbarLCL) ? i + 1 : -1).filter(i => i !== -1);
-      const outOfControlR = stats.ranges.map((v, i) => (v > stats.rUCL || v < stats.rLCL) ? i + 1 : -1).filter(i => i !== -1);
+      const outOfControlS = stats.stdevs.map((v, i) => (v > stats.sUCL || v < stats.sLCL) ? i + 1 : -1).filter(i => i !== -1);
 
       const statsPayload = {
-        chartType: 'Xbar-R',
+        chartType: 'Xbar-S',
         subgroupCount: stats.subgroupCount,
         subgroupSize: effectiveSubgroupSize,
         xbarBar: stats.xbarBar,
-        rBar: stats.rBar,
+        sBar: stats.sBar,
         xbarUCL: stats.xbarUCL,
         xbarLCL: stats.xbarLCL,
-        rUCL: stats.rUCL,
-        rLCL: stats.rLCL,
+        sUCL: stats.sUCL,
+        sLCL: stats.sLCL,
         outOfControlXbar,
-        outOfControlR,
+        outOfControlS,
         xbars: stats.xbars,
-        ranges: stats.ranges,
+        stdevs: stats.stdevs,
       };
 
       const contextPayload = {
@@ -796,21 +797,21 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
     return { inControl, outOfControl };
   };
 
-  const getRChartPointArrays = () => {
+  const getSChartPointArrays = () => {
     if (!stats) return { inControl: { x: [] as number[], y: [] as number[] }, outOfControl: { x: [] as number[], y: [] as number[] } };
     const inControl: { x: number[]; y: number[] } = { x: [], y: [] };
     const outOfControl: { x: number[]; y: number[] } = { x: [], y: [] };
     
-    stats.ranges.forEach((value, i) => {
+    stats.stdevs.forEach((value, i) => {
       const xVal = chartXIndices[i];
-      let ucl = stats.rUCL;
-      let lcl = stats.rLCL;
+      let ucl = stats.sUCL;
+      let lcl = stats.sLCL;
       
       if (stagesEnabled) {
         const stageStats = getStageStatsForIndex(xVal);
         if (stageStats) {
-          ucl = stageStats.rUCL;
-          lcl = stageStats.rLCL;
+          ucl = stageStats.sUCL;
+          lcl = stageStats.sLCL;
         }
       }
       
@@ -826,7 +827,7 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
   };
 
   const xbarChartPoints = getXbarChartPointArrays();
-  const rChartPoints = getRChartPointArrays();
+  const sChartPoints = getSChartPointArrays();
 
   // Generate per-stage control limit traces for X̄ chart
   const generateXbarChartStageTraces = () => {
@@ -876,7 +877,7 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
   };
 
   // Generate per-stage control limit traces for R chart
-  const generateRChartStageTraces = () => {
+  const generateSChartStageTraces = () => {
     if (!stagesEnabled || stageStatsList.length === 0) return [];
     
     const traces: any[] = [];
@@ -889,33 +890,33 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
       
       traces.push({
         x: xPoints,
-        y: xPoints.map(() => stageStat.rCL),
+        y: xPoints.map(() => stageStat.sCL),
         type: 'scatter',
         mode: 'lines',
-        name: idx === 0 ? 'CL (R̄)' : undefined,
+        name: idx === 0 ? 'CL (Sbar)' : undefined,
         showlegend: idx === 0,
         line: { color: '#16a34a', width: 2 },
-        hovertemplate: `CL: ${stageStat.rCL.toFixed(4)}<extra></extra>`,
+        hovertemplate: `CL: ${stageStat.sCL.toFixed(4)}<extra></extra>`,
       });
       traces.push({
         x: xPoints,
-        y: xPoints.map(() => stageStat.rUCL),
+        y: xPoints.map(() => stageStat.sUCL),
         type: 'scatter',
         mode: 'lines',
         name: idx === 0 ? 'UCL' : undefined,
         showlegend: idx === 0,
         line: { color: '#dc2626', width: 2, dash: 'dash' },
-        hovertemplate: `UCL: ${stageStat.rUCL.toFixed(4)}<extra></extra>`,
+        hovertemplate: `UCL: ${stageStat.sUCL.toFixed(4)}<extra></extra>`,
       });
       traces.push({
         x: xPoints,
-        y: xPoints.map(() => stageStat.rLCL),
+        y: xPoints.map(() => stageStat.sLCL),
         type: 'scatter',
         mode: 'lines',
         name: idx === 0 ? 'LCL' : undefined,
         showlegend: idx === 0,
         line: { color: '#dc2626', width: 2, dash: 'dash' },
-        hovertemplate: `LCL: ${stageStat.rLCL.toFixed(4)}<extra></extra>`,
+        hovertemplate: `LCL: ${stageStat.sLCL.toFixed(4)}<extra></extra>`,
       });
     });
     
@@ -954,7 +955,7 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
   const generateStageAnnotations = () => {
     if (!stagesEnabled || subgroups.length === 0) return [];
     
-    const stageRanges: { stageName: string; startIdx: number; endIdx: number }[] = [];
+    const stageStdevs: { stageName: string; startIdx: number; endIdx: number }[] = [];
     let currentStage = subgroups[0]?.stageName || '';
     let startIdx = 0;
     
@@ -962,7 +963,7 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
       const nextStage = i < subgroups.length ? (subgroups[i]?.stageName || '') : '';
       if (nextStage !== currentStage) {
         if (currentStage !== '') {
-          stageRanges.push({
+          stageStdevs.push({
             stageName: currentStage,
             startIdx: startIdx + 1,
             endIdx: i,
@@ -973,12 +974,12 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
       }
     }
     
-    return stageRanges.map(range => ({
-      x: (range.startIdx + range.endIdx) / 2,
+    return stageStdevs.map(stdev => ({
+      x: (stdev.startIdx + stdev.endIdx) / 2,
       y: 1.05,
       xref: 'x' as const,
       yref: 'paper' as const,
-      text: range.stageName,
+      text: stdev.stageName,
       showarrow: false,
       font: { color: '#6b7280', size: 10 },
     }));
@@ -1039,17 +1040,17 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
     return annotations;
   };
 
-  const generateRChartStageLimitLabels = () => {
+  const generateSChartStageLimitLabels = () => {
     if (!stagesEnabled || stageStatsList.length === 0) return [];
     const annotations: any[] = [];
     stageStatsList.forEach(stageStat => {
       annotations.push(
         {
           x: stageStat.endIdx,
-          y: stageStat.rUCL,
+          y: stageStat.sUCL,
           xref: 'x' as const,
           yref: 'y' as const,
-          text: `UCL=${stageStat.rUCL.toFixed(2)}`,
+          text: `UCL=${stageStat.sUCL.toFixed(2)}`,
           showarrow: false,
           xanchor: 'left' as const,
           yanchor: 'middle' as const,
@@ -1061,10 +1062,10 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
         },
         {
           x: stageStat.endIdx,
-          y: stageStat.rCL,
+          y: stageStat.sCL,
           xref: 'x' as const,
           yref: 'y' as const,
-          text: `CL=${stageStat.rCL.toFixed(2)}`,
+          text: `CL=${stageStat.sCL.toFixed(2)}`,
           showarrow: false,
           xanchor: 'left' as const,
           yanchor: 'middle' as const,
@@ -1076,10 +1077,10 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
         },
         {
           x: stageStat.endIdx,
-          y: stageStat.rLCL,
+          y: stageStat.sLCL,
           xref: 'x' as const,
           yref: 'y' as const,
-          text: `LCL=${stageStat.rLCL.toFixed(2)}`,
+          text: `LCL=${stageStat.sLCL.toFixed(2)}`,
           showarrow: false,
           xanchor: 'left' as const,
           yanchor: 'middle' as const,
@@ -1110,18 +1111,18 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-lg flex items-center justify-between">
-            <span>Xbar-R Control Chart Data Input</span>
+            <span>Xbar-S Control Chart Data Input</span>
             <div className="flex items-center gap-2">
-              <Button variant="destructive" size="sm" onClick={handleClearAllData} disabled={validDataValues.length === 0} title="Clear all data" data-testid="btn-clear-xbarr">
+              <Button variant="destructive" size="sm" onClick={handleClearAllData} disabled={validDataValues.length === 0} title="Clear all data" data-testid="btn-clear-xbars">
                 <Trash2 className="h-4 w-4 mr-1" />Clear All Data
               </Button>
-              <Button variant="outline" size="sm" onClick={handlePasteFromClipboard} data-testid="btn-paste-xbarr">
+              <Button variant="outline" size="sm" onClick={handlePasteFromClipboard} data-testid="btn-paste-xbars">
                 <Clipboard className="h-4 w-4 mr-1" />Paste
               </Button>
-              <Button variant="outline" size="sm" onClick={handleUndo} disabled={dataHistory.length === 0} data-testid="btn-undo-xbarr">
+              <Button variant="outline" size="sm" onClick={handleUndo} disabled={dataHistory.length === 0} data-testid="btn-undo-xbars">
                 <Undo className="h-4 w-4 mr-1" />Undo
               </Button>
-              <Button size="sm" onClick={handleSaveData} disabled={saveMutation.isPending} data-testid="btn-save-xbarr">
+              <Button size="sm" onClick={handleSaveData} disabled={saveMutation.isPending} data-testid="btn-save-xbars">
                 {saveMutation.isPending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
                 Save Data
               </Button>
@@ -1130,40 +1131,40 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
         </CardHeader>
         <CardContent>
           <div className="text-sm text-gray-600 mb-4">
-            Enter individual measurements. Data will be grouped into subgroups for Xbar-R analysis. Supports Excel copy/paste.
+            Enter individual measurements. Data will be grouped into subgroups for Xbar-S analysis. Supports Excel copy/paste.
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             <div>
               <Label htmlFor="indicator-name" className="text-sm font-medium">Indicator to Monitor</Label>
-              <Input id="indicator-name" type="text" value={indicatorName} onChange={(e) => setIndicatorName(e.target.value)} className="mt-1" placeholder="Enter indicator name" data-testid="input-xbarr-indicator-name" />
+              <Input id="indicator-name" type="text" value={indicatorName} onChange={(e) => setIndicatorName(e.target.value)} className="mt-1" placeholder="Enter indicator name" data-testid="input-xbars-indicator-name" />
               <p className="text-xs text-gray-500 mt-1">This name will appear in the chart titles</p>
             </div>
             <div>
               <Label htmlFor="chart-date" className="text-sm font-medium">Chart Date</Label>
-              <Input id="chart-date" type="date" value={chartDate} onChange={(e) => setChartDate(e.target.value)} className="mt-1" data-testid="input-xbarr-chart-date" />
+              <Input id="chart-date" type="date" value={chartDate} onChange={(e) => setChartDate(e.target.value)} className="mt-1" data-testid="input-xbars-chart-date" />
               <p className="text-xs text-gray-500 mt-1">Date shown on the control charts</p>
             </div>
             <div>
               <Label className="text-sm font-medium">X-Axis Scale Type</Label>
-              <RadioGroup value={xScaleType} onValueChange={(v) => setXScaleType(v as XScaleType)} className="mt-2 flex gap-4" data-testid="radio-xbarr-xscale-type">
+              <RadioGroup value={xScaleType} onValueChange={(v) => setXScaleType(v as XScaleType)} className="mt-2 flex gap-4" data-testid="radio-xbars-xscale-type">
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="index" id="xbarr-xscale-index" />
-                  <Label htmlFor="xbarr-xscale-index" className="text-sm cursor-pointer">Default Index</Label>
+                  <RadioGroupItem value="index" id="xbars-xscale-index" />
+                  <Label htmlFor="xbars-xscale-index" className="text-sm cursor-pointer">Default Index</Label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="freeform" id="xbarr-xscale-freeform" />
-                  <Label htmlFor="xbarr-xscale-freeform" className="text-sm cursor-pointer">Free Form</Label>
+                  <RadioGroupItem value="freeform" id="xbars-xscale-freeform" />
+                  <Label htmlFor="xbars-xscale-freeform" className="text-sm cursor-pointer">Free Form</Label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="date" id="xbarr-xscale-date" />
-                  <Label htmlFor="xbarr-xscale-date" className="text-sm cursor-pointer">Date</Label>
+                  <RadioGroupItem value="date" id="xbars-xscale-date" />
+                  <Label htmlFor="xbars-xscale-date" className="text-sm cursor-pointer">Date</Label>
                 </div>
               </RadioGroup>
               {xScaleType === 'freeform' && (
                 <div className="mt-3">
-                  <Label htmlFor="xbarr-x-axis-label" className="text-sm font-medium">X-Axis Label</Label>
-                  <Input id="xbarr-x-axis-label" type="text" value={xAxisLabel} onChange={(e) => setXAxisLabel(e.target.value)} placeholder="e.g., Batch, Week..." className="mt-1 max-w-xs" data-testid="input-xbarr-x-axis-label" />
+                  <Label htmlFor="xbars-x-axis-label" className="text-sm font-medium">X-Axis Label</Label>
+                  <Input id="xbars-x-axis-label" type="text" value={xAxisLabel} onChange={(e) => setXAxisLabel(e.target.value)} placeholder="e.g., Batch, Week..." className="mt-1 max-w-xs" data-testid="input-xbars-x-axis-label" />
                 </div>
               )}
             </div>
@@ -1195,7 +1196,7 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
             )}
             
             <div className="flex items-center space-x-3 p-3 border rounded-lg bg-gray-50">
-              <Checkbox id="xbarr-stages-enabled" checked={stagesEnabled} onCheckedChange={(checked) => {
+              <Checkbox id="xbars-stages-enabled" checked={stagesEnabled} onCheckedChange={(checked) => {
                 const enabled = checked === true;
                 setStagesEnabled(enabled);
                 if (enabled) {
@@ -1203,9 +1204,9 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
                   const numRows = Math.max(dataValues.length, 3);
                   setStageValues(Array(numRows).fill(''));
                 }
-              }} data-testid="checkbox-xbarr-stages-enabled" />
+              }} data-testid="checkbox-xbars-stages-enabled" />
               <div>
-                <Label htmlFor="xbarr-stages-enabled" className="text-sm font-medium cursor-pointer">Enable Stages</Label>
+                <Label htmlFor="xbars-stages-enabled" className="text-sm font-medium cursor-pointer">Enable Stages</Label>
                 <p className="text-xs text-gray-500">Display separate control limits per stage</p>
               </div>
             </div>
@@ -1243,20 +1244,20 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
                             const normalized = normalizeDate(xScaleValues[index]);
                             if (normalized !== xScaleValues[index]) handleXScaleChange(index, normalized);
                           }
-                        }} className="h-8 text-sm" placeholder={xScaleType === 'date' ? 'YYYY-MM-DD' : 'Enter label'} data-cell-index={index} data-cell-col="xscale" data-testid={`input-xbarr-xscale-${index}`} />
+                        }} className="h-8 text-sm" placeholder={xScaleType === 'date' ? 'YYYY-MM-DD' : 'Enter label'} data-cell-index={index} data-cell-col="xscale" data-testid={`input-xbars-xscale-${index}`} />
                       </td>
                     )}
                     <td className="px-4 py-1">
-                      <Input type="text" value={rawInputValues[index] ?? (isNaN(value) ? '' : value.toString())} onChange={(e) => handleDataChange(index, e.target.value)} onKeyDown={(e) => handleKeyDown(e, index, 'value')} onFocus={() => setFocusedCell({ row: index, col: 'value' })} onBlur={() => setFocusedCell(null)} className="h-8 text-sm" placeholder="Enter value" data-cell-index={index} data-cell-col="value" data-testid={`input-xbarr-value-${index}`} />
+                      <Input type="text" value={rawInputValues[index] ?? (isNaN(value) ? '' : value.toString())} onChange={(e) => handleDataChange(index, e.target.value)} onKeyDown={(e) => handleKeyDown(e, index, 'value')} onFocus={() => setFocusedCell({ row: index, col: 'value' })} onBlur={() => setFocusedCell(null)} className="h-8 text-sm" placeholder="Enter value" data-cell-index={index} data-cell-col="value" data-testid={`input-xbars-value-${index}`} />
                     </td>
                     {!constantSubgroupSize && (
                       <td className="px-4 py-1">
-                        <Input type="text" value={subgroupIndexValues[index] || ''} onChange={(e) => handleSubgroupIndexChange(index, e.target.value)} onKeyDown={(e) => handleKeyDown(e, index, 'subgroup')} onFocus={() => setFocusedCell({ row: index, col: 'subgroup' })} onBlur={() => setFocusedCell(null)} className="h-8 text-sm w-24" placeholder="Subgroup" data-cell-index={index} data-cell-col="subgroup" data-testid={`input-xbarr-subgroup-${index}`} />
+                        <Input type="text" value={subgroupIndexValues[index] || ''} onChange={(e) => handleSubgroupIndexChange(index, e.target.value)} onKeyDown={(e) => handleKeyDown(e, index, 'subgroup')} onFocus={() => setFocusedCell({ row: index, col: 'subgroup' })} onBlur={() => setFocusedCell(null)} className="h-8 text-sm w-24" placeholder="Subgroup" data-cell-index={index} data-cell-col="subgroup" data-testid={`input-xbars-subgroup-${index}`} />
                       </td>
                     )}
                     {stagesEnabled && (
                         <td className="px-4 py-1">
-                          <Input type="text" value={stageValues[index] || ''} onChange={(e) => handleStageChange(index, e.target.value)} onKeyDown={(e) => handleKeyDown(e, index, 'stage')} onFocus={() => setFocusedCell({ row: index, col: 'stage' })} onBlur={() => setFocusedCell(null)} className="h-8 text-sm w-24" placeholder="Stage" data-cell-index={index} data-cell-col="stage" data-testid={`input-xbarr-stage-${index}`} />
+                          <Input type="text" value={stageValues[index] || ''} onChange={(e) => handleStageChange(index, e.target.value)} onKeyDown={(e) => handleKeyDown(e, index, 'stage')} onFocus={() => setFocusedCell({ row: index, col: 'stage' })} onBlur={() => setFocusedCell(null)} className="h-8 text-sm w-24" placeholder="Stage" data-cell-index={index} data-cell-col="stage" data-testid={`input-xbars-stage-${index}`} />
                         </td>
                     )}
                     <td className="px-2 py-1 text-center">
@@ -1265,7 +1266,7 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
                         onClick={() => handleDeleteRow(index)}
                         className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
                         title="Delete row"
-                        data-testid={`button-xbarr-delete-row-${index}`}
+                        data-testid={`button-xbars-delete-row-${index}`}
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -1283,7 +1284,7 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
           <Card>
             <CardHeader className="py-3 px-4 border-b">
               <h3 className="text-sm font-medium">
-                Xbar-R Control Chart Summary
+                Xbar-S Control Chart Summary
                 {chartDate && <span className="text-gray-500 ml-2">({chartDate})</span>}
               </h3>
             </CardHeader>
@@ -1433,7 +1434,7 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
 
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg">R Chart (Range: Max-Min)</CardTitle>
+              <CardTitle className="text-lg">S Chart (Standard Deviation)</CardTitle>
             </CardHeader>
             <CardContent>
               {stagesEnabled && stageStatsList.length > 0 ? (
@@ -1444,15 +1445,15 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
                       <div className="grid grid-cols-3 gap-3 text-sm">
                         <div className="bg-blue-50 p-2 rounded">
                           <Label className="text-xs text-gray-600">UCL</Label>
-                          <div className="font-semibold text-blue-700">{stageStat.rUCL.toFixed(4)}</div>
+                          <div className="font-semibold text-blue-700">{stageStat.sUCL.toFixed(4)}</div>
                         </div>
                         <div className="bg-green-50 p-2 rounded">
-                          <Label className="text-xs text-gray-600">CL (R̄)</Label>
-                          <div className="font-semibold text-green-700">{stageStat.rCL.toFixed(4)}</div>
+                          <Label className="text-xs text-gray-600">CL (Sbar)</Label>
+                          <div className="font-semibold text-green-700">{stageStat.sCL.toFixed(4)}</div>
                         </div>
                         <div className="bg-blue-50 p-2 rounded">
                           <Label className="text-xs text-gray-600">LCL</Label>
-                          <div className="font-semibold text-blue-700">{stageStat.rLCL.toFixed(4)}</div>
+                          <div className="font-semibold text-blue-700">{stageStat.sLCL.toFixed(4)}</div>
                         </div>
                       </div>
                     </div>
@@ -1462,29 +1463,29 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
                 <div className="grid grid-cols-3 gap-4 mb-4 text-sm">
                   <div className="bg-blue-50 p-3 rounded">
                     <Label className="text-xs text-gray-600">UCL</Label>
-                    <div className="font-semibold text-blue-700">{stats.rUCL.toFixed(4)}</div>
+                    <div className="font-semibold text-blue-700">{stats.sUCL.toFixed(4)}</div>
                   </div>
                   <div className="bg-green-50 p-3 rounded">
-                    <Label className="text-xs text-gray-600">Centerline (R̄)</Label>
-                    <div className="font-semibold text-green-700">{stats.rCL.toFixed(4)}</div>
+                    <Label className="text-xs text-gray-600">Centerline (Sbar)</Label>
+                    <div className="font-semibold text-green-700">{stats.sCL.toFixed(4)}</div>
                   </div>
                   <div className="bg-blue-50 p-3 rounded">
                     <Label className="text-xs text-gray-600">LCL</Label>
-                    <div className="font-semibold text-blue-700">{stats.rLCL.toFixed(4)}</div>
+                    <div className="font-semibold text-blue-700">{stats.sLCL.toFixed(4)}</div>
                   </div>
                 </div>
               )}
               <Plot
                 data={[
-                  { x: rChartPoints.inControl.x, y: rChartPoints.inControl.y, type: 'scatter', mode: 'markers', name: 'In Control', marker: { color: '#2563eb', size: 8 } },
-                  { x: rChartPoints.outOfControl.x, y: rChartPoints.outOfControl.y, type: 'scatter', mode: 'markers', name: 'Out of Control', marker: { color: '#dc2626', size: 10, symbol: 'diamond' } },
-                  { x: chartXIndices, y: stats.ranges, type: 'scatter', mode: 'lines', name: 'R Values', line: { color: '#2563eb', width: 1 }, showlegend: false },
+                  { x: sChartPoints.inControl.x, y: sChartPoints.inControl.y, type: 'scatter', mode: 'markers', name: 'In Control', marker: { color: '#2563eb', size: 8 } },
+                  { x: sChartPoints.outOfControl.x, y: sChartPoints.outOfControl.y, type: 'scatter', mode: 'markers', name: 'Out of Control', marker: { color: '#dc2626', size: 10, symbol: 'diamond' } },
+                  { x: chartXIndices, y: stats.stdevs, type: 'scatter', mode: 'lines', name: 'R Values', line: { color: '#2563eb', width: 1 }, showlegend: false },
                   ...(stagesEnabled && stageStatsList.length > 0 
-                    ? generateRChartStageTraces()
+                    ? generateSChartStageTraces()
                     : [
-                        { x: chartXIndices, y: chartXIndices.map(() => stats.rCL), type: 'scatter', mode: 'lines', name: 'CL (R̄)', line: { color: '#16a34a', width: 2 }, hovertemplate: `CL: ${stats.rCL.toFixed(4)}<extra></extra>` },
-                        { x: chartXIndices, y: chartXIndices.map(() => stats.rUCL), type: 'scatter', mode: 'lines', name: 'UCL', line: { color: '#dc2626', width: 2, dash: 'dash' }, hovertemplate: `UCL: ${stats.rUCL.toFixed(4)}<extra></extra>` },
-                        { x: chartXIndices, y: chartXIndices.map(() => stats.rLCL), type: 'scatter', mode: 'lines', name: 'LCL', line: { color: '#dc2626', width: 2, dash: 'dash' }, hovertemplate: `LCL: ${stats.rLCL.toFixed(4)}<extra></extra>` },
+                        { x: chartXIndices, y: chartXIndices.map(() => stats.sCL), type: 'scatter', mode: 'lines', name: 'CL (Sbar)', line: { color: '#16a34a', width: 2 }, hovertemplate: `CL: ${stats.sCL.toFixed(4)}<extra></extra>` },
+                        { x: chartXIndices, y: chartXIndices.map(() => stats.sUCL), type: 'scatter', mode: 'lines', name: 'UCL', line: { color: '#dc2626', width: 2, dash: 'dash' }, hovertemplate: `UCL: ${stats.sUCL.toFixed(4)}<extra></extra>` },
+                        { x: chartXIndices, y: chartXIndices.map(() => stats.sLCL), type: 'scatter', mode: 'lines', name: 'LCL', line: { color: '#dc2626', width: 2, dash: 'dash' }, hovertemplate: `LCL: ${stats.sLCL.toFixed(4)}<extra></extra>` },
                       ]
                   ),
                 ]}
@@ -1492,27 +1493,27 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
                   autosize: true,
                   height: 350,
                   margin: { l: 60, r: 100, t: 50, b: 50 },
-                  title: { text: `R (Range) Chart of ${indicatorName || ctqName}`, font: { size: 14 } },
+                  title: { text: `S (Standard Deviation) Chart of ${indicatorName || ctqName}`, font: { size: 14 } },
                   xaxis: {
                     title: { text: getXAxisTitle(), font: { size: 12 } },
                     tickmode: xScaleType !== 'index' ? 'array' : undefined,
                     tickvals: xScaleType !== 'index' ? chartXIndices : undefined,
                     ticktext: xScaleType !== 'index' ? customTickLabels : undefined,
                   },
-                  yaxis: { title: { text: 'Range (R)', font: { size: 12 } } },
+                  yaxis: { title: { text: 'Std Dev (S)', font: { size: 12 } } },
                   legend: { orientation: 'h', y: -0.3 },
                   showlegend: true,
                   shapes: generateStageSeparatorShapes(),
                   annotations: [
                     ...generateStageAnnotations(),
-                    ...generateRChartStageLimitLabels(),
+                    ...generateSChartStageLimitLabels(),
                     ...(!stagesEnabled ? [
                       {
                         x: chartXIndices.length,
-                        y: stats.rUCL,
+                        y: stats.sUCL,
                         xref: 'x' as const,
                         yref: 'y' as const,
-                        text: `UCL=${stats.rUCL.toFixed(2)}`,
+                        text: `UCL=${stats.sUCL.toFixed(2)}`,
                         showarrow: false,
                         xanchor: 'left' as const,
                         yanchor: 'middle' as const,
@@ -1524,10 +1525,10 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
                       },
                       {
                         x: chartXIndices.length,
-                        y: stats.rCL,
+                        y: stats.sCL,
                         xref: 'x' as const,
                         yref: 'y' as const,
-                        text: `CL=${stats.rCL.toFixed(2)}`,
+                        text: `CL=${stats.sCL.toFixed(2)}`,
                         showarrow: false,
                         xanchor: 'left' as const,
                         yanchor: 'middle' as const,
@@ -1539,10 +1540,10 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
                       },
                       {
                         x: chartXIndices.length,
-                        y: stats.rLCL,
+                        y: stats.sLCL,
                         xref: 'x' as const,
                         yref: 'y' as const,
-                        text: `LCL=${stats.rLCL.toFixed(2)}`,
+                        text: `LCL=${stats.sLCL.toFixed(2)}`,
                         showarrow: false,
                         xanchor: 'left' as const,
                         yanchor: 'middle' as const,
@@ -1555,7 +1556,7 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
                     ] : []),
                   ],
                 }}
-                config={{ responsive: true, displayModeBar: true, modeBarButtonsToRemove: ['lasso2d', 'select2d'], displaylogo: false, toImageButtonOptions: { format: 'png', filename: `r_chart_${indicatorName || ctqName}`, scale: 1 } }}
+                config={{ responsive: true, displayModeBar: true, modeBarButtonsToRemove: ['lasso2d', 'select2d'], displaylogo: false, toImageButtonOptions: { format: 'png', filename: `s_chart_${indicatorName || ctqName}`, scale: 1 } }}
                 style={{ width: '100%' }}
               />
             </CardContent>
@@ -1569,11 +1570,11 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
                   AI Control Card Analysis
                 </h3>
                 <div className="flex items-center gap-2">
-                  <Button type="button" variant="outline" size="sm" onClick={(e) => { e.preventDefault(); e.stopPropagation(); generateAIAnalysis(); }} disabled={isGeneratingAnalysis || subgroups.length < 5} data-testid="btn-xbarr-ai-control-analysis">
+                  <Button type="button" variant="outline" size="sm" onClick={(e) => { e.preventDefault(); e.stopPropagation(); generateAIAnalysis(); }} disabled={isGeneratingAnalysis || subgroups.length < 5} data-testid="btn-xbars-ai-control-analysis">
                     {isGeneratingAnalysis ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4 text-purple-600" />}
                     <span className="ml-1">{isGeneratingAnalysis ? "Generating..." : "Generate Analysis"}</span>
                   </Button>
-                  <Button type="button" variant="default" size="sm" onClick={(e) => { e.preventDefault(); e.stopPropagation(); saveAiAnalysisMutation.mutate(aiAnalysis); }} disabled={saveAiAnalysisMutation.isPending || !aiAnalysis.trim()} data-testid="btn-xbarr-save-ai-analysis">
+                  <Button type="button" variant="default" size="sm" onClick={(e) => { e.preventDefault(); e.stopPropagation(); saveAiAnalysisMutation.mutate(aiAnalysis); }} disabled={saveAiAnalysisMutation.isPending || !aiAnalysis.trim()} data-testid="btn-xbars-save-ai-analysis">
                     {saveAiAnalysisMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                     <span className="ml-1">{saveAiAnalysisMutation.isPending ? "Saving..." : "Save AI-Analysis"}</span>
                   </Button>
@@ -1581,7 +1582,7 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
               </div>
             </CardHeader>
             <CardContent className="p-4 pt-3">
-              <Textarea value={aiAnalysis} onChange={(e) => setAiAnalysis(e.target.value)} placeholder={subgroups.length < 5 ? "Enter at least 5 subgroups to enable AI control card analysis..." : "Click 'Generate Analysis' to get AI-powered insights about your Xbar-R control chart data..."} className="min-h-[200px] w-full font-mono text-sm" data-testid="textarea-xbarr-ai-control-analysis" />
+              <Textarea value={aiAnalysis} onChange={(e) => setAiAnalysis(e.target.value)} placeholder={subgroups.length < 5 ? "Enter at least 5 subgroups to enable AI control card analysis..." : "Click 'Generate Analysis' to get AI-powered insights about your Xbar-S control chart data..."} className="min-h-[200px] w-full font-mono text-sm" data-testid="textarea-xbars-ai-control-analysis" />
             </CardContent>
           </Card>
         </>
