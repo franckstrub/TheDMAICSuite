@@ -1297,7 +1297,7 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
                     </div>
                     <div className="p-3 bg-blue-50 rounded-lg">
                       <div className="text-gray-600">Subgroup Size (n)</div>
-                      <div className="text-lg font-semibold">{effectiveSubgroupSize}</div>
+                      <div className="text-lg font-semibold">{constantSubgroupSize ? effectiveSubgroupSize : 'variable'}</div>
                     </div>
                   </div>
                   <div className="text-sm font-medium text-gray-700 mt-4">Per-Stage Control Limits:</div>
@@ -1343,7 +1343,7 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
                   </div>
                   <div className="p-3 bg-blue-50 rounded-lg">
                     <div className="text-gray-600">Subgroup Size (n)</div>
-                    <div className="text-lg font-semibold">{effectiveSubgroupSize}</div>
+                    <div className="text-lg font-semibold">{constantSubgroupSize ? effectiveSubgroupSize : 'variable'}</div>
                   </div>
                   <div className="p-3 bg-green-50 rounded-lg">
                     <div className="text-gray-600">X̄ (Grand Mean)</div>
