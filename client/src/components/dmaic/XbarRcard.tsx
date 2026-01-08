@@ -287,6 +287,15 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
     });
   }, [saveToHistory]);
 
+  const handleDeleteRow = useCallback((index: number) => {
+    saveToHistory();
+    setDataValues(prev => prev.filter((_, i) => i !== index));
+    setRawInputValues(prev => prev.filter((_, i) => i !== index));
+    setXScaleValues(prev => prev.filter((_, i) => i !== index));
+    setSubgroupIndexValues(prev => prev.filter((_, i) => i !== index));
+    setStageValues(prev => prev.filter((_, i) => i !== index));
+  }, [saveToHistory]);
+
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>, index: number, col: 'xscale' | 'value' | 'subgroup' | 'stage') => {
     if (e.key === 'ArrowDown' || e.key === 'Enter') {
       e.preventDefault();
@@ -803,6 +812,7 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
                   {stagesEnabled && (
                     <th className="px-4 py-2 text-left text-sm font-medium text-gray-700 w-24">Stage</th>
                   )}
+                  <th className="px-2 py-2 text-center text-sm font-medium text-gray-700 w-16">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -836,6 +846,17 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
                           <Input type="text" value={stageValues[index] || ''} onChange={(e) => handleStageChange(index, e.target.value)} onKeyDown={(e) => handleKeyDown(e, index, 'stage')} onFocus={() => setFocusedCell({ row: index, col: 'stage' })} onBlur={() => setFocusedCell(null)} className="h-8 text-sm w-24" placeholder="Stage" data-cell-index={index} data-cell-col="stage" data-testid={`input-xbarr-stage-${index}`} />
                         </td>
                     )}
+                    <td className="px-2 py-1 text-center">
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteRow(index)}
+                        className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                        title="Delete row"
+                        data-testid={`button-xbarr-delete-row-${index}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>

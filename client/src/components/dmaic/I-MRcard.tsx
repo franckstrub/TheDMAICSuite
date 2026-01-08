@@ -575,6 +575,14 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
     });
   }, [saveToHistory]);
 
+  const handleDeleteRow = useCallback((index: number) => {
+    saveToHistory();
+    setDataValues(prev => prev.filter((_, i) => i !== index));
+    setRawInputValues(prev => prev.filter((_, i) => i !== index));
+    setXScaleValues(prev => prev.filter((_, i) => i !== index));
+    setStageValues(prev => prev.filter((_, i) => i !== index));
+  }, [saveToHistory]);
+
   const handleSaveData = useCallback(() => {
     const validIndices: number[] = [];
     dataValues.forEach((v, i) => {
@@ -1436,6 +1444,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                   {stagesEnabled && (
                     <th className="px-4 py-2 text-left text-sm font-medium text-gray-700 w-24">Stage</th>
                   )}
+                  <th className="px-2 py-2 text-center text-sm font-medium text-gray-700 w-16">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -1499,6 +1508,17 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                           />
                         </td>
                     )}
+                    <td className="px-2 py-1 text-center">
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteRow(index)}
+                        className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                        title="Delete row"
+                        data-testid={`button-delete-row-${index}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -1630,7 +1650,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                   },
                   yaxis: { title: { text: 'Value' } },
                   showlegend: true,
-                  legend: { orientation: 'h', y: -0.2 },
+                  legend: { orientation: 'h', y: -0.3 },
                   margin: { t: 60, b: 80, l: 60, r: 100 },
                   height: 400,
                   shapes: generateStageSeparatorShapes(),
@@ -1835,7 +1855,7 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
                   },
                   yaxis: { title: { text: 'Moving Range' }, rangemode: 'tozero' },
                   showlegend: true,
-                  legend: { orientation: 'h', y: -0.2 },
+                  legend: { orientation: 'h', y: -0.3 },
                   margin: { t: 60, b: 80, l: 60, r: 100 },
                   height: 400,
                   shapes: generateStageSeparatorShapes(),
