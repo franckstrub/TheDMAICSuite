@@ -87,7 +87,7 @@ interface DataHistory {
   values: number[];
   xScaleValues: string[];
   subgroupIndexValues: number[];
-  stageValues: number[];
+  stageValues: string[];
   stagesEnabled: boolean;
   constantSubgroupSize: boolean;
   subgroupSize: number;
@@ -101,7 +101,7 @@ interface SubgroupData {
   xbar: number;
   range: number;
   xScaleLabel: string;
-  stageNum: number;
+  stageName: string;
 }
 
 export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
@@ -120,7 +120,7 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
   const [indicatorName, setIndicatorName] = useState<string>(ctqName);
   const [chartDate, setChartDate] = useState<string>('');
   const [stagesEnabled, setStagesEnabled] = useState<boolean>(false);
-  const [stageValues, setStageValues] = useState<number[]>([]);
+  const [stageValues, setStageValues] = useState<string[]>([]);
   const [constantSubgroupSize, setConstantSubgroupSize] = useState<boolean>(false);
   const [subgroupSize, setSubgroupSize] = useState<number>(5);
   const [subgroupIndexValues, setSubgroupIndexValues] = useState<number[]>([]);
@@ -273,29 +273,13 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
 
   const handleStageChange = useCallback((index: number, value: string) => {
     saveToHistory();
-    const numVal = parseInt(value, 10);
     setStageValues(prev => {
       const newStages = [...prev];
-      while (newStages.length <= index) newStages.push(0);
-      if (value === '' || isNaN(numVal) || numVal < 1) {
-        newStages[index] = 0;
-      } else {
-        const prevStage = index > 0 ? newStages[index - 1] : 1;
-        if (prevStage === 0 || prevStage === 1) {
-          newStages[index] = Math.max(1, numVal);
-        } else if (numVal === prevStage || numVal === prevStage + 1) {
-          newStages[index] = numVal;
-        } else if (numVal < prevStage) {
-          newStages[index] = prevStage;
-          toast({ title: "Invalid stage", description: `Stage must be at least ${prevStage}`, variant: "destructive" });
-        } else {
-          newStages[index] = prevStage + 1;
-          toast({ title: "Invalid stage", description: `Stage must be ${prevStage} or ${prevStage + 1}`, variant: "destructive" });
-        }
-      }
+      while (newStages.length <= index) newStages.push('');
+      newStages[index] = value;
       return newStages;
     });
-  }, [saveToHistory, toast]);
+  }, [saveToHistory]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>, index: number, col: 'xscale' | 'value' | 'subgroup' | 'stage') => {
     if (e.key === 'ArrowDown' || e.key === 'Enter') {
@@ -381,10 +365,9 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
       }
       
       if (hasStageColumn && cells.length > cellIdx) {
-        const stageVal = parseInt(cells[cellIdx].trim(), 10);
-        newStageValues.push(!isNaN(stageVal) && stageVal >= 1 ? stageVal : 1);
+        newStageValues.push(cells[cellIdx].trim());
       } else if (hasStageColumn) {
-        newStageValues.push(1);
+        newStageValues.push('');
       }
     });
     
@@ -446,7 +429,7 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
     
     const validXScaleValues = xScaleType !== 'index' ? validIndices.map(i => xScaleValues[i] || '') : [];
     const validSubgroupIndexValues = !constantSubgroupSize ? validIndices.map(i => subgroupIndexValues[i] || 1) : [];
-    const validStageValues = stagesEnabled ? validIndices.map(i => stageValues[i] || 1) : [];
+    const validStageValues = stagesEnabled ? validIndices.map(i => stageValues[i] || '') : [];
     
     saveMutation.mutate({ 
       dataValues: validValues, 
@@ -497,9 +480,9 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
         const xbar = values.reduce((a, b) => a + b, 0) / values.length;
         const range = Math.max(...values) - Math.min(...values);
         const xScaleLabel = xScaleValues[groupIndices[0]] || '';
-        const stageNum = stagesEnabled ? (stageValues[groupIndices[0]] || 1) : 1;
+        const stageName = stagesEnabled ? (stageValues[groupIndices[0]] || '') : '';
         
-        subgroups.push({ subgroupIndex: subgroupIdx, values, xbar, range, xScaleLabel, stageNum });
+        subgroups.push({ subgroupIndex: subgroupIdx, values, xbar, range, xScaleLabel, stageName });
         subgroupIdx++;
       }
     } else {
@@ -523,9 +506,9 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
           const xbar = values.reduce((a, b) => a + b, 0) / values.length;
           const range = Math.max(...values) - Math.min(...values);
           const xScaleLabel = xScaleValues[indices[0]] || '';
-          const stageNum = stagesEnabled ? (stageValues[indices[0]] || 1) : 1;
+          const stageName = stagesEnabled ? (stageValues[indices[0]] || '') : '';
           
-          subgroups.push({ subgroupIndex: subgroupIdx, values, xbar, range, xScaleLabel, stageNum });
+          subgroups.push({ subgroupIndex: subgroupIdx, values, xbar, range, xScaleLabel, stageName });
         });
     }
     
@@ -841,14 +824,11 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
                         </td>
                       );
                     })()}
-                    {stagesEnabled && (() => {
-                      const prevStage = index > 0 ? (stageValues[index - 1] || 1) : 1;
-                      return (
+                    {stagesEnabled && (
                         <td className="px-4 py-1">
-                          <Input type="number" min={Math.max(1, prevStage)} value={stageValues[index] > 0 ? stageValues[index] : ''} onChange={(e) => handleStageChange(index, e.target.value)} onKeyDown={(e) => handleKeyDown(e, index, 'stage')} onFocus={() => setFocusedCell({ row: index, col: 'stage' })} onBlur={() => setFocusedCell(null)} className="h-8 text-sm w-20" placeholder={String(prevStage)} data-cell-index={index} data-cell-col="stage" data-testid={`input-xbarr-stage-${index}`} />
+                          <Input type="text" value={stageValues[index] || ''} onChange={(e) => handleStageChange(index, e.target.value)} onKeyDown={(e) => handleKeyDown(e, index, 'stage')} onFocus={() => setFocusedCell({ row: index, col: 'stage' })} onBlur={() => setFocusedCell(null)} className="h-8 text-sm w-24" placeholder="Stage" data-cell-index={index} data-cell-col="stage" data-testid={`input-xbarr-stage-${index}`} />
                         </td>
-                      );
-                    })()}
+                    )}
                   </tr>
                 ))}
               </tbody>

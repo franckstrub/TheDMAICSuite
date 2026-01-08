@@ -3145,8 +3145,8 @@ export const imrControlCardData = pgTable(
     // Stages feature - enables per-stage control limits
     stagesEnabled: boolean("stages_enabled").default(false),
     
-    // Stage values (array of positive integers, sequential - same or +1)
-    stageValues: jsonb("stage_values").$type<number[]>().default([]),
+    // Stage values (array of free-form string labels for stage identification)
+    stageValues: jsonb("stage_values").$type<string[]>().default([]),
     
     // AI-generated control card analysis
     aiAnalysis: text("ai_analysis").default(""),
@@ -3210,8 +3210,8 @@ export const xbarRControlCardData = pgTable(
     // Stages feature - enables per-stage control limits
     stagesEnabled: boolean("stages_enabled").default(false),
     
-    // Stage values (array of positive integers, sequential - same or +1)
-    stageValues: jsonb("stage_values").$type<number[]>().default([]),
+    // Stage values (array of free-form string labels for stage identification)
+    stageValues: jsonb("stage_values").$type<string[]>().default([]),
     
     // AI-generated control card analysis
     aiAnalysis: text("ai_analysis").default(""),
