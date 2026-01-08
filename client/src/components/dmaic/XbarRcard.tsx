@@ -335,71 +335,134 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
     e.preventDefault();
     saveToHistory();
     
-    const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
+    const target = e.target as HTMLInputElement;
+    const focusedCol = target?.getAttribute('data-cell-col') || 'value';
+    const focusedIndex = parseInt(target?.getAttribute('data-cell-index') || '0', 10);
+    
+    let lines = text.split(/\r?\n/);
+    if (lines.length > 0 && lines[lines.length - 1] === '') {
+      lines = lines.slice(0, -1);
+    }
+    if (lines.length === 0) return;
+    
     const hasXScale = xScaleType !== 'index';
     const hasSubgroupCol = !constantSubgroupSize;
     const hasStageColumn = stagesEnabled;
+    const hasMultipleColumns = lines.some(line => line.includes('\t'));
     
-    const newXScaleValues: string[] = [];
-    const newDataValues: number[] = [];
-    const newRawValues: string[] = [];
-    const newSubgroupIndexValues: number[] = [];
-    const newStageValues: string[] = [];
+    // Single column paste - insert into focused column starting at focused row
+    if (!hasMultipleColumns) {
+      if (focusedCol === 'xscale' && hasXScale) {
+        const newXScaleValues = [...xScaleValues];
+        lines.forEach((line, i) => {
+          const targetIndex = focusedIndex + i;
+          while (newXScaleValues.length <= targetIndex) newXScaleValues.push('');
+          newXScaleValues[targetIndex] = xScaleType === 'date' ? normalizeDate(line.trim()) : line.trim();
+        });
+        setXScaleValues(newXScaleValues);
+        const maxIndex = focusedIndex + lines.length;
+        if (maxIndex > dataValues.length) {
+          const needed = maxIndex - dataValues.length;
+          setDataValues(prev => [...prev, ...Array(needed).fill(NaN)]);
+          setRawInputValues(prev => [...prev, ...Array(needed).fill('')]);
+        }
+        toast({ title: "Data pasted", description: `Pasted ${lines.length} x-scale values` });
+        return;
+      }
+      if (focusedCol === 'value') {
+        const newDataValues = [...dataValues];
+        const newRawValues = [...rawInputValues];
+        lines.forEach((line, i) => {
+          const targetIndex = focusedIndex + i;
+          while (newDataValues.length <= targetIndex) {
+            newDataValues.push(NaN);
+            newRawValues.push('');
+          }
+          newRawValues[targetIndex] = line.trim();
+          newDataValues[targetIndex] = parseNumericValue(line.trim());
+        });
+        setDataValues(newDataValues);
+        setRawInputValues(newRawValues);
+        toast({ title: "Data pasted", description: `Pasted ${lines.length} values` });
+        return;
+      }
+      if (focusedCol === 'subgroup' && hasSubgroupCol) {
+        const newSubgroupValues = [...subgroupIndexValues];
+        lines.forEach((line, i) => {
+          const targetIndex = focusedIndex + i;
+          while (newSubgroupValues.length <= targetIndex) newSubgroupValues.push(1);
+          const val = parseInt(line.trim(), 10);
+          newSubgroupValues[targetIndex] = !isNaN(val) && val >= 1 ? val : 1;
+        });
+        setSubgroupIndexValues(newSubgroupValues);
+        toast({ title: "Data pasted", description: `Pasted ${lines.length} subgroup indices` });
+        return;
+      }
+      if (focusedCol === 'stage' && hasStageColumn) {
+        const newStageValues = [...stageValues];
+        lines.forEach((line, i) => {
+          const targetIndex = focusedIndex + i;
+          while (newStageValues.length <= targetIndex) newStageValues.push('');
+          newStageValues[targetIndex] = line.trim();
+        });
+        setStageValues(newStageValues);
+        toast({ title: "Data pasted", description: `Pasted ${lines.length} stage values` });
+        return;
+      }
+    }
+    
+    // Multi-column paste - insert starting at focused row
+    const newXScaleValues = [...xScaleValues];
+    const newDataValues = [...dataValues];
+    const newRawValues = [...rawInputValues];
+    const newSubgroupIndexValues = [...subgroupIndexValues];
+    const newStageValues = [...stageValues];
     
     lines.forEach((line, lineIdx) => {
+      const targetIndex = focusedIndex + lineIdx;
       const cells = line.split(/\t/);
       let cellIdx = 0;
       
+      // Expand arrays if needed
+      while (newDataValues.length <= targetIndex) {
+        newDataValues.push(NaN);
+        newRawValues.push('');
+      }
+      if (hasXScale) while (newXScaleValues.length <= targetIndex) newXScaleValues.push('');
+      if (hasSubgroupCol) while (newSubgroupIndexValues.length <= targetIndex) newSubgroupIndexValues.push(1);
+      if (hasStageColumn) while (newStageValues.length <= targetIndex) newStageValues.push('');
+      
       if (hasXScale && cells.length > cellIdx) {
-        newXScaleValues.push(cells[cellIdx].trim());
+        newXScaleValues[targetIndex] = xScaleType === 'date' ? normalizeDate(cells[cellIdx].trim()) : cells[cellIdx].trim();
         cellIdx++;
-      } else if (hasXScale) {
-        newXScaleValues.push('');
       }
       
       if (cells.length > cellIdx) {
         const rawValue = cells[cellIdx].trim();
-        newRawValues.push(rawValue);
-        newDataValues.push(parseNumericValue(rawValue));
+        newRawValues[targetIndex] = rawValue;
+        newDataValues[targetIndex] = parseNumericValue(rawValue);
         cellIdx++;
-      } else {
-        newRawValues.push('');
-        newDataValues.push(NaN);
       }
       
       if (hasSubgroupCol && cells.length > cellIdx) {
         const subgroupVal = parseInt(cells[cellIdx].trim(), 10);
-        const prevSubgroup = lineIdx > 0 ? newSubgroupIndexValues[lineIdx - 1] : 1;
-        if (!isNaN(subgroupVal) && subgroupVal >= 1) {
-          if (subgroupVal === prevSubgroup || subgroupVal === prevSubgroup + 1) {
-            newSubgroupIndexValues.push(subgroupVal);
-          } else {
-            newSubgroupIndexValues.push(prevSubgroup);
-          }
-        } else {
-          newSubgroupIndexValues.push(prevSubgroup > 0 ? prevSubgroup : 1);
-        }
+        newSubgroupIndexValues[targetIndex] = !isNaN(subgroupVal) && subgroupVal >= 1 ? subgroupVal : 1;
         cellIdx++;
-      } else if (hasSubgroupCol) {
-        const prevSubgroup = lineIdx > 0 ? newSubgroupIndexValues[lineIdx - 1] : 1;
-        newSubgroupIndexValues.push(prevSubgroup > 0 ? prevSubgroup : 1);
       }
       
       if (hasStageColumn && cells.length > cellIdx) {
-        newStageValues.push(cells[cellIdx].trim());
-      } else if (hasStageColumn) {
-        newStageValues.push('');
+        newStageValues[targetIndex] = cells[cellIdx].trim();
       }
     });
     
     setDataValues(newDataValues);
     setRawInputValues(newRawValues);
     if (hasXScale) setXScaleValues(newXScaleValues);
-    if (hasSubgroupCol && newSubgroupIndexValues.length > 0) setSubgroupIndexValues(newSubgroupIndexValues);
-    if (hasStageColumn && newStageValues.length > 0) setStageValues(newStageValues);
+    if (hasSubgroupCol) setSubgroupIndexValues(newSubgroupIndexValues);
+    if (hasStageColumn) setStageValues(newStageValues);
     
-    toast({ title: "Data pasted", description: `Successfully pasted ${newDataValues.length} data points` });
-  }, [saveToHistory, toast, xScaleType, constantSubgroupSize, stagesEnabled]);
+    toast({ title: "Data pasted", description: `Pasted ${lines.length} data points starting at row ${focusedIndex + 1}` });
+  }, [saveToHistory, toast, xScaleType, constantSubgroupSize, stagesEnabled, xScaleValues, dataValues, rawInputValues, subgroupIndexValues, stageValues]);
 
   const handlePasteFromClipboard = useCallback(async () => {
     try {
