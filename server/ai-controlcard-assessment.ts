@@ -56,6 +56,23 @@ export interface XbarRControlCardStats extends BaseControlCardStats {
   outOfControlR: number[];
 }
 
+// Xbar-S specific stats
+export interface XbarSControlCardStats extends BaseControlCardStats {
+  chartType: 'Xbar-S';
+  subgroupCount: number;
+  subgroupSize: number;
+  xbars: number[];
+  stdDevs: number[];
+  xbarBar: number;
+  sBar: number;
+  xbarUCL: number;
+  xbarLCL: number;
+  sUCL: number;
+  sLCL: number;
+  outOfControlXbar: number[];
+  outOfControlS: number[];
+}
+
 // Legacy stats (for backward compatibility - defaults to I-MR)
 export interface LegacyControlCardStats {
   dataValues?: number[];
@@ -72,7 +89,7 @@ export interface LegacyControlCardStats {
   stageStats?: any[];
 }
 
-export type ControlCardStats = IMRControlCardStats | XbarRControlCardStats | LegacyControlCardStats;
+export type ControlCardStats = IMRControlCardStats | XbarRControlCardStats | XbarSControlCardStats | LegacyControlCardStats;
 
 export interface ControlCardContext {
   ctqName?: string;
@@ -85,6 +102,10 @@ export interface ControlCardContext {
 // Type guard functions
 function isXbarRStats(stats: ControlCardStats): stats is XbarRControlCardStats {
   return 'chartType' in stats && stats.chartType === 'Xbar-R';
+}
+
+function isXbarSStats(stats: ControlCardStats): stats is XbarSControlCardStats {
+  return 'chartType' in stats && stats.chartType === 'Xbar-S';
 }
 
 function isIMRStats(stats: ControlCardStats): stats is IMRControlCardStats {
@@ -110,6 +131,15 @@ function getChartConfig(stats: ControlCardStats): ChartTypeConfig {
       variationComparisonText: 'Compare R chart behavior to X̄ chart',
     };
   }
+  if (isXbarSStats(stats)) {
+    return {
+      chartName: 'Xbar-S (X̄-S)',
+      chartDescription: 'Xbar-S control chart for subgrouped data with standard deviation',
+      primaryChartName: 'X̄ (Xbar) chart',
+      secondaryChartName: 'S (Standard Deviation) chart',
+      variationComparisonText: 'Compare S chart behavior to X̄ chart',
+    };
+  }
   return {
     chartName: 'I-MR (Individual-Moving Range)',
     chartDescription: 'I-MR control chart for individual measurements',
@@ -129,6 +159,17 @@ function buildStatisticalSummary(stats: ControlCardStats): string {
 - X̄ chart LCL: ${stats.xbarLCL.toFixed(4)}
 - R chart UCL: ${stats.rUCL.toFixed(4)}
 - R chart LCL: ${stats.rLCL.toFixed(4)}`;
+  }
+  
+  if (isXbarSStats(stats)) {
+    return `- Number of subgroups: ${stats.subgroupCount}
+- Subgroup size (n): ${stats.subgroupSize}
+- Grand mean (X̿): ${stats.xbarBar.toFixed(4)}
+- Average standard deviation (S̄): ${stats.sBar.toFixed(4)}
+- X̄ chart UCL: ${stats.xbarUCL.toFixed(4)}
+- X̄ chart LCL: ${stats.xbarLCL.toFixed(4)}
+- S chart UCL: ${stats.sUCL.toFixed(4)}
+- S chart LCL: ${stats.sLCL.toFixed(4)}`;
   }
   
   // I-MR or legacy stats
@@ -162,6 +203,24 @@ function buildControlStatus(stats: ControlCardStats, config: ChartTypeConfig): {
     return { status, details };
   }
   
+  if (isXbarSStats(stats)) {
+    const xbarOOC = stats.outOfControlXbar?.length || 0;
+    const sOOC = stats.outOfControlS?.length || 0;
+    const totalOOC = xbarOOC + sOOC;
+    
+    const status = totalOOC === 0
+      ? "The process appears to be IN CONTROL with no points outside control limits."
+      : `The process has OUT OF CONTROL signals: ${xbarOOC} X̄ value(s) and ${sOOC} Standard Deviation value(s) outside control limits.`;
+    
+    const details = totalOOC > 0
+      ? `\nOut-of-Control Points:
+- X̄ chart: Subgroups at indices ${xbarOOC > 0 ? stats.outOfControlXbar.join(', ') : 'none'}
+- S chart: Subgroups at indices ${sOOC > 0 ? stats.outOfControlS.join(', ') : 'none'}`
+      : '';
+    
+    return { status, details };
+  }
+  
   // I-MR or legacy stats
   const imrStats = stats as IMRControlCardStats | LegacyControlCardStats;
   const individualOOC = imrStats.outOfControlIndividuals?.length || 0;
@@ -190,11 +249,15 @@ function buildStageInfo(stats: ControlCardStats): string {
   }
   
   const isXbarR = isXbarRStats(stats);
+  const isXbarS = isXbarSStats(stats);
   
   return `\nMulti-Stage Analysis:\nNumber of stages: ${stageStats.length}\n${stageStats.map(s => {
     const stageName = s.stageName || `Stage ${s.stageNumber || '?'}`;
     if (isXbarR) {
       return `- ${stageName}: ${s.count} subgroups, X̄=${s.mean.toFixed(4)}, X̄ UCL=${s.ucl.toFixed(4)}, X̄ LCL=${s.lcl.toFixed(4)}, R̄=${(s.rBar || 0).toFixed(4)}`;
+    }
+    if (isXbarS) {
+      return `- ${stageName}: ${s.count} subgroups, X̄=${s.mean.toFixed(4)}, X̄ UCL=${s.ucl.toFixed(4)}, X̄ LCL=${s.lcl.toFixed(4)}, S̄=${(s.sBar || 0).toFixed(4)}`;
     }
     return `- ${stageName}: ${s.count} points, Mean=${s.mean.toFixed(4)}, UCL=${s.ucl.toFixed(4)}, LCL=${s.lcl.toFixed(4)}`;
   }).join('\n')}`;
