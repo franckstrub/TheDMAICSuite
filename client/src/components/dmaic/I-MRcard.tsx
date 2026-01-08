@@ -146,7 +146,11 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
         setStagesEnabled(data.stagesEnabled);
       }
       if (data?.stageValues && Array.isArray(data.stageValues)) {
-        setStageValues(data.stageValues);
+        // Convert any numeric values to strings, filter out zeros (legacy empty values)
+        setStageValues(data.stageValues.map((v: any) => {
+          if (v === 0 || v === '0' || v === null || v === undefined) return '';
+          return String(v);
+        }));
       }
       if (data?.aiAnalysis && typeof data.aiAnalysis === 'string') {
         setAiAnalysis(data.aiAnalysis);

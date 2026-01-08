@@ -10639,7 +10639,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           : [];
         const validatedStagesEnabled = typeof stagesEnabled === 'boolean' ? stagesEnabled : false;
         const validatedStageValues = Array.isArray(stageValues) 
-          ? stageValues.map((v: any) => typeof v === 'number' && v > 0 ? Math.floor(v) : 0)
+          ? stageValues.map((v: any) => String(v ?? ''))
           : [];
 
         // Check if record exists
@@ -10901,7 +10901,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           : [];
         const validatedStagesEnabled = typeof stagesEnabled === 'boolean' ? stagesEnabled : false;
         const validatedStageValues = Array.isArray(stageValues) 
-          ? stageValues.map((v: any) => typeof v === 'number' && v > 0 ? Math.floor(v) : 0)
+          ? stageValues.map((v: any) => String(v ?? ''))
           : [];
 
         // Check if record exists
