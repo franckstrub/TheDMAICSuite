@@ -151,7 +151,13 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
       if (typeof data?.subgroupSize === 'number') setSubgroupSize(data.subgroupSize);
       if (data?.subgroupIndexValues && Array.isArray(data.subgroupIndexValues)) setSubgroupIndexValues(data.subgroupIndexValues);
       if (typeof data?.stagesEnabled === 'boolean') setStagesEnabled(data.stagesEnabled);
-      if (data?.stageValues && Array.isArray(data.stageValues)) setStageValues(data.stageValues);
+      if (data?.stageValues && Array.isArray(data.stageValues)) {
+        // Convert any numeric values to strings, filter out zeros (legacy empty values)
+        setStageValues(data.stageValues.map((v: any) => {
+          if (v === 0 || v === '0' || v === null || v === undefined) return '';
+          return String(v);
+        }));
+      }
       if (data?.aiAnalysis && typeof data.aiAnalysis === 'string') setAiAnalysis(data.aiAnalysis);
     }
   }, [dataQuery.data]);
