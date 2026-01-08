@@ -145,6 +145,8 @@ import {
   insertImrControlCardDataSchema,
   xbarRControlCardData,
   insertXbarRControlCardDataSchema,
+  xbarSControlCardData,
+  insertXbarSControlCardDataSchema,
   spcControlCardSelections,
 } from "@shared/schema";
 import { db } from "./db";
@@ -11063,6 +11065,243 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       } catch (err) {
         console.error("Error saving Xbar-R AI control card analysis:", err);
+        return res.status(500).json({
+          error: "Failed to save AI control card analysis",
+          details: err instanceof Error ? err.message : "Unknown error",
+        });
+      }
+    },
+  );
+
+  // ========== Xbar-S Control Card Data ==========
+
+  // GET Xbar-S control card data
+  app.get(
+    "/api/projects/:projectId/spc/xbar-s/:ctqName",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        const ctqName = decodeURIComponent(req.params.ctqName);
+        
+        if (isNaN(projectId)) {
+          return res.status(400).json({ error: "Invalid project ID" });
+        }
+
+        const userId = (req.user as any)?.claims?.sub;
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord?.organizationId) {
+          return res.status(401).json({ error: "Unauthorized" });
+        }
+
+        const [data] = await db
+          .select()
+          .from(xbarSControlCardData)
+          .where(
+            and(
+              eq(xbarSControlCardData.projectId, projectId),
+              eq(xbarSControlCardData.ctqName, ctqName),
+              eq(xbarSControlCardData.organizationId, userRecord.organizationId),
+            ),
+          );
+
+        return res.json(data || null);
+      } catch (err) {
+        console.error("Xbar-S control card data fetch error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // POST/PUT Xbar-S control card data (upsert)
+  app.post(
+    "/api/projects/:projectId/spc/xbar-s/:ctqName",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        const ctqName = decodeURIComponent(req.params.ctqName);
+        
+        if (isNaN(projectId)) {
+          return res.status(400).json({ error: "Invalid project ID" });
+        }
+
+        const userId = (req.user as any)?.claims?.sub;
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord?.organizationId) {
+          return res.status(401).json({ error: "Unauthorized" });
+        }
+
+        const {
+          dataValues,
+          indicatorName,
+          chartDate,
+          xScaleType,
+          xAxisLabel,
+          xScaleValues,
+          constantSubgroupSize,
+          subgroupSize,
+          subgroupIndexValues,
+          stagesEnabled,
+          stageValues,
+        } = req.body;
+
+        // Check if record exists
+        const [existing] = await db
+          .select()
+          .from(xbarSControlCardData)
+          .where(
+            and(
+              eq(xbarSControlCardData.projectId, projectId),
+              eq(xbarSControlCardData.ctqName, ctqName),
+              eq(xbarSControlCardData.organizationId, userRecord.organizationId),
+            ),
+          );
+
+        let result;
+        if (existing) {
+          // Update existing record
+          [result] = await db
+            .update(xbarSControlCardData)
+            .set({
+              dataValues: dataValues ?? existing.dataValues,
+              indicatorName: indicatorName ?? existing.indicatorName,
+              chartDate: chartDate ?? existing.chartDate,
+              xScaleType: xScaleType ?? existing.xScaleType,
+              xAxisLabel: xAxisLabel ?? existing.xAxisLabel,
+              xScaleValues: xScaleValues ?? existing.xScaleValues,
+              constantSubgroupSize: constantSubgroupSize ?? existing.constantSubgroupSize,
+              subgroupSize: subgroupSize ?? existing.subgroupSize,
+              subgroupIndexValues: subgroupIndexValues ?? existing.subgroupIndexValues,
+              stagesEnabled: stagesEnabled ?? existing.stagesEnabled,
+              stageValues: stageValues ?? existing.stageValues,
+              updatedAt: new Date(),
+            })
+            .where(eq(xbarSControlCardData.id, existing.id))
+            .returning();
+        } else {
+          // Create new record
+          [result] = await db
+            .insert(xbarSControlCardData)
+            .values({
+              projectId,
+              ctqName,
+              organizationId: userRecord.organizationId,
+              dataValues: dataValues ?? [],
+              indicatorName: indicatorName ?? ctqName,
+              chartDate: chartDate ?? "",
+              xScaleType: xScaleType ?? "index",
+              xAxisLabel: xAxisLabel ?? "",
+              xScaleValues: xScaleValues ?? [],
+              constantSubgroupSize: constantSubgroupSize ?? false,
+              subgroupSize: subgroupSize ?? 5,
+              subgroupIndexValues: subgroupIndexValues ?? [],
+              stagesEnabled: stagesEnabled ?? false,
+              stageValues: stageValues ?? [],
+            })
+            .returning();
+        }
+
+        return res.json(result);
+      } catch (err) {
+        console.error("Xbar-S control card data save error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // GET AI control card analysis for Xbar-S chart
+  app.get(
+    "/api/projects/:projectId/spc/xbar-s/:ctqName/ai-analysis",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        const ctqName = decodeURIComponent(req.params.ctqName);
+
+        if (isNaN(projectId)) {
+          return res.status(400).json({ error: "Invalid project ID" });
+        }
+
+        const userId = (req.user as any)?.claims?.sub;
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord?.organizationId) {
+          return res.status(401).json({ error: "Unauthorized" });
+        }
+
+        const [data] = await db
+          .select({ aiAnalysis: xbarSControlCardData.aiAnalysis })
+          .from(xbarSControlCardData)
+          .where(
+            and(
+              eq(xbarSControlCardData.projectId, projectId),
+              eq(xbarSControlCardData.ctqName, ctqName),
+              eq(xbarSControlCardData.organizationId, userRecord.organizationId),
+            ),
+          );
+
+        return res.json({ aiAnalysis: data?.aiAnalysis || "" });
+      } catch (err) {
+        console.error("Xbar-S AI analysis fetch error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // PATCH AI control card analysis for Xbar-S chart
+  app.patch(
+    "/api/projects/:projectId/spc/xbar-s/:ctqName/ai-analysis",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        const ctqName = decodeURIComponent(req.params.ctqName);
+
+        if (isNaN(projectId)) {
+          return res.status(400).json({ error: "Invalid project ID" });
+        }
+
+        const userId = (req.user as any)?.claims?.sub;
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord?.organizationId) {
+          return res.status(401).json({ error: "Unauthorized" });
+        }
+
+        const { aiAnalysis } = req.body;
+
+        if (typeof aiAnalysis !== 'string') {
+          return res.status(400).json({ error: "aiAnalysis must be a string" });
+        }
+
+        // Limit AI analysis length to 10000 characters
+        const validatedAiAnalysis = aiAnalysis.slice(0, 10000);
+
+        // Update the AI analysis field
+        const [updated] = await db
+          .update(xbarSControlCardData)
+          .set({
+            aiAnalysis: validatedAiAnalysis,
+            updatedAt: new Date(),
+          })
+          .where(
+            and(
+              eq(xbarSControlCardData.projectId, projectId),
+              eq(xbarSControlCardData.ctqName, ctqName),
+              eq(xbarSControlCardData.organizationId, userRecord.organizationId),
+            ),
+          )
+          .returning();
+
+        if (!updated) {
+          return res.status(404).json({ error: "Control card data not found" });
+        }
+
+        return res.status(200).json({
+          success: true,
+          aiAnalysis: updated.aiAnalysis,
+        });
+      } catch (err) {
+        console.error("Error saving Xbar-S AI control card analysis:", err);
         return res.status(500).json({
           error: "Failed to save AI control card analysis",
           details: err instanceof Error ? err.message : "Unknown error",
