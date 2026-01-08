@@ -280,18 +280,17 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
       if (value === '' || isNaN(numVal) || numVal < 1) {
         newStages[index] = 0;
       } else {
-        let lastStage = 1;
-        for (let i = index - 1; i >= 0; i--) {
-          if (newStages[i] > 0) { lastStage = newStages[i]; break; }
-        }
-        if (numVal === lastStage || numVal === lastStage + 1) {
+        const prevStage = index > 0 ? newStages[index - 1] : 1;
+        if (prevStage === 0 || prevStage === 1) {
+          newStages[index] = Math.max(1, numVal);
+        } else if (numVal === prevStage || numVal === prevStage + 1) {
           newStages[index] = numVal;
-        } else if (numVal < lastStage) {
-          newStages[index] = lastStage;
-          toast({ title: "Invalid stage", description: `Stage must be at least ${lastStage}`, variant: "destructive" });
+        } else if (numVal < prevStage) {
+          newStages[index] = prevStage;
+          toast({ title: "Invalid stage", description: `Stage must be at least ${prevStage}`, variant: "destructive" });
         } else {
-          newStages[index] = lastStage + 1;
-          toast({ title: "Invalid stage", description: `Stage must be ${lastStage} or ${lastStage + 1}`, variant: "destructive" });
+          newStages[index] = prevStage + 1;
+          toast({ title: "Invalid stage", description: `Stage must be ${prevStage} or ${prevStage + 1}`, variant: "destructive" });
         }
       }
       return newStages;
@@ -583,195 +582,6 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
 
   const isOutOfControl = (value: number, ucl: number, lcl: number) => value > ucl || value < lcl;
 
-  // Per-stage statistics for Xbar-R
-  interface StageStats {
-    stageNum: number;
-    startIdx: number;
-    endIdx: number;
-    subgroupsInStage: SubgroupData[];
-    xbarBar: number;
-    rBar: number;
-    xbarUCL: number;
-    xbarLCL: number;
-    xbarCL: number;
-    rUCL: number;
-    rLCL: number;
-    rCL: number;
-  }
-
-  const calculateStageStats = useCallback((): StageStats[] => {
-    if (!stagesEnabled || subgroups.length === 0) return [];
-    
-    const stages: StageStats[] = [];
-    let currentStage = subgroups[0].stageNum;
-    let stageStartIdx = 0;
-    
-    const processStage = (stageNum: number, startIdx: number, endIdx: number) => {
-      const stageSubgroups = subgroups.slice(startIdx, endIdx + 1);
-      if (stageSubgroups.length < 2) return null;
-      
-      const avgSubgroupSize = stageSubgroups.reduce((sum, sg) => sum + sg.values.length, 0) / stageSubgroups.length;
-      const stageConstants = XBAR_R_CONSTANTS[Math.min(25, Math.max(2, Math.round(avgSubgroupSize)))] || XBAR_R_CONSTANTS[5];
-      
-      const xbars = stageSubgroups.map(sg => sg.xbar);
-      const ranges = stageSubgroups.map(sg => sg.range);
-      
-      const xbarBar = xbars.reduce((a, b) => a + b, 0) / xbars.length;
-      const rBar = ranges.reduce((a, b) => a + b, 0) / ranges.length;
-      
-      return {
-        stageNum,
-        startIdx: startIdx + 1,
-        endIdx: endIdx + 1,
-        subgroupsInStage: stageSubgroups,
-        xbarBar,
-        rBar,
-        xbarUCL: xbarBar + stageConstants.A2 * rBar,
-        xbarLCL: xbarBar - stageConstants.A2 * rBar,
-        xbarCL: xbarBar,
-        rUCL: stageConstants.D4 * rBar,
-        rLCL: stageConstants.D3 * rBar,
-        rCL: rBar,
-      };
-    };
-    
-    for (let i = 1; i <= subgroups.length; i++) {
-      const nextStage = i < subgroups.length ? subgroups[i].stageNum : -1;
-      if (nextStage !== currentStage || i === subgroups.length) {
-        if (currentStage > 0) {
-          const stageStats = processStage(currentStage, stageStartIdx, i - 1);
-          if (stageStats) stages.push(stageStats);
-        }
-        stageStartIdx = i;
-        currentStage = nextStage;
-      }
-    }
-    
-    return stages;
-  }, [stagesEnabled, subgroups]);
-
-  const stageStatsList = calculateStageStats();
-
-  const getStageStatsForIndex = (chartIdx: number) => {
-    if (!stagesEnabled || stageStatsList.length === 0) return null;
-    return stageStatsList.find(s => chartIdx >= s.startIdx && chartIdx <= s.endIdx) || null;
-  };
-
-  const isInSingleSubgroupStage = (chartIdx: number) => {
-    const arrayIdx = chartIdx - 1;
-    if (arrayIdx < 0 || arrayIdx >= subgroups.length) return false;
-    const stageNum = subgroups[arrayIdx].stageNum;
-    if (stageNum < 1) return false;
-    const hasStats = stageStatsList.some(s => chartIdx >= s.startIdx && chartIdx <= s.endIdx);
-    return !hasStats;
-  };
-
-  // Generate per-stage control limit traces for Xbar chart
-  const generateXbarChartStageTraces = () => {
-    if (!stagesEnabled || stageStatsList.length === 0) return [];
-    const traces: any[] = [];
-    
-    stageStatsList.forEach((stageStat, idx) => {
-      const xPoints: number[] = [];
-      for (let i = stageStat.startIdx; i <= stageStat.endIdx; i++) xPoints.push(i);
-      
-      traces.push({
-        x: xPoints, y: xPoints.map(() => stageStat.xbarCL),
-        type: 'scatter', mode: 'lines', name: idx === 0 ? 'CL (X̄)' : undefined, showlegend: idx === 0,
-        line: { color: '#16a34a', width: 2 }, hovertemplate: `CL: ${stageStat.xbarCL.toFixed(4)}<extra></extra>`,
-      });
-      traces.push({
-        x: xPoints, y: xPoints.map(() => stageStat.xbarUCL),
-        type: 'scatter', mode: 'lines', name: idx === 0 ? 'UCL' : undefined, showlegend: idx === 0,
-        line: { color: '#dc2626', width: 2, dash: 'dash' }, hovertemplate: `UCL: ${stageStat.xbarUCL.toFixed(4)}<extra></extra>`,
-      });
-      traces.push({
-        x: xPoints, y: xPoints.map(() => stageStat.xbarLCL),
-        type: 'scatter', mode: 'lines', name: idx === 0 ? 'LCL' : undefined, showlegend: idx === 0,
-        line: { color: '#dc2626', width: 2, dash: 'dash' }, hovertemplate: `LCL: ${stageStat.xbarLCL.toFixed(4)}<extra></extra>`,
-      });
-    });
-    return traces;
-  };
-
-  // Generate per-stage control limit traces for R chart
-  const generateRChartStageTraces = () => {
-    if (!stagesEnabled || stageStatsList.length === 0) return [];
-    const traces: any[] = [];
-    
-    stageStatsList.forEach((stageStat, idx) => {
-      const xPoints: number[] = [];
-      for (let i = stageStat.startIdx; i <= stageStat.endIdx; i++) xPoints.push(i);
-      
-      traces.push({
-        x: xPoints, y: xPoints.map(() => stageStat.rCL),
-        type: 'scatter', mode: 'lines', name: idx === 0 ? 'CL (R̄)' : undefined, showlegend: idx === 0,
-        line: { color: '#16a34a', width: 2 }, hovertemplate: `CL: ${stageStat.rCL.toFixed(4)}<extra></extra>`,
-      });
-      traces.push({
-        x: xPoints, y: xPoints.map(() => stageStat.rUCL),
-        type: 'scatter', mode: 'lines', name: idx === 0 ? 'UCL' : undefined, showlegend: idx === 0,
-        line: { color: '#dc2626', width: 2, dash: 'dash' }, hovertemplate: `UCL: ${stageStat.rUCL.toFixed(4)}<extra></extra>`,
-      });
-      traces.push({
-        x: xPoints, y: xPoints.map(() => stageStat.rLCL),
-        type: 'scatter', mode: 'lines', name: idx === 0 ? 'LCL' : undefined, showlegend: idx === 0,
-        line: { color: '#dc2626', width: 2, dash: 'dash' }, hovertemplate: `LCL: ${stageStat.rLCL.toFixed(4)}<extra></extra>`,
-      });
-    });
-    return traces;
-  };
-
-  // Generate vertical separator lines between stages
-  const generateStageSeparatorShapes = () => {
-    if (!stagesEnabled || subgroups.length === 0) return [];
-    const shapes: any[] = [];
-    
-    for (let i = 1; i < subgroups.length; i++) {
-      const prevStage = subgroups[i - 1].stageNum;
-      const currStage = subgroups[i].stageNum;
-      if (prevStage > 0 && currStage > 0 && prevStage !== currStage) {
-        const xPos = i + 0.5;
-        shapes.push({
-          type: 'line', x0: xPos, x1: xPos, y0: 0, y1: 1, xref: 'x', yref: 'paper',
-          line: { color: '#6b7280', width: 2, dash: 'dash' },
-        });
-      }
-    }
-    return shapes;
-  };
-
-  // Generate stage annotations
-  const generateStageAnnotations = () => {
-    if (!stagesEnabled || subgroups.length === 0) return [];
-    
-    const stageRanges: { stageNum: number; startIdx: number; endIdx: number }[] = [];
-    let currentStage = subgroups[0].stageNum;
-    let startIdx = 0;
-    
-    for (let i = 1; i <= subgroups.length; i++) {
-      const nextStage = i < subgroups.length ? subgroups[i].stageNum : -1;
-      if (nextStage !== currentStage) {
-        if (currentStage > 0) {
-          stageRanges.push({ stageNum: currentStage, startIdx: startIdx + 1, endIdx: i });
-        }
-        startIdx = i;
-        currentStage = nextStage;
-      }
-    }
-    
-    return stageRanges.map(range => ({
-      x: (range.startIdx + range.endIdx) / 2, y: 1.05, xref: 'x' as const, yref: 'paper' as const,
-      text: `Stage ${range.stageNum}`, showarrow: false, font: { size: 11, color: '#374151' },
-      bgcolor: 'rgba(255,255,255,0.8)',
-    }));
-  };
-
-  const xbarChartStageTraces = generateXbarChartStageTraces();
-  const rChartStageTraces = generateRChartStageTraces();
-  const stageSeparatorShapes = generateStageSeparatorShapes();
-  const stageAnnotations = generateStageAnnotations();
-
   // Generate AI Analysis
   const generateAIAnalysis = useCallback(async () => {
     if (subgroups.length < 5) {
@@ -838,21 +648,7 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
     
     stats.xbars.forEach((value, i) => {
       const xVal = chartXIndices[i];
-      let ucl = stats.xbarUCL;
-      let lcl = stats.xbarLCL;
-      let skipOOCCheck = false;
-      
-      if (stagesEnabled) {
-        const stageStats = getStageStatsForIndex(xVal);
-        if (stageStats) {
-          ucl = stageStats.xbarUCL;
-          lcl = stageStats.xbarLCL;
-        } else if (isInSingleSubgroupStage(xVal)) {
-          skipOOCCheck = true;
-        }
-      }
-      
-      if (!skipOOCCheck && isOutOfControl(value, ucl, lcl)) {
+      if (isOutOfControl(value, stats.xbarUCL, stats.xbarLCL)) {
         outOfControl.x.push(xVal);
         outOfControl.y.push(value);
       } else {
@@ -870,21 +666,7 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
     
     stats.ranges.forEach((value, i) => {
       const xVal = chartXIndices[i];
-      let ucl = stats.rUCL;
-      let lcl = stats.rLCL;
-      let skipOOCCheck = false;
-      
-      if (stagesEnabled) {
-        const stageStats = getStageStatsForIndex(xVal);
-        if (stageStats) {
-          ucl = stageStats.rUCL;
-          lcl = stageStats.rLCL;
-        } else if (isInSingleSubgroupStage(xVal)) {
-          skipOOCCheck = true;
-        }
-      }
-      
-      if (!skipOOCCheck && isOutOfControl(value, ucl, lcl)) {
+      if (isOutOfControl(value, stats.rUCL, stats.rLCL)) {
         outOfControl.x.push(xVal);
         outOfControl.y.push(value);
       } else {
@@ -1060,13 +842,10 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
                       );
                     })()}
                     {stagesEnabled && (() => {
-                      let lastStage = 1;
-                      for (let i = index - 1; i >= 0; i--) {
-                        if (stageValues[i] > 0) { lastStage = stageValues[i]; break; }
-                      }
+                      const prevStage = index > 0 ? (stageValues[index - 1] || 1) : 1;
                       return (
                         <td className="px-4 py-1">
-                          <Input type="number" min={lastStage} value={stageValues[index] > 0 ? stageValues[index] : ''} onChange={(e) => handleStageChange(index, e.target.value)} onKeyDown={(e) => handleKeyDown(e, index, 'stage')} onFocus={() => setFocusedCell({ row: index, col: 'stage' })} onBlur={() => setFocusedCell(null)} className="h-8 text-sm w-20" placeholder={String(lastStage)} data-cell-index={index} data-cell-col="stage" data-testid={`input-xbarr-stage-${index}`} />
+                          <Input type="number" min={Math.max(1, prevStage)} value={stageValues[index] > 0 ? stageValues[index] : ''} onChange={(e) => handleStageChange(index, e.target.value)} onKeyDown={(e) => handleKeyDown(e, index, 'stage')} onFocus={() => setFocusedCell({ row: index, col: 'stage' })} onBlur={() => setFocusedCell(null)} className="h-8 text-sm w-20" placeholder={String(prevStage)} data-cell-index={index} data-cell-col="stage" data-testid={`input-xbarr-stage-${index}`} />
                         </td>
                       );
                     })()}
@@ -1135,11 +914,9 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
                   { x: xbarChartPoints.inControl.x, y: xbarChartPoints.inControl.y, type: 'scatter', mode: 'markers', name: 'In Control', marker: { color: '#2563eb', size: 8 } },
                   { x: xbarChartPoints.outOfControl.x, y: xbarChartPoints.outOfControl.y, type: 'scatter', mode: 'markers', name: 'Out of Control', marker: { color: '#dc2626', size: 10, symbol: 'diamond' } },
                   { x: chartXIndices, y: stats.xbars, type: 'scatter', mode: 'lines', name: 'X̄ Values', line: { color: '#2563eb', width: 1 }, showlegend: false },
-                  ...(stagesEnabled && xbarChartStageTraces.length > 0 ? xbarChartStageTraces : [
-                    { x: chartXIndices, y: chartXIndices.map(() => stats.xbarCL), type: 'scatter', mode: 'lines', name: 'CL (X̄)', line: { color: '#16a34a', width: 2 }, hovertemplate: `CL: ${stats.xbarCL.toFixed(4)}<extra></extra>` },
-                    { x: chartXIndices, y: chartXIndices.map(() => stats.xbarUCL), type: 'scatter', mode: 'lines', name: 'UCL', line: { color: '#dc2626', width: 2, dash: 'dash' }, hovertemplate: `UCL: ${stats.xbarUCL.toFixed(4)}<extra></extra>` },
-                    { x: chartXIndices, y: chartXIndices.map(() => stats.xbarLCL), type: 'scatter', mode: 'lines', name: 'LCL', line: { color: '#dc2626', width: 2, dash: 'dash' }, hovertemplate: `LCL: ${stats.xbarLCL.toFixed(4)}<extra></extra>` },
-                  ]),
+                  { x: chartXIndices, y: chartXIndices.map(() => stats.xbarCL), type: 'scatter', mode: 'lines', name: 'CL (X̄)', line: { color: '#16a34a', width: 2 }, hovertemplate: `CL: ${stats.xbarCL.toFixed(4)}<extra></extra>` },
+                  { x: chartXIndices, y: chartXIndices.map(() => stats.xbarUCL), type: 'scatter', mode: 'lines', name: 'UCL', line: { color: '#dc2626', width: 2, dash: 'dash' }, hovertemplate: `UCL: ${stats.xbarUCL.toFixed(4)}<extra></extra>` },
+                  { x: chartXIndices, y: chartXIndices.map(() => stats.xbarLCL), type: 'scatter', mode: 'lines', name: 'LCL', line: { color: '#dc2626', width: 2, dash: 'dash' }, hovertemplate: `LCL: ${stats.xbarLCL.toFixed(4)}<extra></extra>` },
                 ]}
                 layout={{
                   autosize: true,
@@ -1155,8 +932,6 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
                   yaxis: { title: { text: 'Subgroup Mean (X̄)', font: { size: 12 } } },
                   legend: { orientation: 'h', y: -0.2 },
                   showlegend: true,
-                  shapes: stageSeparatorShapes,
-                  annotations: stageAnnotations,
                 }}
                 config={{ responsive: true, displayModeBar: true, modeBarButtonsToRemove: ['lasso2d', 'select2d'], displaylogo: false, toImageButtonOptions: { format: 'png', filename: `xbar_chart_${indicatorName || ctqName}`, scale: 1 } }}
                 style={{ width: '100%' }}
@@ -1174,11 +949,9 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
                   { x: rChartPoints.inControl.x, y: rChartPoints.inControl.y, type: 'scatter', mode: 'markers', name: 'In Control', marker: { color: '#2563eb', size: 8 } },
                   { x: rChartPoints.outOfControl.x, y: rChartPoints.outOfControl.y, type: 'scatter', mode: 'markers', name: 'Out of Control', marker: { color: '#dc2626', size: 10, symbol: 'diamond' } },
                   { x: chartXIndices, y: stats.ranges, type: 'scatter', mode: 'lines', name: 'R Values', line: { color: '#2563eb', width: 1 }, showlegend: false },
-                  ...(stagesEnabled && rChartStageTraces.length > 0 ? rChartStageTraces : [
-                    { x: chartXIndices, y: chartXIndices.map(() => stats.rCL), type: 'scatter', mode: 'lines', name: 'CL (R̄)', line: { color: '#16a34a', width: 2 }, hovertemplate: `CL: ${stats.rCL.toFixed(4)}<extra></extra>` },
-                    { x: chartXIndices, y: chartXIndices.map(() => stats.rUCL), type: 'scatter', mode: 'lines', name: 'UCL', line: { color: '#dc2626', width: 2, dash: 'dash' }, hovertemplate: `UCL: ${stats.rUCL.toFixed(4)}<extra></extra>` },
-                    { x: chartXIndices, y: chartXIndices.map(() => stats.rLCL), type: 'scatter', mode: 'lines', name: 'LCL', line: { color: '#dc2626', width: 2, dash: 'dash' }, hovertemplate: `LCL: ${stats.rLCL.toFixed(4)}<extra></extra>` },
-                  ]),
+                  { x: chartXIndices, y: chartXIndices.map(() => stats.rCL), type: 'scatter', mode: 'lines', name: 'CL (R̄)', line: { color: '#16a34a', width: 2 }, hovertemplate: `CL: ${stats.rCL.toFixed(4)}<extra></extra>` },
+                  { x: chartXIndices, y: chartXIndices.map(() => stats.rUCL), type: 'scatter', mode: 'lines', name: 'UCL', line: { color: '#dc2626', width: 2, dash: 'dash' }, hovertemplate: `UCL: ${stats.rUCL.toFixed(4)}<extra></extra>` },
+                  { x: chartXIndices, y: chartXIndices.map(() => stats.rLCL), type: 'scatter', mode: 'lines', name: 'LCL', line: { color: '#dc2626', width: 2, dash: 'dash' }, hovertemplate: `LCL: ${stats.rLCL.toFixed(4)}<extra></extra>` },
                 ]}
                 layout={{
                   autosize: true,
@@ -1194,8 +967,6 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
                   yaxis: { title: { text: 'Range (R)', font: { size: 12 } } },
                   legend: { orientation: 'h', y: -0.2 },
                   showlegend: true,
-                  shapes: stageSeparatorShapes,
-                  annotations: stageAnnotations,
                 }}
                 config={{ responsive: true, displayModeBar: true, modeBarButtonsToRemove: ['lasso2d', 'select2d'], displaylogo: false, toImageButtonOptions: { format: 'png', filename: `r_chart_${indicatorName || ctqName}`, scale: 1 } }}
                 style={{ width: '100%' }}
