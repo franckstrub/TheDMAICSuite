@@ -104,6 +104,21 @@ interface SubgroupData {
   stageName: string;
 }
 
+interface StageStats {
+  stageName: string;
+  startIdx: number;  // 1-based subgroup index for chart
+  endIdx: number;
+  subgroups: SubgroupData[];
+  xbarBar: number;
+  rBar: number;
+  xbarUCL: number;
+  xbarLCL: number;
+  xbarCL: number;
+  rUCL: number;
+  rLCL: number;
+  rCL: number;
+}
+
 export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
   const { toast } = useToast();
   const loadedRef = useRef(false);
@@ -647,6 +662,64 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
 
   const stats = calculateStats();
 
+  // Calculate per-stage statistics for Xbar-R charts
+  const calculateStageStats = useCallback((): StageStats[] => {
+    if (!stagesEnabled || subgroups.length < 2) return [];
+    
+    const stages: StageStats[] = [];
+    let currentStage = subgroups[0]?.stageName || '';
+    let stageStartIdx = 0;
+    
+    const processStage = (stageName: string, startIdx: number, endIdx: number): StageStats | null => {
+      const stageSubgroups = subgroups.slice(startIdx, endIdx + 1);
+      if (stageSubgroups.length < 2) return null; // Need at least 2 subgroups for control limits
+      
+      const xbars = stageSubgroups.map(sg => sg.xbar);
+      const ranges = stageSubgroups.map(sg => sg.range);
+      
+      const xbarBar = xbars.reduce((a, b) => a + b, 0) / xbars.length;
+      const rBar = ranges.reduce((a, b) => a + b, 0) / ranges.length;
+      
+      return {
+        stageName,
+        startIdx: startIdx + 1, // 1-based for chart
+        endIdx: endIdx + 1,
+        subgroups: stageSubgroups,
+        xbarBar,
+        rBar,
+        xbarUCL: xbarBar + constants.A2 * rBar,
+        xbarLCL: xbarBar - constants.A2 * rBar,
+        xbarCL: xbarBar,
+        rUCL: constants.D4 * rBar,
+        rLCL: constants.D3 * rBar,
+        rCL: rBar,
+      };
+    };
+    
+    for (let i = 1; i <= subgroups.length; i++) {
+      const nextStage = i < subgroups.length ? (subgroups[i]?.stageName || '') : '';
+      
+      if (nextStage !== currentStage || i === subgroups.length) {
+        if (currentStage !== '') {
+          const stageStats = processStage(currentStage, stageStartIdx, i - 1);
+          if (stageStats) stages.push(stageStats);
+        }
+        stageStartIdx = i;
+        currentStage = nextStage;
+      }
+    }
+    
+    return stages;
+  }, [stagesEnabled, subgroups, constants]);
+
+  const stageStatsList = calculateStageStats();
+
+  // Helper to find stage stats for a given chart index (1-based subgroup index)
+  const getStageStatsForIndex = (chartIdx: number): StageStats | null => {
+    if (!stagesEnabled || stageStatsList.length === 0) return null;
+    return stageStatsList.find(s => chartIdx >= s.startIdx && chartIdx <= s.endIdx) || null;
+  };
+
   const isOutOfControl = (value: number, ucl: number, lcl: number) => value > ucl || value < lcl;
 
   // Generate AI Analysis
@@ -715,7 +788,18 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
     
     stats.xbars.forEach((value, i) => {
       const xVal = chartXIndices[i];
-      if (isOutOfControl(value, stats.xbarUCL, stats.xbarLCL)) {
+      let ucl = stats.xbarUCL;
+      let lcl = stats.xbarLCL;
+      
+      if (stagesEnabled) {
+        const stageStats = getStageStatsForIndex(xVal);
+        if (stageStats) {
+          ucl = stageStats.xbarUCL;
+          lcl = stageStats.xbarLCL;
+        }
+      }
+      
+      if (isOutOfControl(value, ucl, lcl)) {
         outOfControl.x.push(xVal);
         outOfControl.y.push(value);
       } else {
@@ -733,7 +817,18 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
     
     stats.ranges.forEach((value, i) => {
       const xVal = chartXIndices[i];
-      if (isOutOfControl(value, stats.rUCL, stats.rLCL)) {
+      let ucl = stats.rUCL;
+      let lcl = stats.rLCL;
+      
+      if (stagesEnabled) {
+        const stageStats = getStageStatsForIndex(xVal);
+        if (stageStats) {
+          ucl = stageStats.rUCL;
+          lcl = stageStats.rLCL;
+        }
+      }
+      
+      if (isOutOfControl(value, ucl, lcl)) {
         outOfControl.x.push(xVal);
         outOfControl.y.push(value);
       } else {
@@ -746,6 +841,162 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
 
   const xbarChartPoints = getXbarChartPointArrays();
   const rChartPoints = getRChartPointArrays();
+
+  // Generate per-stage control limit traces for X̄ chart
+  const generateXbarChartStageTraces = () => {
+    if (!stagesEnabled || stageStatsList.length === 0) return [];
+    
+    const traces: any[] = [];
+    
+    stageStatsList.forEach((stageStat, idx) => {
+      const xPoints: number[] = [];
+      for (let i = stageStat.startIdx; i <= stageStat.endIdx; i++) {
+        xPoints.push(i);
+      }
+      
+      traces.push({
+        x: xPoints,
+        y: xPoints.map(() => stageStat.xbarCL),
+        type: 'scatter',
+        mode: 'lines',
+        name: idx === 0 ? 'CL (X̄)' : undefined,
+        showlegend: idx === 0,
+        line: { color: '#16a34a', width: 2 },
+        hovertemplate: `CL: ${stageStat.xbarCL.toFixed(4)}<extra></extra>`,
+      });
+      traces.push({
+        x: xPoints,
+        y: xPoints.map(() => stageStat.xbarUCL),
+        type: 'scatter',
+        mode: 'lines',
+        name: idx === 0 ? 'UCL' : undefined,
+        showlegend: idx === 0,
+        line: { color: '#dc2626', width: 2, dash: 'dash' },
+        hovertemplate: `UCL: ${stageStat.xbarUCL.toFixed(4)}<extra></extra>`,
+      });
+      traces.push({
+        x: xPoints,
+        y: xPoints.map(() => stageStat.xbarLCL),
+        type: 'scatter',
+        mode: 'lines',
+        name: idx === 0 ? 'LCL' : undefined,
+        showlegend: idx === 0,
+        line: { color: '#dc2626', width: 2, dash: 'dash' },
+        hovertemplate: `LCL: ${stageStat.xbarLCL.toFixed(4)}<extra></extra>`,
+      });
+    });
+    
+    return traces;
+  };
+
+  // Generate per-stage control limit traces for R chart
+  const generateRChartStageTraces = () => {
+    if (!stagesEnabled || stageStatsList.length === 0) return [];
+    
+    const traces: any[] = [];
+    
+    stageStatsList.forEach((stageStat, idx) => {
+      const xPoints: number[] = [];
+      for (let i = stageStat.startIdx; i <= stageStat.endIdx; i++) {
+        xPoints.push(i);
+      }
+      
+      traces.push({
+        x: xPoints,
+        y: xPoints.map(() => stageStat.rCL),
+        type: 'scatter',
+        mode: 'lines',
+        name: idx === 0 ? 'CL (R̄)' : undefined,
+        showlegend: idx === 0,
+        line: { color: '#16a34a', width: 2 },
+        hovertemplate: `CL: ${stageStat.rCL.toFixed(4)}<extra></extra>`,
+      });
+      traces.push({
+        x: xPoints,
+        y: xPoints.map(() => stageStat.rUCL),
+        type: 'scatter',
+        mode: 'lines',
+        name: idx === 0 ? 'UCL' : undefined,
+        showlegend: idx === 0,
+        line: { color: '#dc2626', width: 2, dash: 'dash' },
+        hovertemplate: `UCL: ${stageStat.rUCL.toFixed(4)}<extra></extra>`,
+      });
+      traces.push({
+        x: xPoints,
+        y: xPoints.map(() => stageStat.rLCL),
+        type: 'scatter',
+        mode: 'lines',
+        name: idx === 0 ? 'LCL' : undefined,
+        showlegend: idx === 0,
+        line: { color: '#dc2626', width: 2, dash: 'dash' },
+        hovertemplate: `LCL: ${stageStat.rLCL.toFixed(4)}<extra></extra>`,
+      });
+    });
+    
+    return traces;
+  };
+
+  // Generate vertical separator lines between stages
+  const generateStageSeparatorShapes = () => {
+    if (!stagesEnabled || subgroups.length === 0) return [];
+    
+    const shapes: any[] = [];
+    
+    for (let i = 1; i < subgroups.length; i++) {
+      const prevStage = subgroups[i - 1]?.stageName || '';
+      const currStage = subgroups[i]?.stageName || '';
+      
+      if (prevStage !== '' && currStage !== '' && prevStage !== currStage) {
+        const xPos = i + 0.5;
+        shapes.push({
+          type: 'line',
+          x0: xPos,
+          x1: xPos,
+          y0: 0,
+          y1: 1,
+          xref: 'x',
+          yref: 'paper',
+          line: { color: '#6b7280', width: 2, dash: 'dash' },
+        });
+      }
+    }
+    
+    return shapes;
+  };
+
+  // Generate stage name annotations
+  const generateStageAnnotations = () => {
+    if (!stagesEnabled || subgroups.length === 0) return [];
+    
+    const stageRanges: { stageName: string; startIdx: number; endIdx: number }[] = [];
+    let currentStage = subgroups[0]?.stageName || '';
+    let startIdx = 0;
+    
+    for (let i = 1; i <= subgroups.length; i++) {
+      const nextStage = i < subgroups.length ? (subgroups[i]?.stageName || '') : '';
+      if (nextStage !== currentStage) {
+        if (currentStage !== '') {
+          stageRanges.push({
+            stageName: currentStage,
+            startIdx: startIdx + 1,
+            endIdx: i,
+          });
+        }
+        startIdx = i;
+        currentStage = nextStage;
+      }
+    }
+    
+    return stageRanges.map(range => ({
+      x: (range.startIdx + range.endIdx) / 2,
+      y: 1.05,
+      xref: 'x' as const,
+      yref: 'paper' as const,
+      text: range.stageName,
+      showarrow: false,
+      font: { color: '#6b7280', size: 10 },
+    }));
+  };
 
   const displayValues = [...dataValues];
   if (displayValues.length < 3 || !isNaN(displayValues[displayValues.length - 1])) {
@@ -944,40 +1195,89 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
               </h3>
             </CardHeader>
             <CardContent className="p-4 pt-3">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                <div className="p-3 bg-blue-50 rounded-lg">
-                  <div className="text-gray-600">Subgroups</div>
-                  <div className="text-lg font-semibold">{stats.subgroupCount}</div>
+              {stagesEnabled && stageStatsList.length > 0 ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="p-3 bg-blue-50 rounded-lg">
+                      <div className="text-gray-600">Total Subgroups</div>
+                      <div className="text-lg font-semibold">{stats.subgroupCount}</div>
+                    </div>
+                    <div className="p-3 bg-blue-50 rounded-lg">
+                      <div className="text-gray-600">Subgroup Size (n)</div>
+                      <div className="text-lg font-semibold">{effectiveSubgroupSize}</div>
+                    </div>
+                  </div>
+                  <div className="text-sm font-medium text-gray-700 mt-4">Per-Stage Control Limits:</div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {stageStatsList.map(stageStat => (
+                      <div key={stageStat.stageName} className="border rounded-lg p-3 bg-gray-50">
+                        <div className="font-semibold text-gray-800 mb-2 border-b pb-1">{stageStat.stageName}</div>
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div className="p-2 bg-green-50 rounded">
+                            <div className="text-gray-600">X̄</div>
+                            <div className="font-semibold">{stageStat.xbarCL.toFixed(4)}</div>
+                          </div>
+                          <div className="p-2 bg-green-50 rounded">
+                            <div className="text-gray-600">R̄</div>
+                            <div className="font-semibold">{stageStat.rCL.toFixed(4)}</div>
+                          </div>
+                          <div className="p-2 bg-red-50 rounded">
+                            <div className="text-gray-600">X̄ UCL</div>
+                            <div className="font-semibold text-red-600">{stageStat.xbarUCL.toFixed(4)}</div>
+                          </div>
+                          <div className="p-2 bg-red-50 rounded">
+                            <div className="text-gray-600">X̄ LCL</div>
+                            <div className="font-semibold text-red-600">{stageStat.xbarLCL.toFixed(4)}</div>
+                          </div>
+                          <div className="p-2 bg-orange-50 rounded">
+                            <div className="text-gray-600">R UCL</div>
+                            <div className="font-semibold text-orange-600">{stageStat.rUCL.toFixed(4)}</div>
+                          </div>
+                          <div className="p-2 bg-orange-50 rounded">
+                            <div className="text-gray-600">R LCL</div>
+                            <div className="font-semibold text-orange-600">{stageStat.rLCL.toFixed(4)}</div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className="p-3 bg-blue-50 rounded-lg">
-                  <div className="text-gray-600">Subgroup Size (n)</div>
-                  <div className="text-lg font-semibold">{effectiveSubgroupSize}</div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div className="p-3 bg-blue-50 rounded-lg">
+                    <div className="text-gray-600">Subgroups</div>
+                    <div className="text-lg font-semibold">{stats.subgroupCount}</div>
+                  </div>
+                  <div className="p-3 bg-blue-50 rounded-lg">
+                    <div className="text-gray-600">Subgroup Size (n)</div>
+                    <div className="text-lg font-semibold">{effectiveSubgroupSize}</div>
+                  </div>
+                  <div className="p-3 bg-green-50 rounded-lg">
+                    <div className="text-gray-600">X̄ (Grand Mean)</div>
+                    <div className="text-lg font-semibold">{stats.xbarBar.toFixed(4)}</div>
+                  </div>
+                  <div className="p-3 bg-green-50 rounded-lg">
+                    <div className="text-gray-600">R̄ (Avg Range)</div>
+                    <div className="text-lg font-semibold">{stats.rBar.toFixed(4)}</div>
+                  </div>
+                  <div className="p-3 bg-red-50 rounded-lg">
+                    <div className="text-gray-600">X̄ UCL</div>
+                    <div className="text-lg font-semibold text-red-600">{stats.xbarUCL.toFixed(4)}</div>
+                  </div>
+                  <div className="p-3 bg-red-50 rounded-lg">
+                    <div className="text-gray-600">X̄ LCL</div>
+                    <div className="text-lg font-semibold text-red-600">{stats.xbarLCL.toFixed(4)}</div>
+                  </div>
+                  <div className="p-3 bg-orange-50 rounded-lg">
+                    <div className="text-gray-600">R UCL</div>
+                    <div className="text-lg font-semibold text-orange-600">{stats.rUCL.toFixed(4)}</div>
+                  </div>
+                  <div className="p-3 bg-orange-50 rounded-lg">
+                    <div className="text-gray-600">R LCL</div>
+                    <div className="text-lg font-semibold text-orange-600">{stats.rLCL.toFixed(4)}</div>
+                  </div>
                 </div>
-                <div className="p-3 bg-green-50 rounded-lg">
-                  <div className="text-gray-600">X̄ (Grand Mean)</div>
-                  <div className="text-lg font-semibold">{stats.xbarBar.toFixed(4)}</div>
-                </div>
-                <div className="p-3 bg-green-50 rounded-lg">
-                  <div className="text-gray-600">R̄ (Avg Range)</div>
-                  <div className="text-lg font-semibold">{stats.rBar.toFixed(4)}</div>
-                </div>
-                <div className="p-3 bg-red-50 rounded-lg">
-                  <div className="text-gray-600">X̄ UCL</div>
-                  <div className="text-lg font-semibold text-red-600">{stats.xbarUCL.toFixed(4)}</div>
-                </div>
-                <div className="p-3 bg-red-50 rounded-lg">
-                  <div className="text-gray-600">X̄ LCL</div>
-                  <div className="text-lg font-semibold text-red-600">{stats.xbarLCL.toFixed(4)}</div>
-                </div>
-                <div className="p-3 bg-orange-50 rounded-lg">
-                  <div className="text-gray-600">R UCL</div>
-                  <div className="text-lg font-semibold text-orange-600">{stats.rUCL.toFixed(4)}</div>
-                </div>
-                <div className="p-3 bg-orange-50 rounded-lg">
-                  <div className="text-gray-600">R LCL</div>
-                  <div className="text-lg font-semibold text-orange-600">{stats.rLCL.toFixed(4)}</div>
-                </div>
-              </div>
+              )}
             </CardContent>
           </Card>
 
@@ -991,14 +1291,19 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
                   { x: xbarChartPoints.inControl.x, y: xbarChartPoints.inControl.y, type: 'scatter', mode: 'markers', name: 'In Control', marker: { color: '#2563eb', size: 8 } },
                   { x: xbarChartPoints.outOfControl.x, y: xbarChartPoints.outOfControl.y, type: 'scatter', mode: 'markers', name: 'Out of Control', marker: { color: '#dc2626', size: 10, symbol: 'diamond' } },
                   { x: chartXIndices, y: stats.xbars, type: 'scatter', mode: 'lines', name: 'X̄ Values', line: { color: '#2563eb', width: 1 }, showlegend: false },
-                  { x: chartXIndices, y: chartXIndices.map(() => stats.xbarCL), type: 'scatter', mode: 'lines', name: 'CL (X̄)', line: { color: '#16a34a', width: 2 }, hovertemplate: `CL: ${stats.xbarCL.toFixed(4)}<extra></extra>` },
-                  { x: chartXIndices, y: chartXIndices.map(() => stats.xbarUCL), type: 'scatter', mode: 'lines', name: 'UCL', line: { color: '#dc2626', width: 2, dash: 'dash' }, hovertemplate: `UCL: ${stats.xbarUCL.toFixed(4)}<extra></extra>` },
-                  { x: chartXIndices, y: chartXIndices.map(() => stats.xbarLCL), type: 'scatter', mode: 'lines', name: 'LCL', line: { color: '#dc2626', width: 2, dash: 'dash' }, hovertemplate: `LCL: ${stats.xbarLCL.toFixed(4)}<extra></extra>` },
+                  ...(stagesEnabled && stageStatsList.length > 0 
+                    ? generateXbarChartStageTraces()
+                    : [
+                        { x: chartXIndices, y: chartXIndices.map(() => stats.xbarCL), type: 'scatter', mode: 'lines', name: 'CL (X̄)', line: { color: '#16a34a', width: 2 }, hovertemplate: `CL: ${stats.xbarCL.toFixed(4)}<extra></extra>` },
+                        { x: chartXIndices, y: chartXIndices.map(() => stats.xbarUCL), type: 'scatter', mode: 'lines', name: 'UCL', line: { color: '#dc2626', width: 2, dash: 'dash' }, hovertemplate: `UCL: ${stats.xbarUCL.toFixed(4)}<extra></extra>` },
+                        { x: chartXIndices, y: chartXIndices.map(() => stats.xbarLCL), type: 'scatter', mode: 'lines', name: 'LCL', line: { color: '#dc2626', width: 2, dash: 'dash' }, hovertemplate: `LCL: ${stats.xbarLCL.toFixed(4)}<extra></extra>` },
+                      ]
+                  ),
                 ]}
                 layout={{
                   autosize: true,
                   height: 350,
-                  margin: { l: 60, r: 30, t: 40, b: 50 },
+                  margin: { l: 60, r: 30, t: 50, b: 50 },
                   title: { text: `X̄ Chart - ${indicatorName || ctqName}`, font: { size: 14 } },
                   xaxis: {
                     title: { text: getXAxisTitle(), font: { size: 12 } },
@@ -1009,6 +1314,8 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
                   yaxis: { title: { text: 'Subgroup Mean (X̄)', font: { size: 12 } } },
                   legend: { orientation: 'h', y: -0.2 },
                   showlegend: true,
+                  shapes: generateStageSeparatorShapes(),
+                  annotations: generateStageAnnotations(),
                 }}
                 config={{ responsive: true, displayModeBar: true, modeBarButtonsToRemove: ['lasso2d', 'select2d'], displaylogo: false, toImageButtonOptions: { format: 'png', filename: `xbar_chart_${indicatorName || ctqName}`, scale: 1 } }}
                 style={{ width: '100%' }}
@@ -1026,14 +1333,19 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
                   { x: rChartPoints.inControl.x, y: rChartPoints.inControl.y, type: 'scatter', mode: 'markers', name: 'In Control', marker: { color: '#2563eb', size: 8 } },
                   { x: rChartPoints.outOfControl.x, y: rChartPoints.outOfControl.y, type: 'scatter', mode: 'markers', name: 'Out of Control', marker: { color: '#dc2626', size: 10, symbol: 'diamond' } },
                   { x: chartXIndices, y: stats.ranges, type: 'scatter', mode: 'lines', name: 'R Values', line: { color: '#2563eb', width: 1 }, showlegend: false },
-                  { x: chartXIndices, y: chartXIndices.map(() => stats.rCL), type: 'scatter', mode: 'lines', name: 'CL (R̄)', line: { color: '#16a34a', width: 2 }, hovertemplate: `CL: ${stats.rCL.toFixed(4)}<extra></extra>` },
-                  { x: chartXIndices, y: chartXIndices.map(() => stats.rUCL), type: 'scatter', mode: 'lines', name: 'UCL', line: { color: '#dc2626', width: 2, dash: 'dash' }, hovertemplate: `UCL: ${stats.rUCL.toFixed(4)}<extra></extra>` },
-                  { x: chartXIndices, y: chartXIndices.map(() => stats.rLCL), type: 'scatter', mode: 'lines', name: 'LCL', line: { color: '#dc2626', width: 2, dash: 'dash' }, hovertemplate: `LCL: ${stats.rLCL.toFixed(4)}<extra></extra>` },
+                  ...(stagesEnabled && stageStatsList.length > 0 
+                    ? generateRChartStageTraces()
+                    : [
+                        { x: chartXIndices, y: chartXIndices.map(() => stats.rCL), type: 'scatter', mode: 'lines', name: 'CL (R̄)', line: { color: '#16a34a', width: 2 }, hovertemplate: `CL: ${stats.rCL.toFixed(4)}<extra></extra>` },
+                        { x: chartXIndices, y: chartXIndices.map(() => stats.rUCL), type: 'scatter', mode: 'lines', name: 'UCL', line: { color: '#dc2626', width: 2, dash: 'dash' }, hovertemplate: `UCL: ${stats.rUCL.toFixed(4)}<extra></extra>` },
+                        { x: chartXIndices, y: chartXIndices.map(() => stats.rLCL), type: 'scatter', mode: 'lines', name: 'LCL', line: { color: '#dc2626', width: 2, dash: 'dash' }, hovertemplate: `LCL: ${stats.rLCL.toFixed(4)}<extra></extra>` },
+                      ]
+                  ),
                 ]}
                 layout={{
                   autosize: true,
                   height: 350,
-                  margin: { l: 60, r: 30, t: 40, b: 50 },
+                  margin: { l: 60, r: 30, t: 50, b: 50 },
                   title: { text: `R Chart - ${indicatorName || ctqName}`, font: { size: 14 } },
                   xaxis: {
                     title: { text: getXAxisTitle(), font: { size: 12 } },
@@ -1044,6 +1356,8 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
                   yaxis: { title: { text: 'Range (R)', font: { size: 12 } } },
                   legend: { orientation: 'h', y: -0.2 },
                   showlegend: true,
+                  shapes: generateStageSeparatorShapes(),
+                  annotations: generateStageAnnotations(),
                 }}
                 config={{ responsive: true, displayModeBar: true, modeBarButtonsToRemove: ['lasso2d', 'select2d'], displaylogo: false, toImageButtonOptions: { format: 'png', filename: `r_chart_${indicatorName || ctqName}`, scale: 1 } }}
                 style={{ width: '100%' }}
