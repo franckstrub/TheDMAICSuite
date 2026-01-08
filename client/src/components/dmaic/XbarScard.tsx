@@ -144,7 +144,7 @@ export function XbarSCard({ projectId, ctqName }: XbarSCardProps) {
   const [isGeneratingAnalysis, setIsGeneratingAnalysis] = useState<boolean>(false);
 
   const dataQuery = useQuery({
-    queryKey: [`/api/projects/${projectId}/spc/xbar-r/${encodeURIComponent(ctqName)}`],
+    queryKey: [`/api/projects/${projectId}/spc/xbar-s/${encodeURIComponent(ctqName)}`],
     retry: false,
   });
 
@@ -182,13 +182,13 @@ export function XbarSCard({ projectId, ctqName }: XbarSCardProps) {
     mutationFn: async (payload: any) => {
       return apiRequest(
         'POST',
-        `/api/projects/${projectId}/spc/xbar-r/${encodeURIComponent(ctqName)}`,
+        `/api/projects/${projectId}/spc/xbar-s/${encodeURIComponent(ctqName)}`,
         payload
       );
     },
     onSuccess: () => {
       toast({ title: "Data saved", description: "Xbar-S control card data saved successfully." });
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/spc/xbar-r/${encodeURIComponent(ctqName)}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/spc/xbar-s/${encodeURIComponent(ctqName)}`] });
     },
     onError: (error: any) => {
       toast({ title: "Error", description: error.message || "Failed to save data.", variant: "destructive" });
@@ -197,11 +197,11 @@ export function XbarSCard({ projectId, ctqName }: XbarSCardProps) {
 
   const saveAiAnalysisMutation = useMutation({
     mutationFn: async (analysis: string) => {
-      return apiRequest('PATCH', `/api/projects/${projectId}/spc/xbar-r/${encodeURIComponent(ctqName)}/ai-analysis`, { aiAnalysis: analysis });
+      return apiRequest('PATCH', `/api/projects/${projectId}/spc/xbar-s/${encodeURIComponent(ctqName)}/ai-analysis`, { aiAnalysis: analysis });
     },
     onSuccess: () => {
       toast({ title: "AI Analysis saved", description: "Control card AI analysis saved successfully." });
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/spc/xbar-r/${encodeURIComponent(ctqName)}`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/spc/xbar-s/${encodeURIComponent(ctqName)}`] });
     },
     onError: (error: any) => {
       toast({ title: "Error", description: error.message || "Failed to save AI analysis.", variant: "destructive" });
