@@ -16,6 +16,7 @@ import { BarChart3, Download, Loader2 } from "lucide-react";
 import { IMRCard } from "./I-MRcard";
 import { XbarRCard } from "./XbarRcard";
 import { XbarSCard } from "./XbarScard";
+import { CControlCard } from "./CControlCard";
 
 interface SPCProps {
   projectId: number;
@@ -520,7 +521,7 @@ export default function SPC({ projectId, projectType }: SPCProps) {
                             {selection.np && <TabsTrigger value="np">NP</TabsTrigger>}
                             {selection.p && <TabsTrigger value="p">P</TabsTrigger>}
                           </TabsList>
-                          {selection.c && <TabsContent value="c">{renderControlCardTemplate(ctq, 'c', 'C Chart')}</TabsContent>}
+                          {selection.c && <TabsContent value="c"><CControlCard projectId={projectId} ctqName={ctq} /></TabsContent>}
                           {selection.u && <TabsContent value="u">{renderControlCardTemplate(ctq, 'u', 'U Chart')}</TabsContent>}
                           {selection.np && <TabsContent value="np">{renderControlCardTemplate(ctq, 'np', 'NP Chart')}</TabsContent>}
                           {selection.p && <TabsContent value="p">{renderControlCardTemplate(ctq, 'p', 'P Chart')}</TabsContent>}
