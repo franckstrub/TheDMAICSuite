@@ -1108,7 +1108,7 @@ export function NPControlCard({ projectId, ctqName }: NPControlCardProps) {
   };
 
   const getXAxisConfig = () => {
-    const xTitle = xAxisLabel || (xScaleType === 'index' ? 'Sample Number' : xScaleType === 'date' ? 'Date' : 'Sample');
+    const xTitle = xScaleType === 'date' ? 'Date' : (xScaleType === 'freeform' ? (xAxisLabel || 'Label') : 'Observation');
     const baseConfig: any = {
       title: { text: xTitle },
       showgrid: true,
@@ -1306,14 +1306,14 @@ export function NPControlCard({ projectId, ctqName }: NPControlCardProps) {
           </div>
         </div>
         
-        {xScaleType !== 'index' && (
+        {xScaleType === 'freeform' && (
           <div className="space-y-1">
             <Label htmlFor="np-xAxisLabel">X-Axis Label</Label>
             <Input
               id="np-xAxisLabel"
               value={xAxisLabel}
               onChange={(e) => setXAxisLabel(e.target.value)}
-              placeholder={xScaleType === 'date' ? 'Date' : 'Sample Label'}
+              placeholder="e.g., Batch, Week, Sample ID..."
               className="max-w-xs"
             />
           </div>
