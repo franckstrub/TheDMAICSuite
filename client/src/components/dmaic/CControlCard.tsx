@@ -1213,7 +1213,7 @@ export function CControlCard({ projectId, ctqName }: CControlCardProps) {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-1">
             <Label htmlFor="indicatorName">Indicator to Monitor</Label>
             <Input
@@ -1254,61 +1254,79 @@ export function CControlCard({ projectId, ctqName }: CControlCardProps) {
                 <Label htmlFor="c-date" className="font-normal text-sm">Date</Label>
               </div>
             </RadioGroup>
+            {xScaleType !== 'index' && (
+              <div className="space-y-1">
+                <Label htmlFor="xAxisLabel">X-Axis Label</Label>
+                <Input
+                  id="xAxisLabel"
+                  value={xAxisLabel}
+                  onChange={(e) => setXAxisLabel(e.target.value)}
+                  placeholder={xScaleType === 'date' ? 'Date' : 'Sample Label'}
+                  className="max-w-xs"
+                />
+              </div>
+            )}
           </div>
-        </div>
-
-        {xScaleType !== 'index' && (
-          <div className="space-y-1">
-            <Label htmlFor="xAxisLabel">X-Axis Label</Label>
-            <Input
-              id="xAxisLabel"
-              value={xAxisLabel}
-              onChange={(e) => setXAxisLabel(e.target.value)}
-              placeholder={xScaleType === 'date' ? 'Date' : 'Sample Label'}
-              className="max-w-xs"
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="c-stagesEnabled"
+              checked={stagesEnabled}
+              onChange={(e) => {
+                saveToHistory();
+                setStagesEnabled(e.target.checked);
+                if (e.target.checked && stageValues.length < dataValues.length) {
+                  setStageValues(prev => {
+                    const newStages = [...prev];
+                    while (newStages.length < dataValues.length) {
+                      newStages.push('');
+                    }
+                    return newStages;
+                  });
+                }
+              }}
+              className="h-4 w-4"
             />
+            <Label htmlFor="c-stagesEnabled" className="font-normal">
+              Enable Multi-Stage Process Control
+            </Label>
+            <span className="text-xs text-gray-500">(Display separate control limits per stage)</span>
           </div>
-        )}
+        </div>        
 
-        <div className="flex items-center space-x-2">
-          <input
-            type="checkbox"
-            id="c-stagesEnabled"
-            checked={stagesEnabled}
-            onChange={(e) => {
-              saveToHistory();
-              setStagesEnabled(e.target.checked);
-              if (e.target.checked && stageValues.length < dataValues.length) {
-                setStageValues(prev => {
-                  const newStages = [...prev];
-                  while (newStages.length < dataValues.length) {
-                    newStages.push('');
-                  }
-                  return newStages;
-                });
-              }
-            }}
-            className="h-4 w-4"
-          />
-          <Label htmlFor="c-stagesEnabled" className="font-normal">
-            Enable Multi-Stage Process Control
-          </Label>
-        </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="destructive" size="sm" onClick={handleClearAllData}>
+            <Trash2 className="h-4 w-4 mr-1" />
+            Clear All Data
+          </Button>
           <Button variant="outline" size="sm" onClick={handlePasteFromClipboard}>
             <Clipboard className="h-4 w-4 mr-1" />
-            Paste from Clipboard
+            Paste
           </Button>
           <Button variant="outline" size="sm" onClick={handleUndo} disabled={dataHistory.length === 0}>
             <Undo className="h-4 w-4 mr-1" />
             Undo
           </Button>
-          <Button variant="outline" size="sm" onClick={handleClearAllData}>
-            <Trash2 className="h-4 w-4 mr-1" />
-            Clear All
+          <Button
+            size="sm"
+            onClick={handleSaveData}
+            disabled={saveMutation.isPending || validDataValues.length < 2}
+          >
+            {saveMutation.isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4 mr-1" />
+                Save Data
+              </>
+            )}
           </Button>
         </div>
+        <p className="text-xs text-muted-foreground">Excel copy/paste</p>
 
         <div 
           ref={tableRef}
@@ -1393,24 +1411,6 @@ export function CControlCard({ projectId, ctqName }: CControlCardProps) {
           </table>
         </div>
 
-        <Button
-          onClick={handleSaveData}
-          disabled={saveMutation.isPending || validDataValues.length < 2}
-          className="w-full md:w-auto"
-        >
-          {saveMutation.isPending ? (
-            <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Saving...
-            </>
-          ) : (
-            <>
-              <Save className="h-4 w-4 mr-2" />
-              Save Data
-            </>
-          )}
-        </Button>
-
         {hasValidData && stats && (
           <div className="space-y-4">
             <Card>
@@ -1470,7 +1470,7 @@ export function CControlCard({ projectId, ctqName }: CControlCardProps) {
 
         <div className="space-y-4 border-t pt-4">
           <div className="flex items-center justify-between">
-            <h4 className="font-medium">AI Analysis</h4>
+            <h4 className="font-medium">AI Control Card Analysis</h4>
             <Button
               variant="outline"
               size="sm"
