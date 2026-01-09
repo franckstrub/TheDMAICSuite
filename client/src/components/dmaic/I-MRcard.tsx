@@ -577,13 +577,35 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
 
   const handleDeleteRow = useCallback((index: number) => {
     saveToHistory();
-    setDataValues(prev => prev.filter((_, i) => i !== index));
-    setRawInputValues(prev => prev.filter((_, i) => i !== index));
+    setDataValues(prev => {
+      const filtered = prev.filter((_, i) => i !== index);
+      // Always ensure there's at least one empty row after the last data
+      if (filtered.length === 0 || !isNaN(filtered[filtered.length - 1])) {
+        return [...filtered, NaN];
+      }
+      return filtered;
+    });
+    setRawInputValues(prev => {
+      const filtered = prev.filter((_, i) => i !== index);
+      if (filtered.length === 0 || filtered[filtered.length - 1] !== '') {
+        return [...filtered, ''];
+      }
+      return filtered;
+    });
     if (xScaleType !== 'index') {
-      setXScaleValues(prev => prev.filter((_, i) => i !== index));
+      setXScaleValues(prev => {
+        const filtered = prev.filter((_, i) => i !== index);
+        if (filtered.length === 0 || filtered[filtered.length - 1] !== '') {
+          return [...filtered, ''];
+        }
+        return filtered;
+      });
     }
     if (stagesEnabled) {
-      setStageValues(prev => prev.filter((_, i) => i !== index));
+      setStageValues(prev => {
+        const filtered = prev.filter((_, i) => i !== index);
+        return filtered;
+      });
     }
   }, [saveToHistory, xScaleType, stagesEnabled]);
 
