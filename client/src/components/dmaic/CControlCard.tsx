@@ -1090,7 +1090,7 @@ export function CControlCard({ projectId, ctqName }: CControlCardProps) {
   };
 
   const getXAxisConfig = () => {
-    const xTitle = xAxisLabel || (xScaleType === 'index' ? 'Sample Number' : xScaleType === 'date' ? 'Date' : 'Sample');
+    const xTitle = xScaleType === 'date' ? 'Date' : (xScaleType === 'freeform' ? (xAxisLabel || 'Label') : 'Observation');
     const baseConfig: any = {
       title: { text: xTitle },
       showgrid: true,
@@ -1268,14 +1268,14 @@ export function CControlCard({ projectId, ctqName }: CControlCardProps) {
                 <Label htmlFor="c-date" className="font-normal text-sm">Date</Label>
               </div>
             </RadioGroup>
-            {xScaleType !== 'index' && (
+            {xScaleType === 'freeform' && (
               <div className="space-y-1">
                 <Label htmlFor="xAxisLabel">X-Axis Label</Label>
                 <Input
                   id="xAxisLabel"
                   value={xAxisLabel}
                   onChange={(e) => setXAxisLabel(e.target.value)}
-                  placeholder={xScaleType === 'date' ? 'Date' : 'Sample Label'}
+                  placeholder="e.g., Batch, Week, Sample ID..."
                   className="max-w-xs"
                 />
               </div>
