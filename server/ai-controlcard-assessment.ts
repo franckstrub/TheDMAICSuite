@@ -90,6 +90,19 @@ export interface CControlCardStats extends BaseControlCardStats {
   outOfControl: number[];
 }
 
+// NP chart specific stats (Attribute chart for defective units with constant sample size)
+export interface NPControlCardStats extends BaseControlCardStats {
+  chartType: 'NP';
+  sampleCount: number;
+  sampleSize: number;
+  defectiveCounts: number[];
+  npBar: number;
+  pBar: number;
+  ucl: number;
+  lcl: number;
+  outOfControl: number[];
+}
+
 // Legacy stats (for backward compatibility - defaults to I-MR)
 export interface LegacyControlCardStats {
   dataValues?: number[];
@@ -106,7 +119,7 @@ export interface LegacyControlCardStats {
   stageStats?: any[];
 }
 
-export type ControlCardStats = IMRControlCardStats | XbarRControlCardStats | XbarSControlCardStats | CControlCardStats | LegacyControlCardStats;
+export type ControlCardStats = IMRControlCardStats | XbarRControlCardStats | XbarSControlCardStats | CControlCardStats | NPControlCardStats | LegacyControlCardStats;
 
 export interface ControlCardContext {
   ctqName?: string;
@@ -127,6 +140,10 @@ function isXbarSStats(stats: ControlCardStats): stats is XbarSControlCardStats {
 
 function isCStats(stats: ControlCardStats): stats is CControlCardStats {
   return 'chartType' in stats && stats.chartType === 'C';
+}
+
+function isNPStats(stats: ControlCardStats): stats is NPControlCardStats {
+  return 'chartType' in stats && stats.chartType === 'NP';
 }
 
 function isIMRStats(stats: ControlCardStats): stats is IMRControlCardStats {
@@ -170,6 +187,15 @@ function getChartConfig(stats: ControlCardStats): ChartTypeConfig {
       variationComparisonText: 'Analyze the C chart for defect count patterns',
     };
   }
+  if (isNPStats(stats)) {
+    return {
+      chartName: 'NP Chart',
+      chartDescription: 'NP control chart for attribute data (number of defective units with constant sample size)',
+      primaryChartName: 'NP chart',
+      secondaryChartName: '', // NP chart has only one chart
+      variationComparisonText: 'Analyze the NP chart for defective unit patterns',
+    };
+  }
   return {
     chartName: 'I-MR (Individual-Moving Range)',
     chartDescription: 'I-MR control chart for individual measurements',
@@ -197,6 +223,7 @@ function buildStageDataSummary(stats: ControlCardStats): string {
   const isXbarR = isXbarRStats(stats);
   const isXbarS = isXbarSStats(stats);
   const isC = isCStats(stats);
+  const isNP = isNPStats(stats);
   
   let stageDetails = `- Stages enabled: Yes (${stageStats.length} stage(s))\n`;
   stageDetails += stageStats.map((s, idx) => {
@@ -209,6 +236,10 @@ function buildStageDataSummary(stats: ControlCardStats): string {
     }
     if (isC) {
       return `  - ${stageName}: ${s.count} samples, c̄=${s.mean.toFixed(4)}, UCL=${s.ucl.toFixed(4)}, LCL=${s.lcl.toFixed(4)}`;
+    }
+    if (isNP) {
+      const stagePBar = (s as any).pBar ?? 0;
+      return `  - ${stageName}: ${s.count} samples, np̄=${s.mean.toFixed(4)}, p̄=${stagePBar.toFixed(6)}, UCL=${s.ucl.toFixed(4)}, LCL=${s.lcl.toFixed(4)}`;
     }
     // I-MR
     return `  - ${stageName}: ${s.count} points, Mean=${s.mean.toFixed(4)}, UCL=${s.ucl.toFixed(4)}, LCL=${s.lcl.toFixed(4)}, MR̄=${(s.mrMean || 0).toFixed(4)}, MR UCL=${(s.mrUcl || 0).toFixed(4)}, MR LCL=${(s.mrLcl || 0).toFixed(4)}`;
@@ -271,6 +302,20 @@ ${stageData}`;
 - UCL: ${stats.ucl.toFixed(4)}
 - LCL: ${stats.lcl.toFixed(4)}
 ${defectCountsData}
+${stageData}`;
+  }
+  
+  if (isNPStats(stats)) {
+    const defectiveCountsData = formatRawDataArray(stats.defectiveCounts, 'Defective unit counts');
+    const stageData = buildStageDataSummary(stats);
+    
+    return `- Number of samples: ${stats.sampleCount}
+- Sample size (n): ${stats.sampleSize} (constant)
+- Average proportion defective (p̄): ${stats.pBar.toFixed(6)}
+- Average defective units (np̄): ${stats.npBar.toFixed(4)}
+- UCL: ${stats.ucl.toFixed(4)}
+- LCL: ${stats.lcl.toFixed(4)}
+${defectiveCountsData}
 ${stageData}`;
   }
   
@@ -340,6 +385,21 @@ function buildControlStatus(stats: ControlCardStats, config: ChartTypeConfig): {
     const details = cOOC > 0
       ? `\nOut-of-Control Points:
 - C chart: Samples at indices ${stats.outOfControl.join(', ')}`
+      : '';
+    
+    return { status, details };
+  }
+  
+  if (isNPStats(stats)) {
+    const npOOC = stats.outOfControl?.length || 0;
+    
+    const status = npOOC === 0
+      ? "The process appears to be IN CONTROL with no defective unit counts outside control limits."
+      : `The process has OUT OF CONTROL signals: ${npOOC} sample(s) with defective unit counts outside control limits.`;
+    
+    const details = npOOC > 0
+      ? `\nOut-of-Control Points:
+- NP chart: Samples at indices ${stats.outOfControl.join(', ')}`
       : '';
     
     return { status, details };
