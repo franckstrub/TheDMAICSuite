@@ -1030,45 +1030,49 @@ export function UControlCard({ projectId, ctqName }: UControlCardProps) {
     
     stageStatsList.forEach((stageStat, idx) => {
       const xPoints: number[] = [];
-      const clValues: number[] = [];
+      const clValuesPct: number[] = [];
       
       const stageUCL = stageStat.uBar + 3 * Math.sqrt(stageStat.uBar / stageStat.avgSampleSize);
       const stageLCL = Math.max(0, stageStat.uBar - 3 * Math.sqrt(stageStat.uBar / stageStat.avgSampleSize));
+      // Convert to percentage
+      const stageUCLPct = stageUCL * 100;
+      const stageLCLPct = stageLCL * 100;
+      const stageCLPct = stageStat.uBar * 100;
       
       for (let i = stageStat.startIdx; i <= stageStat.endIdx; i++) {
         xPoints.push(i);
-        clValues.push(stageStat.uBar);
+        clValuesPct.push(stageCLPct);
       }
       
       traces.push({
         x: xPoints,
-        y: clValues,
+        y: clValuesPct,
         type: 'scatter',
         mode: 'lines',
         name: idx === 0 ? 'Centerline (ū)' : undefined,
         showlegend: idx === 0,
         line: { color: '#16a34a', width: 2 },
-        hovertemplate: `CL: ${stageStat.uBar.toFixed(4)}<extra></extra>`,
+        hovertemplate: `CL: ${stageCLPct.toFixed(2)}%<extra></extra>`,
       });
       traces.push({
         x: xPoints,
-        y: xPoints.map(() => stageUCL),
+        y: xPoints.map(() => stageUCLPct),
         type: 'scatter',
         mode: 'lines',
         name: idx === 0 ? 'UCL' : undefined,
         showlegend: idx === 0,
         line: { color: '#dc2626', width: 2, dash: 'dash' },
-        hovertemplate: `UCL: ${stageUCL.toFixed(4)}<extra></extra>`,
+        hovertemplate: `UCL: ${stageUCLPct.toFixed(2)}%<extra></extra>`,
       });
       traces.push({
         x: xPoints,
-        y: xPoints.map(() => stageLCL),
+        y: xPoints.map(() => stageLCLPct),
         type: 'scatter',
         mode: 'lines',
         name: idx === 0 ? 'LCL' : undefined,
         showlegend: idx === 0,
         line: { color: '#dc2626', width: 2, dash: 'dash' },
-        hovertemplate: `LCL: ${stageLCL.toFixed(4)}<extra></extra>`,
+        hovertemplate: `LCL: ${stageLCLPct.toFixed(2)}%<extra></extra>`,
       });
     });
     
@@ -1142,13 +1146,17 @@ export function UControlCard({ projectId, ctqName }: UControlCardProps) {
   const generateGlobalLimitLabels = () => {
     if (!stats || stagesEnabled) return [];
     const xPos = chartXIndices.length + 0.3;
+    // Convert to percentage for labels
+    const uclPct = stats.avgUCL * 100;
+    const clPct = stats.CL * 100;
+    const lclPct = stats.avgLCL * 100;
     return [
       {
         x: xPos,
-        y: stats.avgUCL,
+        y: uclPct,
         xref: 'x' as const,
         yref: 'y' as const,
-        text: `UCL≈${stats.avgUCL.toFixed(3)}`,
+        text: `UCL≈${uclPct.toFixed(2)}%`,
         showarrow: false,
         xanchor: 'left' as const,
         yanchor: 'middle' as const,
@@ -1160,10 +1168,10 @@ export function UControlCard({ projectId, ctqName }: UControlCardProps) {
       },
       {
         x: xPos,
-        y: stats.CL,
+        y: clPct,
         xref: 'x' as const,
         yref: 'y' as const,
-        text: `CL=${stats.CL.toFixed(3)}`,
+        text: `CL=${clPct.toFixed(2)}%`,
         showarrow: false,
         xanchor: 'left' as const,
         yanchor: 'middle' as const,
@@ -1175,10 +1183,10 @@ export function UControlCard({ projectId, ctqName }: UControlCardProps) {
       },
       {
         x: xPos,
-        y: stats.avgLCL,
+        y: lclPct,
         xref: 'x' as const,
         yref: 'y' as const,
-        text: `LCL≈${stats.avgLCL.toFixed(3)}`,
+        text: `LCL≈${lclPct.toFixed(2)}%`,
         showarrow: false,
         xanchor: 'left' as const,
         yanchor: 'middle' as const,
@@ -1215,60 +1223,67 @@ export function UControlCard({ projectId, ctqName }: UControlCardProps) {
   const uChartTraces: any[] = [];
   
   if (stats) {
+    // Convert to percentage values (multiply by 100)
+    const clPct = stats.CL * 100;
+    const uclPct = stats.avgUCL * 100;
+    const lclPct = stats.avgLCL * 100;
+    const uValuesPct = stats.uValues.map(v => v * 100);
+    const outOfControlYPct = uChartPoints.outOfControl.y.map(v => v * 100);
+    
     if (stagesEnabled && stageStatsList.length > 0) {
       uChartTraces.push(...generateUChartStageTraces());
     } else {
       uChartTraces.push({
         x: chartXIndices,
-        y: chartXIndices.map(() => stats.CL),
+        y: chartXIndices.map(() => clPct),
         type: 'scatter',
         mode: 'lines',
         name: 'Centerline (ū)',
         line: { color: '#16a34a', width: 2 },
-        hovertemplate: `CL: ${stats.CL.toFixed(4)}<extra></extra>`,
+        hovertemplate: `CL: ${clPct.toFixed(2)}%<extra></extra>`,
       });
       uChartTraces.push({
         x: chartXIndices,
-        y: chartXIndices.map(() => stats.avgUCL),
+        y: chartXIndices.map(() => uclPct),
         type: 'scatter',
         mode: 'lines',
         name: 'UCL',
         line: { color: '#dc2626', width: 2, dash: 'dash' },
-        hovertemplate: `UCL: ${stats.avgUCL.toFixed(4)}<extra></extra>`,
+        hovertemplate: `UCL: ${uclPct.toFixed(2)}%<extra></extra>`,
       });
       uChartTraces.push({
         x: chartXIndices,
-        y: chartXIndices.map(() => stats.avgLCL),
+        y: chartXIndices.map(() => lclPct),
         type: 'scatter',
         mode: 'lines',
         name: 'LCL',
         line: { color: '#dc2626', width: 2, dash: 'dash' },
-        hovertemplate: `LCL: ${stats.avgLCL.toFixed(4)}<extra></extra>`,
+        hovertemplate: `LCL: ${lclPct.toFixed(2)}%<extra></extra>`,
       });
     }
     
-    // Create continuous line through ALL points
+    // Create continuous line through ALL points (in percentage)
     uChartTraces.push({
       x: chartXIndices,
-      y: stats.uValues,
+      y: uValuesPct,
       type: 'scatter',
       mode: 'lines+markers',
       name: 'Defects per Unit (u)',
       line: { color: '#2563eb', width: 1.5 },
       marker: { color: '#2563eb', size: 6 },
-      hovertemplate: 'Sample %{x}<br>u: %{y:.4f}<extra></extra>',
+      hovertemplate: 'Sample %{x}<br>u: %{y:.2f}%<extra></extra>',
     });
     
-    // Overlay out-of-control points with red markers
+    // Overlay out-of-control points with red markers (in percentage)
     if (uChartPoints.outOfControl.x.length > 0) {
       uChartTraces.push({
         x: uChartPoints.outOfControl.x,
-        y: uChartPoints.outOfControl.y,
+        y: outOfControlYPct,
         type: 'scatter',
         mode: 'markers',
         name: 'Out of Control',
         marker: { color: '#dc2626', size: 10, symbol: 'circle' },
-        hovertemplate: 'Sample %{x}<br>u: %{y:.4f} (OOC)<extra></extra>',
+        hovertemplate: 'Sample %{x}<br>u: %{y:.2f}% (OOC)<extra></extra>',
       });
     }
   }
@@ -1280,11 +1295,12 @@ export function UControlCard({ projectId, ctqName }: UControlCardProps) {
     },
     xaxis: getXAxisConfig(),
     yaxis: {
-      title: { text: 'Defects per Unit (u)' },
+      title: { text: 'Defects per Unit (%)' },
       showgrid: true,
       gridcolor: '#e5e7eb',
       zeroline: true,
       rangemode: 'tozero' as const,
+      ticksuffix: '%',
     },
     showlegend: true,
     legend: {
