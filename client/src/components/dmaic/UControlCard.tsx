@@ -771,11 +771,11 @@ export function UControlCard({ projectId, ctqName }: UControlCardProps) {
       const avgSampleSize = totalSampleSize / validData.length;
       
       const uValues = validData.map((c, i) => c / validSampleSizesArr[i]);
-      const uclValues = validSampleSizesArr.map(n => uBar + 3 * Math.sqrt(uBar / n));
-      const lclValues = validSampleSizesArr.map(n => Math.max(0, uBar - 3 * Math.sqrt(uBar / n)));
+      const avgUCL = uBar + 3 * Math.sqrt(uBar / avgSampleSize);
+      const avgLCL = Math.max(0, uBar - 3 * Math.sqrt(uBar / avgSampleSize));
       
       const outOfControl = validData
-        .map((_, i) => (uValues[i] > uclValues[i] || uValues[i] < lclValues[i]) ? i + 1 : -1)
+        .map((_, i) => (uValues[i] > avgUCL || uValues[i] < avgLCL) ? i + 1 : -1)
         .filter(i => i !== -1);
 
       const localValidIndices = dataValues.map((v, i) => (!isNaN(v) && !isNaN(sampleSizes[i]) && sampleSizes[i] > 0 ? i : -1)).filter(i => i !== -1);
@@ -793,18 +793,16 @@ export function UControlCard({ projectId, ctqName }: UControlCardProps) {
           const totalN = data.sampleSizes.reduce((a, b) => a + b, 0);
           const stageUBar = totalDefects / totalN;
           const avgN = totalN / data.defects.length;
-          const stageUcls = data.sampleSizes.map(n => stageUBar + 3 * Math.sqrt(stageUBar / n));
-          const stageLcls = data.sampleSizes.map(n => Math.max(0, stageUBar - 3 * Math.sqrt(stageUBar / n)));
+          const stageUCL = stageUBar + 3 * Math.sqrt(stageUBar / avgN);
+          const stageLCL = Math.max(0, stageUBar - 3 * Math.sqrt(stageUBar / avgN));
           return {
             stageName,
             count: data.defects.length,
             mean: stageUBar,
             uBar: stageUBar,
             avgSampleSize: avgN,
-            ucl: stageUBar + 3 * Math.sqrt(stageUBar / avgN),
-            lcl: Math.max(0, stageUBar - 3 * Math.sqrt(stageUBar / avgN)),
-            minUcl: Math.min(...stageUcls),
-            maxUcl: Math.max(...stageUcls),
+            ucl: stageUCL,
+            lcl: stageLCL,
           };
         });
       })() : undefined;
@@ -819,12 +817,8 @@ export function UControlCard({ projectId, ctqName }: UControlCardProps) {
         avgSampleSize,
         totalDefects,
         totalSampleSize,
-        ucls: uclValues,
-        lcls: lclValues,
-        minUcl: Math.min(...uclValues),
-        maxUcl: Math.max(...uclValues),
-        minLcl: Math.min(...lclValues),
-        maxLcl: Math.max(...lclValues),
+        ucl: avgUCL,
+        lcl: avgLCL,
         outOfControl,
         stagesEnabled,
         stageStats: stageStatsForAI,
@@ -1001,17 +995,15 @@ export function UControlCard({ projectId, ctqName }: UControlCardProps) {
     stats.uValues.forEach((uValue, i) => {
       const xVal = chartXIndices[i];
       
-      let ucl = stats.UCL[i];
-      let lcl = stats.LCL[i];
+      let ucl = stats.avgUCL;
+      let lcl = stats.avgLCL;
       let skipOOCCheck = false;
       
       if (stagesEnabled) {
         const stageStats = getStageStatsForIndex(xVal);
         if (stageStats) {
-          const localIdx = xVal - stageStats.startIdx;
-          const localSampleSize = stageStats.sampleSizes[localIdx];
-          ucl = stageStats.uBar + 3 * Math.sqrt(stageStats.uBar / localSampleSize);
-          lcl = Math.max(0, stageStats.uBar - 3 * Math.sqrt(stageStats.uBar / localSampleSize));
+          ucl = stageStats.uBar + 3 * Math.sqrt(stageStats.uBar / stageStats.avgSampleSize);
+          lcl = Math.max(0, stageStats.uBar - 3 * Math.sqrt(stageStats.uBar / stageStats.avgSampleSize));
         } else if (isInSinglePointStage(xVal)) {
           skipOOCCheck = true;
         }
@@ -1039,16 +1031,13 @@ export function UControlCard({ projectId, ctqName }: UControlCardProps) {
     stageStatsList.forEach((stageStat, idx) => {
       const xPoints: number[] = [];
       const clValues: number[] = [];
-      const uclValues: number[] = [];
-      const lclValues: number[] = [];
+      
+      const stageUCL = stageStat.uBar + 3 * Math.sqrt(stageStat.uBar / stageStat.avgSampleSize);
+      const stageLCL = Math.max(0, stageStat.uBar - 3 * Math.sqrt(stageStat.uBar / stageStat.avgSampleSize));
       
       for (let i = stageStat.startIdx; i <= stageStat.endIdx; i++) {
-        const localIdx = i - stageStat.startIdx;
-        const localSampleSize = stageStat.sampleSizes[localIdx];
         xPoints.push(i);
         clValues.push(stageStat.uBar);
-        uclValues.push(stageStat.uBar + 3 * Math.sqrt(stageStat.uBar / localSampleSize));
-        lclValues.push(Math.max(0, stageStat.uBar - 3 * Math.sqrt(stageStat.uBar / localSampleSize)));
       }
       
       traces.push({
@@ -1063,23 +1052,23 @@ export function UControlCard({ projectId, ctqName }: UControlCardProps) {
       });
       traces.push({
         x: xPoints,
-        y: uclValues,
+        y: xPoints.map(() => stageUCL),
         type: 'scatter',
         mode: 'lines',
         name: idx === 0 ? 'UCL' : undefined,
         showlegend: idx === 0,
         line: { color: '#dc2626', width: 2, dash: 'dash' },
-        hovertemplate: 'UCL: %{y:.4f}<extra></extra>',
+        hovertemplate: `UCL: ${stageUCL.toFixed(4)}<extra></extra>`,
       });
       traces.push({
         x: xPoints,
-        y: lclValues,
+        y: xPoints.map(() => stageLCL),
         type: 'scatter',
         mode: 'lines',
         name: idx === 0 ? 'LCL' : undefined,
         showlegend: idx === 0,
         line: { color: '#dc2626', width: 2, dash: 'dash' },
-        hovertemplate: 'LCL: %{y:.4f}<extra></extra>',
+        hovertemplate: `LCL: ${stageLCL.toFixed(4)}<extra></extra>`,
       });
     });
     
@@ -1240,21 +1229,21 @@ export function UControlCard({ projectId, ctqName }: UControlCardProps) {
       });
       uChartTraces.push({
         x: chartXIndices,
-        y: stats.UCL,
+        y: chartXIndices.map(() => stats.avgUCL),
         type: 'scatter',
         mode: 'lines',
         name: 'UCL',
         line: { color: '#dc2626', width: 2, dash: 'dash' },
-        hovertemplate: 'UCL: %{y:.4f}<extra></extra>',
+        hovertemplate: `UCL: ${stats.avgUCL.toFixed(4)}<extra></extra>`,
       });
       uChartTraces.push({
         x: chartXIndices,
-        y: stats.LCL,
+        y: chartXIndices.map(() => stats.avgLCL),
         type: 'scatter',
         mode: 'lines',
         name: 'LCL',
         line: { color: '#dc2626', width: 2, dash: 'dash' },
-        hovertemplate: 'LCL: %{y:.4f}<extra></extra>',
+        hovertemplate: `LCL: ${stats.avgLCL.toFixed(4)}<extra></extra>`,
       });
     }
     
