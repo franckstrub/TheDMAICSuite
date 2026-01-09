@@ -164,11 +164,13 @@ export default function SPC({ projectId, projectType }: SPCProps) {
     
     setControlCardSelection(newSelections);
 
-    // Set active tab if not already set or if current tab is invalid
-    if (!activeTab || !ctqs.some(c => c.ctq === activeTab)) {
-      const savedTab = localStorage.getItem(`spc-active-tab-${projectId}`);
-      const validSavedTab = savedTab && ctqs.some(c => c.ctq === savedTab);
-      setActiveTab(validSavedTab ? savedTab : ctqs[0].ctq);
+    // Set active tab - always read from localStorage to avoid race conditions
+    const savedTab = localStorage.getItem(`spc-active-tab-${projectId}`);
+    const validSavedTab = savedTab && ctqs.some(c => c.ctq === savedTab);
+    if (validSavedTab) {
+      setActiveTab(savedTab);
+    } else if (ctqs.length > 0) {
+      setActiveTab(ctqs[0].ctq);
     }
   }, [ctsData, selectionsData, selectionsLoading, projectId]);
 
