@@ -1114,19 +1114,16 @@ export function NPControlCard({ projectId, ctqName }: NPControlCardProps) {
       showgrid: true,
       gridcolor: '#e5e7eb',
       zeroline: false,
+      dtick: 1,
+      tick0: 1,
+      rangemode: 'nonnegative' as const,
+      ...(xScaleType !== 'index' ? {
+        tickmode: 'array' as const,
+        tickvals: chartXIndices,
+        ticktext: customTickLabels,
+        ...(xScaleType === 'date' ? { tickangle: -45 } : {}),
+      } : {}),
     };
-    
-    if (xScaleType !== 'index' && customTickLabels.length > 0) {
-      const hasLabels = customTickLabels.some(l => l !== '');
-      if (hasLabels) {
-        baseConfig.tickmode = 'array';
-        baseConfig.tickvals = chartXIndices;
-        baseConfig.ticktext = customTickLabels.map((label, i) => label || (i + 1).toString());
-        if (xScaleType === 'date') {
-          baseConfig.tickangle = -45;
-        }
-      }
-    }
     
     return baseConfig;
   };
@@ -1240,7 +1237,7 @@ export function NPControlCard({ projectId, ctqName }: NPControlCardProps) {
         <CardTitle className="flex items-center gap-2">
           NP Control Chart
           <span className="text-sm font-normal text-muted-foreground">
-            (Defective Units per Sample)
+            (Defective Units of Constant Sample Size)
           </span>
         </CardTitle>
       </CardHeader>
@@ -1303,21 +1300,20 @@ export function NPControlCard({ projectId, ctqName }: NPControlCardProps) {
                 <Label htmlFor="np-date" className="font-normal text-sm">Date</Label>
               </div>
             </RadioGroup>
+            {xScaleType === 'freeform' && (
+              <div className="space-y-1">
+                <Label htmlFor="np-xAxisLabel">X-Axis Label</Label>
+                <Input
+                  id="np-xAxisLabel"
+                  value={xAxisLabel}
+                  onChange={(e) => setXAxisLabel(e.target.value)}
+                  placeholder="e.g., Batch, Week, Sample ID..."
+                  className="max-w-xs"
+                />
+              </div>
+            )}
           </div>
         </div>
-        
-        {xScaleType === 'freeform' && (
-          <div className="space-y-1">
-            <Label htmlFor="np-xAxisLabel">X-Axis Label</Label>
-            <Input
-              id="np-xAxisLabel"
-              value={xAxisLabel}
-              onChange={(e) => setXAxisLabel(e.target.value)}
-              placeholder="e.g., Batch, Week, Sample ID..."
-              className="max-w-xs"
-            />
-          </div>
-        )}
 
         <div className="flex items-center space-x-2">
           <input
@@ -1343,8 +1339,7 @@ export function NPControlCard({ projectId, ctqName }: NPControlCardProps) {
             Enable Multi-Stage Process Control
           </Label>
           <span className="text-xs text-gray-500">(Display separate control limits per stage)</span>
-        </div>        
-
+        </div>      
 
         <div className="flex flex-wrap items-center gap-2">
           <Button variant="destructive" size="sm" onClick={handleClearAllData}>
@@ -1377,7 +1372,7 @@ export function NPControlCard({ projectId, ctqName }: NPControlCardProps) {
             )}
           </Button>
         </div>
-        <p className="text-xs text-muted-foreground">Excel copy/paste</p>
+        <p className="text-xs text-muted-foreground">Enter your defective units. Supports Excel copy/paste (Ctrl+V). Use Ctrl+Z to undo.</p>
 
         <div 
           ref={tableRef}

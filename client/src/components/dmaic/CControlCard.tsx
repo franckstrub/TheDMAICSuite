@@ -1096,19 +1096,16 @@ export function CControlCard({ projectId, ctqName }: CControlCardProps) {
       showgrid: true,
       gridcolor: '#e5e7eb',
       zeroline: false,
+      dtick: 1,
+      tick0: 1,
+      rangemode: 'nonnegative' as const,
+      ...(xScaleType !== 'index' ? {
+        tickmode: 'array' as const,
+        tickvals: chartXIndices,
+        ticktext: customTickLabels,
+        ...(xScaleType === 'date' ? { tickangle: -45 } : {}),
+      } : {}),
     };
-    
-    if (xScaleType !== 'index' && customTickLabels.length > 0) {
-      const hasLabels = customTickLabels.some(l => l !== '');
-      if (hasLabels) {
-        baseConfig.tickmode = 'array';
-        baseConfig.tickvals = chartXIndices;
-        baseConfig.ticktext = customTickLabels.map((label, i) => label || (i + 1).toString());
-        if (xScaleType === 'date') {
-          baseConfig.tickangle = -45;
-        }
-      }
-    }
     
     return baseConfig;
   };
@@ -1148,30 +1145,17 @@ export function CControlCard({ projectId, ctqName }: CControlCardProps) {
       });
     }
     
-    // Continuous line trace connecting ALL points
-    cChartTraces.push({
-      x: chartXIndices,
-      y: validDataValues,
-      type: 'scatter',
-      mode: 'lines',
-      name: 'Data Line',
-      line: { color: '#2563eb', width: 1.5 },
-      showlegend: false,
-      hoverinfo: 'skip',
-    });
-    
-    // In-control points (markers only)
     cChartTraces.push({
       x: cChartPoints.inControl.x,
       y: cChartPoints.inControl.y,
       type: 'scatter',
-      mode: 'markers',
+      mode: 'lines+markers',
       name: 'Defect Count',
+      line: { color: '#2563eb', width: 1.5 },
       marker: { color: '#2563eb', size: 6 },
       hovertemplate: 'Sample %{x}<br>Count: %{y}<extra></extra>',
     });
     
-    // Out-of-control points (markers only, red)
     if (cChartPoints.outOfControl.x.length > 0) {
       cChartTraces.push({
         x: cChartPoints.outOfControl.x,
@@ -1222,7 +1206,7 @@ export function CControlCard({ projectId, ctqName }: CControlCardProps) {
         <CardTitle className="flex items-center gap-2">
           C Control Chart
           <span className="text-sm font-normal text-muted-foreground">
-            (Defect Count per Unit)
+            (Defect Count per Units)
           </span>
         </CardTitle>
       </CardHeader>
@@ -1268,14 +1252,14 @@ export function CControlCard({ projectId, ctqName }: CControlCardProps) {
                 <Label htmlFor="c-date" className="font-normal text-sm">Date</Label>
               </div>
             </RadioGroup>
-            {xScaleType === 'freeform' && (
+            {xScaleType !== 'index' && (
               <div className="space-y-1">
                 <Label htmlFor="xAxisLabel">X-Axis Label</Label>
                 <Input
                   id="xAxisLabel"
                   value={xAxisLabel}
                   onChange={(e) => setXAxisLabel(e.target.value)}
-                  placeholder="e.g., Batch, Week, Sample ID..."
+                  placeholder={xScaleType === 'date' ? 'Date' : 'Sample Label'}
                   className="max-w-xs"
                 />
               </div>
@@ -1340,7 +1324,7 @@ export function CControlCard({ projectId, ctqName }: CControlCardProps) {
             )}
           </Button>
         </div>
-        <p className="text-xs text-muted-foreground">Excel copy/paste</p>
+        <p className="text-xs text-muted-foreground">Enter your defects per unit count. Supports Excel copy/paste (Ctrl+V). Use Ctrl+Z to undo.</p>
 
         <div 
           ref={tableRef}
@@ -1493,72 +1477,70 @@ export function CControlCard({ projectId, ctqName }: CControlCardProps) {
           </div>
         )}
 
-        <Card className="mt-4">
-          <CardHeader className="py-3 px-4 border-b">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-purple-600" />
-                AI Control Card Analysis
-              </h3>
-              <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    generateAIAnalysis();
-                  }}
-                  disabled={isGeneratingAnalysis || validDataValues.length < 10}
-                  data-testid="btn-ai-control-analysis"
-                >
-                  {isGeneratingAnalysis ? (
-                    <RefreshCw className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Sparkles className="h-4 w-4 text-purple-600" />
-                  )}
-                  <span className="ml-1">
-                    {isGeneratingAnalysis ? "Generating..." : "Generate Analysis"}
-                  </span>
-                </Button>
-                <Button
-                  type="button"
-                  variant="default"
-                  size="sm"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    saveAiAnalysisMutation.mutate(aiAnalysis);
-                  }}
-                  disabled={saveAiAnalysisMutation.isPending || !aiAnalysis.trim()}
-                  data-testid="btn-save-ai-analysis"
-                >
-                  {saveAiAnalysisMutation.isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Save className="h-4 w-4" />
-                  )}
-                  <span className="ml-1">
-                    {saveAiAnalysisMutation.isPending ? "Saving..." : "Save AI-Analysis"}
-                  </span>
-                </Button>
-              </div>
+        {/* AI Control Card Analysis */}
+        <div className="space-y-4 border-t pt-4">
+          <div className="flex items-center justify-between">
+            <h4 className="font-medium">AI Control Card Analysis</h4>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={generateAIAnalysis}
+              disabled={isGeneratingAnalysis || validDataValues.length < 10}
+            >
+              {isGeneratingAnalysis ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                  Generating...
+                </>
+              ) : aiAnalysis ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-1" />
+                  Regenerate Analysis
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4 mr-1" />
+                  Generate Analysis
+                </>
+              )}
+            </Button>
+          </div>
+          
+          {aiAnalysis && (
+            <div className="space-y-2">
+              <Textarea
+                value={aiAnalysis}
+                onChange={(e) => setAiAnalysis(e.target.value)}
+                className="min-h-[200px]"
+                placeholder="AI analysis will appear here..."
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => saveAiAnalysisMutation.mutate(aiAnalysis)}
+                disabled={saveAiAnalysisMutation.isPending}
+              >
+                {saveAiAnalysisMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-1" />
+                    Save Analysis
+                  </>
+                )}
+              </Button>
             </div>
-          </CardHeader>
-          <CardContent className="p-4 pt-3">
-            <Textarea
-              value={aiAnalysis}
-              onChange={(e) => setAiAnalysis(e.target.value)}
-              placeholder={validDataValues.length < 10 
-                ? "Enter at least 10 data points to enable AI control card analysis..."
-                : "Click 'Generate Analysis' to get AI-powered insights about your C chart data, including process stability, patterns, and recommendations..."
-              }
-              className="min-h-[200px] w-full font-mono text-sm"
-              data-testid="textarea-ai-control-analysis"
-            />
-          </CardContent>
-        </Card>
+          )}
+          
+          {!aiAnalysis && validDataValues.length < 10 && (
+            <p className="text-sm text-muted-foreground">
+              At least 10 data points are required for AI analysis. Current: {validDataValues.length}
+            </p>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
