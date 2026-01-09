@@ -18,6 +18,7 @@ import { XbarRCard } from "./XbarRcard";
 import { XbarSCard } from "./XbarScard";
 import { CControlCard } from "./CControlCard";
 import { NPControlCard } from "./NPControlCard";
+import { UControlCard } from "./UControlCard";
 
 interface SPCProps {
   projectId: number;
@@ -527,7 +528,7 @@ export default function SPC({ projectId, projectType }: SPCProps) {
                             {selection.p && <TabsTrigger value="p">P</TabsTrigger>}
                           </TabsList>
                           {selection.c && <TabsContent value="c"><CControlCard projectId={projectId} ctqName={ctq} /></TabsContent>}
-                          {selection.u && <TabsContent value="u">{renderControlCardTemplate(ctq, 'u', 'U Chart')}</TabsContent>}
+                          {selection.u && <TabsContent value="u"><UControlCard projectId={projectId} ctqName={ctq} /></TabsContent>}
                           {selection.np && <TabsContent value="np"><NPControlCard projectId={projectId} ctqName={ctq} /></TabsContent>}
                           {selection.p && <TabsContent value="p">{renderControlCardTemplate(ctq, 'p', 'P Chart')}</TabsContent>}
                         </Tabs>

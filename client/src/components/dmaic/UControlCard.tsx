@@ -793,13 +793,18 @@ export function UControlCard({ projectId, ctqName }: UControlCardProps) {
           const totalN = data.sampleSizes.reduce((a, b) => a + b, 0);
           const stageUBar = totalDefects / totalN;
           const avgN = totalN / data.defects.length;
+          const stageUcls = data.sampleSizes.map(n => stageUBar + 3 * Math.sqrt(stageUBar / n));
+          const stageLcls = data.sampleSizes.map(n => Math.max(0, stageUBar - 3 * Math.sqrt(stageUBar / n)));
           return {
             stageName,
             count: data.defects.length,
+            mean: stageUBar,
             uBar: stageUBar,
             avgSampleSize: avgN,
             ucl: stageUBar + 3 * Math.sqrt(stageUBar / avgN),
             lcl: Math.max(0, stageUBar - 3 * Math.sqrt(stageUBar / avgN)),
+            minUcl: Math.min(...stageUcls),
+            maxUcl: Math.max(...stageUcls),
           };
         });
       })() : undefined;
@@ -814,6 +819,12 @@ export function UControlCard({ projectId, ctqName }: UControlCardProps) {
         avgSampleSize,
         totalDefects,
         totalSampleSize,
+        ucls: uclValues,
+        lcls: lclValues,
+        minUcl: Math.min(...uclValues),
+        maxUcl: Math.max(...uclValues),
+        minLcl: Math.min(...lclValues),
+        maxLcl: Math.max(...lclValues),
         outOfControl,
         stagesEnabled,
         stageStats: stageStatsForAI,

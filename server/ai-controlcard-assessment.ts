@@ -114,6 +114,12 @@ export interface UControlCardStats extends BaseControlCardStats {
   avgSampleSize: number;
   totalDefects: number;
   totalSampleSize: number;
+  ucls?: number[];
+  lcls?: number[];
+  minUcl?: number;
+  maxUcl?: number;
+  minLcl?: number;
+  maxLcl?: number;
   outOfControl: number[];
 }
 
@@ -270,9 +276,11 @@ function buildStageDataSummary(stats: ControlCardStats): string {
       return `  - ${stageName}: ${s.count} samples, np̄=${s.mean.toFixed(4)}, p̄=${stagePBar.toFixed(6)}, UCL=${s.ucl.toFixed(4)}, LCL=${s.lcl.toFixed(4)}`;
     }
     if (isU) {
-      const stageUBar = (s as any).uBar ?? s.mean;
+      const stageUBar = (s as any).uBar ?? s.mean ?? 0;
       const stageAvgN = (s as any).avgSampleSize ?? 1;
-      return `  - ${stageName}: ${s.count} samples, ū=${stageUBar.toFixed(4)}, Avg n=${stageAvgN.toFixed(1)}, UCL=${s.ucl.toFixed(4)}, LCL=${s.lcl.toFixed(4)}`;
+      const stageMinUcl = (s as any).minUcl ?? (s as any).ucl ?? 0;
+      const stageMaxUcl = (s as any).maxUcl ?? stageMinUcl;
+      return `  - ${stageName}: ${s.count} samples, ū=${stageUBar.toFixed(4)}, Avg n=${stageAvgN.toFixed(1)}, UCL range=[${stageMinUcl.toFixed(4)} - ${stageMaxUcl.toFixed(4)}] (varies by sample size)`;
     }
     // I-MR
     return `  - ${stageName}: ${s.count} points, Mean=${s.mean.toFixed(4)}, UCL=${s.ucl.toFixed(4)}, LCL=${s.lcl.toFixed(4)}, MR̄=${(s.mrMean || 0).toFixed(4)}, MR UCL=${(s.mrUcl || 0).toFixed(4)}, MR LCL=${(s.mrLcl || 0).toFixed(4)}`;
@@ -358,12 +366,25 @@ ${stageData}`;
     const uValuesData = formatRawDataArray(stats.uValues, 'Defects per unit (u values)');
     const stageData = buildStageDataSummary(stats);
     
+    const minUcl = stats.minUcl ?? (stats.ucls && stats.ucls.length > 0 ? Math.min(...stats.ucls) : 0);
+    const maxUcl = stats.maxUcl ?? (stats.ucls && stats.ucls.length > 0 ? Math.max(...stats.ucls) : 0);
+    const minLcl = stats.minLcl ?? (stats.lcls && stats.lcls.length > 0 ? Math.min(...stats.lcls.filter(l => l >= 0)) : 0);
+    const maxLcl = stats.maxLcl ?? (stats.lcls && stats.lcls.length > 0 ? Math.max(...stats.lcls.filter(l => l >= 0)) : 0);
+    
+    const uclText = minUcl === maxUcl 
+      ? `- UCL: ${minUcl.toFixed(4)}`
+      : `- UCL range: [${minUcl.toFixed(4)} - ${maxUcl.toFixed(4)}] (varies by sample size)`;
+    const lclText = minLcl === maxLcl
+      ? `- LCL: ${Math.max(0, minLcl).toFixed(4)}`
+      : `- LCL range: [${Math.max(0, minLcl).toFixed(4)} - ${Math.max(0, maxLcl).toFixed(4)}] (varies by sample size)`;
+    
     return `- Number of samples: ${stats.sampleCount}
 - Total defects: ${stats.totalDefects}
 - Total sample size: ${stats.totalSampleSize}
 - Average sample size: ${stats.avgSampleSize.toFixed(2)}
 - Average defects per unit (ū): ${stats.uBar.toFixed(6)}
-- Note: UCL and LCL vary per sample based on sample size (n)
+${uclText}
+${lclText}
 ${defectCountsData}
 ${sampleSizesData}
 ${uValuesData}
