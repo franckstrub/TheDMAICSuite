@@ -971,15 +971,122 @@ export function CControlCard({ projectId, ctqName }: CControlCardProps) {
     
     return stageRanges.map(range => ({
       x: (range.startIdx + range.endIdx) / 2,
-      y: 1.02,
+      y: 1.05,
       xref: 'x' as const,
       yref: 'paper' as const,
       text: range.stageName,
       showarrow: false,
-      font: { size: 11, color: '#374151' },
-      bgcolor: '#f3f4f6',
-      borderpad: 2,
+      font: { color: '#6b7280', size: 10 },
     }));
+  };
+
+  const generateCChartStageLimitLabels = () => {
+    if (!stagesEnabled || stageStatsList.length === 0) return [];
+    
+    const annotations: any[] = [];
+    stageStatsList.forEach(stageStat => {
+      const xPos = stageStat.endIdx + 0.3;
+      annotations.push(
+        {
+          x: xPos,
+          y: stageStat.UCL,
+          xref: 'x' as const,
+          yref: 'y' as const,
+          text: `UCL=${stageStat.UCL.toFixed(2)}`,
+          showarrow: false,
+          xanchor: 'left' as const,
+          yanchor: 'middle' as const,
+          font: { color: '#dc2626', size: 9 },
+          bgcolor: 'rgba(255,255,255,0.9)',
+          bordercolor: '#dc2626',
+          borderwidth: 1,
+          borderpad: 2,
+        },
+        {
+          x: xPos,
+          y: stageStat.CL,
+          xref: 'x' as const,
+          yref: 'y' as const,
+          text: `CL=${stageStat.CL.toFixed(2)}`,
+          showarrow: false,
+          xanchor: 'left' as const,
+          yanchor: 'middle' as const,
+          font: { color: '#16a34a', size: 9 },
+          bgcolor: 'rgba(255,255,255,0.9)',
+          bordercolor: '#16a34a',
+          borderwidth: 1,
+          borderpad: 2,
+        },
+        {
+          x: xPos,
+          y: stageStat.LCL,
+          xref: 'x' as const,
+          yref: 'y' as const,
+          text: `LCL=${stageStat.LCL.toFixed(2)}`,
+          showarrow: false,
+          xanchor: 'left' as const,
+          yanchor: 'middle' as const,
+          font: { color: '#dc2626', size: 9 },
+          bgcolor: 'rgba(255,255,255,0.9)',
+          bordercolor: '#dc2626',
+          borderwidth: 1,
+          borderpad: 2,
+        }
+      );
+    });
+    return annotations;
+  };
+
+  const generateGlobalLimitLabels = () => {
+    if (!stats || stagesEnabled) return [];
+    const xPos = chartXIndices.length + 0.3;
+    return [
+      {
+        x: xPos,
+        y: stats.UCL,
+        xref: 'x' as const,
+        yref: 'y' as const,
+        text: `UCL=${stats.UCL.toFixed(2)}`,
+        showarrow: false,
+        xanchor: 'left' as const,
+        yanchor: 'middle' as const,
+        font: { color: '#dc2626', size: 9 },
+        bgcolor: 'rgba(255,255,255,0.9)',
+        bordercolor: '#dc2626',
+        borderwidth: 1,
+        borderpad: 2,
+      },
+      {
+        x: xPos,
+        y: stats.CL,
+        xref: 'x' as const,
+        yref: 'y' as const,
+        text: `CL=${stats.CL.toFixed(2)}`,
+        showarrow: false,
+        xanchor: 'left' as const,
+        yanchor: 'middle' as const,
+        font: { color: '#16a34a', size: 9 },
+        bgcolor: 'rgba(255,255,255,0.9)',
+        bordercolor: '#16a34a',
+        borderwidth: 1,
+        borderpad: 2,
+      },
+      {
+        x: xPos,
+        y: stats.LCL,
+        xref: 'x' as const,
+        yref: 'y' as const,
+        text: `LCL=${stats.LCL.toFixed(2)}`,
+        showarrow: false,
+        xanchor: 'left' as const,
+        yanchor: 'middle' as const,
+        font: { color: '#dc2626', size: 9 },
+        bgcolor: 'rgba(255,255,255,0.9)',
+        bordercolor: '#dc2626',
+        borderwidth: 1,
+        borderpad: 2,
+      },
+    ];
   };
 
   const getXAxisConfig = () => {
@@ -1086,7 +1193,10 @@ export function CControlCard({ projectId, ctqName }: CControlCardProps) {
     },
     margin: { l: 60, r: 40, t: 60, b: 80 },
     shapes: stagesEnabled ? generateStageSeparatorShapes() : [],
-    annotations: stagesEnabled ? generateStageAnnotations() : [],
+    annotations: [
+      ...(stagesEnabled ? generateStageAnnotations() : []),
+      ...(stagesEnabled ? generateCChartStageLimitLabels() : generateGlobalLimitLabels()),
+    ],
     hovermode: 'closest' as const,
   };
 
@@ -1302,50 +1412,58 @@ export function CControlCard({ projectId, ctqName }: CControlCardProps) {
 
         {hasValidData && stats && (
           <div className="space-y-4">
-            <div className="bg-muted/50 p-4 rounded-lg">
-              <h4 className="font-medium mb-2">C Chart Statistics</h4>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                <div>
-                  <span className="text-muted-foreground">Sample Count:</span>
-                  <span className="ml-2 font-medium">{validDataValues.length}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">c̄ (Average):</span>
-                  <span className="ml-2 font-medium">{stats.cBar.toFixed(4)}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">UCL:</span>
-                  <span className="ml-2 font-medium">{stats.UCL.toFixed(4)}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">LCL:</span>
-                  <span className="ml-2 font-medium">{stats.LCL.toFixed(4)}</span>
-                </div>
-              </div>
-              {stagesEnabled && stageStatsList.length > 0 && (
-                <div className="mt-4">
-                  <h5 className="text-sm font-medium mb-2">Per-Stage Statistics</h5>
-                  <div className="space-y-2">
-                    {stageStatsList.map((ss, idx) => (
-                      <div key={idx} className="text-xs bg-background p-2 rounded">
-                        <span className="font-medium">{ss.stageName}:</span>
-                        <span className="ml-2">c̄={ss.cBar.toFixed(2)}</span>
-                        <span className="ml-2">UCL={ss.UCL.toFixed(2)}</span>
-                        <span className="ml-2">LCL={ss.LCL.toFixed(2)}</span>
-                        <span className="ml-2 text-muted-foreground">({ss.values.length} samples)</span>
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">C Chart (Defect Count)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {stagesEnabled && stageStatsList.length > 0 ? (
+                  <div className="mb-4 space-y-2">
+                    {stageStatsList.map(stageStat => (
+                      <div key={stageStat.stageName} className="border rounded-lg p-3">
+                        <div className="text-sm font-medium text-gray-700 mb-2">{stageStat.stageName}</div>
+                        <div className="grid grid-cols-3 gap-3 text-sm">
+                          <div className="bg-blue-50 p-2 rounded">
+                            <Label className="text-xs text-gray-600">UCL</Label>
+                            <div className="font-semibold text-blue-700">{stageStat.UCL.toFixed(4)}</div>
+                          </div>
+                          <div className="bg-green-50 p-2 rounded">
+                            <Label className="text-xs text-gray-600">CL (c̄)</Label>
+                            <div className="font-semibold text-green-700">{stageStat.CL.toFixed(4)}</div>
+                          </div>
+                          <div className="bg-blue-50 p-2 rounded">
+                            <Label className="text-xs text-gray-600">LCL</Label>
+                            <div className="font-semibold text-blue-700">{stageStat.LCL.toFixed(4)}</div>
+                          </div>
+                        </div>
                       </div>
                     ))}
                   </div>
-                </div>
-              )}
-            </div>
+                ) : (
+                  <div className="grid grid-cols-3 gap-4 mb-4 text-sm">
+                    <div className="bg-blue-50 p-3 rounded">
+                      <Label className="text-xs text-gray-600">UCL</Label>
+                      <div className="font-semibold text-blue-700">{stats.UCL.toFixed(4)}</div>
+                    </div>
+                    <div className="bg-green-50 p-3 rounded">
+                      <Label className="text-xs text-gray-600">Centerline (c̄)</Label>
+                      <div className="font-semibold text-green-700">{stats.CL.toFixed(4)}</div>
+                    </div>
+                    <div className="bg-blue-50 p-3 rounded">
+                      <Label className="text-xs text-gray-600">LCL</Label>
+                      <div className="font-semibold text-blue-700">{stats.LCL.toFixed(4)}</div>
+                    </div>
+                  </div>
+                )}
 
-            <Plot
-              data={cChartTraces}
-              layout={cChartLayout}
-              config={{ responsive: true, displayModeBar: true }}
-              style={{ width: '100%', height: '400px' }}
-            />
+                <Plot
+                  data={cChartTraces}
+                  layout={cChartLayout}
+                  config={{ responsive: true, displayModeBar: true }}
+                  style={{ width: '100%', height: '400px' }}
+                />
+              </CardContent>
+            </Card>
           </div>
         )}
 
