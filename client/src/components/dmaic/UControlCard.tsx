@@ -1616,24 +1616,56 @@ export function UControlCard({ projectId, ctqName }: UControlCardProps) {
                 <CardTitle className="text-lg">U Chart (Defects per Unit)</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-4 gap-4 mb-4 text-sm">
-                  <div className="bg-green-50 p-3 rounded">
-                    <Label className="text-xs text-gray-600">Centerline (ū)</Label>
-                    <div className="font-semibold text-green-700">{stats.CL.toFixed(4)}</div>
+                {stagesEnabled && stageStatsList.length > 0 ? (
+                  <div className="mb-4 space-y-2">
+                    {stageStatsList.map((stageStat) => {
+                      const stageUCL = stageStat.uBar + 3 * Math.sqrt(stageStat.uBar / stageStat.avgSampleSize);
+                      const stageLCL = Math.max(0, stageStat.uBar - 3 * Math.sqrt(stageStat.uBar / stageStat.avgSampleSize));
+                      return (
+                        <div key={stageStat.stageName} className="border rounded-lg p-3">
+                          <div className="text-sm font-medium text-gray-700 mb-2">{stageStat.stageName}</div>
+                          <div className="grid grid-cols-4 gap-3 text-sm">
+                            <div className="bg-blue-50 p-2 rounded">
+                              <Label className="text-xs text-gray-600">UCL</Label>
+                              <div className="font-semibold text-blue-700">{(stageUCL * 100).toFixed(2)}%</div>
+                            </div>
+                            <div className="bg-green-50 p-2 rounded">
+                              <Label className="text-xs text-gray-600">CL (ū)</Label>
+                              <div className="font-semibold text-green-700">{(stageStat.uBar * 100).toFixed(2)}%</div>
+                            </div>
+                            <div className="bg-blue-50 p-2 rounded">
+                              <Label className="text-xs text-gray-600">LCL</Label>
+                              <div className="font-semibold text-blue-700">{(stageLCL * 100).toFixed(2)}%</div>
+                            </div>
+                            <div className="bg-gray-50 p-2 rounded">
+                              <Label className="text-xs text-gray-600">Avg Sample Size</Label>
+                              <div className="font-semibold text-gray-700">{stageStat.avgSampleSize.toFixed(1)}</div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                  <div className="bg-blue-50 p-3 rounded">
-                    <Label className="text-xs text-gray-600">Avg UCL</Label>
-                    <div className="font-semibold text-blue-700">{stats.avgUCL.toFixed(4)}</div>
+                ) : (
+                  <div className="grid grid-cols-4 gap-4 mb-4 text-sm">
+                    <div className="bg-blue-50 p-3 rounded">
+                      <Label className="text-xs text-gray-600">UCL</Label>
+                      <div className="font-semibold text-blue-700">{(stats.avgUCL * 100).toFixed(2)}%</div>
+                    </div>
+                    <div className="bg-green-50 p-3 rounded">
+                      <Label className="text-xs text-gray-600">Centerline (ū)</Label>
+                      <div className="font-semibold text-green-700">{(stats.CL * 100).toFixed(2)}%</div>
+                    </div>
+                    <div className="bg-blue-50 p-3 rounded">
+                      <Label className="text-xs text-gray-600">LCL</Label>
+                      <div className="font-semibold text-blue-700">{(stats.avgLCL * 100).toFixed(2)}%</div>
+                    </div>
+                    <div className="bg-gray-50 p-3 rounded">
+                      <Label className="text-xs text-gray-600">Avg Sample Size</Label>
+                      <div className="font-semibold text-gray-700">{stats.avgSampleSize.toFixed(1)}</div>
+                    </div>
                   </div>
-                  <div className="bg-blue-50 p-3 rounded">
-                    <Label className="text-xs text-gray-600">Avg LCL</Label>
-                    <div className="font-semibold text-blue-700">{stats.avgLCL.toFixed(4)}</div>
-                  </div>
-                  <div className="bg-gray-50 p-3 rounded">
-                    <Label className="text-xs text-gray-600">Avg Sample Size</Label>
-                    <div className="font-semibold text-gray-700">{stats.avgSampleSize.toFixed(1)}</div>
-                  </div>
-                </div>
+                )}
 
                 <Plot
                   data={uChartTraces}
