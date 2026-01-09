@@ -3327,9 +3327,6 @@ export const cControlCardData = pgTable(
     // Data array stored as JSON (array of integers - defect counts per sample)
     dataValues: jsonb("data_values").$type<number[]>().default([]),
     
-    // Sample size (constant size for C chart, used for display/documentation)
-    sampleSize: integer("sample_size").default(1),
-    
     // Stages feature - enables per-stage control limits
     stagesEnabled: boolean("stages_enabled").default(false),
     

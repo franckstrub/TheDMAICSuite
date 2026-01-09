@@ -11423,7 +11423,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           xScaleType,
           xAxisLabel,
           xScaleValues,
-          sampleSize,
           stagesEnabled,
           stageValues,
         } = req.body;
@@ -11438,7 +11437,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const validatedXScaleType = ["index", "freeform", "date"].includes(xScaleType) ? xScaleType : "index";
         const validatedXAxisLabel = typeof xAxisLabel === "string" ? xAxisLabel : "";
         const validatedXScaleValues = Array.isArray(xScaleValues) ? xScaleValues : [];
-        const validatedSampleSize = typeof sampleSize === "number" && sampleSize > 0 ? sampleSize : 1;
         const validatedStagesEnabled = stagesEnabled === true;
         const validatedStageValues = Array.isArray(stageValues) ? stageValues : [];
 
@@ -11466,7 +11464,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
               xScaleType: validatedXScaleType,
               xAxisLabel: validatedXAxisLabel,
               xScaleValues: validatedXScaleValues,
-              sampleSize: validatedSampleSize,
               stagesEnabled: validatedStagesEnabled,
               stageValues: validatedStageValues,
               updatedAt: new Date(),
@@ -11487,7 +11484,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
               xScaleType: validatedXScaleType,
               xAxisLabel: validatedXAxisLabel,
               xScaleValues: validatedXScaleValues,
-              sampleSize: validatedSampleSize,
               stagesEnabled: validatedStagesEnabled,
               stageValues: validatedStageValues,
             })
