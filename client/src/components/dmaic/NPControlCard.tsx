@@ -1108,8 +1108,9 @@ export function NPControlCard({ projectId, ctqName }: NPControlCardProps) {
   };
 
   const getXAxisConfig = () => {
+    const xTitle = xAxisLabel || (xScaleType === 'index' ? 'Sample Number' : xScaleType === 'date' ? 'Date' : 'Sample');
     const baseConfig: any = {
-      title: xAxisLabel || (xScaleType === 'index' ? 'Sample Number' : xScaleType === 'date' ? 'Date' : 'Sample'),
+      title: { text: xTitle },
       showgrid: true,
       gridcolor: '#e5e7eb',
       zeroline: false,
