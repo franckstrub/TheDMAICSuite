@@ -93,7 +93,6 @@ export function CControlCard({ projectId, ctqName }: CControlCardProps) {
   const [stageValues, setStageValues] = useState<string[]>([]);
   const [aiAnalysis, setAiAnalysis] = useState<string>('');
   const [isGeneratingAnalysis, setIsGeneratingAnalysis] = useState<boolean>(false);
-  const [sampleSize, setSampleSize] = useState<number>(1);
 
   const dataQuery = useQuery({
     queryKey: [`/api/projects/${projectId}/spc/c/${encodeURIComponent(ctqName)}`],
@@ -135,9 +134,6 @@ export function CControlCard({ projectId, ctqName }: CControlCardProps) {
       if (data?.aiAnalysis && typeof data.aiAnalysis === 'string') {
         setAiAnalysis(data.aiAnalysis);
       }
-      if (typeof data?.sampleSize === 'number' && data.sampleSize > 0) {
-        setSampleSize(data.sampleSize);
-      }
     }
   }, [dataQuery.data]);
 
@@ -151,7 +147,6 @@ export function CControlCard({ projectId, ctqName }: CControlCardProps) {
       xScaleValues: string[]; 
       stagesEnabled: boolean; 
       stageValues: string[];
-      sampleSize: number;
     }) => {
       return apiRequest(
         'POST',
@@ -613,9 +608,8 @@ export function CControlCard({ projectId, ctqName }: CControlCardProps) {
       xScaleValues: validXScaleValues,
       stagesEnabled,
       stageValues: validStageValues,
-      sampleSize,
     });
-  }, [dataValues, indicatorName, chartDate, xScaleType, xAxisLabel, xScaleValues, stagesEnabled, stageValues, sampleSize, saveMutation, toast]);
+  }, [dataValues, indicatorName, chartDate, xScaleType, xAxisLabel, xScaleValues, stagesEnabled, stageValues, saveMutation, toast]);
 
   const handleClearAllData = useCallback(() => {
     if (dataValues.filter(v => !isNaN(v)).length === 0) {
@@ -682,7 +676,6 @@ export function CControlCard({ projectId, ctqName }: CControlCardProps) {
       const statsPayload = {
         chartType: 'C' as const,
         sampleCount: validData.length,
-        sampleSize,
         defectCounts: validData,
         cBar,
         ucl,
@@ -730,7 +723,7 @@ export function CControlCard({ projectId, ctqName }: CControlCardProps) {
     } finally {
       setIsGeneratingAnalysis(false);
     }
-  }, [dataValues, stagesEnabled, stageValues, ctqName, indicatorName, chartDate, xScaleType, xAxisLabel, projectId, sampleSize, toast]);
+  }, [dataValues, stagesEnabled, stageValues, ctqName, indicatorName, chartDate, xScaleType, xAxisLabel, projectId, toast]);
 
   const validDataValues = dataValues.filter(v => !isNaN(v));
   const hasValidData = validDataValues.length >= 2;
@@ -1110,7 +1103,7 @@ export function CControlCard({ projectId, ctqName }: CControlCardProps) {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="indicatorName">Indicator Name</Label>
             <Input
@@ -1127,17 +1120,6 @@ export function CControlCard({ projectId, ctqName }: CControlCardProps) {
               type="date"
               value={chartDate}
               onChange={(e) => setChartDate(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="sampleSize">Sample Size (Inspection Units)</Label>
-            <Input
-              id="sampleSize"
-              type="number"
-              min="1"
-              value={sampleSize}
-              onChange={(e) => setSampleSize(Math.max(1, parseInt(e.target.value) || 1))}
-              placeholder="1"
             />
           </div>
         </div>
