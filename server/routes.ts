@@ -11417,7 +11417,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         const {
-          dataValues,
+          defectCounts,
           indicatorName,
           chartDate,
           xScaleType,
@@ -11428,9 +11428,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           stageValues,
         } = req.body;
 
-        // Validate dataValues
-        const validatedData = Array.isArray(dataValues)
-          ? dataValues.filter((v: any) => typeof v === "number" && !isNaN(v) && v >= 0)
+        // Validate defectCounts
+        const validatedData = Array.isArray(defectCounts)
+          ? defectCounts.filter((v: any) => typeof v === "number" && !isNaN(v) && v >= 0)
           : [];
 
         const validatedIndicatorName = typeof indicatorName === "string" ? indicatorName : ctqName;

@@ -104,9 +104,9 @@ export function CControlCard({ projectId, ctqName }: CControlCardProps) {
     if (dataQuery.data && !loadedRef.current) {
       loadedRef.current = true;
       const data = dataQuery.data as any;
-      if (data?.defectCounts && data.defectCounts.length > 0) {
-        setDataValues(data.defectCounts);
-        setRawInputValues(data.defectCounts.map((v: number) => isNaN(v) ? '' : v.toString()));
+      if (data?.dataValues && data.dataValues.length > 0) {
+        setDataValues(data.dataValues);
+        setRawInputValues(data.dataValues.map((v: number) => isNaN(v) ? '' : v.toString()));
       }
       if (data?.indicatorName) {
         setIndicatorName(data.indicatorName);
