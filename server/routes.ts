@@ -12368,8 +12368,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     },
   );
 
-  // POST P chart AI control card analysis (save only)
+  // POST P chart AI Control Card Analysis (Generate)
   app.post(
+    "/api/projects/:projectId/spc/p/:ctqName/ai-analysis",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        const ctqName = decodeURIComponent(req.params.ctqName);
+        
+        if (isNaN(projectId)) {
+          return res.status(400).json({ error: "Invalid project ID" });
+        }
+
+        const userId = (req.user as any)?.claims?.sub;
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord?.organizationId) {
+          return res.status(401).json({ error: "Unauthorized" });
+        }
+
+        const { stats, context } = req.body;
+
+        if (!stats || !context) {
+          return res.status(400).json({ error: "Missing stats or context data" });
+        }
+
+        const assessment = await generateControlCardAssessment(stats, context);
+
+        return res.status(200).json({
+          success: true,
+          assessment: assessment,
+        });
+      } catch (err) {
+        console.error("Error generating P chart AI control card analysis:", err);
+        return res.status(500).json({
+          error: "Failed to generate AI control card analysis",
+          details: err instanceof Error ? err.message : "Unknown error",
+        });
+      }
+    },
+  );
+
+  // PATCH AI control card analysis for P chart (Save)
+  app.patch(
     "/api/projects/:projectId/spc/p/:ctqName/ai-analysis",
     isAuthenticated,
     async (req: Request, res: Response) => {
@@ -12393,7 +12434,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(400).json({ error: "AI analysis must be a string" });
         }
 
-        const validatedAiAnalysis = aiAnalysis.trim();
+        const validatedAiAnalysis = aiAnalysis.slice(0, 10000);
 
         const [updated] = await db
           .update(pControlCardData)
