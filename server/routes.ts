@@ -150,6 +150,7 @@ import {
   cControlCardData,
   npControlCardData,
   uControlCardData,
+  pControlCardData,
   insertCControlCardDataSchema,
   spcControlCardSelections,
 } from "@shared/schema";
@@ -12217,6 +12218,208 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       } catch (err) {
         console.error("Error saving U chart AI control card analysis:", err);
+        return res.status(500).json({
+          error: "Failed to save AI control card analysis",
+          details: err instanceof Error ? err.message : "Unknown error",
+        });
+      }
+    },
+  );
+
+  // ========== P Chart Control Card Routes ==========
+
+  // GET P chart control card data for a specific CTQ
+  app.get(
+    "/api/projects/:projectId/spc/p/:ctqName",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        const ctqName = decodeURIComponent(req.params.ctqName);
+
+        if (isNaN(projectId)) {
+          return res.status(400).json({ error: "Invalid project ID" });
+        }
+
+        const userId = (req.user as any)?.claims?.sub;
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord?.organizationId) {
+          return res.status(401).json({ error: "Unauthorized" });
+        }
+
+        const [data] = await db
+          .select()
+          .from(pControlCardData)
+          .where(
+            and(
+              eq(pControlCardData.projectId, projectId),
+              eq(pControlCardData.ctqName, ctqName),
+              eq(pControlCardData.organizationId, userRecord.organizationId),
+            ),
+          );
+
+        if (!data) {
+          return res.status(404).json({ message: "P chart data not found" });
+        }
+
+        return res.json(data);
+      } catch (err) {
+        console.error("P chart data fetch error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // POST P chart control card data (upsert)
+  app.post(
+    "/api/projects/:projectId/spc/p/:ctqName",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        const ctqName = decodeURIComponent(req.params.ctqName);
+
+        if (isNaN(projectId)) {
+          return res.status(400).json({ error: "Invalid project ID" });
+        }
+
+        const userId = (req.user as any)?.claims?.sub;
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord?.organizationId) {
+          return res.status(401).json({ error: "Unauthorized" });
+        }
+
+        const {
+          dataValues,
+          sampleSizes,
+          indicatorName,
+          chartDate,
+          xScaleType,
+          xAxisLabel,
+          xScaleValues,
+          stagesEnabled,
+          stageValues,
+        } = req.body;
+
+        const validatedData = Array.isArray(dataValues) ? dataValues : [];
+        const validatedSampleSizes = Array.isArray(sampleSizes) ? sampleSizes : [];
+        const validatedIndicatorName = typeof indicatorName === "string" ? indicatorName : ctqName;
+        const validatedChartDate = typeof chartDate === "string" ? chartDate : "";
+        const validatedXScaleType = typeof xScaleType === "string" ? xScaleType : "index";
+        const validatedXAxisLabel = typeof xAxisLabel === "string" ? xAxisLabel : "";
+        const validatedXScaleValues = Array.isArray(xScaleValues) ? xScaleValues : [];
+        const validatedStagesEnabled = typeof stagesEnabled === "boolean" ? stagesEnabled : false;
+        const validatedStageValues = Array.isArray(stageValues) ? stageValues : [];
+
+        const [existing] = await db
+          .select()
+          .from(pControlCardData)
+          .where(
+            and(
+              eq(pControlCardData.projectId, projectId),
+              eq(pControlCardData.ctqName, ctqName),
+              eq(pControlCardData.organizationId, userRecord.organizationId),
+            ),
+          );
+
+        let result;
+        if (existing) {
+          [result] = await db
+            .update(pControlCardData)
+            .set({
+              dataValues: validatedData,
+              sampleSizes: validatedSampleSizes,
+              indicatorName: validatedIndicatorName,
+              chartDate: validatedChartDate,
+              xScaleType: validatedXScaleType,
+              xAxisLabel: validatedXAxisLabel,
+              xScaleValues: validatedXScaleValues,
+              stagesEnabled: validatedStagesEnabled,
+              stageValues: validatedStageValues,
+              updatedAt: new Date(),
+            })
+            .where(eq(pControlCardData.id, existing.id))
+            .returning();
+        } else {
+          [result] = await db
+            .insert(pControlCardData)
+            .values({
+              organizationId: userRecord.organizationId,
+              projectId,
+              ctqName,
+              dataValues: validatedData,
+              sampleSizes: validatedSampleSizes,
+              indicatorName: validatedIndicatorName,
+              chartDate: validatedChartDate,
+              xScaleType: validatedXScaleType,
+              xAxisLabel: validatedXAxisLabel,
+              xScaleValues: validatedXScaleValues,
+              stagesEnabled: validatedStagesEnabled,
+              stageValues: validatedStageValues,
+            })
+            .returning();
+        }
+
+        return res.json(result);
+      } catch (err) {
+        console.error("P chart data save error:", err);
+        return handleErrors(err, res);
+      }
+    },
+  );
+
+  // POST P chart AI control card analysis (save only)
+  app.post(
+    "/api/projects/:projectId/spc/p/:ctqName/ai-analysis",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        const ctqName = decodeURIComponent(req.params.ctqName);
+
+        if (isNaN(projectId)) {
+          return res.status(400).json({ error: "Invalid project ID" });
+        }
+
+        const userId = (req.user as any)?.claims?.sub;
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord?.organizationId) {
+          return res.status(401).json({ error: "Unauthorized" });
+        }
+
+        const { aiAnalysis } = req.body;
+
+        if (typeof aiAnalysis !== "string") {
+          return res.status(400).json({ error: "AI analysis must be a string" });
+        }
+
+        const validatedAiAnalysis = aiAnalysis.trim();
+
+        const [updated] = await db
+          .update(pControlCardData)
+          .set({
+            aiAnalysis: validatedAiAnalysis,
+            updatedAt: new Date(),
+          })
+          .where(
+            and(
+              eq(pControlCardData.projectId, projectId),
+              eq(pControlCardData.ctqName, ctqName),
+              eq(pControlCardData.organizationId, userRecord.organizationId),
+            ),
+          )
+          .returning();
+
+        if (!updated) {
+          return res.status(404).json({ error: "Control card data not found" });
+        }
+
+        return res.status(200).json({
+          success: true,
+          aiAnalysis: updated.aiAnalysis,
+        });
+      } catch (err) {
+        console.error("Error saving P chart AI control card analysis:", err);
         return res.status(500).json({
           error: "Failed to save AI control card analysis",
           details: err instanceof Error ? err.message : "Unknown error",

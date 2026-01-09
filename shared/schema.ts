@@ -3505,3 +3505,61 @@ export const insertUControlCardDataSchema = createInsertSchema(uControlCardData)
 
 export type InsertUControlCardData = z.infer<typeof insertUControlCardDataSchema>;
 export type UControlCardData = typeof uControlCardData.$inferSelect;
+
+// P Control Card Data (P Chart - for proportion defective with VARIABLE sample sizes)
+export const pControlCardData = pgTable(
+  "p_control_card_data",
+  {
+    id: serial("id").primaryKey(),
+    organizationId: integer("organization_id")
+      .references(() => organizations.id)
+      .notNull(),
+    projectId: integer("project_id").notNull(),
+    ctqName: text("ctq_name").notNull(),
+    
+    // Indicator name to monitor (defaults to CTQ name but can be customized)
+    indicatorName: text("indicator_name").default(""),
+    
+    // Chart date
+    chartDate: text("chart_date").default(""),
+    
+    // X-axis scale type: 'index' (default 1,2,3...) or 'freeform' (custom text) or 'date'
+    xScaleType: text("x_scale_type").default("index"),
+    
+    // Custom x-axis label (when using freeform type, e.g., "Batch", "Week", "Sample ID")
+    xAxisLabel: text("x_axis_label").default(""),
+    
+    // Custom x-scale values (array of strings for freeform or date values)
+    xScaleValues: jsonb("x_scale_values").$type<string[]>().default([]),
+    
+    // Data array stored as JSON (array of integers - defective unit counts per sample)
+    dataValues: jsonb("data_values").$type<number[]>().default([]),
+    
+    // Sample sizes array (variable n for P chart - array of sample sizes for each observation)
+    sampleSizes: jsonb("sample_sizes").$type<number[]>().default([]),
+    
+    // Stages feature - enables per-stage control limits
+    stagesEnabled: boolean("stages_enabled").default(false),
+    
+    // Stage values (array of free-form string labels for stage identification)
+    stageValues: jsonb("stage_values").$type<string[]>().default([]),
+    
+    // AI-generated control card analysis
+    aiAnalysis: text("ai_analysis").default(""),
+    
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    uniqueProjectCtq: unique().on(table.projectId, table.ctqName),
+  }),
+);
+
+export const insertPControlCardDataSchema = createInsertSchema(pControlCardData).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertPControlCardData = z.infer<typeof insertPControlCardDataSchema>;
+export type PControlCardData = typeof pControlCardData.$inferSelect;
