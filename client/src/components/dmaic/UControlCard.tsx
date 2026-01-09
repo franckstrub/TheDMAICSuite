@@ -1366,14 +1366,14 @@ export function UControlCard({ projectId, ctqName }: UControlCardProps) {
                 <Label htmlFor="u-date" className="font-normal text-sm">Date</Label>
               </div>
             </RadioGroup>
-            {xScaleType !== 'index' && (
+            {xScaleType === 'freeform' && (
               <div className="space-y-1">
                 <Label htmlFor="xAxisLabel">X-Axis Label</Label>
                 <Input
                   id="xAxisLabel"
                   value={xAxisLabel}
                   onChange={(e) => setXAxisLabel(e.target.value)}
-                  placeholder={xScaleType === 'date' ? 'Date' : 'Sample Label'}
+                  placeholder="Sample Label"
                   className="max-w-xs"
                 />
               </div>
