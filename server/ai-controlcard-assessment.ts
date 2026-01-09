@@ -328,7 +328,7 @@ Please provide a structured analysis ${hasMultipleStages ? 'for each stage' : ''
 
 Keep the analysis professional, and actionable for process monitoring teams. Focus on practical insights that operators and engineers can use immediately.`;
 
-    console.log("Sending request to Google AI API for control card analysis...");
+    console.log("Sending request to Google AI API for control card analysis...Prompt to Gemini 2.5 Pro: ", prompt);
 
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
     
