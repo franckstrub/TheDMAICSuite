@@ -3389,3 +3389,61 @@ export const insertSpcControlCardSelectionSchema = createInsertSchema(spcControl
 
 export type InsertSpcControlCardSelection = z.infer<typeof insertSpcControlCardSelectionSchema>;
 export type SpcControlCardSelection = typeof spcControlCardSelections.$inferSelect;
+
+// NP Control Card Data for SPC (Attribute Control Chart for defective units)
+export const npControlCardData = pgTable(
+  "np_control_card_data",
+  {
+    id: serial("id").primaryKey(),
+    organizationId: integer("organization_id")
+      .references(() => organizations.id)
+      .notNull(),
+    projectId: integer("project_id").notNull(),
+    ctqName: text("ctq_name").notNull(),
+    
+    // Indicator name to monitor (defaults to CTQ name but can be customized)
+    indicatorName: text("indicator_name").default(""),
+    
+    // Chart date
+    chartDate: text("chart_date").default(""),
+    
+    // X-axis scale type: 'index' (default 1,2,3...) or 'freeform' (custom text) or 'date'
+    xScaleType: text("x_scale_type").default("index"),
+    
+    // Custom x-axis label (when using freeform type, e.g., "Batch", "Week", "Sample ID")
+    xAxisLabel: text("x_axis_label").default(""),
+    
+    // Custom x-scale values (array of strings for freeform or date values)
+    xScaleValues: jsonb("x_scale_values").$type<string[]>().default([]),
+    
+    // Data array stored as JSON (array of integers - defective unit counts per sample)
+    dataValues: jsonb("data_values").$type<number[]>().default([]),
+    
+    // Sample size (constant n for NP chart - number of items inspected per sample)
+    sampleSize: integer("sample_size").default(50),
+    
+    // Stages feature - enables per-stage control limits
+    stagesEnabled: boolean("stages_enabled").default(false),
+    
+    // Stage values (array of free-form string labels for stage identification)
+    stageValues: jsonb("stage_values").$type<string[]>().default([]),
+    
+    // AI-generated control card analysis
+    aiAnalysis: text("ai_analysis").default(""),
+    
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    uniqueProjectCtq: unique().on(table.projectId, table.ctqName),
+  }),
+);
+
+export const insertNpControlCardDataSchema = createInsertSchema(npControlCardData).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertNpControlCardData = z.infer<typeof insertNpControlCardDataSchema>;
+export type NpControlCardData = typeof npControlCardData.$inferSelect;
