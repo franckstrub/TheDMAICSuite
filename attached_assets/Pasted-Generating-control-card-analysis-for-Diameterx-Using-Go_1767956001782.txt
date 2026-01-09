@@ -1,0 +1,53 @@
+Generating control card analysis for: "Diameterx"
+Using Google AI API to generate Xbar-R control card assessment analysis
+Sending request to Google AI API for control card analysis...Prompt to Gemini 2.5 Pro: As a Lean Six Sigma Master Black Belt expert, provide a comprehensive and concise Xbar-R control chart analysis for the process characteristic "Diameterx".
+
+Statistical Summary:
+- Number of subgroups: 20
+- Subgroup size (n): 5 (constant)
+- Grand mean (X̿): 100.0741
+- Average range (R̄): 2.2850
+- X̄ chart UCL: 101.3926
+- X̄ chart LCL: 98.7557
+- R chart UCL: 4.8305
+- R chart LCL: 0.0000
+- Subgroup means (X̄ values): [100.5000, 100.1850, 100.7025, 98.9300, 100.1700, 99.0567, 99.4033, 99.9300, 101.6300, 100.4786, 99.9975, 100.3180, 102.0000, 99.8820, 100.9183, 99.3433, 100.1300, 100.0350, 98.8375, 99.0350]
+- Subgroup ranges (R values): [0.2700, 0.5100, 1.6700, 2.5000, 1.1700, 3.1900, 2.1800, 1.9400, 7.8300, 2.1100, 1.8700, 1.2700, 0.0000, 5.1100, 7.2000, 1.2300, 3.0600, 0.1700, 1.5700, 0.8500]
+- Stages: Not enabled
+
+
+Control Status:
+The process has OUT OF CONTROL signals: 2 X̄ value(s) and 3 Range value(s) outside control limits.
+
+Out-of-Control Points:
+- Xbar chart: Subgroups at indices 9, 13
+- R chart: Subgroups at indices 9, 14, 15
+
+Please provide a structured analysis  following these steps:
+
+1. **Process Stability Assessment**
+   - Is the process statistically stable (in control)?
+   - Are there any special cause variations present?
+   - Comment on the distribution of points within control limits
+
+2. **Pattern Analysis**
+   - Check for trends (7+ consecutive points increasing or decreasing)
+   - Check for runs (7+ consecutive points above or below centerline)
+   - Check for cycles or other non-random patterns
+   - Comment on process behavior over time
+
+3. **Variation Analysis**
+   - Assess the magnitude of process variation
+   - Analyze both Xbar and R charts
+   - Identify if variation is consistent or changing
+
+4. **Out-of-Control Investigation**
+   - Highlight each out-of-control point, suggest to investigate potential special causes
+
+5. **Recommendations**
+   - Priority items to address
+   - Monitoring recommendations going forward
+
+Keep the analysis professional, and actionable for process monitoring teams. Focus on practical insights that operators and engineers can use immediately.
+Control card analysis response received from Google AI API
+10:48:29 AM [express] POST /api/projects/26/spc/xbar-r/Diameter/ai-analysis 200 in 42338ms :: {"succe…
