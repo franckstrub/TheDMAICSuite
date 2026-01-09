@@ -1303,7 +1303,8 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
 
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg">X̄ Chart (Subgroup Means)</CardTitle>
+              {/*<CardTitle className="text-lg">X̄ Chart (Subgroup Means)</CardTitle>*/}
+              <CardTitle className="text-lg">Xbar Chart (Subgroup Means)</CardTitle>
             </CardHeader>
             <CardContent>
               {stagesEnabled && stageStatsList.length > 0 ? (
@@ -1362,7 +1363,7 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
                   autosize: true,
                   height: 350,
                   margin: { l: 60, r: 100, t: 50, b: 50 },
-                  title: { text: `X̄ (Xbar) Chart of ${indicatorName || ctqName}`, font: { size: 14 } },
+                  title: { text: `Xbar (X̄) Chart of ${indicatorName || ctqName}`, font: { size: 14 } },
                   xaxis: {
                     title: { text: getXAxisTitle(), font: { size: 12 } },
                     tickmode: xScaleType !== 'index' ? 'array' : undefined,

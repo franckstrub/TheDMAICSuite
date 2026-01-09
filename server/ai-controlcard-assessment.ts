@@ -124,28 +124,28 @@ interface ChartTypeConfig {
 function getChartConfig(stats: ControlCardStats): ChartTypeConfig {
   if (isXbarRStats(stats)) {
     return {
-      chartName: 'Xbar-R (X̄-R)',
+      chartName: 'Xbar-R', // (X̄-R)',
       chartDescription: 'Xbar-R control chart for subgrouped data',
-      primaryChartName: 'X̄ (Xbar) chart',
-      secondaryChartName: 'R (Range) chart',
-      variationComparisonText: 'Compare R chart behavior to X̄ chart',
+      primaryChartName: 'Xbar chart',
+      secondaryChartName: 'R chart',
+      variationComparisonText: 'Compare R chart behavior to Xbar chart',
     };
   }
   if (isXbarSStats(stats)) {
     return {
-      chartName: 'Xbar-S (X̄-S)',
+      chartName: 'Xbar-S', // (X̄-S)',
       chartDescription: 'Xbar-S control chart for subgrouped data with standard deviation',
-      primaryChartName: 'X̄ (Xbar) chart',
-      secondaryChartName: 'S (Standard Deviation) chart',
-      variationComparisonText: 'Compare S chart behavior to X̄ chart',
+      primaryChartName: 'Xbar chart',
+      secondaryChartName: 'S chart',
+      variationComparisonText: 'Compare S chart behavior to Xbar chart',
     };
   }
   return {
     chartName: 'I-MR (Individual-Moving Range)',
     chartDescription: 'I-MR control chart for individual measurements',
-    primaryChartName: 'Individual (I) chart',
-    secondaryChartName: 'Moving Range (MR) chart',
-    variationComparisonText: 'Compare MR chart behavior to Individual chart',
+    primaryChartName: 'I chart',
+    secondaryChartName: 'MR chart',
+    variationComparisonText: 'Compare MR chart behavior to I chart',
   };
 }
 
@@ -196,7 +196,7 @@ function buildControlStatus(stats: ControlCardStats, config: ChartTypeConfig): {
     
     const details = totalOOC > 0
       ? `\nOut-of-Control Points:
-- X̄ chart: Subgroups at indices ${xbarOOC > 0 ? stats.outOfControlXbar.join(', ') : 'none'}
+- Xbar chart: Subgroups at indices ${xbarOOC > 0 ? stats.outOfControlXbar.join(', ') : 'none'}
 - R chart: Subgroups at indices ${rOOC > 0 ? stats.outOfControlR.join(', ') : 'none'}`
       : '';
     
@@ -214,7 +214,7 @@ function buildControlStatus(stats: ControlCardStats, config: ChartTypeConfig): {
     
     const details = totalOOC > 0
       ? `\nOut-of-Control Points:
-- X̄ chart: Subgroups at indices ${xbarOOC > 0 ? stats.outOfControlXbar.join(', ') : 'none'}
+- Xbar chart: Subgroups at indices ${xbarOOC > 0 ? stats.outOfControlXbar.join(', ') : 'none'}
 - S chart: Subgroups at indices ${sOOC > 0 ? stats.outOfControlS.join(', ') : 'none'}`
       : '';
     
@@ -233,7 +233,7 @@ function buildControlStatus(stats: ControlCardStats, config: ChartTypeConfig): {
   
   const details = totalOOC > 0
     ? `\nOut-of-Control Points:
-- Individual chart: Points at indices ${individualOOC > 0 ? imrStats.outOfControlIndividuals!.join(', ') : 'none'}
+- I chart: Points at indices ${individualOOC > 0 ? imrStats.outOfControlIndividuals!.join(', ') : 'none'}
 - MR chart: Points at indices ${mrOOC > 0 ? imrStats.outOfControlMR!.join(', ') : 'none'}`
     : '';
   
@@ -328,7 +328,7 @@ Please provide a structured analysis ${hasMultipleStages ? 'for each stage' : ''
 
 Keep the analysis professional, and actionable for process monitoring teams. Focus on practical insights that operators and engineers can use immediately.`;
 
-    console.log("Sending request to Google AI API for control card analysis...");
+    console.log("Sending request to Google AI API for control card analysis...Prompt to Gemini 2.5 Pro: ", prompt);
 
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
     
