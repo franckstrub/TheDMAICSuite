@@ -146,7 +146,7 @@ export function PControlCard({ projectId, ctqName }: PControlCardProps) {
 
   const saveMutation = useMutation({
     mutationFn: async (payload: { 
-      defectCounts: number[];
+      dataValues: number[];
       sampleSizes: number[];
       indicatorName: string; 
       chartDate: string; 
@@ -436,7 +436,7 @@ export function PControlCard({ projectId, ctqName }: PControlCardProps) {
       }
       toast({
         title: "Data pasted",
-        description: `Successfully pasted ${lines.length} defective counts`,
+        description: `Successfully pasted ${lines.length} defective unit counts`,
       });
       return;
     }
@@ -696,7 +696,7 @@ export function PControlCard({ projectId, ctqName }: PControlCardProps) {
     if (validValues.length < 2) {
       toast({
         title: "Insufficient data",
-        description: "Need at least 2 complete data points (defective count + sample size) for P chart",
+        description: "Need at least 2 complete data points (defective unit count + sample size) for P chart",
         variant: "destructive",
       });
       return;
@@ -711,7 +711,7 @@ export function PControlCard({ projectId, ctqName }: PControlCardProps) {
       : [];
     
     saveMutation.mutate({ 
-      defectCounts: validValues,
+      dataValues: validValues,
       sampleSizes: validSampleSizes,
       indicatorName, 
       chartDate, 
@@ -1332,7 +1332,7 @@ export function PControlCard({ projectId, ctqName }: PControlCardProps) {
       y: pValuesPct,
       type: 'scatter',
       mode: 'lines+markers',
-      name: 'Proportion Defective (p)',
+      name: 'Proportion Defective Unit (p)',
       line: { color: '#2563eb', width: 1.5 },
       marker: { color: '#2563eb', size: 6 },
       hovertemplate: 'Sample %{x}<br>p: %{y:.2f}%<extra></extra>',
@@ -1354,12 +1354,12 @@ export function PControlCard({ projectId, ctqName }: PControlCardProps) {
 
   const pChartLayout = {
     title: {
-      text: `P (Proportion Defective) Chart of ${indicatorName}`,
+      text: `P (Proportion Defective Unit) Chart of ${indicatorName}`,
       font: { size: 16 },
     },
     xaxis: getXAxisConfig(),
     yaxis: {
-      title: { text: 'Proportion Defective (%)' },
+      title: { text: 'Proportion Defective Unit (%)' },
       showgrid: true,
       gridcolor: '#e5e7eb',
       zeroline: true,
@@ -1391,7 +1391,7 @@ export function PControlCard({ projectId, ctqName }: PControlCardProps) {
         <CardTitle className="flex items-center gap-2">
           P Control Chart
           <span className="text-sm font-normal text-muted-foreground">
-            (Proportion Defective with Variable Sample Size)
+            (Proportion Defective Unit with Variable Sample Size)
           </span>
         </CardTitle>
       </CardHeader>
@@ -1509,7 +1509,7 @@ export function PControlCard({ projectId, ctqName }: PControlCardProps) {
             )}
           </Button>
         </div>
-        <p className="text-xs text-muted-foreground">Enter defective counts and sample sizes (variable). Supports Excel copy/paste (Ctrl+V). Use Ctrl+Z to undo.</p>
+        <p className="text-xs text-muted-foreground">Enter defective unit counts and sample sizes (variable). Supports Excel copy/paste (Ctrl+V). Use Ctrl+Z to undo.</p>
 
         <div 
           ref={tableRef}
@@ -1523,7 +1523,7 @@ export function PControlCard({ projectId, ctqName }: PControlCardProps) {
                 {xScaleType !== 'index' && (
                   <th className="p-2 text-left">{xScaleType === 'date' ? 'Date' : 'Label'}</th>
                 )}
-                <th className="p-2 text-left">Defective Count</th>
+                <th className="p-2 text-left">Defective Unit Count</th>
                 <th className="p-2 text-left">Sample Size</th>
                 {stagesEnabled && <th className="p-2 text-left">Stage</th>}
                 <th className="p-2 w-10"></th>
@@ -1613,7 +1613,7 @@ export function PControlCard({ projectId, ctqName }: PControlCardProps) {
           <div className="space-y-4">
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-lg">P Chart (Proportion Defective)</CardTitle>
+                <CardTitle className="text-lg">P Chart (Proportion Defective Unit)</CardTitle>
               </CardHeader>
               <CardContent>
                 {stagesEnabled && stageStatsList.length > 0 ? (
@@ -1748,7 +1748,7 @@ export function PControlCard({ projectId, ctqName }: PControlCardProps) {
               value={aiAnalysis}
               onChange={(e) => setAiAnalysis(e.target.value)}
               placeholder={validDataCount < 10 
-                ? "Enter at least 10 complete data points (defective count + sample size) to enable AI control card analysis..."
+                ? "Enter at least 10 complete data points (defective unit count + sample size) to enable AI control card analysis..."
                 : "Click 'Generate Analysis' to get AI-powered insights about your P chart data, including process stability, patterns, and recommendations..."
               }
               className="min-h-[200px] w-full font-mono text-sm"
