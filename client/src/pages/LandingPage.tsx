@@ -446,7 +446,7 @@ export default function LandingPage() {
                 For small teams just getting started with Six Sigma
               </p>
               <div className="text-4xl font-bold mb-6">
-                $79
+                $69
                 <span className="text-lg font-normal text-gray-500">
                   /month
                 </span>
@@ -487,7 +487,7 @@ export default function LandingPage() {
                 For established improvement teams with advanced needs
               </p>
               <div className="text-4xl font-bold mb-6">
-                $99
+                $169
                 <span className="text-lg font-normal text-gray-500">
                   /month
                 </span>
@@ -529,7 +529,7 @@ export default function LandingPage() {
                 For organizations with comprehensive requirements
               </p>
               <div className="text-4xl font-bold mb-6">
-                $249
+                $349
                 <span className="text-lg font-normal text-gray-500">
                   /month
                 </span>

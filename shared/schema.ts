@@ -3298,6 +3298,64 @@ export const insertXbarSControlCardDataSchema = createInsertSchema(xbarSControlC
 export type InsertXbarSControlCardData = z.infer<typeof insertXbarSControlCardDataSchema>;
 export type XbarSControlCardData = typeof xbarSControlCardData.$inferSelect;
 
+// C Control Card Data for SPC (Attribute Control Chart for defect counts)
+export const cControlCardData = pgTable(
+  "c_control_card_data",
+  {
+    id: serial("id").primaryKey(),
+    organizationId: integer("organization_id")
+      .references(() => organizations.id)
+      .notNull(),
+    projectId: integer("project_id").notNull(),
+    ctqName: text("ctq_name").notNull(),
+    
+    // Indicator name to monitor (defaults to CTQ name but can be customized)
+    indicatorName: text("indicator_name").default(""),
+    
+    // Chart date
+    chartDate: text("chart_date").default(""),
+    
+    // X-axis scale type: 'index' (default 1,2,3...) or 'freeform' (custom text) or 'date'
+    xScaleType: text("x_scale_type").default("index"),
+    
+    // Custom x-axis label (when using freeform type, e.g., "Batch", "Week", "Sample ID")
+    xAxisLabel: text("x_axis_label").default(""),
+    
+    // Custom x-scale values (array of strings for freeform or date values)
+    xScaleValues: jsonb("x_scale_values").$type<string[]>().default([]),
+    
+    // Data array stored as JSON (array of integers - defect counts per sample)
+    dataValues: jsonb("data_values").$type<number[]>().default([]),
+    
+    // Sample size (constant size for C chart, used for display/documentation)
+    sampleSize: integer("sample_size").default(1),
+    
+    // Stages feature - enables per-stage control limits
+    stagesEnabled: boolean("stages_enabled").default(false),
+    
+    // Stage values (array of free-form string labels for stage identification)
+    stageValues: jsonb("stage_values").$type<string[]>().default([]),
+    
+    // AI-generated control card analysis
+    aiAnalysis: text("ai_analysis").default(""),
+    
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    uniqueProjectCtq: unique().on(table.projectId, table.ctqName),
+  }),
+);
+
+export const insertCControlCardDataSchema = createInsertSchema(cControlCardData).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertCControlCardData = z.infer<typeof insertCControlCardDataSchema>;
+export type CControlCardData = typeof cControlCardData.$inferSelect;
+
 // SPC Control Card Selection (stores checkbox selections for each CTQ)
 export const spcControlCardSelections = pgTable(
   "spc_control_card_selections",

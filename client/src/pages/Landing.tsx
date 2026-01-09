@@ -290,7 +290,7 @@ export default function Landing() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
               <div className="bg-white rounded-lg p-8 shadow-md border border-gray-200">
                 <h3 className="text-xl font-semibold mb-3">Starter</h3>
                 <p className="text-gray-600 mb-6">
@@ -324,7 +324,7 @@ export default function Landing() {
                   <li className="flex items-center">
                     <i className="fas fa-check text-green-500 mr-2"></i>
                     <span>
-                      LLM API access plan: $10 included in the subscription,
+                      LLM API access plan: $5/month included in the subscription,
                       then billed per use as needed
                     </span>
                   </li>
@@ -359,7 +359,7 @@ export default function Landing() {
                   Six Sigma
                 </p>
                 <div className="text-4xl font-bold mb-6">
-                  $99
+                  $169
                   <span className="text-lg font-normal text-gray-500">
                     /month
                   </span>
@@ -385,7 +385,7 @@ export default function Landing() {
                   <li className="flex items-center">
                     <i className="fas fa-check text-green-500 mr-2"></i>
                     <span>
-                      LLM API access plan: $25 included in the subscription,
+                      LLM API access plan: $15/month included in the subscription,
                       then billed per use as needed
                     </span>
                   </li>
@@ -418,7 +418,7 @@ export default function Landing() {
                 </p>
                 <div className="text-lg font-normal text-gray-500 mb-6">
                   from{" "}
-                  <span className="text-4xl text-black font-bold">$249</span>{" "}
+                  <span className="text-4xl text-black font-bold">$349</span>{" "}
                   <span className="text-lg font-normal text-gray-500">
                     /month
                   </span>
@@ -444,7 +444,7 @@ export default function Landing() {
                   <li className="flex items-center">
                     <i className="fas fa-check text-green-500 mr-2"></i>
                     <span>
-                      LLM API access plan: from $50 included in the
+                      LLM API access plan: from $35/mo. included in the
                       subscription, then billed per use as needed
                     </span>
                   </li>
