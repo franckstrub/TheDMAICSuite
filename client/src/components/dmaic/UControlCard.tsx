@@ -1247,9 +1247,10 @@ export function UControlCard({ projectId, ctqName }: UControlCardProps) {
       });
     }
     
+    // Create continuous line through ALL points
     uChartTraces.push({
-      x: uChartPoints.inControl.x,
-      y: uChartPoints.inControl.y,
+      x: chartXIndices,
+      y: stats.uValues,
       type: 'scatter',
       mode: 'lines+markers',
       name: 'Defects per Unit (u)',
@@ -1258,6 +1259,7 @@ export function UControlCard({ projectId, ctqName }: UControlCardProps) {
       hovertemplate: 'Sample %{x}<br>u: %{y:.4f}<extra></extra>',
     });
     
+    // Overlay out-of-control points with red markers
     if (uChartPoints.outOfControl.x.length > 0) {
       uChartTraces.push({
         x: uChartPoints.outOfControl.x,
