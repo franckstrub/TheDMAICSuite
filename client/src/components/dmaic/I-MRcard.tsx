@@ -1335,60 +1335,12 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
         <CardHeader className="pb-3">
           <CardTitle className="text-lg flex items-center justify-between">
             <span>I-MR Control Chart Data Input</span>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleClearAllData}
-                disabled={validDataValues.length === 0}               
-                title="Clear all data (can be undone)"
-                data-testid="btn-clear-imr"
-              >
-                <Trash2 className="h-4 w-4 mr-1" />
-                Clear All Data
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handlePasteFromClipboard}
-                data-testid="btn-paste-imr"
-              >
-                <Clipboard className="h-4 w-4 mr-1" />
-                Paste
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleUndo}
-                disabled={dataHistory.length === 0}
-                data-testid="btn-undo-imr"
-              >
-                <Undo className="h-4 w-4 mr-1" />
-                Undo
-              </Button>
-              <Button
-                size="sm"
-                onClick={handleSaveData}
-                disabled={saveMutation.isPending}
-                data-testid="btn-save-imr"
-              >
-                {saveMutation.isPending ? (
-                  <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                ) : (
-                  <Save className="h-4 w-4 mr-1" />
-                )}
-                Save Data
-              </Button>
-            </div>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-sm text-gray-600 mb-4">
-            Enter individual measurements. Supports Excel copy/paste (Ctrl+V). Use Ctrl+Z to undo.
-          </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            <div>
+            <div className="space-y-1">
               <Label htmlFor="indicator-name" className="text-sm font-medium">Indicator to Monitor</Label>
               <Input
                 id="indicator-name"
@@ -1470,7 +1422,52 @@ export function IMRCard({ projectId, ctqName }: IMRCardProps) {
               <span className="text-xs text-gray-500">(Display separate control limits per stage)</span>
             </div>
           </div>
-          
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleClearAllData}
+              disabled={validDataValues.length === 0}               
+              title="Clear all data (can be undone)"
+              data-testid="btn-clear-imr"
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              Clear All Data
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handlePasteFromClipboard}
+              data-testid="btn-paste-imr"
+            >
+              <Clipboard className="h-4 w-4 mr-1" />
+              Paste
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleUndo}
+              disabled={dataHistory.length === 0}
+              data-testid="btn-undo-imr"
+            >
+              <Undo className="h-4 w-4 mr-1" />
+              Undo
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleSaveData}
+              disabled={saveMutation.isPending}
+              data-testid="btn-save-imr"
+            >
+              {saveMutation.isPending ? (
+                <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4 mr-1" />
+              )}
+              Save Data
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground mt-4 mb-4">Enter individual measurements. Supports Excel copy/paste (Ctrl+V). Use Ctrl+Z to undo.</p>
           <div 
             ref={tableRef}
             className="border rounded-lg overflow-hidden max-h-[400px] overflow-y-auto"

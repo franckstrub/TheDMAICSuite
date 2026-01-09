@@ -1143,27 +1143,10 @@ export function XbarSCard({ projectId, ctqName }: XbarSCardProps) {
         <CardHeader className="pb-3">
           <CardTitle className="text-lg flex items-center justify-between">
             <span>Xbar-S Control Chart Data Input</span>
-            <div className="flex items-center gap-2">
-              <Button variant="destructive" size="sm" onClick={handleClearAllData} disabled={validDataValues.length === 0} title="Clear all data" data-testid="btn-clear-xbars">
-                <Trash2 className="h-4 w-4 mr-1" />Clear All Data
-              </Button>
-              <Button variant="outline" size="sm" onClick={handlePasteFromClipboard} data-testid="btn-paste-xbars">
-                <Clipboard className="h-4 w-4 mr-1" />Paste
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleUndo} disabled={dataHistory.length === 0} data-testid="btn-undo-xbars">
-                <Undo className="h-4 w-4 mr-1" />Undo
-              </Button>
-              <Button size="sm" onClick={handleSaveData} disabled={saveMutation.isPending} data-testid="btn-save-xbars">
-                {saveMutation.isPending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
-                Save Data
-              </Button>
-            </div>
+
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-sm text-gray-600 mb-4">
-            Enter individual measurements. Data will be grouped into subgroups for Xbar-S analysis. Supports Excel copy/paste.
-          </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             <div>
@@ -1242,7 +1225,25 @@ export function XbarSCard({ projectId, ctqName }: XbarSCardProps) {
               </div>
             </div>
           </div>
-          
+          <div className="flex items-center gap-2">
+            <Button variant="destructive" size="sm" onClick={handleClearAllData} disabled={validDataValues.length === 0} title="Clear all data" data-testid="btn-clear-xbars">
+              <Trash2 className="h-4 w-4 mr-1" />Clear All Data
+            </Button>
+            <Button variant="outline" size="sm" onClick={handlePasteFromClipboard} data-testid="btn-paste-xbars">
+              <Clipboard className="h-4 w-4 mr-1" />Paste
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleUndo} disabled={dataHistory.length === 0} data-testid="btn-undo-xbars">
+              <Undo className="h-4 w-4 mr-1" />Undo
+            </Button>
+            <Button size="sm" onClick={handleSaveData} disabled={saveMutation.isPending} data-testid="btn-save-xbars">
+              {saveMutation.isPending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
+              Save Data
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground mt-4 mb-4">
+            Enter individual measurements. Data will be grouped into subgroups for Xbar-S analysis. Supports Excel copy/paste.
+          </p>
+
           <div ref={tableRef} className="border rounded-lg overflow-hidden max-h-[400px] overflow-y-auto" onPaste={handlePaste}>
             <table className="w-full">
               <thead className="bg-gray-100 sticky top-0">
