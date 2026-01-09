@@ -103,6 +103,20 @@ export interface NPControlCardStats extends BaseControlCardStats {
   outOfControl: number[];
 }
 
+// U chart specific stats (Attribute chart for defects per unit with VARIABLE sample sizes)
+export interface UControlCardStats extends BaseControlCardStats {
+  chartType: 'U';
+  sampleCount: number;
+  defectCounts: number[];
+  sampleSizes: number[];
+  uValues: number[];
+  uBar: number;
+  avgSampleSize: number;
+  totalDefects: number;
+  totalSampleSize: number;
+  outOfControl: number[];
+}
+
 // Legacy stats (for backward compatibility - defaults to I-MR)
 export interface LegacyControlCardStats {
   dataValues?: number[];
@@ -119,7 +133,7 @@ export interface LegacyControlCardStats {
   stageStats?: any[];
 }
 
-export type ControlCardStats = IMRControlCardStats | XbarRControlCardStats | XbarSControlCardStats | CControlCardStats | NPControlCardStats | LegacyControlCardStats;
+export type ControlCardStats = IMRControlCardStats | XbarRControlCardStats | XbarSControlCardStats | CControlCardStats | NPControlCardStats | UControlCardStats | LegacyControlCardStats;
 
 export interface ControlCardContext {
   ctqName?: string;
@@ -144,6 +158,10 @@ function isCStats(stats: ControlCardStats): stats is CControlCardStats {
 
 function isNPStats(stats: ControlCardStats): stats is NPControlCardStats {
   return 'chartType' in stats && stats.chartType === 'NP';
+}
+
+function isUStats(stats: ControlCardStats): stats is UControlCardStats {
+  return 'chartType' in stats && stats.chartType === 'U';
 }
 
 function isIMRStats(stats: ControlCardStats): stats is IMRControlCardStats {
@@ -196,6 +214,15 @@ function getChartConfig(stats: ControlCardStats): ChartTypeConfig {
       variationComparisonText: 'Analyze the NP chart for defective unit patterns',
     };
   }
+  if (isUStats(stats)) {
+    return {
+      chartName: 'U Chart',
+      chartDescription: 'U control chart for attribute data (defects per unit with variable sample sizes)',
+      primaryChartName: 'U chart',
+      secondaryChartName: '', // U chart has only one chart
+      variationComparisonText: 'Analyze the U chart for defects per unit patterns with varying sample sizes',
+    };
+  }
   return {
     chartName: 'I-MR (Individual-Moving Range)',
     chartDescription: 'I-MR control chart for individual measurements',
@@ -224,6 +251,7 @@ function buildStageDataSummary(stats: ControlCardStats): string {
   const isXbarS = isXbarSStats(stats);
   const isC = isCStats(stats);
   const isNP = isNPStats(stats);
+  const isU = isUStats(stats);
   
   let stageDetails = `- Stages enabled: Yes (${stageStats.length} stage(s))\n`;
   stageDetails += stageStats.map((s, idx) => {
@@ -240,6 +268,11 @@ function buildStageDataSummary(stats: ControlCardStats): string {
     if (isNP) {
       const stagePBar = (s as any).pBar ?? 0;
       return `  - ${stageName}: ${s.count} samples, np̄=${s.mean.toFixed(4)}, p̄=${stagePBar.toFixed(6)}, UCL=${s.ucl.toFixed(4)}, LCL=${s.lcl.toFixed(4)}`;
+    }
+    if (isU) {
+      const stageUBar = (s as any).uBar ?? s.mean;
+      const stageAvgN = (s as any).avgSampleSize ?? 1;
+      return `  - ${stageName}: ${s.count} samples, ū=${stageUBar.toFixed(4)}, Avg n=${stageAvgN.toFixed(1)}, UCL=${s.ucl.toFixed(4)}, LCL=${s.lcl.toFixed(4)}`;
     }
     // I-MR
     return `  - ${stageName}: ${s.count} points, Mean=${s.mean.toFixed(4)}, UCL=${s.ucl.toFixed(4)}, LCL=${s.lcl.toFixed(4)}, MR̄=${(s.mrMean || 0).toFixed(4)}, MR UCL=${(s.mrUcl || 0).toFixed(4)}, MR LCL=${(s.mrLcl || 0).toFixed(4)}`;
@@ -316,6 +349,24 @@ ${stageData}`;
 - UCL: ${stats.ucl.toFixed(4)}
 - LCL: ${stats.lcl.toFixed(4)}
 ${defectiveCountsData}
+${stageData}`;
+  }
+  
+  if (isUStats(stats)) {
+    const defectCountsData = formatRawDataArray(stats.defectCounts, 'Defect counts');
+    const sampleSizesData = formatRawDataArray(stats.sampleSizes, 'Sample sizes (n)');
+    const uValuesData = formatRawDataArray(stats.uValues, 'Defects per unit (u values)');
+    const stageData = buildStageDataSummary(stats);
+    
+    return `- Number of samples: ${stats.sampleCount}
+- Total defects: ${stats.totalDefects}
+- Total sample size: ${stats.totalSampleSize}
+- Average sample size: ${stats.avgSampleSize.toFixed(2)}
+- Average defects per unit (ū): ${stats.uBar.toFixed(6)}
+- Note: UCL and LCL vary per sample based on sample size (n)
+${defectCountsData}
+${sampleSizesData}
+${uValuesData}
 ${stageData}`;
   }
   
@@ -400,6 +451,21 @@ function buildControlStatus(stats: ControlCardStats, config: ChartTypeConfig): {
     const details = npOOC > 0
       ? `\nOut-of-Control Points:
 - NP chart: Samples at indices ${stats.outOfControl.join(', ')}`
+      : '';
+    
+    return { status, details };
+  }
+  
+  if (isUStats(stats)) {
+    const uOOC = stats.outOfControl?.length || 0;
+    
+    const status = uOOC === 0
+      ? "The process appears to be IN CONTROL with no defects per unit values outside control limits."
+      : `The process has OUT OF CONTROL signals: ${uOOC} sample(s) with defects per unit outside control limits.`;
+    
+    const details = uOOC > 0
+      ? `\nOut-of-Control Points:
+- U chart: Samples at indices ${stats.outOfControl.join(', ')}`
       : '';
     
     return { status, details };
