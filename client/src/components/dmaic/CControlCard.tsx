@@ -1147,17 +1147,30 @@ export function CControlCard({ projectId, ctqName }: CControlCardProps) {
       });
     }
     
+    // Continuous line trace connecting ALL points
+    cChartTraces.push({
+      x: chartXIndices,
+      y: validDataValues,
+      type: 'scatter',
+      mode: 'lines',
+      name: 'Data Line',
+      line: { color: '#2563eb', width: 1.5 },
+      showlegend: false,
+      hoverinfo: 'skip',
+    });
+    
+    // In-control points (markers only)
     cChartTraces.push({
       x: cChartPoints.inControl.x,
       y: cChartPoints.inControl.y,
       type: 'scatter',
-      mode: 'lines+markers',
+      mode: 'markers',
       name: 'Defect Count',
-      line: { color: '#2563eb', width: 1.5 },
       marker: { color: '#2563eb', size: 6 },
       hovertemplate: 'Sample %{x}<br>Count: %{y}<extra></extra>',
     });
     
+    // Out-of-control points (markers only, red)
     if (cChartPoints.outOfControl.x.length > 0) {
       cChartTraces.push({
         x: cChartPoints.outOfControl.x,

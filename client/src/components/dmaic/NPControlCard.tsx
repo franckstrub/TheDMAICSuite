@@ -1165,17 +1165,30 @@ export function NPControlCard({ projectId, ctqName }: NPControlCardProps) {
       });
     }
     
+    // Continuous line trace connecting ALL points
+    npChartTraces.push({
+      x: chartXIndices,
+      y: validDataValues,
+      type: 'scatter',
+      mode: 'lines',
+      name: 'Data Line',
+      line: { color: '#2563eb', width: 1.5 },
+      showlegend: false,
+      hoverinfo: 'skip',
+    });
+    
+    // In-control points (markers only)
     npChartTraces.push({
       x: npChartPoints.inControl.x,
       y: npChartPoints.inControl.y,
       type: 'scatter',
-      mode: 'lines+markers',
+      mode: 'markers',
       name: 'Defective Units',
-      line: { color: '#2563eb', width: 1.5 },
       marker: { color: '#2563eb', size: 6 },
       hovertemplate: 'Sample %{x}<br>Defectives: %{y}<extra></extra>',
     });
     
+    // Out-of-control points (markers only, red)
     if (npChartPoints.outOfControl.x.length > 0) {
       npChartTraces.push({
         x: npChartPoints.outOfControl.x,
