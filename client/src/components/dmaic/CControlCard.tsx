@@ -1213,17 +1213,18 @@ export function CControlCard({ projectId, ctqName }: CControlCardProps) {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="indicatorName">Indicator Name</Label>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="space-y-1">
+            <Label htmlFor="indicatorName">Indicator to Monitor</Label>
             <Input
               id="indicatorName"
               value={indicatorName}
               onChange={(e) => setIndicatorName(e.target.value)}
               placeholder="Enter indicator name"
             />
+            <p className="text-xs text-muted-foreground">This name will appear in the chart titles</p>
           </div>
-          <div className="space-y-2">
+          <div className="space-y-1">
             <Label htmlFor="chartDate">Chart Date</Label>
             <Input
               id="chartDate"
@@ -1231,43 +1232,43 @@ export function CControlCard({ projectId, ctqName }: CControlCardProps) {
               value={chartDate}
               onChange={(e) => setChartDate(e.target.value)}
             />
+            <p className="text-xs text-muted-foreground">Date shown on the control charts</p>
+          </div>
+          <div className="space-y-1">
+            <Label>X-Axis Scale Type</Label>
+            <RadioGroup
+              value={xScaleType}
+              onValueChange={(v) => setXScaleType(v as XScaleType)}
+              className="flex items-center gap-4 pt-2"
+            >
+              <div className="flex items-center space-x-1">
+                <RadioGroupItem value="index" id="c-index" />
+                <Label htmlFor="c-index" className="font-normal text-sm">Default Index</Label>
+              </div>
+              <div className="flex items-center space-x-1">
+                <RadioGroupItem value="freeform" id="c-freeform" />
+                <Label htmlFor="c-freeform" className="font-normal text-sm">Free Form</Label>
+              </div>
+              <div className="flex items-center space-x-1">
+                <RadioGroupItem value="date" id="c-date" />
+                <Label htmlFor="c-date" className="font-normal text-sm">Date</Label>
+              </div>
+            </RadioGroup>
           </div>
         </div>
 
-        <div className="space-y-3">
-          <Label>X-Axis Scale</Label>
-          <RadioGroup
-            value={xScaleType}
-            onValueChange={(v) => setXScaleType(v as XScaleType)}
-            className="flex flex-wrap gap-4"
-          >
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="index" id="c-index" />
-              <Label htmlFor="c-index" className="font-normal">Default Index (1, 2, 3...)</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="freeform" id="c-freeform" />
-              <Label htmlFor="c-freeform" className="font-normal">Free Form Labels</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="date" id="c-date" />
-              <Label htmlFor="c-date" className="font-normal">Date</Label>
-            </div>
-          </RadioGroup>
-          
-          {xScaleType !== 'index' && (
-            <div className="mt-2">
-              <Label htmlFor="xAxisLabel">X-Axis Label</Label>
-              <Input
-                id="xAxisLabel"
-                value={xAxisLabel}
-                onChange={(e) => setXAxisLabel(e.target.value)}
-                placeholder={xScaleType === 'date' ? 'Date' : 'Sample Label'}
-                className="max-w-xs mt-1"
-              />
-            </div>
-          )}
-        </div>
+        {xScaleType !== 'index' && (
+          <div className="space-y-1">
+            <Label htmlFor="xAxisLabel">X-Axis Label</Label>
+            <Input
+              id="xAxisLabel"
+              value={xAxisLabel}
+              onChange={(e) => setXAxisLabel(e.target.value)}
+              placeholder={xScaleType === 'date' ? 'Date' : 'Sample Label'}
+              className="max-w-xs"
+            />
+          </div>
+        )}
 
         <div className="flex items-center space-x-2">
           <input
