@@ -78,6 +78,18 @@ export interface XbarSControlCardStats extends BaseControlCardStats {
   outOfControlS: number[];
 }
 
+// C chart specific stats (Attribute chart for defect counts)
+export interface CControlCardStats extends BaseControlCardStats {
+  chartType: 'C';
+  sampleCount: number;
+  sampleSize?: number;
+  defectCounts: number[];
+  cBar: number;
+  ucl: number;
+  lcl: number;
+  outOfControl: number[];
+}
+
 // Legacy stats (for backward compatibility - defaults to I-MR)
 export interface LegacyControlCardStats {
   dataValues?: number[];
@@ -94,7 +106,7 @@ export interface LegacyControlCardStats {
   stageStats?: any[];
 }
 
-export type ControlCardStats = IMRControlCardStats | XbarRControlCardStats | XbarSControlCardStats | LegacyControlCardStats;
+export type ControlCardStats = IMRControlCardStats | XbarRControlCardStats | XbarSControlCardStats | CControlCardStats | LegacyControlCardStats;
 
 export interface ControlCardContext {
   ctqName?: string;
@@ -111,6 +123,10 @@ function isXbarRStats(stats: ControlCardStats): stats is XbarRControlCardStats {
 
 function isXbarSStats(stats: ControlCardStats): stats is XbarSControlCardStats {
   return 'chartType' in stats && stats.chartType === 'Xbar-S';
+}
+
+function isCStats(stats: ControlCardStats): stats is CControlCardStats {
+  return 'chartType' in stats && stats.chartType === 'C';
 }
 
 function isIMRStats(stats: ControlCardStats): stats is IMRControlCardStats {
@@ -145,6 +161,15 @@ function getChartConfig(stats: ControlCardStats): ChartTypeConfig {
       variationComparisonText: 'Analyze both Xbar and S charts',
     };
   }
+  if (isCStats(stats)) {
+    return {
+      chartName: 'C Chart',
+      chartDescription: 'C control chart for attribute data (count of defects per unit)',
+      primaryChartName: 'C chart',
+      secondaryChartName: '', // C chart has only one chart
+      variationComparisonText: 'Analyze the C chart for defect count patterns',
+    };
+  }
   return {
     chartName: 'I-MR (Individual-Moving Range)',
     chartDescription: 'I-MR control chart for individual measurements',
@@ -171,6 +196,7 @@ function buildStageDataSummary(stats: ControlCardStats): string {
   
   const isXbarR = isXbarRStats(stats);
   const isXbarS = isXbarSStats(stats);
+  const isC = isCStats(stats);
   
   let stageDetails = `- Stages enabled: Yes (${stageStats.length} stage(s))\n`;
   stageDetails += stageStats.map((s, idx) => {
@@ -180,6 +206,9 @@ function buildStageDataSummary(stats: ControlCardStats): string {
     }
     if (isXbarS) {
       return `  - ${stageName}: ${s.count} subgroups, X̄=${s.mean.toFixed(4)}, UCL=${s.ucl.toFixed(4)}, LCL=${s.lcl.toFixed(4)}, S̄=${(s.sBar || 0).toFixed(4)}, S UCL=${(s.sUCL || 0).toFixed(4)}, S LCL=${(s.sLCL || 0).toFixed(4)}`;
+    }
+    if (isC) {
+      return `  - ${stageName}: ${s.count} samples, c̄=${s.mean.toFixed(4)}, UCL=${s.ucl.toFixed(4)}, LCL=${s.lcl.toFixed(4)}`;
     }
     // I-MR
     return `  - ${stageName}: ${s.count} points, Mean=${s.mean.toFixed(4)}, UCL=${s.ucl.toFixed(4)}, LCL=${s.lcl.toFixed(4)}, MR̄=${(s.mrMean || 0).toFixed(4)}, MR UCL=${(s.mrUcl || 0).toFixed(4)}, MR LCL=${(s.mrLcl || 0).toFixed(4)}`;
@@ -228,6 +257,20 @@ ${stageData}`;
 - S chart LCL: ${stats.sLCL.toFixed(4)}
 ${xbarsData}
 ${stdDevsData}
+${stageData}`;
+  }
+  
+  if (isCStats(stats)) {
+    const defectCountsData = formatRawDataArray(stats.defectCounts, 'Defect counts');
+    const stageData = buildStageDataSummary(stats);
+    const sampleSizeText = stats.sampleSize ? `${stats.sampleSize}` : '1';
+    
+    return `- Number of samples: ${stats.sampleCount}
+- Sample size (inspection units): ${sampleSizeText}
+- Average defect count (c̄): ${stats.cBar.toFixed(4)}
+- UCL: ${stats.ucl.toFixed(4)}
+- LCL: ${stats.lcl.toFixed(4)}
+${defectCountsData}
 ${stageData}`;
   }
   
@@ -282,6 +325,21 @@ function buildControlStatus(stats: ControlCardStats, config: ChartTypeConfig): {
       ? `\nOut-of-Control Points:
 - Xbar chart: Subgroups at indices ${xbarOOC > 0 ? stats.outOfControlXbar.join(', ') : 'none'}
 - S chart: Subgroups at indices ${sOOC > 0 ? stats.outOfControlS.join(', ') : 'none'}`
+      : '';
+    
+    return { status, details };
+  }
+  
+  if (isCStats(stats)) {
+    const cOOC = stats.outOfControl?.length || 0;
+    
+    const status = cOOC === 0
+      ? "The process appears to be IN CONTROL with no defect counts outside control limits."
+      : `The process has OUT OF CONTROL signals: ${cOOC} sample(s) with defect counts outside control limits.`;
+    
+    const details = cOOC > 0
+      ? `\nOut-of-Control Points:
+- C chart: Samples at indices ${stats.outOfControl.join(', ')}`
       : '';
     
     return { status, details };
