@@ -726,6 +726,7 @@ export function XbarSCard({ projectId, ctqName }: XbarSCardProps) {
         chartType: 'Xbar-S',
         subgroupCount: stats.subgroupCount,
         subgroupSize: effectiveSubgroupSize,
+        constantSubgroupSize,
         xbarBar: stats.xbarBar,
         sBar: stats.sBar,
         xbarUCL: stats.xbarUCL,
@@ -735,7 +736,9 @@ export function XbarSCard({ projectId, ctqName }: XbarSCardProps) {
         outOfControlXbar,
         outOfControlS,
         xbars: stats.xbars,
-        stdevs: stats.stdevs,
+        stdDevs: stats.stdevs,
+        stagesEnabled,
+        stageStats: stagesEnabled ? stageStatsList : undefined,
       };
 
       const contextPayload = {
@@ -744,7 +747,7 @@ export function XbarSCard({ projectId, ctqName }: XbarSCardProps) {
         stagesEnabled,
       };
 
-      const response = await apiRequest('POST', `/api/projects/${projectId}/spc/xbar-r/${encodeURIComponent(ctqName)}/ai-analysis`, {
+      const response = await apiRequest('POST', `/api/projects/${projectId}/spc/xbar-s/${encodeURIComponent(ctqName)}/ai-analysis`, {
         stats: statsPayload,
         context: contextPayload,
       });
@@ -761,7 +764,7 @@ export function XbarSCard({ projectId, ctqName }: XbarSCardProps) {
     } finally {
       setIsGeneratingAnalysis(false);
     }
-  }, [subgroups, stats, effectiveSubgroupSize, indicatorName, chartDate, stagesEnabled, projectId, ctqName, toast]);
+  }, [subgroups, stats, effectiveSubgroupSize, indicatorName, chartDate, stagesEnabled, stageStatsList, constantSubgroupSize, projectId, ctqName, toast]);
 
   // Chart data
   const chartXIndices = subgroups.map((_, i) => i + 1);

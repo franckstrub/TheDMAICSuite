@@ -725,6 +725,7 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
         chartType: 'Xbar-R',
         subgroupCount: stats.subgroupCount,
         subgroupSize: effectiveSubgroupSize,
+        constantSubgroupSize,
         xbarBar: stats.xbarBar,
         rBar: stats.rBar,
         xbarUCL: stats.xbarUCL,
@@ -735,6 +736,8 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
         outOfControlR,
         xbars: stats.xbars,
         ranges: stats.ranges,
+        stagesEnabled,
+        stageStats: stagesEnabled ? stageStatsList : undefined,
       };
 
       const contextPayload = {
@@ -760,7 +763,7 @@ export function XbarRCard({ projectId, ctqName }: XbarRCardProps) {
     } finally {
       setIsGeneratingAnalysis(false);
     }
-  }, [subgroups, stats, effectiveSubgroupSize, indicatorName, chartDate, stagesEnabled, projectId, ctqName, toast]);
+  }, [subgroups, stats, effectiveSubgroupSize, indicatorName, chartDate, stagesEnabled, stageStatsList, constantSubgroupSize, projectId, ctqName, toast]);
 
   // Chart data
   const chartXIndices = subgroups.map((_, i) => i + 1);

@@ -47,6 +47,7 @@ export interface XbarRControlCardStats extends BaseControlCardStats {
   chartType: 'Xbar-R';
   subgroupCount: number;
   subgroupSize: number;
+  constantSubgroupSize?: boolean;
   xbars: number[];
   ranges: number[];
   xbarBar: number;
@@ -64,6 +65,7 @@ export interface XbarSControlCardStats extends BaseControlCardStats {
   chartType: 'Xbar-S';
   subgroupCount: number;
   subgroupSize: number;
+  constantSubgroupSize?: boolean;
   xbars: number[];
   stdDevs: number[];
   xbarBar: number;
@@ -191,9 +193,12 @@ function buildStatisticalSummary(stats: ControlCardStats): string {
     const xbarsData = formatRawDataArray(stats.xbars, 'Subgroup means (X̄ values)');
     const rangesData = formatRawDataArray(stats.ranges, 'Subgroup ranges (R values)');
     const stageData = buildStageDataSummary(stats);
+    const subgroupSizeText = stats.constantSubgroupSize 
+      ? `${stats.subgroupSize} (constant)` 
+      : 'Variable';
     
     return `- Number of subgroups: ${stats.subgroupCount}
-- Subgroup size (n): ${stats.subgroupSize} (constant)
+- Subgroup size (n): ${subgroupSizeText}
 - Grand mean (X̿): ${stats.xbarBar.toFixed(4)}
 - Average range (R̄): ${stats.rBar.toFixed(4)}
 - X̄ chart UCL: ${stats.xbarUCL.toFixed(4)}
@@ -209,9 +214,12 @@ ${stageData}`;
     const xbarsData = formatRawDataArray(stats.xbars, 'Subgroup means (X̄ values)');
     const stdDevsData = formatRawDataArray(stats.stdDevs, 'Subgroup standard deviations (S values)');
     const stageData = buildStageDataSummary(stats);
+    const subgroupSizeText = stats.constantSubgroupSize 
+      ? `${stats.subgroupSize} (constant)` 
+      : 'Variable';
     
     return `- Number of subgroups: ${stats.subgroupCount}
-- Subgroup size (n): ${stats.subgroupSize} (constant)
+- Subgroup size (n): ${subgroupSizeText}
 - Grand mean (X̿): ${stats.xbarBar.toFixed(4)}
 - Average standard deviation (S̄): ${stats.sBar.toFixed(4)}
 - X̄ chart UCL: ${stats.xbarUCL.toFixed(4)}
