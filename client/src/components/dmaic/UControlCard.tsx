@@ -1143,6 +1143,70 @@ export function UControlCard({ projectId, ctqName }: UControlCardProps) {
     }));
   };
 
+  const generateUChartStageLimitLabels = () => {
+    if (!stagesEnabled || stageStatsList.length === 0) return [];
+    
+    const annotations: any[] = [];
+    stageStatsList.forEach(stageStat => {
+      const xPos = stageStat.endIdx + 0.3;
+      const stageUCL = stageStat.uBar + 3 * Math.sqrt(stageStat.uBar / stageStat.avgSampleSize);
+      const stageLCL = Math.max(0, stageStat.uBar - 3 * Math.sqrt(stageStat.uBar / stageStat.avgSampleSize));
+      // Convert to percentage
+      const uclPct = stageUCL * 100;
+      const clPct = stageStat.uBar * 100;
+      const lclPct = stageLCL * 100;
+      
+      annotations.push(
+        {
+          x: xPos,
+          y: uclPct,
+          xref: 'x' as const,
+          yref: 'y' as const,
+          text: `UCL=${uclPct.toFixed(2)}%`,
+          showarrow: false,
+          xanchor: 'left' as const,
+          yanchor: 'middle' as const,
+          font: { color: '#dc2626', size: 9 },
+          bgcolor: 'rgba(255,255,255,0.9)',
+          bordercolor: '#dc2626',
+          borderwidth: 1,
+          borderpad: 2,
+        },
+        {
+          x: xPos,
+          y: clPct,
+          xref: 'x' as const,
+          yref: 'y' as const,
+          text: `CL=${clPct.toFixed(2)}%, n̄=${stageStat.avgSampleSize.toFixed(1)}`,
+          showarrow: false,
+          xanchor: 'left' as const,
+          yanchor: 'middle' as const,
+          font: { color: '#16a34a', size: 9 },
+          bgcolor: 'rgba(255,255,255,0.9)',
+          bordercolor: '#16a34a',
+          borderwidth: 1,
+          borderpad: 2,
+        },
+        {
+          x: xPos,
+          y: lclPct,
+          xref: 'x' as const,
+          yref: 'y' as const,
+          text: `LCL=${lclPct.toFixed(2)}%`,
+          showarrow: false,
+          xanchor: 'left' as const,
+          yanchor: 'middle' as const,
+          font: { color: '#dc2626', size: 9 },
+          bgcolor: 'rgba(255,255,255,0.9)',
+          bordercolor: '#dc2626',
+          borderwidth: 1,
+          borderpad: 2,
+        }
+      );
+    });
+    return annotations;
+  };
+
   const generateGlobalLimitLabels = () => {
     if (!stats || stagesEnabled) return [];
     const xPos = chartXIndices.length + 0.3;
@@ -1313,7 +1377,7 @@ export function UControlCard({ projectId, ctqName }: UControlCardProps) {
     shapes: stagesEnabled ? generateStageSeparatorShapes() : [],
     annotations: [
       ...(stagesEnabled ? generateStageAnnotations() : []),
-      ...generateGlobalLimitLabels(),
+      ...(stagesEnabled ? generateUChartStageLimitLabels() : generateGlobalLimitLabels()),
     ],
     hovermode: 'closest' as const,
   };
