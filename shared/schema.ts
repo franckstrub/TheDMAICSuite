@@ -2863,6 +2863,9 @@ export const logisticRegressionConfig = pgTable(
     showScatterPlot: boolean("show_scatter_plot").default(false),
     predictionX: real("prediction_x"),
     
+    // AI-generated analysis
+    aiAnalysis: text("ai_analysis").default(""),
+    
     lastUpdated: timestamp("last_updated").notNull().defaultNow(),
   },
   (table) => ({

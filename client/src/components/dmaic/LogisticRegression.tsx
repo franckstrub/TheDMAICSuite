@@ -6,7 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Trash2, Save } from "lucide-react";
+import { Loader2, Trash2, Save, Sparkles, RefreshCw } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { parseTwoColumnPaste } from '@/lib/excelPasteUtils';
@@ -53,6 +54,8 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
   const [showScatterPlot, setShowScatterPlot] = useState(false);
   const [activeTab, setActiveTab] = useState("setup");
   const [predictionX, setPredictionX] = useState("");
+  const [aiAnalysis, setAiAnalysis] = useState("");
+  const [isGeneratingAnalysis, setIsGeneratingAnalysis] = useState(false);
 
   const configQuery = useQuery({
     queryKey: [`/api/projects/${projectId}/solutions/${solutionId}/logistic-regression`],
@@ -91,6 +94,10 @@ export function LogisticRegression({ projectId, solutionId }: LogisticRegression
       
       if (config.predictionX !== null && config.predictionX !== undefined) {
         setPredictionX(String(config.predictionX));
+      }
+      
+      if (config.aiAnalysis && typeof config.aiAnalysis === 'string') {
+        setAiAnalysis(config.aiAnalysis);
       }
     }
   }, [configQuery.data]);

@@ -163,6 +163,7 @@ import {
   generateMitigationPlan,
   generateElevatorSpeech,
   generateEngagementStrategy,
+  generateLogisticRegressionAnalysis,
 } from "./googleai";
 import { organizationService } from "./organizationService";
 import { registerGateReviewRoutes } from "./routes-gate-review";
@@ -8016,6 +8017,112 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (err) {
         console.error("Logistic Regression config error:", err);
         return handleErrors(err, res);
+      }
+    },
+  );
+
+  // POST Logistic Regression AI Analysis (Generate)
+  app.post(
+    "/api/projects/:projectId/solutions/:solutionId/logistic-regression/ai-analysis",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        const solutionId = req.params.solutionId;
+
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res.status(400).json({ message: "User organization not found" });
+        }
+
+        const { stats, context } = req.body;
+
+        if (!stats) {
+          return res.status(400).json({ error: "Missing stats data" });
+        }
+
+        // Generate AI analysis using Gemini
+        const assessment = await generateLogisticRegressionAnalysis(stats, context || {});
+
+        return res.status(200).json({
+          success: true,
+          assessment: assessment,
+        });
+      } catch (err) {
+        console.error("Error generating Logistic Regression AI analysis:", err);
+        return res.status(500).json({
+          error: "Failed to generate AI analysis",
+          details: err instanceof Error ? err.message : "Unknown error",
+        });
+      }
+    },
+  );
+
+  // PATCH Logistic Regression AI Analysis (Save)
+  app.patch(
+    "/api/projects/:projectId/solutions/:solutionId/logistic-regression/ai-analysis",
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+      try {
+        const projectId = parseInt(req.params.projectId);
+        const solutionId = req.params.solutionId;
+
+        const userClaims = (req.user as any)?.claims;
+        const userId = userClaims?.sub;
+
+        if (!userId) {
+          return res.status(401).json({ message: "User not found in session" });
+        }
+
+        const userRecord = await storage.getUser(userId);
+        if (!userRecord || !userRecord.organizationId) {
+          return res.status(400).json({ message: "User organization not found" });
+        }
+
+        const { aiAnalysis } = req.body;
+
+        if (typeof aiAnalysis !== "string") {
+          return res.status(400).json({ error: "AI analysis must be a string" });
+        }
+
+        const validatedAiAnalysis = aiAnalysis.slice(0, 10000);
+
+        const [updated] = await db
+          .update(logisticRegressionConfig)
+          .set({
+            aiAnalysis: validatedAiAnalysis,
+            lastUpdated: new Date(),
+          })
+          .where(
+            and(
+              eq(logisticRegressionConfig.projectId, projectId),
+              eq(logisticRegressionConfig.solutionId, solutionId),
+              eq(logisticRegressionConfig.organizationId, userRecord.organizationId),
+            ),
+          )
+          .returning();
+
+        if (!updated) {
+          return res.status(404).json({ error: "Logistic regression config not found" });
+        }
+
+        return res.status(200).json({
+          success: true,
+          aiAnalysis: updated.aiAnalysis,
+        });
+      } catch (err) {
+        console.error("Error saving Logistic Regression AI analysis:", err);
+        return res.status(500).json({
+          error: "Failed to save AI analysis",
+          details: err instanceof Error ? err.message : "Unknown error",
+        });
       }
     },
   );
